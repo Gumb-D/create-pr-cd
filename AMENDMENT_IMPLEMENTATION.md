@@ -1,7 +1,7 @@
 # Amendment Implementation Summary
 
 **Date:** May 18, 2026  
-**Task:** Amend the create-pr-cd skill implementation based on Amendments 1–3  
+**Task:** Amend the create-pr-cd skill implementation based on Amendments 1–4  
 **Status:** ✓ COMPLETE
 
 ---
@@ -60,6 +60,15 @@
 | 3.4 Column P = Column 8 | Both populated with identical Contract Number value |
 | 3.5 Fuzzy Matching | Implemented `fuzzy_match_subcon()` using `SequenceMatcher` ratio >0.6 threshold |
 | 3.6 Max 30 Sites Split | Count unique Site IDs per group; split into Part 1, Part 2, etc. if >30 |
+
+### Amendment 4: Fix PR Model Line Item Mapping
+**Change:** Corrected `SOW*`, `PBOM Code*`, `Unit*`, and `Quantity*` output values to come from the PR model line item definition rather than site-level Tx SOW values.
+**Implementation:**
+- `PBOM Code*` now uses PR model line item `Code`
+- `SOW*` now uses PR model line item `Description`
+- `Unit*` now uses PR model line item `Unit`
+- `Quantity*` now uses PR model line item quantity (or existing skill quantity rule)
+- Removed use of site `Tx SOW` as ECC `SOW*`
 
 ---
 
