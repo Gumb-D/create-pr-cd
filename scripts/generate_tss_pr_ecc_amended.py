@@ -29,6 +29,7 @@ def parse_args():
     parser.add_argument('--output', default='output', help='Output directory for generated ECC files')
     parser.add_argument('--site-code', help='Comma-separated Site Code(s) to generate PR ECC for')
     parser.add_argument('--all-sites', action='store_true', help='Generate PR ECC for all eligible sites')
+    parser.add_argument('--scope', choices=['TSS', 'TI'], default='TSS', type=str.upper, help='PR scope to generate: TSS or TI')
     return parser.parse_args()
 
 
@@ -58,7 +59,7 @@ output_dir = Path(args.output)
 output_dir.mkdir(parents=True, exist_ok=True)
 
 print("=" * 100)
-print("TSS PR ECC GENERATION - AMENDED IMPLEMENTATION")
+print(f"{args.scope.upper()} PR ECC GENERATION - AMENDED IMPLEMENTATION")
 print("=" * 100)
 print(f"Execution Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
 
@@ -151,6 +152,78 @@ def detect_site_code_column(df):
     )
 
 
+def normalize_antenna_size(value):
+    if pd.isna(value):
+        return None
+    raw = str(value).strip()
+    if not raw:
+        return None
+    match = re.search(r'(\d+(?:\.\d+)?)', raw.replace(',', '.'))
+    if not match:
+        return None
+    try:
+        return float(match.group(1))
+    except ValueError:
+        return None
+
+
+def determine_ti_antenna_category(ne_size, fe_size):
+    ne_val = normalize_antenna_size(ne_size)
+    fe_val = normalize_antenna_size(fe_size)
+    chosen_size = None
+    remark = None
+
+    if ne_val is None and fe_val is None:
+        remark = 'Missing TI antenna size - review required'
+    elif ne_val is None or fe_val is None:
+        chosen_size = fe_val if ne_val is None else ne_val
+        remark = 'Incomplete TI antenna size - review required'
+    else:
+        chosen_size = max(ne_val, fe_val)
+        if ne_val != fe_val:
+            remark = 'TI antenna sizes differ - using larger size for matching'
+
+    category = None
+    if chosen_size is not None:
+        if chosen_size <= 0.6:
+            category = '0.3/0.6m'
+        elif chosen_size <= 1.2:
+            category = '0.9/1.2m'
+        elif chosen_size <= 1.8:
+            category = '1.8m'
+        elif chosen_size <= 2.4:
+            category = '2.4m'
+        else:
+            category = f'{chosen_size}m'
+
+    return category, remark
+
+
+def match_ti_models(sow, antenna_category, ti_models):
+    sow_upper = sow.upper()
+    candidates = []
+    for item in ti_models:
+        item_sow_upper = item['SOW'].upper()
+        if item_sow_upper == sow_upper or item_sow_upper in sow_upper or sow_upper in item_sow_upper:
+            if item['Is_Mandatory']:
+                candidates.append(item)
+
+    if not candidates:
+        return [], False
+
+    size_candidates = []
+    if antenna_category:
+        search_term = antenna_category.lower()
+        for item in candidates:
+            if search_term in item['Description'].lower() or search_term in item['SOW'].lower():
+                size_candidates.append(item)
+        if size_candidates:
+            candidates = size_candidates
+
+    review_required = len(candidates) > 1
+    return candidates, review_required
+
+
 def filter_site_rows(df_site, site_codes=None, all_sites=False):
     if site_codes and all_sites:
         raise ValueError('Use either --site-code or --all-sites, not both.')
@@ -241,7 +314,43 @@ for idx in range(7, len(df_pr)):
 
 print(f"✓ Extracted {len(tss_models)} TSS line items")
 
-# Group by SOW
+# Extract TI models (starting from TI Model header)
+ti_models = []
+ti_header_idx = None
+for idx in range(len(df_pr)):
+    cell_value = df_pr.iloc[idx, 0]
+    if isinstance(cell_value, str) and 'TI Model' in cell_value:
+        ti_header_idx = idx
+        break
+
+if ti_header_idx is not None:
+    for idx in range(ti_header_idx + 1, len(df_pr)):
+        sow = df_pr.iloc[idx, 0]
+        pbom = df_pr.iloc[idx, 1]
+        desc = df_pr.iloc[idx, 2]
+        unit = df_pr.iloc[idx, 3]
+        qty = df_pr.iloc[idx, 4]
+        rules = df_pr.iloc[idx, 5]
+
+        if pd.isna(sow) or str(sow).strip() == '':
+            break
+
+        is_mandatory = 'Mandatory' in str(rules) if pd.notna(rules) else False
+        if pd.notna(pbom) and pd.notna(desc):
+            ti_models.append({
+                'SOW': str(sow).strip(),
+                'PBOM_Code': str(pbom).strip(),
+                'Description': str(desc).strip(),
+                'Unit': str(unit).strip() if pd.notna(unit) else 'Hop',
+                'Quantity': float(qty) if pd.notna(qty) else 1,
+                'Is_Mandatory': is_mandatory
+            })
+
+    print(f"✓ Extracted {len(ti_models)} TI line items")
+else:
+    print('Warning: TI Model section not found in PR model sheet.')
+
+# Group by SOW for TSS and TI models
 sow_groups = {}
 for item in tss_models:
     sow = item['SOW']
@@ -253,6 +362,19 @@ print(f"✓ Found {len(sow_groups)} unique TSS SOWs:")
 for sow in sorted(sow_groups.keys()):
     mandatory_count = len([x for x in sow_groups[sow] if x['Is_Mandatory']])
     print(f"  - {sow[:50]}: {len(sow_groups[sow])} items ({mandatory_count} mandatory)")
+
+if ti_models:
+    ti_sow_groups = {}
+    for item in ti_models:
+        sow = item['SOW']
+        if sow not in ti_sow_groups:
+            ti_sow_groups[sow] = []
+        ti_sow_groups[sow].append(item)
+
+    print(f"✓ Found {len(ti_sow_groups)} unique TI SOWs:")
+    for sow in sorted(ti_sow_groups.keys()):
+        mandatory_count = len([x for x in ti_sow_groups[sow] if x['Is_Mandatory']])
+        print(f"  - {sow[:50]}: {len(ti_sow_groups[sow])} items ({mandatory_count} mandatory)")
 
 # ===== STEP 2: LOAD SITE DATA =====
 print("\n[STEP 2] Loading Site Data...")
@@ -272,22 +394,24 @@ except ValueError as e:
     print(f"ERROR: {e}")
     sys.exit(1)
 
-# Filter TSS candidates
-tss_candidates = df_site[
-    (df_site['SubCon - TSS Team'].notna()) & 
-    (df_site['SubCon - TSS Team'].astype(str).str.strip() != '')
+scope_name = args.scope.upper()
+subcon_column = 'SubCon - TSS Team' if scope_name == 'TSS' else 'SubCon - TI Team'
+
+candidates = df_site[
+    (df_site[subcon_column].notna()) &
+    (df_site[subcon_column].astype(str).str.strip() != '')
 ].copy().reset_index(drop=True)
 
-print(f"✓ Found {len(tss_candidates)} TSS candidates")
+print(f"✓ Found {len(candidates)} {scope_name} candidates")
 
 # Display first 5 for dry run
 print(f"✓ First 5 candidates:")
-for i in range(min(5, len(tss_candidates))):
-    site_id = tss_candidates.iloc[i]['customer site code']
-    site_name = tss_candidates.iloc[i]['customer site name']
-    region = tss_candidates.iloc[i]['region']
-    subcon = tss_candidates.iloc[i]['SubCon - TSS Team']
-    sow = tss_candidates.iloc[i]['Tx SOW']
+for i in range(min(5, len(candidates))):
+    site_id = candidates.iloc[i]['customer site code']
+    site_name = candidates.iloc[i]['customer site name']
+    region = candidates.iloc[i]['region']
+    subcon = candidates.iloc[i][subcon_column]
+    sow = str(candidates.iloc[i]['Tx SOW'])
     print(f"  {i+1}. {site_id} ({site_name}) - Region: {region}, SubCon: {subcon}, SOW: {sow[:40]}")
 
 # ===== STEP 3: BUILD ECC OUTPUT ROWS =====
@@ -296,13 +420,13 @@ print("\n[STEP 3] Building ECC Output Rows...")
 ecc_rows = []
 fuzzy_matches = {}
 
-for idx in range(len(tss_candidates)):
-    row = tss_candidates.iloc[idx]
+for idx in range(len(candidates)):
+    row = candidates.iloc[idx]
     
     site_id = str(row['customer site code']).strip()
     site_name = str(row['customer site name']).strip()
     region = str(row['region']).strip()
-    subcon = str(row['SubCon - TSS Team']).strip()
+    subcon = str(row[subcon_column]).strip()
     sow = str(row['Tx SOW']).strip()
     delivery_unit = str(row.get('du code', '')).strip() if pd.notna(row.get('du code')) else ''
     logical_site = str(row.get('customer site code', '')).strip() if pd.notna(row.get('customer site code')) else ''
@@ -315,7 +439,6 @@ for idx in range(len(tss_candidates)):
     if subcon in subcon_mapping:
         contract_info = subcon_mapping[subcon]
     else:
-        # Try fuzzy match
         fuzzy_match = fuzzy_match_subcon(subcon, subcon_mapping)
         if fuzzy_match:
             matched_subcon = fuzzy_match
@@ -328,20 +451,30 @@ for idx in range(len(tss_candidates)):
     
     contract_number = contract_info['contract_number']
     
-    # Match SOW to PBOM items (use substring/fuzzy match for variations)
     matched_items = []
-    sow_upper = sow.upper()
-    for item in tss_models:
-        item_sow_upper = item['SOW'].upper()
-        # Check for exact match or if sow contains item SOW as substring
-        if item['Is_Mandatory'] and (item_sow_upper == sow_upper or item_sow_upper in sow_upper or sow_upper in item_sow_upper):
-            matched_items.append(item)
-    
+    remarks = ''
+
+    if scope_name == 'TSS':
+        sow_upper = sow.upper()
+        for item in tss_models:
+            item_sow_upper = item['SOW'].upper()
+            if item['Is_Mandatory'] and (item_sow_upper == sow_upper or item_sow_upper in sow_upper or sow_upper in item_sow_upper):
+                matched_items.append(item)
+    else:
+        antenna_category, antenna_remark = determine_ti_antenna_category(
+            row.get('MW Config Antenna Size NE', ''),
+            row.get('MW Config Antenna Size FE', '')
+        )
+        if antenna_remark:
+            remarks = antenna_remark
+        matched_items, review_required = match_ti_models(sow, antenna_category, ti_models)
+        if review_required:
+            remarks = 'REVIEW_REQUIRED' if not remarks else f"{remarks}; REVIEW_REQUIRED"
+
     if not matched_items:
-        print(f"  ✗ No mandatory items found for SOW: {sow[:50]}")
+        print(f"  ✗ No mandatory items found for SOW: {sow[:50]} (Scope: {scope_name})")
         continue
     
-    # Create one ECC row per mandatory item
     for item in matched_items:
         ecc_row = {
             'Site_ID': site_id,
@@ -356,7 +489,7 @@ for idx in range(len(tss_candidates)):
             'Quantity': item['Quantity'],
             'Delivery_Unit_Code': delivery_unit,
             'Logical_Site_Name': logical_site,
-            'Remarks': ''
+            'Remarks': remarks
         }
         ecc_rows.append(ecc_row)
 
@@ -462,9 +595,9 @@ for (region, subcon), rows in sorted(grouped.items()):
         # Generate filename
         timestamp = datetime.now().strftime('%Y%m%d')
         if num_files == 1:
-            filename = output_dir / f"{region}-{subcon} TX Mini Project TSS PR {timestamp}.xls"
+            filename = output_dir / f"{region}-{subcon} TX Mini Project {scope_name} PR {timestamp}.xls"
         else:
-            filename = output_dir / f"{region}-{subcon} TX Mini Project TSS PR {timestamp} Part {part_num}.xls"
+            filename = output_dir / f"{region}-{subcon} TX Mini Project {scope_name} PR {timestamp} Part {part_num}.xls"
         
         # Save file
         wb.save(str(filename))

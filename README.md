@@ -51,7 +51,13 @@ create-pr-cd/
 Basic execution:
 
 ```bash
-python scripts/generate_tss_pr_ecc_amended.py
+python scripts/generate_tss_pr_ecc_amended.py --scope TSS --all-sites
+```
+
+Generate TI scope for selected sites:
+
+```bash
+python scripts/generate_tss_pr_ecc_amended.py --scope TI --site-code A01073_AD
 ```
 
 Override paths if needed:
