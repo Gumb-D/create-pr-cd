@@ -1,5 +1,5 @@
 import pandas as pd
-df = pd.read_excel('output/outputs/Central-GTSB TX Mini Project TSS PR 20260518.xls')
+df = pd.read_excel('output/Central-GTSB TX Mini Project TSS PR 20260518.xls')
 print('Headers:')
 print(df.columns.tolist())
 print('\nFirst row data:')

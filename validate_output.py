@@ -2,10 +2,10 @@ import pandas as pd
 import os
 
 files = [
-    'output/outputs/Central-GTSB TX Mini Project TSS PR 20260518.xls',
-    'output/outputs/Northern-GCI TX Mini Project TSS PR 20260518.xls',
-    'output/outputs/Northern-GTSB TX Mini Project TSS PR 20260518.xls',
-    'output/outputs/Sabah-Seri Pancar TX Mini Project TSS PR 20260518.xls'
+    'output/Central-GTSB TX Mini Project TSS PR 20260518.xls',
+    'output/Northern-GCI TX Mini Project TSS PR 20260518.xls',
+    'output/Northern-GTSB TX Mini Project TSS PR 20260518.xls',
+    'output/Sabah-Seri Pancar TX Mini Project TSS PR 20260518.xls'
 ]
 
 print('\n' + '=' * 100)

@@ -9,7 +9,7 @@
 ## 1. Files Changed
 
 ### Created Files:
-1. **`Info/contract_info_reference.md`** — New reference file containing:
+1. **`Info/input/contract_info_reference.md`** — New reference file containing:
    - Region to Purchasing Area mapping (6 entries)
    - Subcontractor to Contract Number mapping (26 entries)
 
@@ -24,10 +24,10 @@
    - Proper SOW substring matching
 
 ### Generated Output (Sample Test):
-- `output/outputs/Central-GTSB TX Mini Project TSS PR 20260518.xls` (4 records, 2 sites)
-- `output/outputs/Northern-GCI TX Mini Project TSS PR 20260518.xls` (2 records, 1 site)
-- `output/outputs/Northern-GTSB TX Mini Project TSS PR 20260518.xls` (2 records, 1 site)
-- `output/outputs/Sabah-Seri Pancar TX Mini Project TSS PR 20260518.xls` (2 records, 1 site)
+- `output/Central-GTSB TX Mini Project TSS PR 20260518.xls` (4 records, 2 sites)
+- `output/Northern-GCI TX Mini Project TSS PR 20260518.xls` (2 records, 1 site)
+- `output/Northern-GTSB TX Mini Project TSS PR 20260518.xls` (2 records, 1 site)
+- `output/Sabah-Seri Pancar TX Mini Project TSS PR 20260518.xls` (2 records, 1 site)
 
 ---
 
@@ -36,7 +36,7 @@
 ### Amendment 1: Separate Contract Info Reference
 **Change:** Replaced dependency on `contract infor` sheet in PR Model Excel with standalone Markdown file  
 **Implementation:**
-- Created `Info/contract_info_reference.md` with two reference tables
+- Created `Info/input/contract_info_reference.md` with two reference tables
 - Added `load_region_mapping()` function to parse Region → Purchasing Area
 - Added `load_subcon_mapping()` function to parse Subcontractor → Contract Number
 - Fixed parser logic to correctly identify table rows vs. headers (skip "Region*" and "---" only)
@@ -133,7 +133,7 @@ python validate_output_final.py
 
 ## 5. Assumptions Made
 
-1. **Region Mapping Static**: Region → Purchasing Area mapping is stable and defined in `Info/contract_info_reference.md`. Markdown format chosen for human readability and easy updates.
+1. **Region Mapping Static**: Region → Purchasing Area mapping is stable and defined in `Info/input/contract_info_reference.md`. Markdown format chosen for human readability and easy updates.
 
 2. **Markdown Table Format**: Parser assumes standard Markdown table format with:
    - Header row contains "*" symbol (e.g., "Region*", "Subcontractor*")

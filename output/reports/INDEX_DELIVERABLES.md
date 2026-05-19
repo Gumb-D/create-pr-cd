@@ -360,5 +360,5 @@ All deliverables have been prepared and are ready for review. The skill is well-
 
 *This index was generated as part of the create-pr-cd skill dry run.*  
 *For questions or clarifications, refer to the specific documents listed above.*  
-*All documents are located in: `output/outputs/`*
+*All documents are located in: `output/`*
 

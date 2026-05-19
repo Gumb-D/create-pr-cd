@@ -50,7 +50,7 @@
 ## 📁 Files Generated
 
 ### Output Files Location
-All 4 output files are in: **output/outputs/**
+All 4 output files are in: **output/**
 
 ### File Details
 
@@ -244,7 +244,7 @@ Simply run the same algorithm on all 1,962 TSS PR candidates:
 
 4 Excel files have been generated with 10 TSS PR records for 5 candidates. All files are ready for review and deployment.
 
-**Location:** `output/outputs/`
+**Location:** `output/`
 
 ---
 
