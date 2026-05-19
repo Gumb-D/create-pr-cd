@@ -25,7 +25,7 @@ def load_region_mapping(ref_file):
                 print(f"  -> ADDED: {parts[1]} -> {parts[2]}")
     return mapping
 
-ref_file = 'Info/contract_info_reference.md'
+ref_file = 'Info/input/contract_info_reference.md'
 result = load_region_mapping(ref_file)
 print(f'\nFinal mapping ({len(result)} entries):')
 for k, v in sorted(result.items()):

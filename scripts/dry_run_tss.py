@@ -5,9 +5,9 @@ import json
 
 # File paths
 info_folder = Path("Info")
-site_data_file = info_folder / "A-P202202168750_D002-TX Mini Project-Mira's PR_PO View-20260511141147.xlsx"
-pr_model_file = info_folder / "Celcomdigi TX PR Model & Line Item 20250416 Rev 2.0.xlsx"
-ecc_template_file = info_folder / "ECC Template.xls"
+site_data_file = info_folder / "input" / "site_pr_po_view.xlsx"
+pr_model_file = info_folder / "input" / "pr_model.xlsx"
+ecc_template_file = info_folder / "input" / "ecc_template.xls"
 
 print("=" * 80)
 print("DRY RUN: TSS PR Generation")

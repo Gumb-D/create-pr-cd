@@ -6,7 +6,7 @@ print("=" * 100)
 print("EXTRACTING PR MODEL DATA")
 print("=" * 100)
 
-pr_file = 'Info/Celcomdigi TX PR Model & Line Item 20250416 Rev 2.0.xlsx'
+pr_file = 'Info/input/pr_model.xlsx'
 
 # Load workbook
 wb = load_workbook(pr_file, data_only=True)

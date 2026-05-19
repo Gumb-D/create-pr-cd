@@ -7,7 +7,7 @@ print("=" * 100)
 print(f"Execution Date: {datetime.now().strftime('%Y-%m-%d')}")
 
 # Load site data with row 3 as headers
-site_file = 'Info/A-P202202168750_D002-TX Mini Project-Mira\'s PR_PO View-20260511141147.xlsx'
+site_file = 'Info/input/site_pr_po_view.xlsx'
 df_site = pd.read_excel(site_file, sheet_name='data', header=3)
 
 print(f"\n[STEP 1] Loaded {len(df_site)} site records")
@@ -26,13 +26,13 @@ print(f"  ✓ Found {len(tss_candidates)} candidates")
 
 # Load PR Model
 print(f"\n[STEP 3] Loading PR Model Reference...")
-pr_file = 'Info/Celcomdigi TX PR Model & Line Item 20250416 Rev 2.0.xlsx'
+pr_file = 'Info/input/pr_model.xlsx'
 pr_df = pd.read_excel(pr_file, sheet_name='TX Line Item (After 21-Apr 26)', header=None, nrows=50)
 print(f"  ✓ PR model loaded")
 
 # Load sample for reference
 print(f"\n[STEP 4] Loading Sample TSS PR Output...")
-sample_file = 'Info/Northern-GCI TX Mini Project TSS PR 20260515.xls'
+sample_file = 'Info/sample/Northern-GCI TX Mini Project TSS PR 20260515.xls'
 sample_df = pd.read_excel(sample_file, sheet_name='details')
 print(f"  ✓ Sample has {len(sample_df)} PR lines")
 

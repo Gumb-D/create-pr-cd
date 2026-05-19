@@ -8,7 +8,7 @@ print("=" * 100)
 print(f"\nExecution Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 # Load site data with proper multi-level headers
-site_file = 'Info/A-P202202168750_D002-TX Mini Project-Mira\'s PR_PO View-20260511141147.xlsx'
+site_file = 'Info/input/site_pr_po_view.xlsx'
 
 print("\n[STEP 1] Loading Site Data...")
 df_raw = pd.read_excel(site_file, sheet_name='data', header=[1, 2], nrows=5)  # Use rows 1-2 as headers
@@ -106,7 +106,7 @@ for idx, (i, row) in enumerate(tss_candidates.head(5).iterrows(), 1):
 
 # Load PR Model for TSS matching
 print("\n\n[STEP 5] Loading PR Model Reference...")
-pr_file = 'Info/Celcomdigi TX PR Model & Line Item 20250416 Rev 2.0.xlsx'
+pr_file = 'Info/input/pr_model.xlsx'
 try:
     pr_df = pd.read_excel(pr_file, sheet_name='TX Line Item (After 21-Apr 26)', header=None)
     print(f"✓ PR model loaded: {len(pr_df)} rows")
@@ -122,7 +122,7 @@ except Exception as e:
 
 # Load sample output for reference
 print("\n\n[STEP 6] Sample TSS PR Output Structure...")
-sample_file = 'Info/Northern-GCI TX Mini Project TSS PR 20260515.xls'
+sample_file = 'Info/sample/Northern-GCI TX Mini Project TSS PR 20260515.xls'
 sample_df = pd.read_excel(sample_file, sheet_name='details')
 sample_contract = pd.read_excel(sample_file, sheet_name='contract infor', header=None)
 

@@ -1,4 +1,4 @@
-with open('Info/contract_info_reference.md', 'r') as f:
+with open('Info/input/contract_info_reference.md', 'r') as f:
     lines = f.readlines()
 
 for i in range(5, 14):

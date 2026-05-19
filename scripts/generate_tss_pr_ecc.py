@@ -13,7 +13,7 @@ print(f"Execution Date: {datetime.now().strftime('%Y-%m-%d')}\n")
 # ===== STEP 1: EXTRACT PR MODEL DATA =====
 print("[STEP 1] Extracting PR Model Data...")
 
-pr_file = 'Info/Celcomdigi TX PR Model & Line Item 20250416 Rev 2.0.xlsx'
+pr_file = 'Info/input/pr_model.xlsx'
 df_pr = pd.read_excel(pr_file, sheet_name="TX Line Item (After 21-Apr 26)", header=None)
 
 # Extract TSS models (starting from row 7 = index 7)
@@ -63,7 +63,7 @@ for sow in sorted(sow_groups.keys()):
 # ===== STEP 2: CONTRACT INFORMATION =====
 print("\n[STEP 2] Extracting Contract Information...")
 
-sample_file = 'Info/Northern-GCI TX Mini Project TSS PR 20260515.xls'
+sample_file = 'Info/sample/Northern-GCI TX Mini Project TSS PR 20260515.xls'
 df_contract = pd.read_excel(sample_file, sheet_name='contract infor', header=None)
 
 # Parse contract info
@@ -89,7 +89,7 @@ for subcon, info in contracts.items():
 # ===== STEP 3: LOAD 5 DRY RUN CANDIDATES =====
 print("\n[STEP 3] Loading 5 Dry Run Candidates...")
 
-site_file = 'Info/A-P202202168750_D002-TX Mini Project-Mira\'s PR_PO View-20260511141147.xlsx'
+site_file = 'Info/input/site_pr_po_view.xlsx'
 df_site = pd.read_excel(site_file, sheet_name='data', header=3)
 
 # Filter TSS candidates

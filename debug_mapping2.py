@@ -1,4 +1,4 @@
-ref_file = 'Info/contract_info_reference.md'
+ref_file = 'Info/input/contract_info_reference.md'
 mapping = {}
 with open(ref_file, 'r') as f:
     lines = f.readlines()

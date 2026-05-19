@@ -8,8 +8,8 @@ print("=" * 100)
 
 # File paths
 info_folder = Path("Info")
-site_data_file = info_folder / "A-P202202168750_D002-TX Mini Project-Mira's PR_PO View-20260511141147.xlsx"
-pr_model_file = info_folder / "Celcomdigi TX PR Model & Line Item 20250416 Rev 2.0.xlsx"
+site_data_file = info_folder / "input" / "site_pr_po_view.xlsx"
+pr_model_file = info_folder / "input" / "pr_model.xlsx"
 
 # Load site data (database format - using row 2 which has the human-readable headers)
 print("\n[STEP 1] Loading Site Data...")
@@ -53,15 +53,15 @@ for i, h in enumerate(headers_pbom[:12], 1):
 
 # Load ECC Template
 print("\n\n[STEP 3] Loading ECC Template...")
-ecc_template = pd.read_excel(info_folder / "ECC Template.xls", sheet_name='details')
+ecc_template = pd.read_excel(info_folder / "input" / "ecc_template.xls", sheet_name='details')
 print(f"✓ ECC Template columns ({len(ecc_template.columns)}):")
 for i, col in enumerate(ecc_template.columns, 1):
     print(f"    {i}. {col}")
 
 # Load Sample Output for reference
 print("\n\n[STEP 4] Analyzing Sample TSS PR Output...")
-sample_df = pd.read_excel(info_folder / "Northern-GCI TX Mini Project TSS PR 20260515.xls", sheet_name='details')
-sample_contract = pd.read_excel(info_folder / "Northern-GCI TX Mini Project TSS PR 20260515.xls", sheet_name='contract infor')
+sample_df = pd.read_excel(info_folder / "sample" / "Northern-GCI TX Mini Project TSS PR 20260515.xls", sheet_name='details')
+sample_contract = pd.read_excel(info_folder / "sample" / "Northern-GCI TX Mini Project TSS PR 20260515.xls", sheet_name='contract infor')
 
 print(f"✓ Sample output has {len(sample_df)} PR lines")
 print(f"\n  Sample contract infor sheet:")
