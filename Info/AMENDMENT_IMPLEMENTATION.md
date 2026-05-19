@@ -13,7 +13,7 @@
    - Region to Purchasing Area mapping (6 entries)
    - Subcontractor to Contract Number mapping (26 entries)
 
-2. **`scripts/generate_tss_pr_ecc_amended.py`** (280 lines) — Complete amended implementation with:
+2. **`scripts/generate_tss_pr_ecc.py`** (280 lines) — Complete amended implementation with:
    - Load contract data from Markdown instead of Excel
    - Single `details` sheet output only
    - Sequential SN numbering (1-based per file)
@@ -77,7 +77,7 @@
 ### Generate amended output:
 ```bash
 cd "d:\Users\10265696\Documents\AI Transformation\Skill\create-pr-cd"
-python scripts/generate_tss_pr_ecc_amended.py
+python scripts/generate_tss_pr_ecc.py
 ```
 
 ### Validate all 9 amendments:

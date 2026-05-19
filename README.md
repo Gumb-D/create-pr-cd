@@ -51,19 +51,19 @@ create-pr-cd/
 Basic execution:
 
 ```bash
-python scripts/generate_tss_pr_ecc_amended.py --scope TSS --all-sites
+python scripts/generate_tss_pr_ecc.py --scope TSS --all-sites
 ```
 
 Generate TI scope for selected sites:
 
 ```bash
-python scripts/generate_tss_pr_ecc_amended.py --scope TI --site-code A01073_AD
+python scripts/generate_tss_pr_ecc.py --scope TI --site-code A01073_AD
 ```
 
 Override paths if needed:
 
 ```bash
-python scripts/generate_tss_pr_ecc_amended.py --site-data Info/input/site_pr_po_view.xlsx --pr-model Info/input/pr_model.xlsx --template Info/input/ecc_template.xls --mapping Info/input/contract_info_reference.md --output output
+python scripts/generate_tss_pr_ecc.py --site-data Info/input/site_pr_po_view.xlsx --pr-model Info/input/pr_model.xlsx --template Info/input/ecc_template.xls --mapping Info/input/contract_info_reference.md --output output
 ```
 
 ## Site Selection Mode
@@ -73,19 +73,19 @@ The generator supports explicit site selection or full-site generation.
 ### Generate selected site
 
 ```bash
-python scripts/generate_tss_pr_ecc_amended.py --site-code B00123
+python scripts/generate_tss_pr_ecc.py --site-code B00123
 ```
 
 ### Generate multiple selected sites
 
 ```bash
-python scripts/generate_tss_pr_ecc_amended.py --site-code B00123,B00456,K00340
+python scripts/generate_tss_pr_ecc.py --site-code B00123,B00456,K00340
 ```
 
 ### Generate all eligible sites
 
 ```bash
-python scripts/generate_tss_pr_ecc_amended.py --all-sites
+python scripts/generate_tss_pr_ecc.py --all-sites
 ```
 
 The script requires either `--site-code` or `--all-sites`.
