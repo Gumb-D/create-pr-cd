@@ -3,3 +3,10 @@ debug_*.py
 test_*.py
 validate_*.py
 inspect_*.py
+
+# Ignore generated ECC outputs and test output folders
+output/
+output_*/
+output_ti_dryrun/
+output_tss_test/
+output_ti_test/
