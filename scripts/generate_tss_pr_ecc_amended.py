@@ -7,6 +7,9 @@ Amended version incorporating:
 - Amendment 3: Sequential SN, Region→Purchasing Area, Subcon→Contract, 30-site split, fuzzy matching
 """
 
+import argparse
+import os
+from pathlib import Path
 import pandas as pd
 import openpyxl
 from openpyxl import load_workbook, Workbook
@@ -14,6 +17,42 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from datetime import datetime
 from difflib import SequenceMatcher
 import re
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Generate ECC files from site PR/PO view and PR model.")
+    parser.add_argument('--site-data', default='Info/input/site_pr_po_view.xlsx', help='Path to daily site PR/PO view file')
+    parser.add_argument('--pr-model', default='Info/input/pr_model.xlsx', help='Path to PR model Excel file')
+    parser.add_argument('--template', default='Info/input/ecc_template.xls', help='Path to ECC template file')
+    parser.add_argument('--mapping', default='Info/input/contract_info_reference.md', help='Path to region/subcontractor mapping markdown')
+    parser.add_argument('--output', default='output', help='Output directory for generated ECC files')
+    return parser.parse_args()
+
+
+def require_file(path, description):
+    p = Path(path)
+    if not p.exists():
+        raise FileNotFoundError(
+            f"{description} not found: {p}\n" \
+            f"Place the correct file at this path or use the --site-data/--pr-model/--template/--mapping options."
+        )
+    return p
+
+
+def validate_template_file(path):
+    p = Path(path)
+    if not p.exists():
+        raise FileNotFoundError(f"ECC Template not found: {path}")
+    if p.suffix.lower() == '.xlsx':
+        wb = load_workbook(path, read_only=True, data_only=True)
+        if 'details' not in wb.sheetnames:
+            raise ValueError(f"ECC template must contain a 'details' sheet: {path}")
+    return True
+
+
+args = parse_args()
+output_dir = Path(args.output)
+output_dir.mkdir(parents=True, exist_ok=True)
 
 print("=" * 100)
 print("TSS PR ECC GENERATION - AMENDED IMPLEMENTATION")
@@ -89,9 +128,19 @@ def fuzzy_match_subcon(subcon_name, subcon_mapping, threshold=0.6):
     return best_match
 
 # ===== STEP 0: LOAD REFERENCE DATA =====
-print("[STEP 0] Loading Reference Data from Markdown...")
+print("[STEP 0] Loading Reference Data from Markdown and validating inputs...")
 
-ref_file = 'Info/contract_info_reference.md'
+site_file = require_file(args.site_data, 'Site PR/PO View')
+pr_file = require_file(args.pr_model, 'PR Model')
+template_file = require_file(args.template, 'ECC Template')
+ref_file = require_file(args.mapping, 'Contract info mapping')
+validate_template_file(template_file)
+
+print(f"✓ Site PR/PO View: {site_file}")
+print(f"✓ PR Model: {pr_file}")
+print(f"✓ ECC Template: {template_file}")
+print(f"✓ Mapping file: {ref_file}")
+
 region_mapping = load_region_mapping(ref_file)
 subcon_mapping = load_subcon_mapping(ref_file)
 
@@ -103,7 +152,6 @@ print(f"  Subcons: {', '.join(sorted(subcon_mapping.keys()))[:80]}...")
 # ===== STEP 1: EXTRACT PR MODEL DATA =====
 print("\n[STEP 1] Extracting PR Model Data...")
 
-pr_file = 'Info/Celcomdigi TX PR Model & Line Item 20250416 Rev 2.0.xlsx'
 df_pr = pd.read_excel(pr_file, sheet_name="TX Line Item (After 21-Apr 26)", header=None)
 
 # Extract TSS models (starting from row 7 = index 7)
@@ -152,7 +200,6 @@ for sow in sorted(sow_groups.keys()):
 # ===== STEP 2: LOAD SITE DATA =====
 print("\n[STEP 2] Loading Site Data...")
 
-site_file = 'Info/A-P202202168750_D002-TX Mini Project-Mira\'s PR_PO View-20260511141147.xlsx'
 df_site = pd.read_excel(site_file, sheet_name='data', header=3)
 
 # Filter TSS candidates
@@ -345,12 +392,12 @@ for (region, subcon), rows in sorted(grouped.items()):
         # Generate filename
         timestamp = datetime.now().strftime('%Y%m%d')
         if num_files == 1:
-            filename = f"output/outputs/{region}-{subcon} TX Mini Project TSS PR {timestamp}.xls"
+            filename = output_dir / f"{region}-{subcon} TX Mini Project TSS PR {timestamp}.xls"
         else:
-            filename = f"output/outputs/{region}-{subcon} TX Mini Project TSS PR {timestamp} Part {part_num}.xls"
+            filename = output_dir / f"{region}-{subcon} TX Mini Project TSS PR {timestamp} Part {part_num}.xls"
         
         # Save file
-        wb.save(filename)
+        wb.save(str(filename))
         
         file_count += 1
         total_rows += len(part_rows)
