@@ -154,7 +154,7 @@ Each scope uses different matching logic and PR model definitions (see **Key Mat
 - If the ECC template does not contain a `details` sheet, the script will raise a validation error.
 - Ensure `Info/input/ecc_template.xls` is valid and contains the required sheet.
 
-- **Unknown subcontractor handling:**
+**Unknown subcontractor handling:**
 - Unknown subcontractor names use fuzzy matching to find the nearest / highest similarity match.
 - If the fuzzy match result is incorrect or undesired:
   1. Do not automatically change the mapping file.
