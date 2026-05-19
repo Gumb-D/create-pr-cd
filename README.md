@@ -86,7 +86,7 @@ Northern-GCI TX Mini Project TSS PR 20260518 Part 2.xls
 **Operation Backoffice** files use `Allstar` as the subcontractor:
 
 ```text
-Central-Allstar TX Mini Project Operation PR 20260518.xls
+Central-Allstar TX Mini Project Operation Backoffice PR 20260518.xls
 ```
 
 ## Supported PR Scopes
@@ -119,7 +119,7 @@ Each scope uses different matching logic and PR model definitions (see **Key Mat
 
 - **Purchasing Area** ← derived from Region mapping in `Info/input/contract_info_reference.md`
 - **Contract Number** ← derived from Subcontractor mapping in `Info/input/contract_info_reference.md`
-- **Unknown Subcontractors** ← fuzzy matching enabled, using highest similarity match above 60% threshold
+- **Unknown Subcontractors** ← fuzzy matching enabled using nearest / highest similarity match
 
 ### ECC Output Rules
 
@@ -154,8 +154,8 @@ Each scope uses different matching logic and PR model definitions (see **Key Mat
 - If the ECC template does not contain a `details` sheet, the script will raise a validation error.
 - Ensure `Info/input/ecc_template.xls` is valid and contains the required sheet.
 
-**Unknown subcontractor handling:**
-- Unknown subcontractor names use fuzzy matching to find the highest similarity match (minimum 60% threshold).
+- **Unknown subcontractor handling:**
+- Unknown subcontractor names use fuzzy matching to find the nearest / highest similarity match.
 - If the fuzzy match result is incorrect or undesired:
   1. Do not automatically change the mapping file.
   2. Verify the correct subcontractor name in the source data.
