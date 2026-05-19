@@ -98,7 +98,7 @@ The generator supports the following Project Report (PR) scopes:
 | TSS | Microwave Site Survey PR |
 | TI | Microwave Integration PR |
 | Planning | Microwave Planning PR |
-| Operation | Microwave Backoffice PR |
+| Operation Backoffice | Microwave Backoffice PR |
 
 Each scope uses different matching logic and PR model definitions (see **Key Matching Rules** section below).
 
@@ -113,13 +113,13 @@ Each scope uses different matching logic and PR model definitions (see **Key Mat
 | TSS | Tx SOW from site data |
 | TI | Tx SOW + Antenna Size from site data |
 | Planning | Fixed PBOM logic using `Subcon - Planning` mapping |
-| Operation | Allstar + `TX Integrated actual end date` from site data |
+| Operation Backoffice | Allstar + `TX Integrated actual end date` from site data |
 
 ### Mapping Rules
 
 - **Purchasing Area** ← derived from Region mapping in `Info/input/contract_info_reference.md`
 - **Contract Number** ← derived from Subcontractor mapping in `Info/input/contract_info_reference.md`
-- **Unknown Subcontractors** ← fuzzy matching enabled (60% similarity threshold)
+- **Unknown Subcontractors** ← fuzzy matching enabled, using highest similarity match above 60% threshold
 
 ### ECC Output Rules
 
@@ -127,7 +127,7 @@ Each scope uses different matching logic and PR model definitions (see **Key Mat
 - `SOW*` ← sourced from PR model Description
 - `PBOM Code*` ← sourced from PR model Code
 - `Unit*` ← sourced from PR model Unit
-- `Quantity*` ← sourced from PR model Quantity
+- `Quantity*` ← PR model quantity or scope-specific quantity rule
 - `SN.` ← sequential (1-based) per output file
 - Max 30 unique Site IDs per output file
 
@@ -155,7 +155,7 @@ Each scope uses different matching logic and PR model definitions (see **Key Mat
 - Ensure `Info/input/ecc_template.xls` is valid and contains the required sheet.
 
 **Unknown subcontractor handling:**
-- Unknown subcontractor names use fuzzy matching to find the nearest mapping entry.
+- Unknown subcontractor names use fuzzy matching to find the highest similarity match (minimum 60% threshold).
 - If the fuzzy match result is incorrect or undesired:
   1. Do not automatically change the mapping file.
   2. Verify the correct subcontractor name in the source data.
