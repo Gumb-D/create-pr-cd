@@ -9,6 +9,7 @@ Amended version incorporating:
 
 import argparse
 import os
+import sys
 from pathlib import Path
 import pandas as pd
 import openpyxl
@@ -26,6 +27,8 @@ def parse_args():
     parser.add_argument('--template', default='Info/input/ecc_template.xls', help='Path to ECC template file')
     parser.add_argument('--mapping', default='Info/input/contract_info_reference.md', help='Path to region/subcontractor mapping markdown')
     parser.add_argument('--output', default='output', help='Output directory for generated ECC files')
+    parser.add_argument('--site-code', help='Comma-separated Site Code(s) to generate PR ECC for')
+    parser.add_argument('--all-sites', action='store_true', help='Generate PR ECC for all eligible sites')
     return parser.parse_args()
 
 
@@ -127,6 +130,60 @@ def fuzzy_match_subcon(subcon_name, subcon_mapping, threshold=0.6):
     
     return best_match
 
+
+def parse_site_codes(site_code_str):
+    if not site_code_str:
+        return []
+    codes = [code.strip().upper() for code in site_code_str.split(',') if code.strip()]
+    return [code for code in codes if code]
+
+
+def detect_site_code_column(df):
+    preferred = ['Site ID', 'Site ID*', 'Site ID ', 'customer site code', 'Site Code', 'site code']
+    lower_columns = {col.lower(): col for col in df.columns}
+    for candidate in preferred:
+        if candidate in df.columns:
+            return candidate
+        if candidate.lower() in lower_columns:
+            return lower_columns[candidate.lower()]
+    raise ValueError(
+        'Site code column not found. Expected one of: Site ID, Site ID*, customer site code, Site Code.'
+    )
+
+
+def filter_site_rows(df_site, site_codes=None, all_sites=False):
+    if site_codes and all_sites:
+        raise ValueError('Use either --site-code or --all-sites, not both.')
+    if not site_codes and not all_sites:
+        raise ValueError('Please provide --site-code <SITE_CODE> or use --all-sites to generate all eligible sites.')
+    if all_sites:
+        return df_site.copy(), []
+
+    normalized_codes = [code for code in site_codes if code]
+    if not normalized_codes:
+        raise ValueError('No valid site codes provided to --site-code.')
+
+    site_code_column = detect_site_code_column(df_site)
+
+    df_site['_normalized_site_code'] = df_site[site_code_column].astype(str).str.strip().str.upper()
+    requested_set = set(normalized_codes)
+    matched_df = df_site[df_site['_normalized_site_code'].isin(requested_set)].copy()
+    matched_codes = set(matched_df['_normalized_site_code'].unique())
+    missing_codes = [code for code in normalized_codes if code not in matched_codes]
+
+    if len(matched_df) == 0:
+        raise ValueError('No matching Site Codes found in Site PR/PO View. Please check the input site code(s).')
+
+    if missing_codes:
+        print('Warning: requested Site Code(s) not found:')
+        for code in missing_codes:
+            print(f'- {code}')
+        print(f'✓ Continuing with {len(matched_df)} matched row(s).')
+
+    matched_df = matched_df.drop(columns=['_normalized_site_code'])
+    return matched_df, missing_codes
+
+
 # ===== STEP 0: LOAD REFERENCE DATA =====
 print("[STEP 0] Loading Reference Data from Markdown and validating inputs...")
 
@@ -202,6 +259,19 @@ print("\n[STEP 2] Loading Site Data...")
 
 df_site = pd.read_excel(site_file, sheet_name='data', header=3)
 
+# Apply Site Selection filter
+try:
+    selected_site_codes = parse_site_codes(args.site_code)
+    df_site, missing_codes = filter_site_rows(df_site, site_codes=selected_site_codes, all_sites=args.all_sites)
+    if args.site_code:
+        print(f"✓ Site selection: {len(selected_site_codes)} requested codes")
+    if args.all_sites:
+        print("✓ Site selection: all eligible sites")
+    print(f"✓ Matched site rows: {len(df_site)}")
+except ValueError as e:
+    print(f"ERROR: {e}")
+    sys.exit(1)
+
 # Filter TSS candidates
 tss_candidates = df_site[
     (df_site['SubCon - TSS Team'].notna()) & 
@@ -226,7 +296,7 @@ print("\n[STEP 3] Building ECC Output Rows...")
 ecc_rows = []
 fuzzy_matches = {}
 
-for idx in range(min(5, len(tss_candidates))):
+for idx in range(len(tss_candidates)):
     row = tss_candidates.iloc[idx]
     
     site_id = str(row['customer site code']).strip()

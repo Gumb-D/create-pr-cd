@@ -60,6 +60,31 @@ Override paths if needed:
 python scripts/generate_tss_pr_ecc_amended.py --site-data Info/input/site_pr_po_view.xlsx --pr-model Info/input/pr_model.xlsx --template Info/input/ecc_template.xls --mapping Info/input/contract_info_reference.md --output output
 ```
 
+## Site Selection Mode
+
+The generator supports explicit site selection or full-site generation.
+
+### Generate selected site
+
+```bash
+python scripts/generate_tss_pr_ecc_amended.py --site-code B00123
+```
+
+### Generate multiple selected sites
+
+```bash
+python scripts/generate_tss_pr_ecc_amended.py --site-code B00123,B00456,K00340
+```
+
+### Generate all eligible sites
+
+```bash
+python scripts/generate_tss_pr_ecc_amended.py --all-sites
+```
+
+The script requires either `--site-code` or `--all-sites`.
+Do not use both at the same time.
+
 ## Output Naming Convention
 
 Generated ECC files follow this format:

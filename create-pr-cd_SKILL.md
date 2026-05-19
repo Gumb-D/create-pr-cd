@@ -103,6 +103,16 @@ The skill supports the following PR scopes:
 
 Do not generate other scopes unless the user explicitly requests an extension.
 
+### 3.1 Site Selection Layer
+
+The generator accepts either selected Site Code(s) or a Generate All option before PR scope evaluation.
+
+- `--site-code` accepts one or more comma-separated site codes.
+- `--all-sites` generates for all eligible sites.
+- If neither option is provided, the generator exits with an error.
+- If both options are provided, the generator exits with an error.
+- Filtering occurs before evaluating TSS, TI, Planning, or Operation Backoffice triggers.
+
 ## 4. Scope Trigger Logic
 
 ### 4.1 TSS PR Trigger
