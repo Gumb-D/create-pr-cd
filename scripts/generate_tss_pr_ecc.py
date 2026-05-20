@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-TSS PR ECC File Generation - Amendment Implementation
+TSS/TI PR ECC File Generation - Amendment Implementation
 Amended version incorporating:
 - Amendment 1: Separate contract info reference (Markdown)
 - Amendment 2: Single 'details' sheet only
 - Amendment 3: Sequential SN, Region→Purchasing Area, Subcon→Contract, 30-site split, fuzzy matching
+- TI Phase 1: Trigger hardening, antenna parser, REVIEW_REQUIRED framework, duplicate prevention
 """
 
 import argparse
@@ -18,6 +19,7 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from datetime import datetime
 from difflib import SequenceMatcher
 import re
+import csv
 
 
 def parse_args():
@@ -150,6 +152,59 @@ def detect_site_code_column(df):
     raise ValueError(
         'Site code column not found. Expected one of: Site ID, Site ID*, customer site code, Site Code.'
     )
+
+
+def normalize_antenna_size(value):
+    if pd.isna(value):
+        return None
+    raw = str(value).strip()
+    if not raw:
+        return None
+    match = re.search(r'(\d+(?:\.\d+)?)', raw.replace(',', '.'))
+    if not match:
+        return None
+    try:
+        return float(match.group(1))
+    except ValueError:
+        return None
+
+
+def parse_antenna_sizes(antenna_string):
+    """
+    Extract all antenna sizes from a string and return them as a list of floats.
+    Handles formats like:
+    - "18G_1.2M(MAC)+OMT x1" => [1.2]
+    - "0.6m, 1.2m" => [0.6, 1.2]
+    - "1.2m" => [1.2]
+    
+    Returns: list of floats (sorted)
+    """
+    if pd.isna(antenna_string):
+        return []
+    
+    raw = str(antenna_string).strip()
+    if not raw:
+        return []
+    
+    # Find all numeric patterns with optional decimals
+    matches = re.findall(r'(\d+(?:\.\d+)?)', raw.replace(',', '.'))
+    sizes = []
+    for match in matches:
+        try:
+            sizes.append(float(match))
+        except ValueError:
+            pass
+    
+    return sorted(list(set(sizes)))  # unique, sorted
+
+
+def get_max_antenna_size(antenna_string):
+    """
+    Extract antenna sizes and return the maximum.
+    Returns: float or None
+    """
+    sizes = parse_antenna_sizes(antenna_string)
+    return max(sizes) if sizes else None
 
 
 def normalize_antenna_size(value):
@@ -396,13 +451,82 @@ except ValueError as e:
 
 scope_name = args.scope.upper()
 subcon_column = 'SubCon - TSS Team' if scope_name == 'TSS' else 'SubCon - TI Team'
+pr_status_column = 'Subcon PR - TSS' if scope_name == 'TSS' else 'Subcon PR - TI'
 
-candidates = df_site[
-    (df_site[subcon_column].notna()) &
-    (df_site[subcon_column].astype(str).str.strip() != '')
-].copy().reset_index(drop=True)
+# Track review-required and skipped items for TI Phase 1
+review_required_items = []
+duplicates_skipped = []
+warnings = []
 
-print(f"✓ Found {len(candidates)} {scope_name} candidates")
+# TI Phase 1: Hardened candidate filtering with duplicate prevention
+if scope_name == 'TI':
+    # For TI: must have SubCon - TI Team AND blank Subcon PR - TI
+    candidates_all = df_site[
+        (df_site[subcon_column].notna()) &
+        (df_site[subcon_column].astype(str).str.strip() != '')
+    ].copy()
+    
+    print(f"✓ Found {len(candidates_all)} rows with SubCon - TI Team")
+    
+    # Split into candidates and duplicates
+    candidates_list = []
+    for idx, row in candidates_all.iterrows():
+        site_id = str(row['customer site code']).strip()
+        region = str(row['region']).strip()
+        subcon = str(row[subcon_column]).strip()
+        sow = str(row.get('Tx SOW', '')).strip() if pd.notna(row.get('Tx SOW')) else ''
+        pr_status = str(row.get(pr_status_column, '')).strip() if pd.notna(row.get(pr_status_column)) else ''
+        
+        # Duplicate prevention: check if PR already exists
+        if pr_status and pr_status != '':
+            duplicates_skipped.append({
+                'Site_ID': site_id,
+                'Region': region,
+                'SubCon_TI': subcon,
+                'Tx_SOW': sow,
+                'Existing_PR': pr_status,
+                'Reason': 'Duplicate - PR already exists'
+            })
+            continue
+        
+        # Check for missing Tx SOW
+        if not sow or sow == '':
+            review_required_items.append({
+                'Site_ID': site_id,
+                'Region': region,
+                'SubCon_TI': subcon,
+                'Tx_SOW': '(missing)',
+                'Review_Reason': 'Missing Tx SOW'
+            })
+            continue
+        
+        # Check for MW Re-engineering (forced review)
+        if 'MW Re-engineering' in sow or sow.lower().startswith('mw re-eng'):
+            review_required_items.append({
+                'Site_ID': site_id,
+                'Region': region,
+                'SubCon_TI': subcon,
+                'Tx_SOW': sow,
+                'Review_Reason': 'MW Re-engineering follow-up required'
+            })
+            continue
+        
+        # All checks passed - add as candidate
+        candidates_list.append(idx)
+    
+    candidates = df_site.iloc[candidates_list].copy().reset_index(drop=True)
+    print(f"✓ Candidates after TI Phase 1 filtering: {len(candidates)}")
+    print(f"  - Duplicates skipped: {len(duplicates_skipped)}")
+    print(f"  - Review-required flagged: {len(review_required_items)}")
+
+else:
+    # TSS: simple filtering (no TI Phase 1 changes)
+    candidates = df_site[
+        (df_site[subcon_column].notna()) &
+        (df_site[subcon_column].astype(str).str.strip() != '')
+    ].copy().reset_index(drop=True)
+    print(f"✓ Found {len(candidates)} {scope_name} candidates")
+
 
 # Display first 5 for dry run
 print(f"✓ First 5 candidates:")
@@ -606,15 +730,68 @@ for (region, subcon), rows in sorted(grouped.items()):
         total_rows += len(part_rows)
         print(f"    ✓ Created: {filename} ({len(part_rows)} rows)")
 
+# ===== STEP 5: CREATE REVIEW-REQUIRED OUTPUT (TI PHASE 1) =====
+if scope_name == 'TI' and (review_required_items or duplicates_skipped):
+    print("\n[STEP 5] Creating Review Output Files (TI Phase 1)...")
+    
+    # Create review-required CSV
+    if review_required_items:
+        timestamp = datetime.now().strftime('%Y%m%d')
+        review_file = output_dir / f"REVIEW_REQUIRED_TI_{timestamp}.csv"
+        
+        with open(review_file, 'w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=['Site_ID', 'Region', 'SubCon_TI', 'Tx_SOW', 'Review_Reason', 'Source_Scope'])
+            writer.writeheader()
+            for item in review_required_items:
+                row = {
+                    'Site_ID': item['Site_ID'],
+                    'Region': item['Region'],
+                    'SubCon_TI': item['SubCon_TI'],
+                    'Tx_SOW': item['Tx_SOW'],
+                    'Review_Reason': item['Review_Reason'],
+                    'Source_Scope': 'TI'
+                }
+                writer.writerow(row)
+        
+        print(f"  ✓ Created review-required file: {review_file} ({len(review_required_items)} items)")
+    
+    # Create duplicates-skipped CSV
+    if duplicates_skipped:
+        timestamp = datetime.now().strftime('%Y%m%d')
+        dups_file = output_dir / f"DUPLICATES_SKIPPED_TI_{timestamp}.csv"
+        
+        with open(dups_file, 'w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=['Site_ID', 'Region', 'SubCon_TI', 'Tx_SOW', 'Existing_PR', 'Reason'])
+            writer.writeheader()
+            for item in duplicates_skipped:
+                writer.writerow(item)
+        
+        print(f"  ✓ Created duplicates-skipped file: {dups_file} ({len(duplicates_skipped)} items)")
+
 # ===== SUMMARY =====
 print("\n" + "=" * 100)
 print("SUMMARY")
 print("=" * 100)
+print(f"Scope: {scope_name}")
 print(f"Total files generated: {file_count}")
 print(f"Total ECC rows: {total_rows}")
 print(f"Fuzzy matched subcontractors: {len(fuzzy_matches)}")
 if fuzzy_matches:
     for original, matched in fuzzy_matches.items():
         print(f"  - '{original}' → '{matched}'")
+
+# TI Phase 1 summary
+if scope_name == 'TI':
+    print(f"\nTI Phase 1 Summary:")
+    print(f"  Review-required items: {len(review_required_items)}")
+    print(f"  Duplicates skipped: {len(duplicates_skipped)}")
+    if review_required_items:
+        review_reasons = {}
+        for item in review_required_items:
+            reason = item['Review_Reason']
+            review_reasons[reason] = review_reasons.get(reason, 0) + 1
+        for reason, count in sorted(review_reasons.items()):
+            print(f"    - {reason}: {count}")
+
 print(f"\nTimestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 print("=" * 100)
