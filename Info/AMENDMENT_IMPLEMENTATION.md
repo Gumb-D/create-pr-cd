@@ -1,7 +1,7 @@
 # Amendment Implementation Summary
 
-**Date:** May 18, 2026  
-**Task:** Amend the create-pr-cd skill implementation based on Amendments 1–4  
+**Date:** May 20, 2026  
+**Task:** Amend the create-pr-cd skill implementation based on Amendments 1–5  
 **Status:** ✓ COMPLETE
 
 ---
@@ -69,6 +69,16 @@
 - `Unit*` now uses PR model line item `Unit`
 - `Quantity*` now uses PR model line item quantity (or existing skill quantity rule)
 - Removed use of site `Tx SOW` as ECC `SOW*`
+
+### Amendment 5: Site Selection / Filtering
+**Change:** Added CLI site selection and filter validation before PR scope evaluation.
+**Implementation:**
+- Added `--site-code` for explicit site selection and `--all-sites` for full generation.
+- Normalized site codes case-insensitively and trimmed whitespace for matching.
+- Validated that the script exits with an error if both `--site-code` and `--all-sites` are provided.
+- Validated that the script exits with an error if neither selection mode is provided.
+- Applied site filtering before PR scope candidate evaluation.
+- Current CLI accepts only `--scope TSS` and `--scope TI`; Planning and Operation Backoffice are defined in the skill documentation but not implemented in this script.
 
 ---
 
@@ -198,7 +208,7 @@ python validate_output_final.py
 
 1. **Scale to Full Dataset**: Algorithm ready to process all 1,962 TSS candidates (current test uses 5). Expected ~100-200 output files.
 
-2. **Additional Scopes**: TI and Planning scopes not amended in this version but framework supports them.
+2. **Additional Scopes**: TI and Planning scopes are implemented in the framework. Operation Backoffice is defined in the skill documentation but not active in the current CLI.
 
 3. **Fuzzy Match Logging**: Current implementation logs fuzzy matches to console; production version may store to file.
 

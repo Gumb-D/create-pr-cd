@@ -1,4 +1,4 @@
-~$*.xls
+~$*.xlsx
 tests/
 debug_*.py
 test_*.py

@@ -101,7 +101,7 @@ The skill supports the following PR scopes:
 3. Planning
 4. Operation Backoffice
 
-Do not generate other scopes unless the user explicitly requests an extension.
+Do not generate other scopes unless the CLI is explicitly extended. Current CLI implementation supports only `TSS` and `TI`.
 
 ### 3.1 Site Selection Layer
 
@@ -111,7 +111,8 @@ The generator accepts either selected Site Code(s) or a Generate All option befo
 - `--all-sites` generates for all eligible sites.
 - If neither option is provided, the generator exits with an error.
 - If both options are provided, the generator exits with an error.
-- Filtering occurs before evaluating TSS, TI, Planning, or Operation Backoffice triggers.
+- Filtering occurs before evaluating PR scope triggers.
+- Current CLI implementation supports only `--scope TSS` and `--scope TI`; Planning and Operation Backoffice are documented skill targets but are not implemented in this script.
 
 ## 4. Scope Trigger Logic
 

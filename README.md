@@ -91,6 +91,9 @@ python scripts/generate_tss_pr_ecc.py --all-sites
 The script requires either `--site-code` or `--all-sites`.
 Do not use both at the same time.
 
+- `--scope` currently supports only `TSS` and `TI`.
+- Planning and Operation Backoffice are defined in the skill documentation but are not available in the current CLI implementation.
+
 ## Output Naming Convention
 
 Generated ECC files follow this format:
@@ -120,6 +123,8 @@ Northern-GCI TX Mini Project TSS PR 20260518 Part 2.xls
 Central-Allstar TX Mini Project Operation Backoffice PR 20260518.xls
 ```
 
+> Note: The current CLI generator accepts only `--scope TSS` and `--scope TI`. Planning and Operation Backoffice are defined as target scopes but are not yet implemented in this script.
+
 ## Supported PR Scopes
 
 The generator supports the following Project Report (PR) scopes:
@@ -130,6 +135,8 @@ The generator supports the following Project Report (PR) scopes:
 | TI | Microwave Integration PR |
 | Planning | Microwave Planning PR |
 | Operation Backoffice | Microwave Backoffice PR |
+
+The skill defines these scopes, but the current CLI implementation only supports `TSS` and `TI`. Planning and Operation Backoffice are documented in the skill and may be added in a future extension.
 
 Each scope uses different matching logic and PR model definitions (see **Key Matching Rules** section below).
 
