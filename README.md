@@ -127,16 +127,23 @@ Central-Allstar TX Mini Project Operation Backoffice PR 20260518.xls
 
 ## Supported PR Scopes
 
-The generator supports the following Project Report (PR) scopes:
+### Current CLI Support
 
-| Scope | Description |
-|---|---|
-| TSS | Microwave Site Survey PR |
-| TI | Microwave Integration PR |
-| Planning | Microwave Planning PR |
-| Operation Backoffice | Microwave Backoffice PR |
+The CLI currently supports these scopes:
 
-The skill defines these scopes, but the current CLI implementation only supports `TSS` and `TI`. Planning and Operation Backoffice are documented in the skill and may be added in a future extension.
+| Scope | Status | Description |
+|---|---|---|
+| TSS | ✓ Active | Microwave Site Survey PR |
+| TI | ✓ Active | Microwave Integration PR |
+
+### Skill Roadmap
+
+The skill documentation defines additional scopes for future implementation:
+
+| Scope | Status | Description |
+|---|---|---|
+| Planning | 📋 Planned | Microwave Planning PR |
+| Operation Backoffice | 📋 Planned | Microwave Backoffice PR |
 
 Each scope uses different matching logic and PR model definitions (see **Key Matching Rules** section below).
 
