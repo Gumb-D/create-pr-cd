@@ -236,6 +236,253 @@ def determine_ti_antenna_category(ne_size, fe_size):
     return category, remark, chosen_size
 
 
+def is_mw_reroute_row(row):
+    sow = str(row.get('Tx SOW', '')).strip().lower()
+    return 'mw' in sow and 'reroute' in sow
+
+
+def get_text_value(row, column):
+    value = row.get(column, '')
+    if pd.isna(value):
+        return ''
+    return str(value).strip()
+
+
+def extract_antenna_size_tokens(text):
+    if not text or pd.isna(text):
+        return []
+
+    normalized = str(text).replace(',', '.')
+    tokens = []
+    pattern = re.compile(r'(?<![A-Za-z0-9])(\d+(?:\.\d+)?)(?=\s*(?:m(?=\b|[^A-Za-z0-9])|/|-))', re.IGNORECASE)
+    for match in pattern.finditer(normalized):
+        try:
+            size = float(match.group(1))
+        except ValueError:
+            continue
+        if 0 < size <= 5.0:
+            tokens.append({'size': size, 'start': match.start(), 'end': match.end()})
+    return tokens
+
+
+def size_context_window(text, token, window=70):
+    segment_start = max(text.rfind('\n', 0, token['start']), text.rfind(';', 0, token['start']), text.rfind('.', 0, token['start']))
+    segment_end_candidates = [
+        position for position in [
+            text.find('\n', token['end']),
+            text.find(';', token['end']),
+            text.find('.', token['end'])
+        ] if position != -1
+    ]
+    segment_start = 0 if segment_start == -1 else segment_start + 1
+    segment_end = min(segment_end_candidates) if segment_end_candidates else len(text)
+    start = max(segment_start, token['start'] - window)
+    end = min(segment_end, token['end'] + window)
+    return text[start:end].lower()
+
+
+def size_context_before(text, token, window=70):
+    segment_start = max(text.rfind('\n', 0, token['start']), text.rfind(';', 0, token['start']), text.rfind('.', 0, token['start']))
+    segment_start = 0 if segment_start == -1 else segment_start + 1
+    start = max(segment_start, token['start'] - window)
+    return text[start:token['start']].lower()
+
+
+def extract_contextual_sizes(text, context_keywords, ambiguous_keywords=None, require_keyword_before=False):
+    if not text or pd.isna(text):
+        return [], False
+
+    raw = str(text)
+    tokens = extract_antenna_size_tokens(raw)
+    if not tokens:
+        return [], False
+
+    sizes = []
+    ambiguous_found = False
+    ambiguous_keywords = ambiguous_keywords or []
+    for token in tokens:
+        window = size_context_window(raw, token)
+        before_window = size_context_before(raw, token)
+        context_text = before_window if require_keyword_before else window
+        has_context = any(keyword in context_text for keyword in context_keywords)
+        has_ambiguous_context = any(keyword in context_text for keyword in ambiguous_keywords)
+        if has_context:
+            sizes.append(token['size'])
+        elif has_ambiguous_context:
+            ambiguous_found = True
+
+    return sorted(set(sizes)), ambiguous_found
+
+
+def extract_mw_reroute_install_size(row):
+    ne_size = normalize_antenna_size(row.get('MW Config Antenna Size NE', ''))
+    fe_size = normalize_antenna_size(row.get('MW Config Antenna Size FE', ''))
+    config_sizes = [size for size in [ne_size, fe_size] if size is not None]
+    if config_sizes:
+        return {
+            'size': max(config_sizes),
+            'source': 'MW Config Antenna Size NE/FE',
+            'confidence': 'HIGH',
+            'reason': None
+        }
+
+    install_keywords = ['target', 'new', 'install', 'upgrade', 'build']
+    source_groups = [
+        ('BOQ Configuration', ['BOQ Configuration']),
+        ('TX SOW Details', ['TX SOW Details']),
+        ('NE/FE SOW Details', ['NE SOW Details', 'FE SOW Details'])
+    ]
+    for source_name, columns in source_groups:
+        sizes = []
+        for column in columns:
+            column_sizes, _ = extract_contextual_sizes(get_text_value(row, column), install_keywords)
+            sizes.extend(column_sizes)
+        if sizes:
+            return {
+                'size': max(sizes),
+                'source': source_name,
+                'confidence': 'MEDIUM',
+                'reason': None
+            }
+
+    return {
+        'size': None,
+        'source': None,
+        'confidence': 'LOW',
+        'reason': 'MW Reroute install antenna size missing'
+    }
+
+
+def extract_mw_reroute_decom_size(row):
+    decom_keywords = ['decom', 'dismant', 'remove', 'removal']
+    existing_keywords = ['existing']
+    source_columns = [
+        ('BOQ Configuration', 'BOQ Configuration'),
+        ('TX SOW Details', 'TX SOW Details'),
+        ('NE SOW Details', 'NE SOW Details'),
+        ('FE SOW Details', 'FE SOW Details')
+    ]
+
+    for source_name, column in source_columns:
+        text = get_text_value(row, column)
+        sizes, ambiguous_reuse = extract_contextual_sizes(
+            text,
+            decom_keywords,
+            ambiguous_keywords=['reuse existing'],
+            require_keyword_before=True
+        )
+        existing_sizes, _ = extract_contextual_sizes(text, existing_keywords, require_keyword_before=True)
+
+        # "Reuse existing" often describes retained equipment, not a decom target.
+        lower_text = text.lower()
+        if 'reuse existing' in lower_text:
+            existing_sizes = []
+            ambiguous_reuse = True
+
+        combined = sorted(set(sizes + existing_sizes))
+        if len(combined) == 1:
+            return {
+                'size': combined[0],
+                'source': source_name,
+                'confidence': 'MEDIUM',
+                'reason': None
+            }
+        if len(combined) > 1 or ambiguous_reuse:
+            return {
+                'size': None,
+                'source': source_name,
+                'confidence': 'LOW',
+                'reason': 'MW Reroute decom antenna size ambiguous'
+            }
+
+    return {
+        'size': None,
+        'source': None,
+        'confidence': 'LOW',
+        'reason': 'MW Reroute decom antenna size missing'
+    }
+
+
+def classify_mw_reroute_model_item(item):
+    text = ' '.join([str(item.get('SOW', '')), str(item.get('Description', '')), str(item.get('Rules', ''))]).lower()
+    if 'new - mw link' in text:
+        return 'install'
+    if 'mw dismantling' in text and 'antenna' in text:
+        return 'dismantle'
+    return 'other'
+
+
+def text_matches_size_bucket(text, chosen_size):
+    if chosen_size is None:
+        return False
+    normalized = str(text).replace(',', '.').lower()
+
+    if '>3.2' in normalized:
+        return chosen_size > 3.2
+
+    for first, second in re.findall(r'(\d+(?:\.\d+)?)\s*[-/]\s*(\d+(?:\.\d+)?)\s*m?', normalized):
+        low = float(first)
+        high = float(second)
+        if low <= chosen_size <= high:
+            return True
+
+    sizes = extract_antenna_size_tokens(normalized)
+    return any(abs(token['size'] - chosen_size) < 1e-6 for token in sizes)
+
+
+def select_mw_reroute_item(items, chosen_size):
+    matched = []
+    for item in items:
+        text = ' '.join([str(item.get('SOW', '')), str(item.get('Description', '')), str(item.get('Rules', ''))])
+        if text_matches_size_bucket(text, chosen_size):
+            matched.append(item)
+    if len(matched) == 1:
+        return matched[0], None
+    if len(matched) > 1:
+        return None, 'ambiguous'
+    return None, 'missing'
+
+
+def match_mw_reroute_models(row, region, ti_models):
+    sow = str(row.get('Tx SOW', '')).strip()
+    sow_upper = sow.upper()
+    candidates = []
+    for item in ti_models:
+        item_sow_upper = item['SOW'].upper()
+        if item['Is_Mandatory'] and item_sow_upper == 'MW REROUTE':
+            candidates.append(item)
+
+    install_items = [item for item in candidates if classify_mw_reroute_model_item(item) == 'install']
+    dismantle_items = [item for item in candidates if classify_mw_reroute_model_item(item) == 'dismantle']
+
+    selected_items = []
+    review_reasons = []
+    install_result = extract_mw_reroute_install_size(row)
+    decom_result = extract_mw_reroute_decom_size(row)
+
+    if install_result['size'] is None:
+        return [], ['MW Reroute install antenna size missing'], install_result, decom_result
+
+    install_item, install_status = select_mw_reroute_item(install_items, install_result['size'])
+    if install_item:
+        selected_items.append(install_item)
+    else:
+        review_reasons.append('MW Reroute install item not matched')
+
+    if decom_result['size'] is None:
+        review_reasons.append(decom_result['reason'])
+    else:
+        dismantle_item, dismantle_status = select_mw_reroute_item(dismantle_items, decom_result['size'])
+        if dismantle_item:
+            selected_items.append(dismantle_item)
+        elif dismantle_status == 'ambiguous':
+            review_reasons.append('MW Reroute dismantle item not matched')
+        else:
+            review_reasons.append('MW Reroute dismantle item not matched')
+
+    return selected_items, review_reasons, install_result, decom_result
+
+
 def parse_choice_rule(rule_text):
     if not rule_text or pd.isna(rule_text):
         return None
@@ -684,34 +931,51 @@ for idx in range(len(candidates)):
             if item['Is_Mandatory'] and (item_sow_upper == sow_upper or item_sow_upper in sow_upper or sow_upper in item_sow_upper):
                 matched_items.append(item)
     else:
-        antenna_category, antenna_remark, antenna_size = determine_ti_antenna_category(
-            row.get('MW Config Antenna Size NE', ''),
-            row.get('MW Config Antenna Size FE', '')
-        )
-        if antenna_remark:
-            remarks = antenna_remark
-        matched_items, review_required = match_ti_models(
-            sow,
-            antenna_category,
-            antenna_size,
-            region,
-            ti_models
-        )
-        if review_required:
-            remarks = 'REVIEW_REQUIRED' if not remarks else f"{remarks}; REVIEW_REQUIRED"
+        if is_mw_reroute_row(row):
+            matched_items, mw_review_reasons, install_result, decom_result = match_mw_reroute_models(
+                row,
+                region,
+                ti_models
+            )
+            if mw_review_reasons:
+                remarks = 'REVIEW_REQUIRED'
+                for review_reason in mw_review_reasons:
+                    unmatched_ti_items.append({
+                        'Site_ID': site_id,
+                        'Region': region,
+                        'SubCon_TI': subcon,
+                        'Tx_SOW': sow,
+                        'Review_Reason': review_reason
+                    })
+        else:
+            antenna_category, antenna_remark, antenna_size = determine_ti_antenna_category(
+                row.get('MW Config Antenna Size NE', ''),
+                row.get('MW Config Antenna Size FE', '')
+            )
+            if antenna_remark:
+                remarks = antenna_remark
+            matched_items, review_required = match_ti_models(
+                sow,
+                antenna_category,
+                antenna_size,
+                region,
+                ti_models
+            )
+            if review_required:
+                remarks = 'REVIEW_REQUIRED' if not remarks else f"{remarks}; REVIEW_REQUIRED"
 
-        # Phase 2B-1: capture reason for unmatched TI candidates
-        if not matched_items:
-            # Determine the reason for no matching items
-            sow_matches = [m for m in ti_models if sow.upper() in m['SOW'].upper() or m['SOW'].upper() in sow.upper()]
-            if not sow_matches:
-                unmatched_reason = 'No matching TI PR model item'
-            elif not any(m['Is_Mandatory'] for m in sow_matches):
-                unmatched_reason = 'No mandatory TI item found'
-            elif antenna_category and antenna_size is not None:
-                unmatched_reason = 'No matching antenna group item'
-            else:
-                unmatched_reason = 'No matching TI PR model item'
+            # Phase 2B-1: capture reason for unmatched TI candidates
+            if not matched_items:
+                # Determine the reason for no matching items
+                sow_matches = [m for m in ti_models if sow.upper() in m['SOW'].upper() or m['SOW'].upper() in sow.upper()]
+                if not sow_matches:
+                    unmatched_reason = 'No matching TI PR model item'
+                elif not any(m['Is_Mandatory'] for m in sow_matches):
+                    unmatched_reason = 'No mandatory TI item found'
+                elif antenna_category and antenna_size is not None:
+                    unmatched_reason = 'No matching antenna group item'
+                else:
+                    unmatched_reason = 'No matching TI PR model item'
 
     if not matched_items:
         if scope_name == 'TI' and unmatched_reason:
