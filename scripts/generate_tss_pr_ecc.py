@@ -652,6 +652,7 @@ print("\n[STEP 3] Building ECC Output Rows...")
 
 ecc_rows = []
 fuzzy_matches = {}
+unmatched_ti_items = []  # Phase 2B-1: capture unmatched TI candidates
 
 for idx in range(len(candidates)):
     row = candidates.iloc[idx]
@@ -686,6 +687,7 @@ for idx in range(len(candidates)):
     
     matched_items = []
     remarks = ''
+    unmatched_reason = None
 
     if scope_name == 'TSS':
         sow_upper = sow.upper()
@@ -709,8 +711,30 @@ for idx in range(len(candidates)):
         )
         if review_required:
             remarks = 'REVIEW_REQUIRED' if not remarks else f"{remarks}; REVIEW_REQUIRED"
+        
+        # Phase 2B-1: capture reason for unmatched TI candidates
+        if not matched_items:
+            # Determine the reason for no matching items
+            sow_matches = [m for m in ti_models if sow.upper() in m['SOW'].upper() or m['SOW'].upper() in sow.upper()]
+            if not sow_matches:
+                unmatched_reason = 'No matching TI PR model item'
+            elif not any(m['Is_Mandatory'] for m in sow_matches):
+                unmatched_reason = 'No mandatory TI item found'
+            elif antenna_category and antenna_size is not None:
+                unmatched_reason = 'No matching antenna group item'
+            else:
+                unmatched_reason = 'No matching TI PR model item'
 
     if not matched_items:
+        if scope_name == 'TI' and unmatched_reason:
+            # Phase 2B-1: Add to review-required instead of silently dropping
+            unmatched_ti_items.append({
+                'Site_ID': site_id,
+                'Region': region,
+                'SubCon_TI': subcon,
+                'Tx_SOW': sow,
+                'Review_Reason': unmatched_reason
+            })
         print(f"  ✗ No mandatory items found for SOW: {sow[:50]} (Scope: {scope_name})")
         continue
     
@@ -845,19 +869,20 @@ for (region, subcon), rows in sorted(grouped.items()):
         total_rows += len(part_rows)
         print(f"    ✓ Created: {filename} ({len(part_rows)} rows)")
 
-# ===== STEP 5: CREATE REVIEW-REQUIRED OUTPUT (TI PHASE 1) =====
-if scope_name == 'TI' and (review_required_items or duplicates_skipped):
-    print("\n[STEP 5] Creating Review Output Files (TI Phase 1)...")
+# ===== STEP 5: CREATE REVIEW-REQUIRED OUTPUT (TI PHASE 1 + PHASE 2B-1) =====
+if scope_name == 'TI' and (review_required_items or duplicates_skipped or unmatched_ti_items):
+    print("\n[STEP 5] Creating Review Output Files (TI Phase 1 + Phase 2B-1)...")
     
-    # Create review-required CSV
-    if review_required_items:
+    # Create review-required CSV (includes Phase 1 + Phase 2B-1 items)
+    combined_review = review_required_items + unmatched_ti_items
+    if combined_review:
         timestamp = datetime.now().strftime('%Y%m%d')
         review_file = output_dir / f"REVIEW_REQUIRED_TI_{timestamp}.csv"
         
         with open(review_file, 'w', newline='') as f:
             writer = csv.DictWriter(f, fieldnames=['Site_ID', 'Region', 'SubCon_TI', 'Tx_SOW', 'Review_Reason', 'Source_Scope'])
             writer.writeheader()
-            for item in review_required_items:
+            for item in combined_review:
                 row = {
                     'Site_ID': item['Site_ID'],
                     'Region': item['Region'],
@@ -868,7 +893,9 @@ if scope_name == 'TI' and (review_required_items or duplicates_skipped):
                 }
                 writer.writerow(row)
         
-        print(f"  ✓ Created review-required file: {review_file} ({len(review_required_items)} items)")
+        print(f"  ✓ Created review-required file: {review_file} ({len(combined_review)} items)")
+        print(f"    - Phase 1 review-required: {len(review_required_items)}")
+        print(f"    - Phase 2B-1 unmatched TI items: {len(unmatched_ti_items)}")
     
     # Create duplicates-skipped CSV
     if duplicates_skipped:
