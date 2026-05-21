@@ -154,18 +154,6 @@ def detect_site_code_column(df):
     )
 
 
-def normalize_antenna_size(value):
-    if pd.isna(value):
-        return None
-    raw = str(value).strip()
-    if not raw:
-        return None
-    normalized = raw.replace(',', '.')
-    sizes = parse_antenna_sizes(normalized)
-    sizes = [size for size in sizes if size <= 5.0]
-    return max(sizes) if sizes else None
-
-
 def parse_antenna_sizes(antenna_string):
     """
     Extract all antenna sizes from a string and return them as a list of floats.
@@ -711,7 +699,7 @@ for idx in range(len(candidates)):
         )
         if review_required:
             remarks = 'REVIEW_REQUIRED' if not remarks else f"{remarks}; REVIEW_REQUIRED"
-        
+
         # Phase 2B-1: capture reason for unmatched TI candidates
         if not matched_items:
             # Determine the reason for no matching items

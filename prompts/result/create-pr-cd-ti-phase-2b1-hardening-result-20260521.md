@@ -1,8 +1,8 @@
 # TI Phase 2B-1 Hardening Implementation Result
-**Date:** 2026-05-21  
-**Scope:** TI Phase 2B-1 Validation Hardening  
-**Branch:** `feature/ti-phase-2a-antenna-matching-20260520`  
-**Commit:** `922aed6` - "feat: add TI phase 2B-1 validation hardening"  
+**Date:** 2026-05-21
+**Scope:** TI Phase 2B-1 Validation Hardening
+**Branch:** `feature/ti-phase-2a-antenna-matching-20260520`
+**Commit:** `922aed6` - "feat: add TI phase 2B-1 validation hardening"
 
 ---
 
