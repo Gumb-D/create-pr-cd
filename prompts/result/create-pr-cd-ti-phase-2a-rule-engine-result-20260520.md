@@ -64,9 +64,29 @@
   - Output line item: `Swap - MW Link (0.9/1.2m, 2 antenna) for C&D Project`
   - Confirmed one details row and antenna-selection remark: `TI antenna sizes differ - using larger size for matching`.
 
+## Investigation: Non-antenna TI matching gaps
+
+### 9663C_AD / MW Hardware Upgrade
+- **Input Tx SOW:** `MW Hardware Upgrade`
+- **Antenna:** 0.3m (NE) / 0.6m (FE)
+- **PR Model search:** Zero matching TI items in PR Model Column A for `MW Hardware Upgrade`
+- **Result:** 0 ECC rows generated (expected)
+- **Root cause:** PR model gap — no matching mandatory items for this SOW name
+
+### 2065E_AD / BBU Patching
+- **Input Tx SOW:** `BBU Patching`
+- **Antenna:** None (non-antenna)
+- **PR Model search:** PR model has `MW BBU/IDU Patching` (2 items, 1 mandatory) but zero items match `BBU Patching` exactly
+- **Result:** 0 ECC rows generated (expected)
+- **Root cause:** PR model gap — exact SOW text mismatch between input and PR model
+
+### Conclusion
+Both cases are **PR model data gaps, not script bugs**. The matching logic correctly rejects these because no mandatory TI items exist for the exact SOW names provided. The script is functioning as designed.
+
 ## Remaining gaps
 - No pure `MW Reroute` TI site was available in the input dataset for a dedicated MW Reroute site validation.
-- Some site-specific TI SOWs produced `No mandatory items found` because the current PR model does not include matching mandatory TI lines for those SOWs.
+- PR model does not contain mandatory TI items for `MW Hardware Upgrade` or `BBU Patching` SOW names (only `MW BBU/IDU Patching` exists).
+- Some site-specific TI SOWs produce `No mandatory items found` because the current PR model does not include matching mandatory TI lines for those SOWs.
 
 ## Confirmations
 - No TSS, Planning, or Operation logic was modified in this validation cycle.
