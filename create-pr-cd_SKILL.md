@@ -114,6 +114,38 @@ The generator accepts either selected Site Code(s) or a Generate All option befo
 - Filtering occurs before evaluating PR scope triggers.
 - Current CLI implementation supports only `--scope TSS` and `--scope TI`; Planning and Operation Backoffice are documented skill targets but are not implemented in this script.
 
+### 3.2 Implementation Status
+
+Current TI logic implementation status:
+
+- TI Phase 1 is complete: trigger hardening, duplicate prevention, and `REVIEW_REQUIRED` foundation.
+- TI Phase 2A is complete: antenna-aware matching, mandatory choose-1 handling, and exact antenna group matching.
+- TI Phase 2B1 is complete: silent 0-row prevention through `REVIEW_REQUIRED` output.
+- TI Phase 2B2 is complete: MW Reroute dual install/decom logic.
+
+Current stable baseline:
+
+| Scope / Metric | Current Result |
+|---|---:|
+| TSS output | 78 files / 2727 rows |
+| TI output | 14 files / 234 rows |
+| TI `REVIEW_REQUIRED` | 163 |
+| TI duplicates skipped | 1741 |
+
+Known limitations:
+
+- MW Re-engineering remains `REVIEW_REQUIRED`.
+- MW Reroute decom antenna size is unreliable and requires manual review when missing or ambiguous.
+- Planning CLI is not implemented.
+- Operation Backoffice CLI is not implemented.
+
+Next recommended scope:
+
+1. Add regression test framework.
+2. Implement Planning scope CLI.
+3. Implement Operation Backoffice CLI.
+4. Define MW Re-engineering rules after business confirmation.
+
 ## 4. Scope Trigger Logic
 
 ### 4.1 TSS PR Trigger

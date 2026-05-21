@@ -149,6 +149,29 @@ Each scope uses different matching logic and PR model definitions (see **Key Mat
 
 ---
 
+## Current TI Logic Status
+
+The TI implementation is active for the current CLI `--scope TI` flow.
+
+- Duplicate prevention is implemented using existing TI PR status values.
+- `REVIEW_REQUIRED` framework is implemented for unsafe or incomplete TI cases.
+- Antenna-aware TI matching is implemented.
+- Mandatory choose-1 logic is implemented.
+- MW Reroute dual install/decom logic is implemented.
+- MW Re-engineering intentionally remains manual review until business rules are confirmed.
+- Current CLI scope support remains `TSS` and `TI` only.
+
+Current stable baseline:
+
+| Scope / Metric | Current Result |
+|---|---:|
+| TSS output | 78 files / 2727 rows |
+| TI output | 14 files / 234 rows |
+| TI `REVIEW_REQUIRED` | 163 |
+| TI duplicates skipped | 1741 |
+
+---
+
 ## Key Matching Rules
 
 ### Matching Logic by Scope
