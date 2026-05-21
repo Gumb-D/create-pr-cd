@@ -160,13 +160,10 @@ def normalize_antenna_size(value):
     raw = str(value).strip()
     if not raw:
         return None
-    match = re.search(r'(\d+(?:\.\d+)?)', raw.replace(',', '.'))
-    if not match:
-        return None
-    try:
-        return float(match.group(1))
-    except ValueError:
-        return None
+    normalized = raw.replace(',', '.')
+    sizes = parse_antenna_sizes(normalized)
+    sizes = [size for size in sizes if size <= 5.0]
+    return max(sizes) if sizes else None
 
 
 def parse_antenna_sizes(antenna_string):
@@ -213,13 +210,10 @@ def normalize_antenna_size(value):
     raw = str(value).strip()
     if not raw:
         return None
-    match = re.search(r'(\d+(?:\.\d+)?)', raw.replace(',', '.'))
-    if not match:
-        return None
-    try:
-        return float(match.group(1))
-    except ValueError:
-        return None
+    normalized = raw.replace(',', '.')
+    sizes = parse_antenna_sizes(normalized)
+    sizes = [size for size in sizes if size <= 5.0]
+    return max(sizes) if sizes else None
 
 
 def determine_ti_antenna_category(ne_size, fe_size):
@@ -251,10 +245,94 @@ def determine_ti_antenna_category(ne_size, fe_size):
         else:
             category = f'{chosen_size}m'
 
-    return category, remark
+    return category, remark, chosen_size
 
 
-def match_ti_models(sow, antenna_category, ti_models):
+def parse_choice_rule(rule_text):
+    if not rule_text or pd.isna(rule_text):
+        return None
+    rule_text = str(rule_text).lower()
+    match = re.search(r'(\d+)\s*choose\s*1', rule_text)
+    if not match:
+        return None
+    try:
+        return int(match.group(1))
+    except ValueError:
+        return None
+
+
+def normalize_choice_category(text):
+    if not text:
+        return None
+    lower = str(text).lower()
+    if 'simple packing' in lower:
+        return 'outbound_route'
+    if 'partial material transportation' in lower:
+        return 'material_route'
+    if 'antenna' in lower and parse_antenna_sizes(lower):
+        return 'antenna'
+    if 'inland transportation' in lower and 'exact site location' in lower:
+        return 'inbound_route'
+    if 'dismantling' in lower and 'antenna' in lower:
+        return 'antenna'
+    return 'choose'
+
+
+def get_region_search_terms(region):
+    if not region:
+        return []
+    region_key = str(region).strip().lower()
+    mapping = {
+        'northern': ['north region', 'perlis', 'kedah', 'penang', 'perak'],
+        'southern': ['south region', 'negeri sembilan', 'malacca', 'johor'],
+        'eastern': ['east region', 'pahang', 'terengganu', 'kelantan'],
+        'sabah': ['sabah'],
+        'sarawak': ['sarawak', 'salawak', 'kuching', 'sibu', 'bintulu', 'miri', 'limbang', 'lawas', 'sri aman'],
+        'central': ['kv region', 'kv warehouse', 'kuantan', 'kk']
+    }
+    terms = mapping.get(region_key, [region_key])
+    return [term for term in terms if term]
+
+
+def item_matches_region(item, region):
+    if not region:
+        return False
+    text = ' '.join([str(item.get('SOW', '')), str(item.get('Description', '')), str(item.get('Rules', ''))]).lower()
+    for term in get_region_search_terms(region):
+        if term in text:
+            return True
+    return False
+
+
+def item_matches_chosen_size(item, chosen_size):
+    if chosen_size is None:
+        return False
+    text = ' '.join([str(item.get('SOW', '')), str(item.get('Description', '')), str(item.get('Rules', ''))])
+    sizes = parse_antenna_sizes(text)
+    return any(abs(size - chosen_size) < 1e-6 for size in sizes)
+
+
+def filter_choose_group_items(group_items, chosen_size, region):
+    if len(group_items) <= 1:
+        return group_items, False
+
+    category = normalize_choice_category(' '.join([group_items[0].get('SOW', ''), group_items[0].get('Description', ''), group_items[0].get('Rules', '')]))
+    if category == 'antenna':
+        matched = [item for item in group_items if item_matches_chosen_size(item, chosen_size)]
+        if matched:
+            return matched, len(matched) > 1
+        return group_items, True
+
+    if category in {'inbound_route', 'outbound_route', 'material_route', 'choose'}:
+        matched = [item for item in group_items if item_matches_region(item, region)]
+        if matched:
+            return matched, len(matched) > 1
+        return group_items, True
+
+    return group_items, len(group_items) > 1
+
+
+def match_ti_models(sow, antenna_category, chosen_size, region, ti_models):
     sow_upper = sow.upper()
     candidates = []
     for item in ti_models:
@@ -266,17 +344,47 @@ def match_ti_models(sow, antenna_category, ti_models):
     if not candidates:
         return [], False
 
-    size_candidates = []
-    if antenna_category:
-        search_term = antenna_category.lower()
+    if antenna_category and chosen_size is not None:
+        size_filtered = []
         for item in candidates:
-            if search_term in item['Description'].lower() or search_term in item['SOW'].lower():
-                size_candidates.append(item)
-        if size_candidates:
-            candidates = size_candidates
+            if item_matches_chosen_size(item, chosen_size):
+                size_filtered.append(item)
 
-    review_required = len(candidates) > 1
-    return candidates, review_required
+        if size_filtered:
+            candidates = size_filtered
+
+    grouped_candidates = {}
+    for item in candidates:
+        rules = str(item.get('Rules', '')).strip().lower()
+        if 'choose' in rules:
+            group_key = (
+                item['SOW'],
+                item['Rules'],
+                normalize_choice_category(' '.join([item.get('SOW', ''), item.get('Description', ''), item.get('Rules', '')]))
+            )
+        else:
+            group_key = (item['PBOM_Code'],)
+        grouped_candidates.setdefault(group_key, []).append(item)
+
+    selected_items = []
+    review_required = False
+    for group_items in grouped_candidates.values():
+        if len(group_items) == 1:
+            selected_items.extend(group_items)
+            continue
+
+        rules = str(group_items[0].get('Rules', '')).lower()
+        if 'choose' in rules:
+            chosen_items, ambiguous = filter_choose_group_items(group_items, chosen_size, region)
+            selected_items.extend(chosen_items)
+            if ambiguous:
+                review_required = True
+        else:
+            selected_items.extend(group_items)
+            if len(group_items) > 1:
+                review_required = True
+
+    return selected_items, review_required
 
 
 def filter_site_rows(df_site, site_codes=None, all_sites=False):
@@ -398,7 +506,8 @@ if ti_header_idx is not None:
                 'Description': str(desc).strip(),
                 'Unit': str(unit).strip() if pd.notna(unit) else 'Hop',
                 'Quantity': float(qty) if pd.notna(qty) else 1,
-                'Is_Mandatory': is_mandatory
+                'Is_Mandatory': is_mandatory,
+                'Rules': str(rules).strip() if pd.notna(rules) else ''
             })
 
     print(f"✓ Extracted {len(ti_models)} TI line items")
@@ -514,7 +623,7 @@ if scope_name == 'TI':
         # All checks passed - add as candidate
         candidates_list.append(idx)
     
-    candidates = df_site.iloc[candidates_list].copy().reset_index(drop=True)
+    candidates = df_site.loc[candidates_list].copy().reset_index(drop=True)
     print(f"✓ Candidates after TI Phase 1 filtering: {len(candidates)}")
     print(f"  - Duplicates skipped: {len(duplicates_skipped)}")
     print(f"  - Review-required flagged: {len(review_required_items)}")
@@ -585,13 +694,19 @@ for idx in range(len(candidates)):
             if item['Is_Mandatory'] and (item_sow_upper == sow_upper or item_sow_upper in sow_upper or sow_upper in item_sow_upper):
                 matched_items.append(item)
     else:
-        antenna_category, antenna_remark = determine_ti_antenna_category(
+        antenna_category, antenna_remark, antenna_size = determine_ti_antenna_category(
             row.get('MW Config Antenna Size NE', ''),
             row.get('MW Config Antenna Size FE', '')
         )
         if antenna_remark:
             remarks = antenna_remark
-        matched_items, review_required = match_ti_models(sow, antenna_category, ti_models)
+        matched_items, review_required = match_ti_models(
+            sow,
+            antenna_category,
+            antenna_size,
+            region,
+            ti_models
+        )
         if review_required:
             remarks = 'REVIEW_REQUIRED' if not remarks else f"{remarks}; REVIEW_REQUIRED"
 
