@@ -506,7 +506,7 @@ def normalize_choice_category(text):
         return 'material_route'
     if 'antenna' in lower and parse_antenna_sizes(lower):
         return 'antenna'
-    if 'inland transportation' in lower and 'exact site location' in lower:
+    if 'inland transportation' in lower:
         return 'inbound_route'
     if 'dismantling' in lower and 'antenna' in lower:
         return 'antenna'
@@ -569,9 +569,13 @@ def filter_choose_group_items(group_items, chosen_size, region):
         return [], True
 
     if category in {'inbound_route', 'outbound_route', 'material_route', 'choose'}:
-        matched = [item for item in group_items if item_matches_region(item, region)]
-        if len(matched) == 1:
-            return matched, False
+        for term in get_region_search_terms(region):
+            matched = [
+                item for item in group_items
+                if term in ' '.join([str(item.get('SOW', '')), str(item.get('Description', '')), str(item.get('Rules', ''))]).lower()
+            ]
+            if len(matched) == 1:
+                return matched, False
         # Zero or multiple matched -> return empty, flag as ambiguous
         return [], True
 
@@ -591,15 +595,6 @@ def match_ti_models(sow, antenna_category, chosen_size, region, ti_models):
     if not candidates:
         return [], False
 
-    if antenna_category and chosen_size is not None:
-        size_filtered = []
-        for item in candidates:
-            if item_matches_chosen_size(item, chosen_size):
-                size_filtered.append(item)
-
-        if size_filtered:
-            candidates = size_filtered
-
     grouped_candidates = {}
     for item in candidates:
         rules = str(item.get('Rules', '')).strip().lower()
@@ -615,6 +610,7 @@ def match_ti_models(sow, antenna_category, chosen_size, region, ti_models):
 
     selected_items = []
     review_required = False
+    choose_group_ambiguous = False
     for group_items in grouped_candidates.values():
         if len(group_items) == 1:
             selected_items.extend(group_items)
@@ -626,10 +622,14 @@ def match_ti_models(sow, antenna_category, chosen_size, region, ti_models):
             selected_items.extend(chosen_items)
             if ambiguous:
                 review_required = True
+                choose_group_ambiguous = True
         else:
             selected_items.extend(group_items)
             if len(group_items) > 1:
                 review_required = True
+
+    if choose_group_ambiguous:
+        return [], True
 
     return selected_items, review_required
 
