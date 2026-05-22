@@ -548,23 +548,35 @@ def item_matches_chosen_size(item, chosen_size):
 
 
 def filter_choose_group_items(group_items, chosen_size, region):
+    """
+    Filter choose-1 group items.
+    
+    Returns:
+        (list, bool): (filtered_items, ambiguous)
+        - If exactly one item matches: return that single item, ambiguous=False
+        - If multiple items match: return empty list, ambiguous=True (do not write to ECC)
+        - If zero items match: return empty list, ambiguous=True (do not write to ECC)
+    """
     if len(group_items) <= 1:
         return group_items, False
 
     category = normalize_choice_category(' '.join([group_items[0].get('SOW', ''), group_items[0].get('Description', ''), group_items[0].get('Rules', '')]))
     if category == 'antenna':
         matched = [item for item in group_items if item_matches_chosen_size(item, chosen_size)]
-        if matched:
-            return matched, len(matched) > 1
-        return group_items, True
+        if len(matched) == 1:
+            return matched, False
+        # Zero or multiple matched -> return empty, flag as ambiguous
+        return [], True
 
     if category in {'inbound_route', 'outbound_route', 'material_route', 'choose'}:
         matched = [item for item in group_items if item_matches_region(item, region)]
-        if matched:
-            return matched, len(matched) > 1
-        return group_items, True
+        if len(matched) == 1:
+            return matched, False
+        # Zero or multiple matched -> return empty, flag as ambiguous
+        return [], True
 
-    return group_items, len(group_items) > 1
+    # Unknown category -> return empty, flag as ambiguous
+    return [], True
 
 
 def match_ti_models(sow, antenna_category, chosen_size, region, ti_models):
