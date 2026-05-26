@@ -7,7 +7,8 @@
     "production_ready": false,
     "notes": [
       "This file is not complete.",
-      "Do not use for production route selection until missing mappings and open questions are resolved."
+      "Do not use for production route selection until missing mappings and open questions are resolved.",
+      "Simple Packing mapping has partial confirmed coverage and unresolved route alternatives."
     ]
   },
   "warehouse_mapping": {
@@ -214,16 +215,211 @@
         "material_code": "350000589314",
         "direction": "destination_to_warehouse",
         "status": "CONFIRMED"
+      },
+      "Selangor / Kuala Lumpur": {
+        "destination_bucket": "KV Region exact site location",
+        "warehouse": "KV warehouse",
+        "material_code": "350000589232",
+        "direction": "destination_to_warehouse",
+        "status": "CONFIRMED"
+      },
+      "Negeri Sembilan": {
+        "destination_bucket": "Negeri Sembilan",
+        "warehouse": "KV warehouse",
+        "material_code": "350000589263",
+        "direction": "destination_to_warehouse",
+        "status": "CONFIRMED"
+      },
+      "Melaka / Malacca": {
+        "destination_bucket": "Melaka / Malacca",
+        "warehouse": "KV warehouse",
+        "material_code": "350000589264",
+        "direction": "destination_to_warehouse",
+        "status": "CONFIRMED"
+      },
+      "Johor": {
+        "destination_bucket": "Johor",
+        "warehouse": "KV warehouse",
+        "material_code": "350000589265",
+        "direction": "destination_to_warehouse",
+        "status": "CONFIRMED"
+      },
+      "Kuching": {
+        "destination_bucket": "Kuching",
+        "warehouse": "Sarawak warehouse",
+        "material_code": "350000589306",
+        "direction": "destination_to_warehouse",
+        "status": "CONFIRMED"
+      },
+      "Limbang": {
+        "destination_bucket": "Limbang",
+        "warehouse": "Sarawak warehouse",
+        "material_code": "350000589310",
+        "direction": "destination_to_warehouse",
+        "status": "CONFIRMED"
+      },
+      "Sri Aman": {
+        "destination_bucket": "Sri Aman",
+        "warehouse": "Sarawak warehouse",
+        "material_code": "350000589312",
+        "direction": "destination_to_warehouse",
+        "status": "CONFIRMED"
+      },
+      "Tawau": {
+        "destination_bucket": "Tawau",
+        "warehouse": "Sabah warehouse",
+        "material_code": "350000589315",
+        "direction": "destination_to_warehouse",
+        "status": "CONFIRMED"
       }
     },
     "missing_simple_packing_data": [
-      "Kuching",
-      "Limbang",
+      "Perlis",
+      "Kedah",
+      "Penang",
+      "Perak",
+      "Pahang",
+      "Terengganu",
+      "Kelantan",
       "Lawas",
-      "Sri Aman",
-      "Tawau",
       "West Malaysia states/regions if applicable"
-    ]
+    ],
+    "unresolved_route_alternatives": {
+      "North Region": {
+        "Perlis": [
+          {
+            "destination_bucket": "North Region--Perlis",
+            "warehouse": "KV warehouse",
+            "material_code": "350000589241",
+            "direction": "destination_to_warehouse",
+            "status": "SME_VALIDATION_REQUIRED"
+          },
+          {
+            "destination_bucket": "North Region--Perlis",
+            "warehouse": "Penang warehouse",
+            "material_code": "350000589254",
+            "direction": "destination_to_warehouse",
+            "status": "SME_VALIDATION_REQUIRED"
+          }
+        ],
+        "Kedah": [
+          {
+            "destination_bucket": "North Region--Kedah",
+            "warehouse": "KV warehouse",
+            "material_code": "350000589242",
+            "direction": "destination_to_warehouse",
+            "status": "SME_VALIDATION_REQUIRED"
+          },
+          {
+            "destination_bucket": "North Region--Kedah",
+            "warehouse": "Penang warehouse",
+            "material_code": "350000589255",
+            "direction": "destination_to_warehouse",
+            "status": "SME_VALIDATION_REQUIRED"
+          }
+        ],
+        "Penang": [
+          {
+            "destination_bucket": "North Region--Penang",
+            "warehouse": "KV warehouse",
+            "material_code": "350000589243",
+            "direction": "destination_to_warehouse",
+            "status": "SME_VALIDATION_REQUIRED"
+          },
+          {
+            "destination_bucket": "North Region--Penang",
+            "warehouse": "Penang warehouse",
+            "material_code": "350000589253",
+            "direction": "destination_to_warehouse",
+            "status": "SME_VALIDATION_REQUIRED"
+          }
+        ],
+        "Perak": [
+          {
+            "destination_bucket": "North Region--Perak",
+            "warehouse": "KV warehouse",
+            "material_code": "350000589244",
+            "direction": "destination_to_warehouse",
+            "status": "SME_VALIDATION_REQUIRED"
+          },
+          {
+            "destination_bucket": "North Region--Perak",
+            "warehouse": "Penang warehouse",
+            "material_code": "350000589256",
+            "direction": "destination_to_warehouse",
+            "status": "SME_VALIDATION_REQUIRED"
+          }
+        ]
+      },
+      "East Region": {
+        "Pahang": [
+          {
+            "destination_bucket": "East Region--Pahang",
+            "warehouse": "KV warehouse",
+            "material_code": "350000589272",
+            "direction": "destination_to_warehouse",
+            "status": "SME_VALIDATION_REQUIRED"
+          },
+          {
+            "destination_bucket": "East Region--Pahang",
+            "warehouse": "Kuantan warehouse",
+            "material_code": "350000589281",
+            "direction": "destination_to_warehouse",
+            "status": "SME_VALIDATION_REQUIRED"
+          }
+        ],
+        "Terengganu": [
+          {
+            "destination_bucket": "East Region--Terengganu",
+            "warehouse": "KV warehouse",
+            "material_code": "350000589273",
+            "direction": "destination_to_warehouse",
+            "status": "SME_VALIDATION_REQUIRED"
+          },
+          {
+            "destination_bucket": "East Region--Terengganu",
+            "warehouse": "Kuantan warehouse",
+            "material_code": "350000589282",
+            "direction": "destination_to_warehouse",
+            "status": "SME_VALIDATION_REQUIRED"
+          }
+        ],
+        "Kelantan": [
+          {
+            "destination_bucket": "East Region--Kelantan",
+            "warehouse": "KV warehouse",
+            "material_code": "350000589274",
+            "direction": "destination_to_warehouse",
+            "status": "SME_VALIDATION_REQUIRED"
+          },
+          {
+            "destination_bucket": "East Region--Kelantan",
+            "warehouse": "Kuantan warehouse",
+            "material_code": "350000589283",
+            "direction": "destination_to_warehouse",
+            "status": "SME_VALIDATION_REQUIRED"
+          }
+        ]
+      },
+      "Lawas": {
+        "Lawas": [
+          {
+            "destination_bucket": "Lawas",
+            "warehouse": "Sarawak warehouse",
+            "material_code": "350000589311",
+            "direction": "destination_to_warehouse",
+            "status": "SME_VALIDATION_REQUIRED"
+          },
+          {
+            "destination_bucket": "Lawas",
+            "warehouse": "Sabah warehouse",
+            "material_code": "350000589316",
+            "direction": "destination_to_warehouse",
+            "status": "SME_VALIDATION_REQUIRED"
+          }
+        ]
+      }
+    }
   },
   "coordinate_resolution": {
     "status": "SME_VALIDATION_REQUIRED",
