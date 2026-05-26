@@ -1,0 +1,279 @@
+{
+  "metadata": {
+    "version": "0.1",
+    "status": "DISCOVERY_SKELETON",
+    "source": "PR model rule discovery",
+    "purpose": "Reference mapping skeleton for future Geography/Inland Transportation/Simple Packing resolver",
+    "production_ready": false,
+    "notes": [
+      "This file is not complete.",
+      "Do not use for production route selection until missing mappings and open questions are resolved."
+    ]
+  },
+  "warehouse_mapping": {
+    "West Malaysia": "KV warehouse",
+    "Sabah": "Sabah warehouse",
+    "Sarawak": "Sarawak warehouse",
+    "Lawas Special Handling Note": "Coordinate/manual decision required to determine Sabah-side or Sarawak-side warehouse assignment."
+  },
+  "west_malaysia_inland_transportation": {
+    "Perlis": {
+      "destination_bucket": "North Region--Perlis",
+      "warehouse": "KV warehouse",
+      "material_code": "350000214920",
+      "direction": "warehouse_to_destination",
+      "status": "CONFIRMED"
+    },
+    "Kedah": {
+      "destination_bucket": "North Region--Kedah",
+      "warehouse": "KV warehouse",
+      "material_code": "350000214921",
+      "direction": "warehouse_to_destination",
+      "status": "CONFIRMED"
+    },
+    "Penang": {
+      "destination_bucket": "North Region--Penang",
+      "warehouse": "KV warehouse",
+      "material_code": "350000214922",
+      "direction": "warehouse_to_destination",
+      "status": "CONFIRMED"
+    },
+    "Perak": {
+      "destination_bucket": "North Region--Perak",
+      "warehouse": "KV warehouse",
+      "material_code": "350000214923",
+      "direction": "warehouse_to_destination",
+      "status": "CONFIRMED"
+    },
+    "Selangor": {
+      "destination_bucket": "KV Region exact site location",
+      "warehouse": "KV warehouse",
+      "material_code": "350000214911",
+      "direction": "warehouse_to_destination",
+      "status": "CONFIRMED"
+    },
+    "Kuala Lumpur": {
+      "destination_bucket": "KV Region exact site location",
+      "warehouse": "KV warehouse",
+      "material_code": "350000214911",
+      "direction": "warehouse_to_destination",
+      "status": "CONFIRMED"
+    },
+    "Negeri Sembilan": {
+      "destination_bucket": "South Region--Negeri Sembilan",
+      "warehouse": "KV warehouse",
+      "material_code": "350000214930",
+      "direction": "warehouse_to_destination",
+      "status": "CONFIRMED"
+    },
+    "Melaka": {
+      "destination_bucket": "South Region--Malacca",
+      "warehouse": "KV warehouse",
+      "material_code": "350000214931",
+      "direction": "warehouse_to_destination",
+      "status": "CONFIRMED"
+    },
+    "Johor": {
+      "destination_bucket": "South Region--Johor",
+      "warehouse": "KV warehouse",
+      "material_code": "350000214932",
+      "direction": "warehouse_to_destination",
+      "status": "CONFIRMED"
+    },
+    "Pahang": {
+      "destination_bucket": "East Region--Pahang",
+      "warehouse": "KV warehouse",
+      "material_code": "350000214939",
+      "direction": "warehouse_to_destination",
+      "status": "CONFIRMED"
+    },
+    "Terengganu": {
+      "destination_bucket": "East Region--Terengganu",
+      "warehouse": "KV warehouse",
+      "material_code": "350000214940",
+      "direction": "warehouse_to_destination",
+      "status": "CONFIRMED"
+    },
+    "Kelantan": {
+      "destination_bucket": "East Region--Kelantan",
+      "warehouse": "KV warehouse",
+      "material_code": "350000214941",
+      "direction": "warehouse_to_destination",
+      "status": "CONFIRMED"
+    }
+  },
+  "sabah_inland_transportation": {
+    "Kota Kinabalu": {
+      "destination_bucket": "Kota Kinabalu",
+      "warehouse": "Sabah warehouse",
+      "material_code": "350000212474",
+      "direction": "warehouse_to_destination",
+      "status": "CONFIRMED"
+    },
+    "Sandakan": {
+      "destination_bucket": "Sandakan",
+      "warehouse": "Sabah warehouse",
+      "material_code": "350000212475",
+      "direction": "warehouse_to_destination",
+      "status": "CONFIRMED"
+    },
+    "Tawau": {
+      "destination_bucket": "Tawau",
+      "warehouse": "Sabah warehouse",
+      "material_code": "350000212476",
+      "direction": "warehouse_to_destination",
+      "status": "CONFIRMED"
+    }
+  },
+  "sarawak_inland_transportation": {
+    "Kuching": {
+      "destination_bucket": "Kuching",
+      "warehouse": "Sarawak warehouse",
+      "material_code": "350000212468",
+      "direction": "warehouse_to_destination",
+      "status": "CONFIRMED"
+    },
+    "Sibu": {
+      "destination_bucket": "Sibu",
+      "warehouse": "Sarawak warehouse",
+      "material_code": "350000212469",
+      "direction": "warehouse_to_destination",
+      "status": "CONFIRMED"
+    },
+    "Bintulu": {
+      "destination_bucket": "Bintulu",
+      "warehouse": "Sarawak warehouse",
+      "material_code": "350000212470",
+      "direction": "warehouse_to_destination",
+      "status": "CONFIRMED"
+    },
+    "Miri": {
+      "destination_bucket": "Miri",
+      "warehouse": "Sarawak warehouse",
+      "material_code": "350000212471",
+      "direction": "warehouse_to_destination",
+      "status": "CONFIRMED"
+    },
+    "Limbang": {
+      "destination_bucket": "Limbang",
+      "warehouse": "Sarawak warehouse",
+      "material_code": "350000212472",
+      "direction": "warehouse_to_destination",
+      "status": "CONFIRMED"
+    },
+    "Lawas": {
+      "destination_bucket": "Lawas",
+      "warehouse": "Sarawak warehouse",
+      "material_code": "350000212473",
+      "direction": "warehouse_to_destination",
+      "status": "CONFIRMED"
+    },
+    "Sri Aman": {
+      "destination_bucket": "Sri Aman",
+      "warehouse": "Sarawak warehouse",
+      "material_code": "350000358611",
+      "direction": "warehouse_to_destination",
+      "status": "CONFIRMED"
+    }
+  },
+  "simple_packing": {
+    "section_status": "INCOMPLETE",
+    "note": "Complete Simple Packing mapping table is required before production resolver implementation.",
+    "mappings": {
+      "Sibu": {
+        "destination_bucket": "Sibu",
+        "warehouse": "Sarawak warehouse",
+        "material_code": "350000589307",
+        "direction": "destination_to_warehouse",
+        "status": "CONFIRMED"
+      },
+      "Bintulu": {
+        "destination_bucket": "Bintulu",
+        "warehouse": "Sarawak warehouse",
+        "material_code": "350000589308",
+        "direction": "destination_to_warehouse",
+        "status": "CONFIRMED"
+      },
+      "Miri": {
+        "destination_bucket": "Miri",
+        "warehouse": "Sarawak warehouse",
+        "material_code": "350000589309",
+        "direction": "destination_to_warehouse",
+        "status": "CONFIRMED"
+      },
+      "Kota Kinabalu": {
+        "destination_bucket": "Kota Kinabalu",
+        "warehouse": "Sabah warehouse",
+        "material_code": "350000589313",
+        "direction": "destination_to_warehouse",
+        "status": "CONFIRMED"
+      },
+      "Sandakan": {
+        "destination_bucket": "Sandakan",
+        "warehouse": "Sabah warehouse",
+        "material_code": "350000589314",
+        "direction": "destination_to_warehouse",
+        "status": "CONFIRMED"
+      }
+    },
+    "missing_simple_packing_data": [
+      "Kuching",
+      "Limbang",
+      "Lawas",
+      "Sri Aman",
+      "Tawau",
+      "West Malaysia states/regions if applicable"
+    ]
+  },
+  "coordinate_resolution": {
+    "status": "SME_VALIDATION_REQUIRED",
+    "automatic_gis": false,
+    "google_maps_api_required": false,
+    "resolution_method": "manual/static mapping first",
+    "west_malaysia": {
+      "source_candidate": "Province/State where available",
+      "trust_level": "OPEN_QUESTION"
+    },
+    "sabah_city_bucket": {
+      "method": "manual/static mapping required",
+      "buckets": [
+        "Kota Kinabalu",
+        "Sandakan",
+        "Tawau"
+      ]
+    },
+    "sarawak_city_bucket": {
+      "method": "manual/static mapping required",
+      "buckets": [
+        "Kuching",
+        "Sibu",
+        "Bintulu",
+        "Miri",
+        "Limbang",
+        "Lawas",
+        "Sri Aman"
+      ]
+    },
+    "lawas_special_handling": {
+      "status": "OPEN_QUESTION",
+      "note": "Coordinate/manual decision required to determine Sabah-side or Sarawak-side warehouse assignment."
+    }
+  },
+  "missing_data_required_before_phase_2c": [
+    "Complete Simple Packing material code table",
+    "Sabah city bucket classification rule",
+    "Sarawak city bucket classification rule",
+    "Lawas warehouse decision rule",
+    "Confirmation whether Province/State can be trusted for West Malaysia",
+    "Whether site-code override table is needed",
+    "Whether existing site data has reliable City/District columns"
+  ],
+  "open_questions": [
+    "Are West Malaysia states reliable from Province/State field?",
+    "How should Sabah coordinates map to Kota Kinabalu/Sandakan/Tawau buckets?",
+    "How should Sarawak coordinates map to Kuching/Sibu/Bintulu/Miri/Limbang/Lawas/Sri Aman buckets?",
+    "What is the complete Simple Packing material code list?",
+    "How should Lawas be assigned when coordinate falls near Sabah/Sarawak boundary?",
+    "Should production resolver fail closed with REVIEW_REQUIRED when bucket is unknown?"
+  ]
+}
