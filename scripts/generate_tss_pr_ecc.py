@@ -583,6 +583,16 @@ def filter_choose_group_items(group_items, chosen_size, region):
     return [], True
 
 
+def is_mw_hardware_cutover_item(item):
+    """
+    Check if a PR model item represents MW Hardware Cutover.
+    """
+    sow = str(item.get('SOW', '')).strip().lower()
+    desc = str(item.get('Description', '')).strip().lower()
+    rules = str(item.get('Rules', '')).strip().lower()
+    return "mw hardware cutover" in sow or "mw hardware cutover" in desc or "mw hardware cutover" in rules
+
+
 def match_ti_models(sow, antenna_category, chosen_size, region, ti_models):
     sow_upper = sow.upper()
     candidates = []
@@ -590,7 +600,8 @@ def match_ti_models(sow, antenna_category, chosen_size, region, ti_models):
         item_sow_upper = item['SOW'].upper()
         if item_sow_upper == sow_upper or item_sow_upper in sow_upper or sow_upper in item_sow_upper:
             if item['Is_Mandatory']:
-                candidates.append(item)
+                if not is_mw_hardware_cutover_item(item):
+                    candidates.append(item)
 
     if not candidates:
         return [], False
@@ -966,6 +977,17 @@ for idx in range(len(candidates)):
             )
             if antenna_remark:
                 remarks = antenna_remark
+            
+            if antenna_remark in ['Missing TI antenna size - review required', 'Incomplete TI antenna size - review required']:
+                unmatched_ti_items.append({
+                    'Site_ID': site_id,
+                    'Region': region,
+                    'SubCon_TI': subcon,
+                    'Tx_SOW': sow,
+                    'Review_Reason': antenna_remark
+                })
+                continue
+
             matched_items, review_required = match_ti_models(
                 sow,
                 antenna_category,
