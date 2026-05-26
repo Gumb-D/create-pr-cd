@@ -20,6 +20,7 @@ from datetime import datetime
 from difflib import SequenceMatcher
 import re
 import csv
+from geography_resolver import GeographyResolver
 
 
 def parse_args():
@@ -547,7 +548,7 @@ def item_matches_chosen_size(item, chosen_size):
     return any(abs(size - chosen_size) < 1e-6 for size in sizes)
 
 
-def filter_choose_group_items(group_items, chosen_size, region):
+def filter_choose_group_items(group_items, chosen_size, region, row=None, resolver=None):
     """
     Filter choose-1 group items.
     
@@ -568,7 +569,19 @@ def filter_choose_group_items(group_items, chosen_size, region):
         # Zero or multiple matched -> return empty, flag as ambiguous
         return [], True
 
-    if category in {'inbound_route', 'outbound_route', 'material_route', 'choose'}:
+    if category == 'outbound_route':
+        if row is not None and resolver is not None:
+            res = resolver.resolve_material_code(row, "outbound_route")
+            if res["status"] == "RESOLVED":
+                material_code = res["material_code"]
+                matched = [item for item in group_items if item.get("PBOM_Code") == material_code]
+                if len(matched) == 1:
+                    return matched, False
+                return [], True
+            return [], True
+        return [], True
+
+    if category in {'inbound_route', 'material_route', 'choose'}:
         for term in get_region_search_terms(region):
             matched = [
                 item for item in group_items
@@ -593,7 +606,7 @@ def is_mw_hardware_cutover_item(item):
     return "mw hardware cutover" in sow or "mw hardware cutover" in desc or "mw hardware cutover" in rules
 
 
-def match_ti_models(sow, antenna_category, chosen_size, region, ti_models):
+def match_ti_models(sow, antenna_category, chosen_size, region, ti_models, row=None, resolver=None):
     sow_upper = sow.upper()
     candidates = []
     for item in ti_models:
@@ -601,7 +614,7 @@ def match_ti_models(sow, antenna_category, chosen_size, region, ti_models):
         if item_sow_upper == sow_upper or item_sow_upper in sow_upper or sow_upper in item_sow_upper:
             if item['Is_Mandatory']:
                 if not is_mw_hardware_cutover_item(item):
-                    candidates.append(item)
+                     candidates.append(item)
 
     if not candidates:
         return [], False
@@ -629,7 +642,7 @@ def match_ti_models(sow, antenna_category, chosen_size, region, ti_models):
 
         rules = str(group_items[0].get('Rules', '')).lower()
         if 'choose' in rules:
-            chosen_items, ambiguous = filter_choose_group_items(group_items, chosen_size, region)
+            chosen_items, ambiguous = filter_choose_group_items(group_items, chosen_size, region, row=row, resolver=resolver)
             selected_items.extend(chosen_items)
             if ambiguous:
                 review_required = True
@@ -694,6 +707,7 @@ print(f"✓ Mapping file: {ref_file}")
 
 region_mapping = load_region_mapping(ref_file)
 subcon_mapping = load_subcon_mapping(ref_file)
+resolver = GeographyResolver()
 
 print(f"✓ Loaded {len(region_mapping)} region mappings")
 print(f"  Regions: {', '.join(sorted(region_mapping.keys()))}")
@@ -993,7 +1007,9 @@ for idx in range(len(candidates)):
                 antenna_category,
                 antenna_size,
                 region,
-                ti_models
+                ti_models,
+                row=row,
+                resolver=resolver
             )
             if review_required:
                 remarks = 'REVIEW_REQUIRED' if not remarks else f"{remarks}; REVIEW_REQUIRED"
