@@ -241,5 +241,52 @@ class TestGeographyResolver(unittest.TestCase):
         sp = self.resolver.mapping_data.get("simple_packing", {})
         self.assertEqual(sp.get("section_status"), "INCOMPLETE")
 
+    def test_resolver_last_error_propagation(self):
+        """Verify that resolver.last_error is correctly populated with structured metadata on failures."""
+        # outbound_route Perlis -> NORTH_REGION_UNRESOLVED
+        row_perlis = {"customer site code": "WM_N1", "region": "Northern", "Province/State": "Perlis"}
+        self.resolver.last_error = None
+        self.resolver.resolve_material_code(row_perlis, "outbound_route")
+        self.assertIsNotNone(self.resolver.last_error)
+        self.assertEqual(self.resolver.last_error["reason_code"], "NORTH_REGION_UNRESOLVED")
+        self.assertEqual(self.resolver.last_error["route_type"], "outbound_route")
+        self.assertEqual(self.resolver.last_error["bucket"], "Perlis")
+
+        # outbound_route Pahang -> EAST_REGION_UNRESOLVED
+        row_pahang = {"customer site code": "WM_E1", "region": "Eastern", "Province/State": "Pahang"}
+        self.resolver.last_error = None
+        self.resolver.resolve_material_code(row_pahang, "outbound_route")
+        self.assertIsNotNone(self.resolver.last_error)
+        self.assertEqual(self.resolver.last_error["reason_code"], "EAST_REGION_UNRESOLVED")
+        self.assertEqual(self.resolver.last_error["bucket"], "Pahang")
+
+        # outbound_route Lawas -> LAWAS_UNRESOLVED
+        row_lawas = {"customer site code": "EM_L1", "region": "Sarawak", "Province/State": "Lawas"}
+        self.resolver.last_error = None
+        self.resolver.resolve_material_code(row_lawas, "outbound_route")
+        self.assertIsNotNone(self.resolver.last_error)
+        self.assertEqual(self.resolver.last_error["reason_code"], "LAWAS_UNRESOLVED")
+
+        # inbound_route Sabah -> COORDINATE_RESOLUTION_UNSUPPORTED
+        row_sabah = {"customer site code": "EM_S1", "region": "Sabah", "Province/State": "Kota Kinabalu", "Latitude (North Plus South Minus)": 5.0, "Longitude (East Plus West Minus)": 115.0}
+        self.resolver.last_error = None
+        self.resolver.resolve_material_code(row_sabah, "inbound_route")
+        self.assertIsNotNone(self.resolver.last_error)
+        self.assertEqual(self.resolver.last_error["reason_code"], "COORDINATE_RESOLUTION_UNSUPPORTED")
+
+        # missing state -> MISSING_STATE
+        row_missing_state = {"customer site code": "WM_ERR", "region": "Central", "Province/State": None}
+        self.resolver.last_error = None
+        self.resolver.resolve_material_code(row_missing_state, "outbound_route")
+        self.assertIsNotNone(self.resolver.last_error)
+        self.assertEqual(self.resolver.last_error["reason_code"], "MISSING_STATE")
+
+        # unknown state -> UNKNOWN_STATE
+        row_unknown_state = {"customer site code": "WM_ERR2", "region": "Central", "Province/State": "Atlantis"}
+        self.resolver.last_error = None
+        self.resolver.resolve_material_code(row_unknown_state, "outbound_route")
+        self.assertIsNotNone(self.resolver.last_error)
+        self.assertEqual(self.resolver.last_error["reason_code"], "UNKNOWN_STATE")
+
 if __name__ == "__main__":
     unittest.main()

@@ -577,6 +577,12 @@ def filter_choose_group_items(group_items, chosen_size, region, row=None, resolv
                 matched = [item for item in group_items if item.get("PBOM_Code") == material_code]
                 if len(matched) == 1:
                     return matched, False
+                resolver.last_error = {
+                    "route_type": "outbound_route",
+                    "reason_code": "MATERIAL_CODE_NOT_FOUND" if len(matched) == 0 else "DUPLICATE_MATERIAL_CODE",
+                    "bucket": res.get("bucket"),
+                    "material_code": material_code
+                }
                 return [], True
             return [], True
         return [], True
@@ -589,6 +595,12 @@ def filter_choose_group_items(group_items, chosen_size, region, row=None, resolv
                 matched = [item for item in group_items if item.get("PBOM_Code") == material_code]
                 if len(matched) == 1:
                     return matched, False
+                resolver.last_error = {
+                    "route_type": "inbound_route",
+                    "reason_code": "MATERIAL_CODE_NOT_FOUND" if len(matched) == 0 else "DUPLICATE_MATERIAL_CODE",
+                    "bucket": res.get("bucket"),
+                    "material_code": material_code
+                }
                 return [], True
             return [], True
         return [], True
@@ -940,6 +952,8 @@ unmatched_ti_items = []  # Phase 2B-1: capture unmatched TI candidates
 
 for idx in range(len(candidates)):
     row = candidates.iloc[idx]
+    if resolver is not None:
+        resolver.last_error = None
     
     site_id = str(row['customer site code']).strip()
     site_name = str(row['customer site name']).strip()
@@ -1028,16 +1042,25 @@ for idx in range(len(candidates)):
 
             # Phase 2B-1: capture reason for unmatched TI candidates
             if not matched_items:
-                # Determine the reason for no matching items
-                sow_matches = [m for m in ti_models if sow.upper() in m['SOW'].upper() or m['SOW'].upper() in sow.upper()]
-                if not sow_matches:
-                    unmatched_reason = 'No matching TI PR model item'
-                elif not any(m['Is_Mandatory'] for m in sow_matches):
-                    unmatched_reason = 'No mandatory TI item found'
-                elif antenna_category and antenna_size is not None:
-                    unmatched_reason = 'No matching antenna group item'
+                if resolver is not None and getattr(resolver, 'last_error', None) is not None:
+                    err = resolver.last_error
+                    if err["reason_code"] == "MATERIAL_CODE_NOT_FOUND":
+                        unmatched_reason = f"ROUTE_RESOLVER_PR_MODEL_MISMATCH: route_type={err['route_type']}; material_code={err.get('material_code')}; reason=MATERIAL_CODE_NOT_FOUND"
+                    elif err["reason_code"] == "DUPLICATE_MATERIAL_CODE":
+                        unmatched_reason = f"ROUTE_RESOLVER_PR_MODEL_DUPLICATE: route_type={err['route_type']}; material_code={err.get('material_code')}; reason=DUPLICATE_MATERIAL_CODE"
+                    else:
+                        unmatched_reason = f"ROUTE_RESOLVER_REVIEW_REQUIRED: route_type={err['route_type']}; reason={err['reason_code']}; bucket={err.get('bucket') or ''}"
                 else:
-                    unmatched_reason = 'No matching TI PR model item'
+                    # Determine the reason for no matching items
+                    sow_matches = [m for m in ti_models if sow.upper() in m['SOW'].upper() or m['SOW'].upper() in sow.upper()]
+                    if not sow_matches:
+                        unmatched_reason = 'No matching TI PR model item'
+                    elif not any(m['Is_Mandatory'] for m in sow_matches):
+                        unmatched_reason = 'No mandatory TI item found'
+                    elif antenna_category and antenna_size is not None:
+                        unmatched_reason = 'No matching antenna group item'
+                    else:
+                        unmatched_reason = 'No matching TI PR model item'
 
     if not matched_items:
         if scope_name == 'TI' and unmatched_reason:

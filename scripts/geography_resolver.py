@@ -15,6 +15,7 @@ class GeographyResolver:
     def __init__(self, mapping_path="Info/reference/geography_mapping.json"):
         self.mapping_path = Path(mapping_path)
         self.mapping_data = {}
+        self.last_error = None
         self.load_and_validate_mapping()
 
     def load_and_validate_mapping(self):
@@ -238,7 +239,7 @@ class GeographyResolver:
         """
         bucket_res = self.resolve_route_bucket(site_row, route_type)
         if bucket_res["status"] == "REVIEW_REQUIRED":
-            return {
+            res = {
                 "status": "REVIEW_REQUIRED",
                 "material_code": None,
                 "bucket": bucket_res["bucket"],
@@ -246,6 +247,12 @@ class GeographyResolver:
                 "reason_code": bucket_res["reason_code"],
                 "message": bucket_res["message"]
             }
+            self.last_error = {
+                "route_type": route_type,
+                "reason_code": res["reason_code"],
+                "bucket": res["bucket"]
+            }
+            return res
 
         bucket_name = bucket_res["bucket"]
 
@@ -267,7 +274,7 @@ class GeographyResolver:
                         "message": f"Resolved Inland Transportation route to: {bucket_name}"
                     }
                 
-                return {
+                res = {
                     "status": "REVIEW_REQUIRED",
                     "material_code": None,
                     "bucket": bucket_name,
@@ -275,9 +282,15 @@ class GeographyResolver:
                     "reason_code": "INLAND_TRANS_MAPPING_MISSING",
                     "message": f"Inland Transportation mapping missing for West Malaysia state: {bucket_name}"
                 }
+                self.last_error = {
+                    "route_type": route_type,
+                    "reason_code": res["reason_code"],
+                    "bucket": res["bucket"]
+                }
+                return res
             
             # Sabah/Sarawak Inland Transportation requires resolved city bucket first (currently stubs)
-            return {
+            res = {
                 "status": "REVIEW_REQUIRED",
                 "material_code": None,
                 "bucket": bucket_name,
@@ -285,6 +298,12 @@ class GeographyResolver:
                 "reason_code": "COORDINATE_RESOLUTION_UNSUPPORTED",
                 "message": "Inland Transportation city resolution not implemented."
             }
+            self.last_error = {
+                "route_type": route_type,
+                "reason_code": res["reason_code"],
+                "bucket": res["bucket"]
+            }
+            return res
 
         # 2. Simple Packing
         elif route_type == "outbound_route":
@@ -302,7 +321,7 @@ class GeographyResolver:
                     "message": f"Resolved Simple Packing outbound route to: {bucket_name}"
                 }
 
-            return {
+            res = {
                 "status": "REVIEW_REQUIRED",
                 "material_code": None,
                 "bucket": bucket_name,
@@ -310,9 +329,15 @@ class GeographyResolver:
                 "reason_code": "SIMPLE_PACKING_MAPPING_MISSING",
                 "message": f"Simple Packing mapping is missing or unconfirmed for bucket: {bucket_name}"
             }
+            self.last_error = {
+                "route_type": route_type,
+                "reason_code": res["reason_code"],
+                "bucket": res["bucket"]
+            }
+            return res
 
         else:
-            return {
+            res = {
                 "status": "REVIEW_REQUIRED",
                 "material_code": None,
                 "bucket": bucket_name,
@@ -320,4 +345,10 @@ class GeographyResolver:
                 "reason_code": "INVALID_ROUTE_TYPE",
                 "message": f"Invalid route type requested: {route_type}"
             }
+            self.last_error = {
+                "route_type": route_type,
+                "reason_code": res["reason_code"],
+                "bucket": res["bucket"]
+            }
+            return res
 
