@@ -192,6 +192,46 @@ class TestGeographyResolver(unittest.TestCase):
         self.assertEqual(res["status"], "REVIEW_REQUIRED")
         self.assertEqual(res["reason_code"], "INVALID_ROUTE_TYPE")
 
+    def test_confirmed_inland_transportation_west_malaysia(self):
+        """Verify confirmed West Malaysia Inland Transportation state routes resolve to correct material codes."""
+        # Johor
+        row_johor = {"customer site code": "WM08", "region": "Southern", "Province/State": "Johor"}
+        res = self.resolver.resolve_material_code(row_johor, "inbound_route")
+        self.assertEqual(res["status"], "RESOLVED")
+        self.assertEqual(res["material_code"], "350000214932")
+        self.assertEqual(res["warehouse"], "KV warehouse")
+
+        # Selangor
+        row_selangor = {"customer site code": "WM01", "region": "Central", "Province/State": "Selangor"}
+        res = self.resolver.resolve_material_code(row_selangor, "inbound_route")
+        self.assertEqual(res["status"], "RESOLVED")
+        self.assertEqual(res["material_code"], "350000214911")
+        self.assertEqual(res["warehouse"], "KV warehouse")
+
+        # Kuala Lumpur
+        row_kl = {"customer site code": "WM02", "region": "Central", "Province/State": "Kuala Lumpur"}
+        res = self.resolver.resolve_material_code(row_kl, "inbound_route")
+        self.assertEqual(res["status"], "RESOLVED")
+        self.assertEqual(res["material_code"], "350000214911")
+
+        # Putrajaya
+        row_putrajaya = {"customer site code": "WM03", "region": "Central", "Province/State": "Putrajaya"}
+        res = self.resolver.resolve_material_code(row_putrajaya, "inbound_route")
+        self.assertEqual(res["status"], "RESOLVED")
+        self.assertEqual(res["material_code"], "350000214911")
+
+        # Sabah/Sarawak fails closed
+        row_sabah = {"customer site code": "EM_S1", "region": "Sabah", "Province/State": "Kota Kinabalu", "Latitude (North Plus South Minus)": 5.0, "Longitude (East Plus West Minus)": 115.0}
+        res_sabah = self.resolver.resolve_material_code(row_sabah, "inbound_route")
+        self.assertEqual(res_sabah["status"], "REVIEW_REQUIRED")
+        self.assertEqual(res_sabah["reason_code"], "COORDINATE_RESOLUTION_UNSUPPORTED")
+
+        # Lawas fails closed
+        row_lawas = {"customer site code": "EM_L1", "region": "Sarawak", "Province/State": "Lawas", "Latitude (North Plus South Minus)": 4.8, "Longitude (East Plus West Minus)": 115.4}
+        res_lawas = self.resolver.resolve_material_code(row_lawas, "inbound_route")
+        self.assertEqual(res_lawas["status"], "REVIEW_REQUIRED")
+        self.assertEqual(res_lawas["reason_code"], "LAWAS_UNRESOLVED")
+
     def test_metadata_safety_integrity(self):
         """Verify safety assertions on metadata block inside geography_mapping.json."""
         meta = self.resolver.mapping_data.get("metadata", {})

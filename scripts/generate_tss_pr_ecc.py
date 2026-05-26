@@ -581,7 +581,19 @@ def filter_choose_group_items(group_items, chosen_size, region, row=None, resolv
             return [], True
         return [], True
 
-    if category in {'inbound_route', 'material_route', 'choose'}:
+    if category == 'inbound_route':
+        if row is not None and resolver is not None:
+            res = resolver.resolve_material_code(row, "inbound_route")
+            if res["status"] == "RESOLVED":
+                material_code = res["material_code"]
+                matched = [item for item in group_items if item.get("PBOM_Code") == material_code]
+                if len(matched) == 1:
+                    return matched, False
+                return [], True
+            return [], True
+        return [], True
+
+    if category in {'material_route', 'choose'}:
         for term in get_region_search_terms(region):
             matched = [
                 item for item in group_items
