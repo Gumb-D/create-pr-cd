@@ -65,7 +65,7 @@ else:
     print(f"  ✓ Found 'customer site code' header dynamically at column {site_code_col_idx}")
 
 # Target sites we need to test
-test_sites = {'1106L_HU', '1007D_HU', '9743C_AD', 'A01073_AD'}
+test_sites = {'1106L_HU', '1007D_HU', '9743C_AD', 'A01073_AD', '9313A_AD'}
 cleared_count = 0
 
 for r in range(5, ws.max_row + 1):
@@ -81,6 +81,52 @@ wb.save(TEMP_SITE_DATA)
 wb.close()
 print(f"  ✓ Saved temporary patched site data. Cleared duplicate flags on {cleared_count} rows.")
 
+print("  Adding synthetic TI review scenarios...")
+wb = openpyxl.load_workbook(TEMP_SITE_DATA)
+ws = wb['data'] if 'data' in wb.sheetnames else wb.active
+header_map = {str(ws.cell(4, c).value).strip(): c for c in range(1, ws.max_column + 1) if ws.cell(4, c).value is not None}
+
+def find_row(site_code):
+    col = header_map['customer site code']
+    for row_idx in range(5, ws.max_row + 1):
+        if str(ws.cell(row_idx, col).value).strip() == site_code:
+            return row_idx
+    raise RuntimeError(f"Source site row not found: {site_code}")
+
+def clone_site(source_site, target_site, overrides):
+    source_row = find_row(source_site)
+    target_row = ws.max_row + 1
+    for col_idx in range(1, ws.max_column + 1):
+        ws.cell(target_row, col_idx).value = ws.cell(source_row, col_idx).value
+    ws.cell(target_row, header_map['customer site code']).value = target_site
+    for header, value in overrides.items():
+        if header in header_map:
+            ws.cell(target_row, header_map[header]).value = value
+    print(f"    - Added synthetic row {target_site} from {source_site}")
+
+clone_site('9313A_AD', 'QA_RE_NO_MODEL', {
+    'Subcon PR - TI': None,
+    'Tx SOW': 'MW Re-eng Unsupported',
+    'Province/State': 'Selangor',
+    'region': 'Central'
+})
+
+clone_site('1106L_HU', 'QA_SABAH_COORD', {
+    'Subcon PR - TI': None,
+    'SubCon - TI Team': 'Allstar',
+    'Tx SOW': 'MW Swap',
+    'region': 'Sabah',
+    'Province/State': 'Sabah',
+    'Latitude (North Plus South Minus)': 5.9804,
+    'Longitude (East Plus West Minus)': 116.0735,
+    'MW Config Antenna Size NE': 0.6,
+    'MW Config Antenna Size FE': 0.6
+})
+
+wb.save(TEMP_SITE_DATA)
+wb.close()
+print("  ✓ Synthetic rows added.")
+
 # Step 3: Run the generator for each site under isolated outputs
 print(f"\n[STEP 3] Running generator script on target validation sites...")
 test_results = {}
@@ -90,7 +136,10 @@ sites_to_test = [
     ("1106L_HU", 3, False, None),
     ("1007D_HU", 0, True, "No matching antenna group item"),
     ("9743C_AD", 1, True, "MW Reroute decom antenna size ambiguous"),
-    ("A01073_AD", 0, True, "Missing TI antenna size - review required")
+    ("A01073_AD", 0, True, "Missing TI antenna size - review required"),
+    ("9313A_AD", 1, False, None),
+    ("QA_RE_NO_MODEL", 0, True, "NO_MATCHING_TI_PR_MODEL_ITEM"),
+    ("QA_SABAH_COORD", 0, True, "COORDINATE_RESOLUTION_UNSUPPORTED")
 ]
 
 for site, exp_ecc, exp_rev, exp_reason in sites_to_test:
@@ -160,7 +209,11 @@ for site, exp_ecc, exp_rev, exp_reason in sites_to_test:
             site_rev = df_rev[df_rev['Site_ID'] == site]
             if len(site_rev) > 0:
                 is_in_review = True
-                actual_reason = str(site_rev.iloc[0]['Review_Reason']).strip()
+                reason_parts = []
+                for column in ['Reason_Code', 'Reason_Description', 'Required_Action', 'Technical_Detail', 'Review_Reason']:
+                    if column in site_rev.columns:
+                        reason_parts.append(str(site_rev.iloc[0][column]).strip())
+                actual_reason = ' | '.join([part for part in reason_parts if part])
         except Exception as e:
             print(f"    ⚠ Error reading generated Review CSV {latest_csv}: {e}")
             

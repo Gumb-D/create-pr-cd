@@ -219,7 +219,7 @@ class GeographyResolver:
             # Coordinates city resolution bounding box stub
             return {
                 "status": "REVIEW_REQUIRED",
-                "bucket": None,
+                "bucket": state,
                 "reason_code": "COORDINATE_RESOLUTION_UNSUPPORTED",
                 "message": f"City bucket resolution from coordinates ({lat}, {lon}) is currently unsupported for site {site_code}."
             }

@@ -273,6 +273,7 @@ class TestGeographyResolver(unittest.TestCase):
         self.resolver.resolve_material_code(row_sabah, "inbound_route")
         self.assertIsNotNone(self.resolver.last_error)
         self.assertEqual(self.resolver.last_error["reason_code"], "COORDINATE_RESOLUTION_UNSUPPORTED")
+        self.assertEqual(self.resolver.last_error["bucket"], "Kota Kinabalu")
 
         # missing state -> MISSING_STATE
         row_missing_state = {"customer site code": "WM_ERR", "region": "Central", "Province/State": None}

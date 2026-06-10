@@ -135,6 +135,112 @@ def fuzzy_match_subcon(subcon_name, subcon_mapping, threshold=0.6):
     return best_match
 
 
+def is_mw_reengineering_sow(sow):
+    normalized = str(sow or '').strip().lower()
+    return 'mw re-engineering' in normalized or normalized.startswith('mw re-eng')
+
+
+def make_review_reason(reason_code, category='PR Model Matching', description=None, action=None, technical_detail=None):
+    descriptions = {
+        'MISSING_TX_SOW': 'The site does not have a Tx SOW value, so the TI PR model cannot be selected.',
+        'MISSING_TI_ANTENNA_SIZE': 'The site does not have enough TI antenna size information to select the mandatory antenna PR item.',
+        'NO_MATCHING_TI_PR_MODEL_ITEM': 'No TI PR model item matches the site Tx SOW.',
+        'NO_MANDATORY_TI_ITEM_FOUND': 'The matching TI PR model rows do not contain mandatory items that can be generated automatically.',
+        'NO_MATCHING_ANTENNA_GROUP_ITEM': 'The mandatory antenna choose-one group could not be matched to the site antenna size.',
+        'MW_REROUTE_INSTALL_ANTENNA_SIZE_MISSING': 'The MW Reroute install antenna size could not be determined from the site data.',
+        'MW_REROUTE_DECOM_ANTENNA_SIZE_AMBIGUOUS': 'The MW Reroute dismantle antenna size is ambiguous in the site data.',
+        'MW_REROUTE_DECOM_ANTENNA_SIZE_MISSING': 'The MW Reroute dismantle antenna size could not be determined from the site data.',
+        'MW_REROUTE_INSTALL_ITEM_NOT_MATCHED': 'The MW Reroute install mandatory PR item could not be matched.',
+        'MW_REROUTE_DISMANTLE_ITEM_NOT_MATCHED': 'The MW Reroute dismantle mandatory PR item could not be matched.',
+        'MATERIAL_CODE_NOT_FOUND': 'The geography route was resolved, but the resolved material code is not present in the matching PR model group.',
+        'DUPLICATE_MATERIAL_CODE': 'The geography route was resolved, but more than one PR model item has the resolved material code.',
+        'COORDINATE_RESOLUTION_UNSUPPORTED': 'The site is in Sabah or Sarawak, but latitude/longitude cannot yet be converted into a confirmed city or warehouse route.'
+    }
+    actions = {
+        'MISSING_TX_SOW': 'Confirm the Tx SOW for this site.',
+        'MISSING_TI_ANTENNA_SIZE': 'Confirm the TI antenna size and rerun generation.',
+        'NO_MATCHING_TI_PR_MODEL_ITEM': 'Confirm the Tx SOW and update the PR model if this SOW should be supported.',
+        'NO_MANDATORY_TI_ITEM_FOUND': 'Confirm the mandatory TI PR model rows for this SOW.',
+        'NO_MATCHING_ANTENNA_GROUP_ITEM': 'Confirm the antenna size and mandatory antenna group selection.',
+        'MW_REROUTE_INSTALL_ANTENNA_SIZE_MISSING': 'Confirm the MW Reroute install antenna size.',
+        'MW_REROUTE_DECOM_ANTENNA_SIZE_AMBIGUOUS': 'Confirm the MW Reroute dismantle antenna size.',
+        'MW_REROUTE_DECOM_ANTENNA_SIZE_MISSING': 'Confirm the MW Reroute dismantle antenna size.',
+        'MW_REROUTE_INSTALL_ITEM_NOT_MATCHED': 'Confirm the install antenna size and matching PR model row.',
+        'MW_REROUTE_DISMANTLE_ITEM_NOT_MATCHED': 'Confirm the dismantle antenna size and matching PR model row.',
+        'MATERIAL_CODE_NOT_FOUND': 'Confirm the route mapping and PR model material code.',
+        'DUPLICATE_MATERIAL_CODE': 'Confirm which duplicate PR model material row should be used.',
+        'COORDINATE_RESOLUTION_UNSUPPORTED': 'Confirm the site city/district and applicable warehouse/material code.'
+    }
+    return {
+        'Reason_Category': category,
+        'Reason_Code': reason_code,
+        'Reason_Description': description or descriptions.get(reason_code, reason_code.replace('_', ' ').title()),
+        'Required_Action': action or actions.get(reason_code, 'Review the site input and PR model mapping.'),
+        'Technical_Detail': technical_detail or reason_code,
+        'Review_Reason': technical_detail or reason_code
+    }
+
+
+def normalize_reason_code(text):
+    normalized = re.sub(r'[^A-Z0-9]+', '_', str(text or '').upper()).strip('_')
+    replacements = {
+        'MISSING_TI_ANTENNA_SIZE_REVIEW_REQUIRED': 'MISSING_TI_ANTENNA_SIZE',
+        'INCOMPLETE_TI_ANTENNA_SIZE_REVIEW_REQUIRED': 'MISSING_TI_ANTENNA_SIZE',
+        'NO_MATCHING_TI_PR_MODEL_ITEM': 'NO_MATCHING_TI_PR_MODEL_ITEM',
+        'NO_MANDATORY_TI_ITEM_FOUND': 'NO_MANDATORY_TI_ITEM_FOUND',
+        'NO_MATCHING_ANTENNA_GROUP_ITEM': 'NO_MATCHING_ANTENNA_GROUP_ITEM',
+        'MW_REROUTE_DECOM_ANTENNA_SIZE_AMBIGUOUS': 'MW_REROUTE_DECOM_ANTENNA_SIZE_AMBIGUOUS',
+        'MW_REROUTE_DECOM_ANTENNA_SIZE_MISSING': 'MW_REROUTE_DECOM_ANTENNA_SIZE_MISSING',
+        'MW_REROUTE_INSTALL_ANTENNA_SIZE_MISSING': 'MW_REROUTE_INSTALL_ANTENNA_SIZE_MISSING',
+        'MW_REROUTE_INSTALL_ITEM_NOT_MATCHED': 'MW_REROUTE_INSTALL_ITEM_NOT_MATCHED',
+        'MW_REROUTE_DISMANTLE_ITEM_NOT_MATCHED': 'MW_REROUTE_DISMANTLE_ITEM_NOT_MATCHED'
+    }
+    return replacements.get(normalized, normalized or 'REVIEW_REQUIRED')
+
+
+def route_error_technical_detail(err, row):
+    parts = [
+        f"route_type={err.get('route_type')}",
+        f"reason={err.get('reason_code')}",
+        f"bucket={err.get('bucket') or ''}",
+        f"region={row.get('region', '') if row is not None else ''}"
+    ]
+    if err.get('material_code'):
+        parts.append(f"material_code={err.get('material_code')}")
+    if row is not None:
+        lat = row.get('Latitude (North Plus South Minus)', '')
+        lon = row.get('Longitude (East Plus West Minus)', '')
+        if pd.notna(lat) or pd.notna(lon):
+            parts.append(f"coordinates=({lat}, {lon})")
+    return '; '.join(parts)
+
+
+def make_route_review_reason(err, row):
+    reason_code = err.get('reason_code') or 'ROUTE_RESOLVER_REVIEW_REQUIRED'
+    category = 'Geography Mapping'
+    technical_detail = route_error_technical_detail(err, row)
+    if reason_code == 'MATERIAL_CODE_NOT_FOUND':
+        technical_detail = f"ROUTE_RESOLVER_PR_MODEL_MISMATCH: {technical_detail}"
+        category = 'PR Model Matching'
+    elif reason_code == 'DUPLICATE_MATERIAL_CODE':
+        technical_detail = f"ROUTE_RESOLVER_PR_MODEL_DUPLICATE: {technical_detail}"
+        category = 'PR Model Matching'
+    else:
+        technical_detail = f"ROUTE_RESOLVER_REVIEW_REQUIRED: {technical_detail}"
+    return make_review_reason(reason_code, category=category, technical_detail=technical_detail)
+
+
+def make_generic_review_reason(text, category='PR Model Matching'):
+    code = normalize_reason_code(text)
+    return make_review_reason(code, category=category, technical_detail=str(text or code))
+
+
+def add_review_fields(base, reason):
+    enriched = dict(base)
+    enriched.update(reason)
+    return enriched
+
+
 def parse_site_codes(site_code_str):
     if not site_code_str:
         return []
@@ -450,7 +556,7 @@ def match_mw_reroute_models(row, region, ti_models):
     candidates = []
     for item in ti_models:
         item_sow_upper = item['SOW'].upper()
-        if item['Is_Mandatory'] and item_sow_upper == 'MW REROUTE':
+        if item['Is_Mandatory'] and ('REROUTE' in item_sow_upper or item_sow_upper == 'MW REROUTE'):
             candidates.append(item)
 
     install_items = [item for item in candidates if classify_mw_reroute_model_item(item) == 'install']
@@ -896,24 +1002,12 @@ if scope_name == 'TI':
         
         # Check for missing Tx SOW
         if not sow or sow == '':
-            review_required_items.append({
+            review_required_items.append(add_review_fields({
                 'Site_ID': site_id,
                 'Region': region,
                 'SubCon_TI': subcon,
-                'Tx_SOW': '(missing)',
-                'Review_Reason': 'Missing Tx SOW'
-            })
-            continue
-        
-        # Check for MW Re-engineering (forced review)
-        if 'MW Re-engineering' in sow or sow.lower().startswith('mw re-eng'):
-            review_required_items.append({
-                'Site_ID': site_id,
-                'Region': region,
-                'SubCon_TI': subcon,
-                'Tx_SOW': sow,
-                'Review_Reason': 'MW Re-engineering follow-up required'
-            })
+                'Tx_SOW': '(missing)'
+            }, make_review_reason('MISSING_TX_SOW', technical_detail='Missing Tx SOW')))
             continue
         
         # All checks passed - add as candidate
@@ -986,6 +1080,12 @@ for idx in range(len(candidates)):
     matched_items = []
     remarks = ''
     unmatched_reason = None
+    review_base = {
+        'Site_ID': site_id,
+        'Region': region,
+        'SubCon_TI': subcon,
+        'Tx_SOW': sow
+    }
 
     if scope_name == 'TSS':
         sow_upper = sow.upper()
@@ -1003,13 +1103,40 @@ for idx in range(len(candidates)):
             if mw_review_reasons:
                 remarks = 'REVIEW_REQUIRED'
                 for review_reason in mw_review_reasons:
-                    unmatched_ti_items.append({
-                        'Site_ID': site_id,
-                        'Region': region,
-                        'SubCon_TI': subcon,
-                        'Tx_SOW': sow,
-                        'Review_Reason': review_reason
-                    })
+                    unmatched_ti_items.append(add_review_fields(
+                        review_base,
+                        make_generic_review_reason(review_reason)
+                    ))
+        elif is_mw_reengineering_sow(sow):
+            matched_items, review_required = match_ti_models(
+                sow,
+                None,
+                None,
+                region,
+                ti_models,
+                row=row,
+                resolver=resolver
+            )
+            if review_required:
+                remarks = 'REVIEW_REQUIRED' if not remarks else f"{remarks}; REVIEW_REQUIRED"
+
+            if not matched_items:
+                sow_matches = [m for m in ti_models if sow.upper() in m['SOW'].upper() or m['SOW'].upper() in sow.upper()]
+                if not sow_matches:
+                    unmatched_reason = make_review_reason(
+                        'NO_MATCHING_TI_PR_MODEL_ITEM',
+                        technical_detail='No matching TI PR model item'
+                    )
+                elif not any(m['Is_Mandatory'] for m in sow_matches):
+                    unmatched_reason = make_review_reason(
+                        'NO_MANDATORY_TI_ITEM_FOUND',
+                        technical_detail='No mandatory TI item found'
+                    )
+                else:
+                    unmatched_reason = make_review_reason(
+                        'NO_MANDATORY_TI_ITEM_FOUND',
+                        technical_detail='No valid mandatory TI PR model items matched'
+                    )
         else:
             antenna_category, antenna_remark, antenna_size = determine_ti_antenna_category(
                 row.get('MW Config Antenna Size NE', ''),
@@ -1019,13 +1146,10 @@ for idx in range(len(candidates)):
                 remarks = antenna_remark
             
             if antenna_remark in ['Missing TI antenna size - review required', 'Incomplete TI antenna size - review required']:
-                unmatched_ti_items.append({
-                    'Site_ID': site_id,
-                    'Region': region,
-                    'SubCon_TI': subcon,
-                    'Tx_SOW': sow,
-                    'Review_Reason': antenna_remark
-                })
+                unmatched_ti_items.append(add_review_fields(
+                    review_base,
+                    make_generic_review_reason(antenna_remark)
+                ))
                 continue
 
             matched_items, review_required = match_ti_models(
@@ -1044,34 +1168,35 @@ for idx in range(len(candidates)):
             if not matched_items:
                 if resolver is not None and getattr(resolver, 'last_error', None) is not None:
                     err = resolver.last_error
-                    if err["reason_code"] == "MATERIAL_CODE_NOT_FOUND":
-                        unmatched_reason = f"ROUTE_RESOLVER_PR_MODEL_MISMATCH: route_type={err['route_type']}; material_code={err.get('material_code')}; reason=MATERIAL_CODE_NOT_FOUND"
-                    elif err["reason_code"] == "DUPLICATE_MATERIAL_CODE":
-                        unmatched_reason = f"ROUTE_RESOLVER_PR_MODEL_DUPLICATE: route_type={err['route_type']}; material_code={err.get('material_code')}; reason=DUPLICATE_MATERIAL_CODE"
-                    else:
-                        unmatched_reason = f"ROUTE_RESOLVER_REVIEW_REQUIRED: route_type={err['route_type']}; reason={err['reason_code']}; bucket={err.get('bucket') or ''}"
+                    unmatched_reason = make_route_review_reason(err, row)
                 else:
                     # Determine the reason for no matching items
                     sow_matches = [m for m in ti_models if sow.upper() in m['SOW'].upper() or m['SOW'].upper() in sow.upper()]
                     if not sow_matches:
-                        unmatched_reason = 'No matching TI PR model item'
+                        unmatched_reason = make_review_reason(
+                            'NO_MATCHING_TI_PR_MODEL_ITEM',
+                            technical_detail='No matching TI PR model item'
+                        )
                     elif not any(m['Is_Mandatory'] for m in sow_matches):
-                        unmatched_reason = 'No mandatory TI item found'
+                        unmatched_reason = make_review_reason(
+                            'NO_MANDATORY_TI_ITEM_FOUND',
+                            technical_detail='No mandatory TI item found'
+                        )
                     elif antenna_category and antenna_size is not None:
-                        unmatched_reason = 'No matching antenna group item'
+                        unmatched_reason = make_review_reason(
+                            'NO_MATCHING_ANTENNA_GROUP_ITEM',
+                            technical_detail='No matching antenna group item'
+                        )
                     else:
-                        unmatched_reason = 'No matching TI PR model item'
+                        unmatched_reason = make_review_reason(
+                            'NO_MATCHING_TI_PR_MODEL_ITEM',
+                            technical_detail='No matching TI PR model item'
+                        )
 
     if not matched_items:
         if scope_name == 'TI' and unmatched_reason:
             # Phase 2B-1: Add to review-required instead of silently dropping
-            unmatched_ti_items.append({
-                'Site_ID': site_id,
-                'Region': region,
-                'SubCon_TI': subcon,
-                'Tx_SOW': sow,
-                'Review_Reason': unmatched_reason
-            })
+            unmatched_ti_items.append(add_review_fields(review_base, unmatched_reason))
         print(f"  ✗ No mandatory items found for SOW: {sow[:50]} (Scope: {scope_name})")
         continue
     
@@ -1216,8 +1341,21 @@ if scope_name == 'TI' and (review_required_items or duplicates_skipped or unmatc
         timestamp = datetime.now().strftime('%Y%m%d')
         review_file = output_dir / f"REVIEW_REQUIRED_TI_{timestamp}.csv"
         
+        review_fieldnames = [
+            'Site_ID',
+            'Region',
+            'SubCon_TI',
+            'Tx_SOW',
+            'Reason_Category',
+            'Reason_Code',
+            'Reason_Description',
+            'Required_Action',
+            'Technical_Detail',
+            'Review_Reason',
+            'Source_Scope'
+        ]
         with open(review_file, 'w', newline='') as f:
-            writer = csv.DictWriter(f, fieldnames=['Site_ID', 'Region', 'SubCon_TI', 'Tx_SOW', 'Review_Reason', 'Source_Scope'])
+            writer = csv.DictWriter(f, fieldnames=review_fieldnames)
             writer.writeheader()
             for item in combined_review:
                 row = {
@@ -1225,7 +1363,12 @@ if scope_name == 'TI' and (review_required_items or duplicates_skipped or unmatc
                     'Region': item['Region'],
                     'SubCon_TI': item['SubCon_TI'],
                     'Tx_SOW': item['Tx_SOW'],
-                    'Review_Reason': item['Review_Reason'],
+                    'Reason_Category': item.get('Reason_Category', 'PR Model Matching'),
+                    'Reason_Code': item.get('Reason_Code', normalize_reason_code(item.get('Review_Reason'))),
+                    'Reason_Description': item.get('Reason_Description', item.get('Review_Reason', 'Review required.')),
+                    'Required_Action': item.get('Required_Action', 'Review the site input and PR model mapping.'),
+                    'Technical_Detail': item.get('Technical_Detail', item.get('Review_Reason', '')),
+                    'Review_Reason': item.get('Review_Reason', item.get('Technical_Detail', '')),
                     'Source_Scope': 'TI'
                 }
                 writer.writerow(row)
@@ -1267,7 +1410,7 @@ if scope_name == 'TI':
     if review_required_items:
         review_reasons = {}
         for item in review_required_items:
-            reason = item['Review_Reason']
+            reason = item.get('Reason_Code') or item.get('Review_Reason')
             review_reasons[reason] = review_reasons.get(reason, 0) + 1
         for reason, count in sorted(review_reasons.items()):
             print(f"    - {reason}: {count}")
