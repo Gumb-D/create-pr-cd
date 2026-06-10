@@ -12,6 +12,7 @@ import sys
 import os
 import unittest
 import json
+import tempfile
 from pathlib import Path
 
 # Add scripts directory to path to load geography_resolver
@@ -102,23 +103,35 @@ class TestGeographyResolver(unittest.TestCase):
         self.assertEqual(res["status"], "RESOLVED")
         self.assertEqual(res["material_code"], "350000589265")
 
-    def test_unresolved_sabah_sarawak_simple_packing(self):
-        """Verify that Sabah/Sarawak city buckets fail closed because coordinates resolution is a stub."""
-        cities = ["Kuching", "Sibu", "Bintulu", "Miri", "Limbang", "Sri Aman", "Kota Kinabalu", "Sandakan", "Tawau"]
+    def test_sabah_sarawak_coordinate_resolution_and_simple_packing(self):
+        """Verify valid Sabah/Sarawak coordinates resolve to confirmed Simple Packing material codes."""
+        cases = [
+            ("KK01", "Sabah", "Kota Kinabalu", 5.9804, 116.0735, "350000589313", "Sabah warehouse"),
+            ("SDK01", "Sabah", "Sandakan", 5.84, 118.12, "350000589314", "Sabah warehouse"),
+            ("TWU01", "Sabah", "Tawau", 4.2607, 117.8768, "350000589315", "Sabah warehouse"),
+            ("KCH01", "Sarawak", "Kuching", 1.55, 110.35, "350000589306", "Sarawak warehouse"),
+            ("SBU01", "Sarawak", "Sibu", 2.30, 111.83, "350000589307", "Sarawak warehouse"),
+            ("BTU01", "Sarawak", "Bintulu", 3.17, 113.04, "350000589308", "Sarawak warehouse"),
+            ("MYY01", "Sarawak", "Miri", 4.39, 113.99, "350000589309", "Sarawak warehouse"),
+            ("LMN01", "Sarawak", "Limbang", 4.75, 115.00, "350000589310", "Sarawak warehouse"),
+            ("SAM01", "Sarawak", "Sri Aman", 1.24, 111.46, "350000589312", "Sarawak warehouse"),
+        ]
 
-        # All of these are expected to fail-closed with COORDINATE_RESOLUTION_UNSUPPORTED
-        for city in cities:
+        for site_code, region, district, lat, lon, material_code, warehouse in cases:
             row = {
-                "customer site code": "EM01",
-                "region": "Sabah" if "Kota" in city or "Sandakan" in city or "Tawau" in city else "Sarawak",
-                "Province/State": city,
-                "Latitude (North Plus South Minus)": 5.0,
-                "Longitude (East Plus West Minus)": 115.0
+                "customer site code": site_code,
+                "region": region,
+                "Province/State": region,
+                "Latitude (North Plus South Minus)": lat,
+                "Longitude (East Plus West Minus)": lon,
             }
             res = self.resolver.resolve_material_code(row, "outbound_route")
-            self.assertEqual(res["status"], "REVIEW_REQUIRED")
-            self.assertIsNone(res["material_code"])
-            self.assertEqual(res["reason_code"], "COORDINATE_RESOLUTION_UNSUPPORTED")
+            self.assertEqual(res["status"], "RESOLVED", district)
+            self.assertEqual(res["state"], region)
+            self.assertEqual(res["city_or_district"], district)
+            self.assertEqual(res["route_bucket"], district)
+            self.assertEqual(res["material_code"], material_code)
+            self.assertEqual(res["warehouse"], warehouse)
 
     def test_unresolved_simple_packing_bounds(self):
         """Verify that unresolved Simple Packing buckets for North, East, Lawas, and Labuan fail closed."""
@@ -140,12 +153,19 @@ class TestGeographyResolver(unittest.TestCase):
             self.assertIsNone(res["material_code"])
             self.assertEqual(res["reason_code"], "EAST_REGION_UNRESOLVED")
 
-        # Lawas Anomaly
-        row_lawas = {"customer site code": "EM_L", "region": "Sarawak", "Province/State": "Lawas"}
+        # Lawas resolves geographically, but Simple Packing remains unconfirmed.
+        row_lawas = {
+            "customer site code": "EM_L",
+            "region": "Sarawak",
+            "Province/State": "Sarawak",
+            "Latitude (North Plus South Minus)": 4.85,
+            "Longitude (East Plus West Minus)": 115.4
+        }
         res = self.resolver.resolve_material_code(row_lawas, "outbound_route")
         self.assertEqual(res["status"], "REVIEW_REQUIRED")
         self.assertIsNone(res["material_code"])
-        self.assertEqual(res["reason_code"], "LAWAS_UNRESOLVED")
+        self.assertEqual(res["city_or_district"], "Lawas")
+        self.assertEqual(res["reason_code"], "LAWAS_SIMPLE_PACKING_UNCONFIRMED")
 
         # Labuan Anomaly
         row_labuan = {"customer site code": "EM_LB", "region": "Central", "Province/State": "Labuan"}
@@ -220,17 +240,148 @@ class TestGeographyResolver(unittest.TestCase):
         self.assertEqual(res["status"], "RESOLVED")
         self.assertEqual(res["material_code"], "350000214911")
 
-        # Sabah/Sarawak fails closed
-        row_sabah = {"customer site code": "EM_S1", "region": "Sabah", "Province/State": "Kota Kinabalu", "Latitude (North Plus South Minus)": 5.0, "Longitude (East Plus West Minus)": 115.0}
+        # Sabah/Sarawak confirmed route buckets resolve by coordinate.
+        row_sabah = {"customer site code": "EM_S1", "region": "Sabah", "Province/State": "Sabah", "Latitude (North Plus South Minus)": 5.9804, "Longitude (East Plus West Minus)": 116.0735}
         res_sabah = self.resolver.resolve_material_code(row_sabah, "inbound_route")
-        self.assertEqual(res_sabah["status"], "REVIEW_REQUIRED")
-        self.assertEqual(res_sabah["reason_code"], "COORDINATE_RESOLUTION_UNSUPPORTED")
+        self.assertEqual(res_sabah["status"], "RESOLVED")
+        self.assertEqual(res_sabah["route_bucket"], "Kota Kinabalu")
+        self.assertEqual(res_sabah["material_code"], "350000212474")
 
-        # Lawas fails closed
-        row_lawas = {"customer site code": "EM_L1", "region": "Sarawak", "Province/State": "Lawas", "Latitude (North Plus South Minus)": 4.8, "Longitude (East Plus West Minus)": 115.4}
+        # Lawas resolves for Inland Transportation.
+        row_lawas = {"customer site code": "EM_L1", "region": "Sarawak", "Province/State": "Sarawak", "Latitude (North Plus South Minus)": 4.85, "Longitude (East Plus West Minus)": 115.4}
         res_lawas = self.resolver.resolve_material_code(row_lawas, "inbound_route")
-        self.assertEqual(res_lawas["status"], "REVIEW_REQUIRED")
-        self.assertEqual(res_lawas["reason_code"], "LAWAS_UNRESOLVED")
+        self.assertEqual(res_lawas["status"], "RESOLVED")
+        self.assertEqual(res_lawas["route_bucket"], "Lawas")
+        self.assertEqual(res_lawas["material_code"], "350000212473")
+
+    def test_coordinate_validation_failures(self):
+        """Verify missing, invalid, non-numeric, and out-of-bound coordinates fail closed."""
+        base = {
+            "customer site code": "BAD_COORD",
+            "region": "Sabah",
+            "Province/State": "Sabah",
+            "Latitude (North Plus South Minus)": 5.9804,
+            "Longitude (East Plus West Minus)": 116.0735,
+        }
+        cases = [
+            ("Latitude (North Plus South Minus)", None, "MISSING_COORDINATES"),
+            ("Longitude (East Plus West Minus)", "", "MISSING_COORDINATES"),
+            ("Latitude (North Plus South Minus)", 91, "INVALID_COORDINATES"),
+            ("Longitude (East Plus West Minus)", 181, "INVALID_COORDINATES"),
+            ("Latitude (North Plus South Minus)", "not-a-number", "INVALID_COORDINATES"),
+        ]
+        for column, value, reason_code in cases:
+            row = dict(base)
+            row[column] = value
+            res = self.resolver.resolve_material_code(row, "inbound_route")
+            self.assertEqual(res["status"], "REVIEW_REQUIRED")
+            self.assertEqual(res["reason_code"], reason_code)
+
+    def test_coordinate_outside_boundary_and_state_mismatch(self):
+        outside = {
+            "customer site code": "OUTSIDE",
+            "region": "Sabah",
+            "Province/State": "Sabah",
+            "Latitude (North Plus South Minus)": 0.0,
+            "Longitude (East Plus West Minus)": 100.0,
+        }
+        res = self.resolver.resolve_material_code(outside, "inbound_route")
+        self.assertEqual(res["status"], "REVIEW_REQUIRED")
+        self.assertEqual(res["reason_code"], "COORDINATE_OUTSIDE_SUPPORTED_BOUNDARY")
+
+        mismatch = {
+            "customer site code": "MISMATCH",
+            "region": "Sarawak",
+            "Province/State": "Sarawak",
+            "Latitude (North Plus South Minus)": 5.9804,
+            "Longitude (East Plus West Minus)": 116.0735,
+        }
+        res = self.resolver.resolve_material_code(mismatch, "inbound_route")
+        self.assertEqual(res["status"], "REVIEW_REQUIRED")
+        self.assertEqual(res["reason_code"], "RESOLVED_STATE_MISMATCH")
+        self.assertEqual(res["state"], "Sabah")
+
+    def test_unsupported_district_route_mapping_missing(self):
+        row = {
+            "customer site code": "BFT01",
+            "region": "Sabah",
+            "Province/State": "Sabah",
+            "Latitude (North Plus South Minus)": 5.35,
+            "Longitude (East Plus West Minus)": 115.75,
+        }
+        res = self.resolver.resolve_material_code(row, "inbound_route")
+        self.assertEqual(res["status"], "REVIEW_REQUIRED")
+        self.assertEqual(res["reason_code"], "ROUTE_MAPPING_MISSING")
+        self.assertEqual(res["city_or_district"], "Beaufort")
+
+    def test_mapping_validation_missing_warehouse_and_material_code(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = Path(tmpdir) / "mapping.json"
+            mapping = json.loads(json.dumps(self.resolver.mapping_data))
+            mapping["sabah_inland_transportation"]["Kota Kinabalu"]["warehouse"] = ""
+            with open(tmp_path, "w", encoding="utf-8") as f:
+                json.dump(mapping, f)
+            resolver = GeographyResolver(mapping_path=tmp_path)
+            row = {
+                "customer site code": "KK_MISSING_WH",
+                "region": "Sabah",
+                "Province/State": "Sabah",
+                "Latitude (North Plus South Minus)": 5.9804,
+                "Longitude (East Plus West Minus)": 116.0735,
+            }
+            res = resolver.resolve_material_code(row, "inbound_route")
+            self.assertEqual(res["reason_code"], "WAREHOUSE_MAPPING_MISSING")
+
+            mapping["sabah_inland_transportation"]["Kota Kinabalu"]["warehouse"] = "Sabah warehouse"
+            mapping["sabah_inland_transportation"]["Kota Kinabalu"]["material_code"] = ""
+            with open(tmp_path, "w", encoding="utf-8") as f:
+                json.dump(mapping, f)
+            resolver = GeographyResolver(mapping_path=tmp_path)
+            res = resolver.resolve_material_code(row, "inbound_route")
+            self.assertEqual(res["reason_code"], "MATERIAL_CODE_MAPPING_MISSING")
+
+    def test_ambiguous_boundary_fixture(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir = Path(tmpdir)
+            boundary_path = tmpdir / "boundary.geojson"
+            mapping_path = tmpdir / "mapping.json"
+            square = [
+                [0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], [0.0, 0.0]
+            ]
+            data = {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "bbox": [0.0, 0.0, 1.0, 1.0],
+                        "properties": {"state": "Sabah", "district": "Kota Kinabalu"},
+                        "geometry": {"type": "Polygon", "coordinates": [square]},
+                    },
+                    {
+                        "type": "Feature",
+                        "bbox": [0.0, 0.0, 1.0, 1.0],
+                        "properties": {"state": "Sabah", "district": "Sandakan"},
+                        "geometry": {"type": "Polygon", "coordinates": [square]},
+                    },
+                ],
+            }
+            with open(boundary_path, "w", encoding="utf-8") as f:
+                json.dump(data, f)
+            mapping = json.loads(json.dumps(self.resolver.mapping_data))
+            mapping["coordinate_resolution"]["boundary_geojson"] = str(boundary_path)
+            with open(mapping_path, "w", encoding="utf-8") as f:
+                json.dump(mapping, f)
+            resolver = GeographyResolver(mapping_path=mapping_path)
+            row = {
+                "customer site code": "AMB01",
+                "region": "Sabah",
+                "Province/State": "Sabah",
+                "Latitude (North Plus South Minus)": 0.5,
+                "Longitude (East Plus West Minus)": 0.5,
+            }
+            res = resolver.resolve_material_code(row, "inbound_route")
+            self.assertEqual(res["status"], "REVIEW_REQUIRED")
+            self.assertEqual(res["reason_code"], "AMBIGUOUS_DISTRICT_BOUNDARY")
 
     def test_metadata_safety_integrity(self):
         """Verify safety assertions on metadata block inside geography_mapping.json."""
@@ -260,20 +411,27 @@ class TestGeographyResolver(unittest.TestCase):
         self.assertEqual(self.resolver.last_error["reason_code"], "EAST_REGION_UNRESOLVED")
         self.assertEqual(self.resolver.last_error["bucket"], "Pahang")
 
-        # outbound_route Lawas -> LAWAS_UNRESOLVED
-        row_lawas = {"customer site code": "EM_L1", "region": "Sarawak", "Province/State": "Lawas"}
+        # outbound_route Lawas -> LAWAS_SIMPLE_PACKING_UNCONFIRMED
+        row_lawas = {
+            "customer site code": "EM_L1",
+            "region": "Sarawak",
+            "Province/State": "Sarawak",
+            "Latitude (North Plus South Minus)": 4.85,
+            "Longitude (East Plus West Minus)": 115.4
+        }
         self.resolver.last_error = None
         self.resolver.resolve_material_code(row_lawas, "outbound_route")
         self.assertIsNotNone(self.resolver.last_error)
-        self.assertEqual(self.resolver.last_error["reason_code"], "LAWAS_UNRESOLVED")
+        self.assertEqual(self.resolver.last_error["reason_code"], "LAWAS_SIMPLE_PACKING_UNCONFIRMED")
+        self.assertEqual(self.resolver.last_error["city_or_district"], "Lawas")
 
-        # inbound_route Sabah -> COORDINATE_RESOLUTION_UNSUPPORTED
-        row_sabah = {"customer site code": "EM_S1", "region": "Sabah", "Province/State": "Kota Kinabalu", "Latitude (North Plus South Minus)": 5.0, "Longitude (East Plus West Minus)": 115.0}
+        # inbound_route unsupported Sabah district -> ROUTE_MAPPING_MISSING
+        row_sabah = {"customer site code": "EM_S1", "region": "Sabah", "Province/State": "Sabah", "Latitude (North Plus South Minus)": 5.35, "Longitude (East Plus West Minus)": 115.75}
         self.resolver.last_error = None
         self.resolver.resolve_material_code(row_sabah, "inbound_route")
         self.assertIsNotNone(self.resolver.last_error)
-        self.assertEqual(self.resolver.last_error["reason_code"], "COORDINATE_RESOLUTION_UNSUPPORTED")
-        self.assertEqual(self.resolver.last_error["bucket"], "Kota Kinabalu")
+        self.assertEqual(self.resolver.last_error["reason_code"], "ROUTE_MAPPING_MISSING")
+        self.assertEqual(self.resolver.last_error["city_or_district"], "Beaufort")
 
         # missing state -> MISSING_STATE
         row_missing_state = {"customer site code": "WM_ERR", "region": "Central", "Province/State": None}

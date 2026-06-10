@@ -154,7 +154,16 @@ def make_review_reason(reason_code, category='PR Model Matching', description=No
         'MW_REROUTE_DISMANTLE_ITEM_NOT_MATCHED': 'The MW Reroute dismantle mandatory PR item could not be matched.',
         'MATERIAL_CODE_NOT_FOUND': 'The geography route was resolved, but the resolved material code is not present in the matching PR model group.',
         'DUPLICATE_MATERIAL_CODE': 'The geography route was resolved, but more than one PR model item has the resolved material code.',
-        'COORDINATE_RESOLUTION_UNSUPPORTED': 'The site is in Sabah or Sarawak, but latitude/longitude cannot yet be converted into a confirmed city or warehouse route.'
+        'COORDINATE_RESOLUTION_UNSUPPORTED': 'The site is in Sabah or Sarawak, but latitude/longitude cannot yet be converted into a confirmed city or warehouse route.',
+        'MISSING_COORDINATES': 'Latitude or longitude is missing from the iEPMS site record.',
+        'INVALID_COORDINATES': 'Latitude or longitude is non-numeric or outside the valid range.',
+        'COORDINATE_OUTSIDE_SUPPORTED_BOUNDARY': 'The coordinate does not fall within a supported Sabah or Sarawak administrative boundary.',
+        'AMBIGUOUS_DISTRICT_BOUNDARY': 'The coordinate falls on or close to multiple administrative boundaries.',
+        'RESOLVED_STATE_MISMATCH': 'The coordinate resolves to a different state from the declared site region or state.',
+        'ROUTE_MAPPING_MISSING': 'The district was resolved geographically, but no confirmed business route exists.',
+        'WAREHOUSE_MAPPING_MISSING': 'The route was resolved, but the warehouse mapping is missing or unconfirmed.',
+        'MATERIAL_CODE_MAPPING_MISSING': 'The route was resolved, but the material code mapping is missing or unconfirmed.',
+        'LAWAS_SIMPLE_PACKING_UNCONFIRMED': 'Lawas was resolved geographically, but its Simple Packing business mapping is not confirmed.'
     }
     actions = {
         'MISSING_TX_SOW': 'Confirm the Tx SOW for this site.',
@@ -169,7 +178,16 @@ def make_review_reason(reason_code, category='PR Model Matching', description=No
         'MW_REROUTE_DISMANTLE_ITEM_NOT_MATCHED': 'Confirm the dismantle antenna size and matching PR model row.',
         'MATERIAL_CODE_NOT_FOUND': 'Confirm the route mapping and PR model material code.',
         'DUPLICATE_MATERIAL_CODE': 'Confirm which duplicate PR model material row should be used.',
-        'COORDINATE_RESOLUTION_UNSUPPORTED': 'Confirm the site city/district and applicable warehouse/material code.'
+        'COORDINATE_RESOLUTION_UNSUPPORTED': 'Confirm the site city/district and applicable warehouse/material code.',
+        'MISSING_COORDINATES': 'Update site coordinates and rerun PR generation.',
+        'INVALID_COORDINATES': 'Correct the site latitude and longitude values and rerun PR generation.',
+        'COORDINATE_OUTSIDE_SUPPORTED_BOUNDARY': 'Confirm the site coordinates and supported administrative boundary coverage.',
+        'AMBIGUOUS_DISTRICT_BOUNDARY': 'Confirm the correct district or city before generating PR.',
+        'RESOLVED_STATE_MISMATCH': 'Confirm the declared region/state and the site coordinates.',
+        'ROUTE_MAPPING_MISSING': 'Obtain a confirmed city/district-to-route bucket mapping from the business owner.',
+        'WAREHOUSE_MAPPING_MISSING': 'Obtain a confirmed warehouse mapping from the business owner.',
+        'MATERIAL_CODE_MAPPING_MISSING': 'Obtain a confirmed material code from the business owner.',
+        'LAWAS_SIMPLE_PACKING_UNCONFIRMED': 'Obtain confirmed Lawas Simple Packing warehouse and material code from the business owner.'
     }
     return {
         'Reason_Category': category,
@@ -205,6 +223,12 @@ def route_error_technical_detail(err, row):
         f"bucket={err.get('bucket') or ''}",
         f"region={row.get('region', '') if row is not None else ''}"
     ]
+    if err.get('state'):
+        parts.append(f"resolved_state={err.get('state')}")
+    if err.get('city_or_district'):
+        parts.append(f"resolved_city_or_district={err.get('city_or_district')}")
+    if err.get('warehouse'):
+        parts.append(f"warehouse={err.get('warehouse')}")
     if err.get('material_code'):
         parts.append(f"material_code={err.get('material_code')}")
     if row is not None:
@@ -227,7 +251,13 @@ def make_route_review_reason(err, row):
         category = 'PR Model Matching'
     else:
         technical_detail = f"ROUTE_RESOLVER_REVIEW_REQUIRED: {technical_detail}"
-    return make_review_reason(reason_code, category=category, technical_detail=technical_detail)
+    return make_review_reason(
+        reason_code,
+        category=category,
+        description=err.get('reason_description'),
+        action=err.get('required_action'),
+        technical_detail=technical_detail
+    )
 
 
 def make_generic_review_reason(text, category='PR Model Matching'):
@@ -238,6 +268,24 @@ def make_generic_review_reason(text, category='PR Model Matching'):
 def add_review_fields(base, reason):
     enriched = dict(base)
     enriched.update(reason)
+    return enriched
+
+
+def add_route_context_fields(review_item, row, resolver=None):
+    enriched = dict(review_item)
+    if row is not None:
+        enriched['Latitude'] = row.get('Latitude (North Plus South Minus)', '')
+        enriched['Longitude'] = row.get('Longitude (East Plus West Minus)', '')
+        enriched['Declared_Region'] = row.get('region', '')
+        enriched['Declared_State'] = row.get('Province/State', '')
+    err = getattr(resolver, 'last_error', None) if resolver is not None else None
+    if err:
+        enriched['Resolved_State'] = err.get('state', '')
+        enriched['Resolved_City_District'] = err.get('city_or_district', '')
+        enriched['Route_Type'] = err.get('route_type', '')
+        enriched['Route_Bucket'] = err.get('bucket', '')
+        enriched['Warehouse'] = err.get('warehouse', '')
+        enriched['Material_Code'] = err.get('material_code', '')
     return enriched
 
 
@@ -687,6 +735,9 @@ def filter_choose_group_items(group_items, chosen_size, region, row=None, resolv
                     "route_type": "outbound_route",
                     "reason_code": "MATERIAL_CODE_NOT_FOUND" if len(matched) == 0 else "DUPLICATE_MATERIAL_CODE",
                     "bucket": res.get("bucket"),
+                    "state": res.get("state"),
+                    "city_or_district": res.get("city_or_district"),
+                    "warehouse": res.get("warehouse"),
                     "material_code": material_code
                 }
                 return [], True
@@ -705,6 +756,9 @@ def filter_choose_group_items(group_items, chosen_size, region, row=None, resolv
                     "route_type": "inbound_route",
                     "reason_code": "MATERIAL_CODE_NOT_FOUND" if len(matched) == 0 else "DUPLICATE_MATERIAL_CODE",
                     "bucket": res.get("bucket"),
+                    "state": res.get("state"),
+                    "city_or_district": res.get("city_or_district"),
+                    "warehouse": res.get("warehouse"),
                     "material_code": material_code
                 }
                 return [], True
@@ -1196,7 +1250,11 @@ for idx in range(len(candidates)):
     if not matched_items:
         if scope_name == 'TI' and unmatched_reason:
             # Phase 2B-1: Add to review-required instead of silently dropping
-            unmatched_ti_items.append(add_review_fields(review_base, unmatched_reason))
+            unmatched_ti_items.append(add_route_context_fields(
+                add_review_fields(review_base, unmatched_reason),
+                row,
+                resolver=resolver
+            ))
         print(f"  ✗ No mandatory items found for SOW: {sow[:50]} (Scope: {scope_name})")
         continue
     
@@ -1352,6 +1410,16 @@ if scope_name == 'TI' and (review_required_items or duplicates_skipped or unmatc
             'Required_Action',
             'Technical_Detail',
             'Review_Reason',
+            'Latitude',
+            'Longitude',
+            'Declared_Region',
+            'Declared_State',
+            'Resolved_State',
+            'Resolved_City_District',
+            'Route_Type',
+            'Route_Bucket',
+            'Warehouse',
+            'Material_Code',
             'Source_Scope'
         ]
         with open(review_file, 'w', newline='') as f:
@@ -1369,6 +1437,16 @@ if scope_name == 'TI' and (review_required_items or duplicates_skipped or unmatc
                     'Required_Action': item.get('Required_Action', 'Review the site input and PR model mapping.'),
                     'Technical_Detail': item.get('Technical_Detail', item.get('Review_Reason', '')),
                     'Review_Reason': item.get('Review_Reason', item.get('Technical_Detail', '')),
+                    'Latitude': item.get('Latitude', ''),
+                    'Longitude': item.get('Longitude', ''),
+                    'Declared_Region': item.get('Declared_Region', item.get('Region', '')),
+                    'Declared_State': item.get('Declared_State', ''),
+                    'Resolved_State': item.get('Resolved_State', ''),
+                    'Resolved_City_District': item.get('Resolved_City_District', ''),
+                    'Route_Type': item.get('Route_Type', ''),
+                    'Route_Bucket': item.get('Route_Bucket', ''),
+                    'Warehouse': item.get('Warehouse', ''),
+                    'Material_Code': item.get('Material_Code', ''),
                     'Source_Scope': 'TI'
                 }
                 writer.writerow(row)

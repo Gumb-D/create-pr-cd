@@ -422,10 +422,40 @@
     }
   },
   "coordinate_resolution": {
-    "status": "SME_VALIDATION_REQUIRED",
-    "automatic_gis": false,
+    "status": "LOCAL_BOUNDARY_LOOKUP_ENABLED",
+    "automatic_gis": true,
     "google_maps_api_required": false,
-    "resolution_method": "manual/static mapping first",
+    "resolution_method": "checked-in GeoJSON ADM2 boundary point-in-polygon lookup plus controlled district route table",
+    "boundary_geojson": "Info/reference/sabah_sarawak_adm2.geojson",
+    "boundary_tolerance_degrees": 0.000001,
+    "boundary_tolerance_note": "Coordinates on or within this tolerance of multiple district boundaries fail closed as AMBIGUOUS_DISTRICT_BOUNDARY.",
+    "boundary_source": {
+      "source_organization": "geoBoundaries / William & Mary geoLab",
+      "source_url": "https://www.geoboundaries.org/api/current/gbOpen/MYS/ADM2/",
+      "download_url": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/MYS/ADM2/geoBoundaries-MYS-ADM2_simplified.geojson",
+      "license": "Creative Commons Attribution 3.0 License",
+      "retrieval_date": "2026-06-10",
+      "administrative_level": "ADM2 district",
+      "original_format": "GeoJSON simplified",
+      "filtering_or_simplification": "Started from geoBoundaries simplified Malaysia ADM2 GeoJSON; retained Sabah and Sarawak district features only; retained state, district, source_shape_id, bbox, and geometry.",
+      "regeneration_method": "python scripts/build_sabah_sarawak_boundaries.py"
+    },
+    "district_route_buckets": {
+      "Sabah": {
+        "Kota Kinabalu": "Kota Kinabalu",
+        "Sandakan": "Sandakan",
+        "Tawau": "Tawau"
+      },
+      "Sarawak": {
+        "Kuching": "Kuching",
+        "Sibu": "Sibu",
+        "Bintulu": "Bintulu",
+        "Miri": "Miri",
+        "Limbang": "Limbang",
+        "Lawas": "Lawas",
+        "Sri Aman": "Sri Aman"
+      }
+    },
     "west_malaysia": {
       "source_candidate": "Province/State where available",
       "trust_level": "OPEN_QUESTION"

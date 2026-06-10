@@ -139,7 +139,7 @@ sites_to_test = [
     ("A01073_AD", 0, True, "Missing TI antenna size - review required"),
     ("9313A_AD", 1, False, None),
     ("QA_RE_NO_MODEL", 0, True, "NO_MATCHING_TI_PR_MODEL_ITEM"),
-    ("QA_SABAH_COORD", 0, True, "COORDINATE_RESOLUTION_UNSUPPORTED")
+    ("QA_SABAH_COORD", 3, False, None)
 ]
 
 for site, exp_ecc, exp_rev, exp_reason in sites_to_test:
