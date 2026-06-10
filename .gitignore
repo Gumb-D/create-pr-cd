@@ -17,3 +17,6 @@ output_tss_test/
 **/TECHNICAL_DESIGN_PR_RULE_ENGINE_DISCOVERY*.md
 **/OPENCLAW_SKILL_DEVELOPMENT_GUIDELINE*.md
 output_ti_test/
+
+__pycache__/
+*.pyc
