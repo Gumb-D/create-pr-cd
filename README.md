@@ -19,7 +19,7 @@ create-pr-cd/
 │  │  ├─ ecc_template.xls
 │  │  └─ contract_info_reference.md
 │  ├─ sample/
-│  │  └─ Northern-GCI TX Mini Project TSS PR 20260515.xls
+│  │  └─ Northern-GCI TX Mini Project TSS PR 20260515.xlsx
 │  └─ OPENCLAW_SKILL_DEVELOPMENT_GUIDELINE.md
 ├─ output/
 ├─ scripts/
@@ -99,28 +99,28 @@ Do not use both at the same time.
 Generated ECC files follow this format:
 
 ```text
-<Region>-<Subcontractor> TX Mini Project <Scope> PR <YYYYMMDD>.xls
+<Region>-<Subcontractor> TX Mini Project <Scope> PR <YYYYMMDD>.xlsx
 ```
 
 **Examples:**
 
 ```text
-Northern-GCI TX Mini Project TSS PR 20260518.xls
-Central-GTSB TX Mini Project TSS PR 20260518.xls
-Sabah-Seri Pancar TX Mini Project TSS PR 20260518.xls
+Northern-GCI TX Mini Project TSS PR 20260518.xlsx
+Central-GTSB TX Mini Project TSS PR 20260518.xlsx
+Sabah-Seri Pancar TX Mini Project TSS PR 20260518.xlsx
 ```
 
 **Split files** (when >30 unique Site IDs in a group):
 
 ```text
-Northern-GCI TX Mini Project TSS PR 20260518 Part 1.xls
-Northern-GCI TX Mini Project TSS PR 20260518 Part 2.xls
+Northern-GCI TX Mini Project TSS PR 20260518 Part 1.xlsx
+Northern-GCI TX Mini Project TSS PR 20260518 Part 2.xlsx
 ```
 
 **Operation Backoffice** files use `Allstar` as the subcontractor:
 
 ```text
-Central-Allstar TX Mini Project Operation Backoffice PR 20260518.xls
+Central-Allstar TX Mini Project Operation Backoffice PR 20260518.xlsx
 ```
 
 > Note: The current CLI generator accepts only `--scope TSS` and `--scope TI`. Planning and Operation Backoffice are defined as target scopes but are not yet implemented in this script.

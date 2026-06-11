@@ -81,7 +81,7 @@ Used as the required output format.
 Example output file:
 
 ```text
-Northern-GCI TX Mini Project TSS PR 20260515.xls
+Northern-GCI TX Mini Project TSS PR 20260515.xlsx
 ```
 
 Use this sample to understand:
@@ -443,7 +443,7 @@ Scope + Subcon + Region
 Generate one ECC file only:
 
 ```text
-Allstar TX Mini Project Operation PR <YYYYMMDD>.xls
+Allstar TX Mini Project Operation PR <YYYYMMDD>.xlsx
 ```
 
 No region-based grouping is required for Operation Backoffice.
@@ -453,21 +453,21 @@ No region-based grouping is required for Operation Backoffice.
 Use this file naming format for TSS / TI / Planning:
 
 ```text
-<Region>-<Subcon> TX Mini Project <Scope> PR <YYYYMMDD>.xls
+<Region>-<Subcon> TX Mini Project <Scope> PR <YYYYMMDD>.xlsx
 ```
 
 Examples:
 
 ```text
-Northern-GCI TX Mini Project TSS PR 20260515.xls
-Southern-GTSB TX Mini Project TI PR 20260515.xls
-Northern-GCI TX Mini Project Planning PR 20260515.xls
+Northern-GCI TX Mini Project TSS PR 20260515.xlsx
+Southern-GTSB TX Mini Project TI PR 20260515.xlsx
+Northern-GCI TX Mini Project Planning PR 20260515.xlsx
 ```
 
 Operation Backoffice file name:
 
 ```text
-Allstar TX Mini Project Operation PR <YYYYMMDD>.xls
+Allstar TX Mini Project Operation PR <YYYYMMDD>.xlsx
 ```
 
 Use the execution date for `<YYYYMMDD>` unless the user provides a specific date.
@@ -572,7 +572,7 @@ The user should provide:
 
 The skill must output:
 
-1. ECC `.xls` or `.xlsx` files grouped by required naming convention.
+1. ECC `.xlsx` files grouped by required naming convention.
 2. Processing summary.
 3. `REVIEW_REQUIRED` issue list.
 4. Skipped duplicate summary.

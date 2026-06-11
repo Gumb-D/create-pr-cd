@@ -1378,9 +1378,9 @@ for (region, subcon), rows in sorted(grouped.items()):
         # Generate filename
         timestamp = datetime.now().strftime('%Y%m%d')
         if num_files == 1:
-            filename = output_dir / f"{region}-{subcon} TX Mini Project {scope_name} PR {timestamp}.xls"
+            filename = output_dir / f"{region}-{subcon} TX Mini Project {scope_name} PR {timestamp}.xlsx"
         else:
-            filename = output_dir / f"{region}-{subcon} TX Mini Project {scope_name} PR {timestamp} Part {part_num}.xls"
+            filename = output_dir / f"{region}-{subcon} TX Mini Project {scope_name} PR {timestamp} Part {part_num}.xlsx"
         
         # Save file
         wb.save(str(filename))

@@ -174,10 +174,23 @@ for site, exp_ecc, exp_rev, exp_reason in sites_to_test:
     excel_files = glob.glob(os.path.join(site_out_dir, "*.xls")) + glob.glob(os.path.join(site_out_dir, "*.xlsx"))
     total_ecc_rows = 0
     cutover_found_in_any = False
+    xls_outputs = [path for path in excel_files if path.lower().endswith(".xls")]
+    workbook_format_failures = []
     
     for xls_path in excel_files:
         try:
-            # openpyxl engine is robust for the .xls file output since it is actually openxml structured
+            with open(xls_path, "rb") as fh:
+                signature = fh.read(2)
+            if not xls_path.lower().endswith(".xlsx"):
+                workbook_format_failures.append(f"obsolete .xls extension: {xls_path}")
+            if signature != b"PK":
+                workbook_format_failures.append(f"not XLSX/Open XML ZIP format: {xls_path}")
+
+            wb_check = openpyxl.load_workbook(xls_path, read_only=True, data_only=True)
+            if "details" not in wb_check.sheetnames:
+                workbook_format_failures.append(f"missing details sheet: {xls_path}")
+            wb_check.close()
+
             df_xls = pd.read_excel(xls_path, sheet_name=0)
             
             # Count rows that belong to this site
@@ -236,6 +249,10 @@ for site, exp_ecc, exp_rev, exp_reason in sites_to_test:
     # Assert Phase 1B
     if cutover_found_in_any:
         case_failures.append("MW Hardware Cutover was not excluded from generated ECC rows")
+    if xls_outputs:
+        case_failures.append(f"ECC workbook used obsolete .xls extension: {xls_outputs}")
+    if workbook_format_failures:
+        case_failures.extend(workbook_format_failures)
         
     # Save results
     if not case_failures:
