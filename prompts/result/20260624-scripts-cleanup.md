@@ -71,9 +71,19 @@ python scripts/generate_tss_pr_ecc.py --help
 $env:PYTHONIOENCODING="utf-8"
 python scripts/generate_tss_pr_ecc.py --scope TSS --site-code 4008B_AD
 ```
-* **Result:** Successfully generated Northern region TSS PR ECC workbook (`output\Northern-GTSB TX Mini Project TSS PR 20260624.xlsx` with 6 lines) for GTSB subcontractor, confirming TSS path works end-to-end.
+* **Result:** Successfully generated Northern region TSS PR ECC workbook (`output\Northern-GTSB TX Mini Project TSS PR 20260624.xlsx` with 6 lines) for GTSB subcontractor.
 
-## 6. Final Git Status
+### 7. Independent TI Execution Check
+```powershell
+$env:PYTHONIOENCODING="utf-8"
+python scripts/generate_tss_pr_ecc.py --scope TI --site-code 1106L_HU
+```
+* **Result:** Successfully generated Central region TI PR ECC workbook (`output\Central-GCI TX Mini Project TI PR 20260624.xlsx` with 3 lines) for GCI subcontractor with 0 review-required flags and 0 duplicates skipped.
+
+## 6. Business Logic Verification Statement
+No TSS/TI business logic was intentionally changed. Validation completed through the existing smoke/regression suite, one TSS generation path, and one TI generation path. No unexpected generation errors were observed in these checks. A full pre/post output-equivalence comparison was not performed.
+
+## 7. Final Git Status
 ```text
 On branch chore/scripts-cleanup
 Changes to be committed:
