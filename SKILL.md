@@ -255,15 +255,21 @@ TSS does not require antenna size.
 TSS PR model matching key:
 
 ```text
-Tx SOW only
+1. Tx SOW
+2. TX Upgrade Scope
 ```
 
 Steps:
-
 1. Read primary SOW from `Tx SOW`.
-2. Match the primary SOW against the TSS model section in the PR model reference.
-3. Select only mandatory line items.
-4. Quantity is always `1` per site per matched mandatory line item.
+2. If the `Tx SOW` shows MW New Link / Reroute, read `TX Upgrade Scope`. If the field contains the word "dismantle" (case insensitive), it is a MW Reroute. If not, it is a MW New Link.
+3. Match the primary SOW against the TSS model section in the PR model reference. For MW New Link / Reroute, match both primary SOW and TX Upgrade Scope, which means need to pay attention to remarks column to select either reroute or new link item.
+4. For LOS Survey selection, if it is a MW Reroute and Site ID contains _LOS, choose PBOM 350000062776; if it is a MW Reroute and Site ID does not contain _LOS, choose PBOM 350000062773; if it is a MW New Link, always choose PBOM 350000062773.
+5. **Quantity Conflict Resolution for MW New Link / Reroute:** The PR model contains duplicate entries for some SOW items (e.g., 350000589343, 350000589344) with different quantities. To prevent conflict:
+   - For **MW Reroute** (with dismantle), only accept items with quantity **1.5 hop**.
+   - For **MW New Link** (without dismantle), only accept items with quantity **1 hop**.
+   This ensures each PBOM appears only once in the output with a consistent quantity.
+6. Select only mandatory line items.
+7. Quantity is according to matched mandatory line item.
 
 If multiple TSS models match the same SOW:
 

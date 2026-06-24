@@ -4,7 +4,7 @@ TSS/TI PR ECC File Generation - Amendment Implementation
 Amended version incorporating:
 - Amendment 1: Separate contract info reference (Markdown)
 - Amendment 2: Single 'details' sheet only
-- Amendment 3: Sequential SN, Region→Purchasing Area, Subcon→Contract, 30-site split, fuzzy matching
+- Amendment 3: Sequential SN, Region->Purchasing Area, Subcon->Contract, 30-site split, fuzzy matching
 - TI Phase 1: Trigger hardening, antenna parser, REVIEW_REQUIRED framework, duplicate prevention
 """
 
@@ -29,7 +29,9 @@ def parse_args():
     parser.add_argument('--pr-model', default='Info/input/pr_model.xlsx', help='Path to PR model Excel file')
     parser.add_argument('--template', default='Info/input/ecc_template.xls', help='Path to ECC template file')
     parser.add_argument('--mapping', default='Info/input/contract_info_reference.md', help='Path to region/subcontractor mapping markdown')
-    parser.add_argument('--output', default='output', help='Output directory for generated ECC files')
+    # Default output is the 'output' folder at the skill root (one level up from this script)
+    default_output = str(Path(__file__).resolve().parent.parent / 'output')
+    parser.add_argument('--output', default=default_output, help='Output directory for generated ECC files (default: <skill-root>/output)')
     parser.add_argument('--site-code', help='Comma-separated Site Code(s) to generate PR ECC for')
     parser.add_argument('--all-sites', action='store_true', help='Generate PR ECC for all eligible sites')
     parser.add_argument('--scope', choices=['TSS', 'TI'], default='TSS', type=str.upper, help='PR scope to generate: TSS or TI')
@@ -392,8 +394,8 @@ def determine_ti_antenna_category(ne_size, fe_size):
 
 
 def is_mw_reroute_row(row):
-    sow = str(row.get('Tx SOW', '')).strip().lower()
-    return 'mw' in sow and 'reroute' in sow
+    upgrade_scope = str(row.get('TX Upgrade Scope', '')).strip().lower()
+    return 'dismantle' in upgrade_scope
 
 
 def get_text_value(row, column):
@@ -869,7 +871,7 @@ def filter_site_rows(df_site, site_codes=None, all_sites=False):
         print('Warning: requested Site Code(s) not found:')
         for code in missing_codes:
             print(f'- {code}')
-        print(f'✓ Continuing with {len(matched_df)} matched row(s).')
+        print(f'[OK] Continuing with {len(matched_df)} matched row(s).')
 
     matched_df = matched_df.drop(columns=['_normalized_site_code'])
     return matched_df, missing_codes
@@ -884,18 +886,18 @@ template_file = require_file(args.template, 'ECC Template')
 ref_file = require_file(args.mapping, 'Contract info mapping')
 validate_template_file(template_file)
 
-print(f"✓ Site PR/PO View: {site_file}")
-print(f"✓ PR Model: {pr_file}")
-print(f"✓ ECC Template: {template_file}")
-print(f"✓ Mapping file: {ref_file}")
+print(f"[OK] Site PR/PO View: {site_file}")
+print(f"[OK] PR Model: {pr_file}")
+print(f"[OK] ECC Template: {template_file}")
+print(f"[OK] Mapping file: {ref_file}")
 
 region_mapping = load_region_mapping(ref_file)
 subcon_mapping = load_subcon_mapping(ref_file)
 resolver = GeographyResolver()
 
-print(f"✓ Loaded {len(region_mapping)} region mappings")
+print(f"[OK] Loaded {len(region_mapping)} region mappings")
 print(f"  Regions: {', '.join(sorted(region_mapping.keys()))}")
-print(f"✓ Loaded {len(subcon_mapping)} subcontractor mappings")
+print(f"[OK] Loaded {len(subcon_mapping)} subcontractor mappings")
 print(f"  Subcons: {', '.join(sorted(subcon_mapping.keys()))[:80]}...")
 
 # ===== STEP 1: EXTRACT PR MODEL DATA =====
@@ -931,7 +933,7 @@ for idx in range(7, len(df_pr)):
             'Is_Mandatory': is_mandatory
         })
 
-print(f"✓ Extracted {len(tss_models)} TSS line items")
+print(f"[OK] Extracted {len(tss_models)} TSS line items")
 
 # Extract TI models (starting from TI Model header)
 ti_models = []
@@ -966,7 +968,7 @@ if ti_header_idx is not None:
                 'Rules': str(rules).strip() if pd.notna(rules) else ''
             })
 
-    print(f"✓ Extracted {len(ti_models)} TI line items")
+    print(f"[OK] Extracted {len(ti_models)} TI line items")
 else:
     print('Warning: TI Model section not found in PR model sheet.')
 
@@ -978,7 +980,7 @@ for item in tss_models:
         sow_groups[sow] = []
     sow_groups[sow].append(item)
 
-print(f"✓ Found {len(sow_groups)} unique TSS SOWs:")
+print(f"[OK] Found {len(sow_groups)} unique TSS SOWs:")
 for sow in sorted(sow_groups.keys()):
     mandatory_count = len([x for x in sow_groups[sow] if x['Is_Mandatory']])
     print(f"  - {sow[:50]}: {len(sow_groups[sow])} items ({mandatory_count} mandatory)")
@@ -991,7 +993,7 @@ if ti_models:
             ti_sow_groups[sow] = []
         ti_sow_groups[sow].append(item)
 
-    print(f"✓ Found {len(ti_sow_groups)} unique TI SOWs:")
+    print(f"[OK] Found {len(ti_sow_groups)} unique TI SOWs:")
     for sow in sorted(ti_sow_groups.keys()):
         mandatory_count = len([x for x in ti_sow_groups[sow] if x['Is_Mandatory']])
         print(f"  - {sow[:50]}: {len(ti_sow_groups[sow])} items ({mandatory_count} mandatory)")
@@ -1006,10 +1008,10 @@ try:
     selected_site_codes = parse_site_codes(args.site_code)
     df_site, missing_codes = filter_site_rows(df_site, site_codes=selected_site_codes, all_sites=args.all_sites)
     if args.site_code:
-        print(f"✓ Site selection: {len(selected_site_codes)} requested codes")
+        print(f"[OK] Site selection: {len(selected_site_codes)} requested codes")
     if args.all_sites:
-        print("✓ Site selection: all eligible sites")
-    print(f"✓ Matched site rows: {len(df_site)}")
+        print("[OK] Site selection: all eligible sites")
+    print(f"[OK] Matched site rows: {len(df_site)}")
 except ValueError as e:
     print(f"ERROR: {e}")
     sys.exit(1)
@@ -1031,7 +1033,7 @@ if scope_name == 'TI':
         (df_site[subcon_column].astype(str).str.strip() != '')
     ].copy()
     
-    print(f"✓ Found {len(candidates_all)} rows with SubCon - TI Team")
+    print(f"[OK] Found {len(candidates_all)} rows with SubCon - TI Team")
     
     # Split into candidates and duplicates
     candidates_list = []
@@ -1068,7 +1070,7 @@ if scope_name == 'TI':
         candidates_list.append(idx)
     
     candidates = df_site.loc[candidates_list].copy().reset_index(drop=True)
-    print(f"✓ Candidates after TI Phase 1 filtering: {len(candidates)}")
+    print(f"[OK] Candidates after TI Phase 1 filtering: {len(candidates)}")
     print(f"  - Duplicates skipped: {len(duplicates_skipped)}")
     print(f"  - Review-required flagged: {len(review_required_items)}")
 
@@ -1078,11 +1080,11 @@ else:
         (df_site[subcon_column].notna()) &
         (df_site[subcon_column].astype(str).str.strip() != '')
     ].copy().reset_index(drop=True)
-    print(f"✓ Found {len(candidates)} {scope_name} candidates")
+    print(f"[OK] Found {len(candidates)} {scope_name} candidates")
 
 
 # Display first 5 for dry run
-print(f"✓ First 5 candidates:")
+print(f"[OK] First 5 candidates:")
 for i in range(min(5, len(candidates))):
     site_id = candidates.iloc[i]['customer site code']
     site_name = candidates.iloc[i]['customer site name']
@@ -1124,10 +1126,10 @@ for idx in range(len(candidates)):
             matched_subcon = fuzzy_match
             contract_info = subcon_mapping[fuzzy_match]
             fuzzy_matches[subcon] = fuzzy_match
-            print(f"  ⚠ Fuzzy matched '{subcon}' → '{fuzzy_match}'")
+            print(f"  [WARN] Fuzzy matched '{subcon}' -> '{fuzzy_match}'")
         else:
             contract_info = {'contract_number': 'UNKNOWN', 'company_name': 'Unknown'}
-            print(f"  ✗ No match for subcontractor: {subcon}")
+            print(f"  [FAIL] No match for subcontractor: {subcon}")
     
     contract_number = contract_info['contract_number']
     
@@ -1143,9 +1145,44 @@ for idx in range(len(candidates)):
 
     if scope_name == 'TSS':
         sow_upper = sow.upper()
+        # Determine if this is MW Reroute or MW New Link
+        # The SOW field will contain "MW New Link / Reroute" - determine by checking TX Upgrade Scope
+        is_mw_reroute = False
+        if 'MW NEW LINK' in sow_upper and '/' in sow_upper and 'REROUTE' in sow_upper:
+            upgrade_scope = str(row.get('TX Upgrade Scope', '')).strip().lower()
+            is_mw_reroute = 'dismantle' in upgrade_scope
+        
         for item in tss_models:
             item_sow_upper = item['SOW'].upper()
             if item['Is_Mandatory'] and (item_sow_upper == sow_upper or item_sow_upper in sow_upper or sow_upper in item_sow_upper):
+                # For MW New Link / Reroute, apply quantity conflict rules
+                if 'MW NEW LINK' in sow_upper and '/' in sow_upper and 'REROUTE' in sow_upper:
+                    pbom = item['PBOM_Code']
+                    qty = item['Quantity']
+                    
+                    # For LOS Survey items (350000062773 and 350000062776), handle selection based on site ID
+                    if pbom in ['350000062773', '350000062776']:
+                        # Only select one based on site ID pattern
+                        if is_mw_reroute:
+                            # For reroute: choose 350000062776 if site_id contains _LOS, else 350000062773
+                            if pbom == '350000062776' and '_LOS' not in site_id.upper():
+                                continue  # Skip this one
+                            if pbom == '350000062773' and '_LOS' in site_id.upper():
+                                continue  # Skip this one
+                        else:
+                            # For New Link: always select 350000062773 only
+                            if pbom != '350000062773':
+                                continue  # Skip 350000062776
+                    
+                    # For other SOW items like 350000589343 and 350000589344
+                    elif pbom in ['350000589343', '350000589344']:
+                        # Enforce consistent quantity: reroute -> 1.5 hop; new link -> 1 hop
+                        expected_qty = 1.5 if is_mw_reroute else 1.0
+                        if qty != expected_qty:
+                            continue  # Skip items with wrong quantity
+                    
+                    # For all other items, accept as-is
+                
                 matched_items.append(item)
     else:
         if is_mw_reroute_row(row):
@@ -1255,7 +1292,7 @@ for idx in range(len(candidates)):
                 row,
                 resolver=resolver
             ))
-        print(f"  ✗ No mandatory items found for SOW: {sow[:50]} (Scope: {scope_name})")
+        print(f"  [FAIL] No mandatory items found for SOW: {sow[:50]} (Scope: {scope_name})")
         continue
     
     for item in matched_items:
@@ -1282,7 +1319,7 @@ for idx in range(len(candidates)):
         }        
         ecc_rows.append(ecc_row)
 
-print(f"✓ Built {len(ecc_rows)} ECC output rows")
+print(f"[OK] Built {len(ecc_rows)} ECC output rows")
 
 # ===== STEP 4: GROUP BY REGION-SUBCON AND CREATE EXCEL FILES =====
 print("\n[STEP 4] Grouping and Creating Excel Files...")
@@ -1393,7 +1430,7 @@ for (region, subcon), rows in sorted(grouped.items()):
         
         file_count += 1
         total_rows += len(part_rows)
-        print(f"    ✓ Created: {filename} ({len(part_rows)} rows)")
+        print(f"    [OK] Created: {filename} ({len(part_rows)} rows)")
 
 # ===== STEP 5: CREATE REVIEW-REQUIRED OUTPUT (TI PHASE 1 + PHASE 2B-1) =====
 if scope_name == 'TI' and (review_required_items or duplicates_skipped or unmatched_ti_items):
@@ -1457,7 +1494,7 @@ if scope_name == 'TI' and (review_required_items or duplicates_skipped or unmatc
                 }
                 writer.writerow(row)
         
-        print(f"  ✓ Created review-required file: {review_file} ({len(combined_review)} items)")
+        print(f"  [OK] Created review-required file: {review_file} ({len(combined_review)} items)")
         print(f"    - Phase 1 review-required: {len(review_required_items)}")
         print(f"    - Phase 2B-1 unmatched TI items: {len(unmatched_ti_items)}")
     
@@ -1472,7 +1509,7 @@ if scope_name == 'TI' and (review_required_items or duplicates_skipped or unmatc
             for item in duplicates_skipped:
                 writer.writerow(item)
         
-        print(f"  ✓ Created duplicates-skipped file: {dups_file} ({len(duplicates_skipped)} items)")
+        print(f"  [OK] Created duplicates-skipped file: {dups_file} ({len(duplicates_skipped)} items)")
 
 # ===== SUMMARY =====
 print("\n" + "=" * 100)
@@ -1484,7 +1521,7 @@ print(f"Total ECC rows: {total_rows}")
 print(f"Fuzzy matched subcontractors: {len(fuzzy_matches)}")
 if fuzzy_matches:
     for original, matched in fuzzy_matches.items():
-        print(f"  - '{original}' → '{matched}'")
+        print(f"  - '{original}' -> '{matched}'")
 
 # TI Phase 1 summary
 if scope_name == 'TI':
