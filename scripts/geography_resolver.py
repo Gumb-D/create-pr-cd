@@ -57,6 +57,22 @@ REASON_DETAILS = {
 
 
 class GeographyResolver:
+    BUCKET_COORDINATES = {
+        # Sarawak
+        "Kuching": (1.5533, 110.3592),
+        "Sibu": (2.2873, 111.8305),
+        "Bintulu": (3.1667, 113.0333),
+        "Miri": (4.3995, 113.9916),
+        "Limbang": (4.7500, 115.0000),
+        "Lawas": (4.8600, 115.4100),
+        "Sri Aman": (1.2370, 111.4620),
+
+        # Sabah
+        "Kota Kinabalu": (5.9804, 116.0735),
+        "Sandakan": (5.8400, 118.1200),
+        "Tawau": (4.2607, 117.8768),
+    }
+
     def __init__(
         self,
         mapping_path="Info/reference/geography_mapping.json",
@@ -434,7 +450,34 @@ class GeographyResolver:
                 ),
             )
 
-        route_bucket = self._district_route_bucket(resolved_state, district)
+        route_bucket = self._district_route_bucket(
+            resolved_state,
+            district
+        )
+
+        resolution_method = "direct_mapping"
+
+        # 1. Excel-derived business mapping
+        if not route_bucket:
+            route_bucket = self._excel_route_bucket(
+                resolved_state,
+                district
+            )
+
+            if route_bucket:
+                resolution_method = "excel_mapping"
+
+        # 2. Geographic fallback
+        if not route_bucket:
+            route_bucket = self._nearest_route_bucket(
+                lat,
+                lon,
+                resolved_state
+            )
+
+            if route_bucket:
+                resolution_method = "nearest_bucket"
+
         if not route_bucket:
             return self._base_result(
                 "REVIEW_REQUIRED",
@@ -442,17 +485,112 @@ class GeographyResolver:
                 site_code=site_code,
                 state=resolved_state,
                 city_or_district=district,
-                technical_detail=f"state={resolved_state}; district={district}; latitude={lat}; longitude={lon}",
+                technical_detail=(
+                    f"state={resolved_state}; "
+                    f"district={district}; "
+                    f"latitude={lat}; "
+                    f"longitude={lon}"
+                ),
             )
 
-        return self._base_result(
+        print(
+            f"[{resolution_method.upper()}] "
+            f"{district} -> {route_bucket}"
+        )
+
+        result = self._base_result(
             "RESOLVED",
             "SUCCESS",
             site_code=site_code,
             state=resolved_state,
             city_or_district=district,
             route_bucket=route_bucket,
-            technical_detail=f"state={resolved_state}; district={district}; route_bucket={route_bucket}",
+            technical_detail=(
+                f"state={resolved_state}; "
+                f"district={district}; "
+                f"route_bucket={route_bucket}; "
+                f"resolution_method={resolution_method}"
+            ),
+        )
+
+        result["resolution_method"] = resolution_method
+
+        return result
+    def _haversine_distance(self, lat1, lon1, lat2, lon2):
+        R = 6371
+
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+
+        a = (
+            math.sin(dlat / 2) ** 2
+            + math.cos(math.radians(lat1))
+            * math.cos(math.radians(lat2))
+            * math.sin(dlon / 2) ** 2
+        )
+
+        c = 2 * math.atan2(
+            math.sqrt(a),
+            math.sqrt(1 - a)
+        )
+
+        return R * c
+
+    def _nearest_route_bucket(self, lat, lon, state):
+
+        if state == "Sarawak":
+            candidates = [
+                "Kuching",
+                "Sibu",
+                "Bintulu",
+                "Miri",
+                "Limbang",
+                "Lawas",
+                "Sri Aman",
+            ]
+
+        elif state == "Sabah":
+            candidates = [
+                "Kota Kinabalu",
+                "Sandakan",
+                "Tawau",
+            ]
+
+        else:
+            return None
+
+        best_bucket = None
+        best_distance = float("inf")
+
+        for bucket in candidates:
+
+            bucket_lat, bucket_lon = (
+                self.BUCKET_COORDINATES[bucket]
+            )
+
+            distance = self._haversine_distance(
+                lat,
+                lon,
+                bucket_lat,
+                bucket_lon,
+            )
+
+            if distance < best_distance:
+                best_distance = distance
+                best_bucket = bucket
+
+        return best_bucket
+
+    def _excel_route_bucket(self, state, district):
+        section = (
+            self.mapping_data
+            .get("excel_route_bucket_mapping", {})
+        )
+
+        return (
+            section
+            .get(state, {})
+            .get(district)
         )
 
     def _district_route_bucket(self, state, district):

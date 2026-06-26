@@ -716,6 +716,11 @@ def filter_choose_group_items(group_items, chosen_size, region, row=None, resolv
         return group_items, False
 
     category = normalize_choice_category(' '.join([group_items[0].get('SOW', ''), group_items[0].get('Description', ''), group_items[0].get('Rules', '')]))
+    print(
+    f"[CATEGORY] {category} | "
+    f"SOW={group_items[0].get('SOW')}",
+    flush=True
+    )
     if category == 'antenna':
         matched = [item for item in group_items if item_matches_chosen_size(item, chosen_size)]
         if len(matched) == 1:

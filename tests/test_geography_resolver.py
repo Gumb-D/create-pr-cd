@@ -310,10 +310,15 @@ class TestGeographyResolver(unittest.TestCase):
             "Longitude (East Plus West Minus)": 115.75,
         }
         res = self.resolver.resolve_material_code(row, "inbound_route")
-        self.assertEqual(res["status"], "REVIEW_REQUIRED")
-        self.assertEqual(res["reason_code"], "ROUTE_MAPPING_MISSING")
+
+        self.assertEqual(res["status"], "RESOLVED")
         self.assertEqual(res["city_or_district"], "Beaufort")
 
+        # Beaufort should now resolve through nearest bucket logic
+        self.assertIn(
+            res["route_bucket"],
+            ["Kota Kinabalu", "Sandakan", "Tawau"]
+        )
     def test_mapping_validation_missing_warehouse_and_material_code(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = Path(tmpdir) / "mapping.json"
@@ -425,14 +430,26 @@ class TestGeographyResolver(unittest.TestCase):
         self.assertEqual(self.resolver.last_error["reason_code"], "LAWAS_SIMPLE_PACKING_UNCONFIRMED")
         self.assertEqual(self.resolver.last_error["city_or_district"], "Lawas")
 
-        # inbound_route unsupported Sabah district -> ROUTE_MAPPING_MISSING
-        row_sabah = {"customer site code": "EM_S1", "region": "Sabah", "Province/State": "Sabah", "Latitude (North Plus South Minus)": 5.35, "Longitude (East Plus West Minus)": 115.75}
-        self.resolver.last_error = None
-        self.resolver.resolve_material_code(row_sabah, "inbound_route")
-        self.assertIsNotNone(self.resolver.last_error)
-        self.assertEqual(self.resolver.last_error["reason_code"], "ROUTE_MAPPING_MISSING")
-        self.assertEqual(self.resolver.last_error["city_or_district"], "Beaufort")
+        # inbound_route unsupported Sabah district
+        # should now auto-resolve using nearest route bucket
 
+        row_sabah = {
+            "customer site code": "EM_S1",
+            "region": "Sabah",
+            "Province/State": "Sabah",
+            "Latitude (North Plus South Minus)": 5.35,
+            "Longitude (East Plus West Minus)": 115.75
+        }
+
+        self.resolver.last_error = None
+
+        result = self.resolver.resolve_material_code(
+            row_sabah,
+            "inbound_route"
+        )
+
+        self.assertEqual(result["status"], "RESOLVED")
+        self.assertIsNone(self.resolver.last_error)
         # missing state -> MISSING_STATE
         row_missing_state = {"customer site code": "WM_ERR", "region": "Central", "Province/State": None}
         self.resolver.last_error = None
