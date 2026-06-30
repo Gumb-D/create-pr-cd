@@ -441,6 +441,48 @@
       "regeneration_method": "python scripts/build_sabah_sarawak_boundaries.py"
     },
     "district_route_buckets": {
+      "excel_route_bucket_mapping": {
+        "Sarawak": {
+          "Serian": "Kuching",
+          "Samarahan": "Kuching",
+          "Asajaya": "Kuching",
+          "Simunjan": "Kuching",
+          "Tebedu": "Kuching",
+
+          "Betong": "Sri Aman",
+          "Saratok": "Sri Aman",
+          "Lubok Antu": "Sri Aman",
+
+          "Sarikei": "Sibu",
+          "Mukah": "Sibu",
+          "Kapit": "Sibu",
+          "Song": "Sibu",
+
+          "Belaga": "Bintulu",
+          "Sebauh": "Bintulu",
+          "Tatau": "Bintulu",
+
+          "Marudi": "Miri",
+          "Beluru": "Miri",
+          "Subis": "Miri",
+          "Telang Usan": "Miri"
+        },
+
+        "Sabah": {
+          "Beaufort": "Kota Kinabalu",
+          "Papar": "Kota Kinabalu",
+          "Ranau": "Kota Kinabalu",
+
+          "Keningau": "Sandakan",
+          "Tenom": "Sandakan",
+          "Sipitang": "Sandakan",
+
+          "Semporna": "Tawau",
+          "Kunak": "Tawau",
+          "Lahad Datu": "Tawau"
+        }
+      },
+
       "Sabah": {
         "Kota Kinabalu": "Kota Kinabalu",
         "Sandakan": "Sandakan",
