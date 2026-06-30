@@ -1,14 +1,13 @@
 import pandas as pd
 import os
 
-# 自动定位项目根目录（支持从 scripts/ 或根目录运行）
+df_pr = # Auto-detect project root (support running from scripts/ or project root)
 script_dir = os.path.dirname(os.path.abspath(__file__))
 if os.path.basename(script_dir) == 'scripts':
     project_root = os.path.dirname(script_dir)
 else:
     project_root = script_dir
 pr_model_path = os.path.join(project_root, 'Info', 'input', 'pr_model.xlsx')
-
 df_pr = pd.read_excel(pr_model_path, sheet_name="TX Line Item (After 21-Apr 26)", header=None)
 
 # Search entire sheet for any cell containing "REROUTE" or "Reroute" (case insensitive)

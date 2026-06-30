@@ -394,8 +394,14 @@ def determine_ti_antenna_category(ne_size, fe_size):
 
 
 def is_mw_reroute_row(row):
-    upgrade_scope = str(row.get('TX Upgrade Scope', '')).strip().lower()
-    return 'dismantle' in upgrade_scope
+    """
+    Determine if a TI row should be processed as MW Reroute.
+    This function is used by the TI matching logic and checks the Tx SOW field,
+    NOT the TX Upgrade Scope (which is only relevant for TSS MW New Link / Reroute).
+    """
+    sow = str(row.get('Tx SOW', '')).strip().lower()
+    # The SOW may contain "MW New Link / Reroute" or similar; we only care about "reroute"
+    return 'reroute' in sow
 
 
 def get_text_value(row, column):
@@ -915,14 +921,15 @@ for idx in range(7, len(df_pr)):
     unit = df_pr.iloc[idx, 3]
     qty = df_pr.iloc[idx, 4]
     rules = df_pr.iloc[idx, 5]
-    
+    remarks = df_pr.iloc[idx, 6] if len(df_pr.columns) > 6 else None
+
     # Stop at next section
     if pd.isna(sow) or str(sow).strip() == '':
         break
-    
+
     # Check if mandatory
     is_mandatory = 'Mandatory' in str(rules) if pd.notna(rules) else False
-    
+
     if pd.notna(pbom) and pd.notna(desc):
         tss_models.append({
             'SOW': str(sow).strip(),
@@ -930,10 +937,9 @@ for idx in range(7, len(df_pr)):
             'Description': str(desc).strip(),
             'Unit': str(unit).strip() if pd.notna(unit) else 'Hop',
             'Quantity': float(qty) if pd.notna(qty) else 1,
-            'Is_Mandatory': is_mandatory
+            'Is_Mandatory': is_mandatory,
+            'Remarks': str(remarks).strip() if pd.notna(remarks) else ''
         })
-
-print(f"[OK] Extracted {len(tss_models)} TSS line items")
 
 # Extract TI models (starting from TI Model header)
 ti_models = []
@@ -1146,43 +1152,43 @@ for idx in range(len(candidates)):
     if scope_name == 'TSS':
         sow_upper = sow.upper()
         # Determine if this is MW Reroute or MW New Link
-        # The SOW field will contain "MW New Link / Reroute" - determine by checking TX Upgrade Scope
         is_mw_reroute = False
         if 'MW NEW LINK' in sow_upper and '/' in sow_upper and 'REROUTE' in sow_upper:
             upgrade_scope = str(row.get('TX Upgrade Scope', '')).strip().lower()
             is_mw_reroute = 'dismantle' in upgrade_scope
-        
+
         for item in tss_models:
             item_sow_upper = item['SOW'].upper()
             if item['Is_Mandatory'] and (item_sow_upper == sow_upper or item_sow_upper in sow_upper or sow_upper in item_sow_upper):
-                # For MW New Link / Reroute, apply quantity conflict rules
+                # For MW New Link / Reroute, apply model-driven filtering based on Remarks
                 if 'MW NEW LINK' in sow_upper and '/' in sow_upper and 'REROUTE' in sow_upper:
                     pbom = item['PBOM_Code']
                     qty = item['Quantity']
+                    remarks = item.get('Remarks', '').strip().lower()
                     
-                    # For LOS Survey items (350000062773 and 350000062776), handle selection based on site ID
+                    # 1. Model-driven filtering: Check Remarks column
+                    if remarks:
+                        if remarks == 'reroute' and not is_mw_reroute:
+                            continue
+                        if remarks == 'new link' and is_mw_reroute:
+                            continue
+                    
+                    # 2. Exception: LOS Survey selection
                     if pbom in ['350000062773', '350000062776']:
-                        # Only select one based on site ID pattern
                         if is_mw_reroute:
-                            # For reroute: choose 350000062776 if site_id contains _LOS, else 350000062773
                             if pbom == '350000062776' and '_LOS' not in site_id.upper():
-                                continue  # Skip this one
+                                continue
                             if pbom == '350000062773' and '_LOS' in site_id.upper():
-                                continue  # Skip this one
+                                continue
                         else:
-                            # For New Link: always select 350000062773 only
                             if pbom != '350000062773':
-                                continue  # Skip 350000062776
+                                continue
                     
-                    # For other SOW items like 350000589343 and 350000589344
-                    elif pbom in ['350000589343', '350000589344']:
-                        # Enforce consistent quantity: reroute -> 1.5 hop; new link -> 1 hop
+                    # 3. Quantity verification
+                    if pbom in ['350000589343', '350000589344']:
                         expected_qty = 1.5 if is_mw_reroute else 1.0
                         if qty != expected_qty:
-                            continue  # Skip items with wrong quantity
-                    
-                    # For all other items, accept as-is
-                
+                            continue
                 matched_items.append(item)
     else:
         if is_mw_reroute_row(row):

@@ -256,20 +256,28 @@ TSS PR model matching key:
 
 ```text
 1. Tx SOW
-2. TX Upgrade Scope
+2. TX Upgrade Scope (only for MW New Link / Reroute)
+3. Site ID (for LOS Survey selection in MW Reroute)
 ```
 
 Steps:
 1. Read primary SOW from `Tx SOW`.
-2. If the `Tx SOW` shows MW New Link / Reroute, read `TX Upgrade Scope`. If the field contains the word "dismantle" (case insensitive), it is a MW Reroute. If not, it is a MW New Link.
-3. Match the primary SOW against the TSS model section in the PR model reference. For MW New Link / Reroute, match both primary SOW and TX Upgrade Scope, which means need to pay attention to remarks column to select either reroute or new link item.
-4. For LOS Survey selection, if it is a MW Reroute and Site ID contains _LOS, choose PBOM 350000062776; if it is a MW Reroute and Site ID does not contain _LOS, choose PBOM 350000062773; if it is a MW New Link, always choose PBOM 350000062773.
-5. **Quantity Conflict Resolution for MW New Link / Reroute:** The PR model contains duplicate entries for some SOW items (e.g., 350000589343, 350000589344) with different quantities. To prevent conflict:
-   - For **MW Reroute** (with dismantle), only accept items with quantity **1.5 hop**.
-   - For **MW New Link** (without dismantle), only accept items with quantity **1 hop**.
-   This ensures each PBOM appears only once in the output with a consistent quantity.
-6. Select only mandatory line items.
-7. Quantity is according to matched mandatory line item.
+2. For MW New Link / Reroute SOW (exact pattern: "MW New Link / Reroute"), read `TX Upgrade Scope`. If the field contains "dismantle" (case insensitive), it is a MW Reroute; otherwise, it is a MW New Link. **This classification only applies to TSS MW New Link / Reroute**.
+3. Match mandatory line items from the TSS model section where the item's `SOW` matches the site's `Tx SOW` (case-insensitive partial match).
+4. For MW New Link / Reroute, apply **model-driven filtering** using the PR model's `Remarks` column:
+   - Items with Remarks "Reroute" are only selected for MW Reroute projects.
+   - Items with Remarks "New Link" are only selected for MW New Link projects.
+   - Items without Remarks (e.g., LOS Survey items) are subject to an additional selection rule below.
+5. **LOS Survey exception**: For PBOMs 350000062773 and 350000062776 (which typically have empty Remarks), selection depends on both `is_mw_reroute` and Site ID pattern:
+   - If MW New Link: always select **350000062773** (ignore _LOS pattern).
+   - If MW Reroute:
+     - Site ID contains "_LOS" (case-insensitive) → select **350000062776**.
+     - Site ID does NOT contain "_LOS" → select **350000062773**.
+6. For additional safety, verify quantity consistency (optional):
+   - For PBOMs 350000589343 and 350000589344, the quantity must be 1.5 hop if `is_mw_reroute` is True, otherwise 1.0 hop.
+7. If multiple mandatory items with identical SOW still match after filtering, mark as `REVIEW_REQUIRED`.
+
+**Important**: The `Remarks` column in the PR model is the primary filter for distinguishing Reroute vs New Link items (except the LOS Survey items). Do not rely on hardcoded PBOM checks alone.
 
 If multiple TSS models match the same SOW:
 
