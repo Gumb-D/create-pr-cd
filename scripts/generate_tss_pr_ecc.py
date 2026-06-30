@@ -21,6 +21,13 @@ from difflib import SequenceMatcher
 import re
 import csv
 from geography_resolver import GeographyResolver
+from pr_helpers import (
+    is_mw_reroute_row,
+    parse_mw_new_link_reroute,
+    filter_tss_mw_new_link_reroute_items,
+    select_tss_items_for_site,
+    has_duplicate_pbom
+)
 
 
 def parse_args():
@@ -1150,46 +1157,8 @@ for idx in range(len(candidates)):
     }
 
     if scope_name == 'TSS':
-        sow_upper = sow.upper()
-        # Determine if this is MW Reroute or MW New Link
-        is_mw_reroute = False
-        if 'MW NEW LINK' in sow_upper and '/' in sow_upper and 'REROUTE' in sow_upper:
-            upgrade_scope = str(row.get('TX Upgrade Scope', '')).strip().lower()
-            is_mw_reroute = 'dismantle' in upgrade_scope
-
-        for item in tss_models:
-            item_sow_upper = item['SOW'].upper()
-            if item['Is_Mandatory'] and (item_sow_upper == sow_upper or item_sow_upper in sow_upper or sow_upper in item_sow_upper):
-                # For MW New Link / Reroute, apply model-driven filtering based on Remarks
-                if 'MW NEW LINK' in sow_upper and '/' in sow_upper and 'REROUTE' in sow_upper:
-                    pbom = item['PBOM_Code']
-                    qty = item['Quantity']
-                    remarks = item.get('Remarks', '').strip().lower()
-                    
-                    # 1. Model-driven filtering: Check Remarks column
-                    if remarks:
-                        if remarks == 'reroute' and not is_mw_reroute:
-                            continue
-                        if remarks == 'new link' and is_mw_reroute:
-                            continue
-                    
-                    # 2. Exception: LOS Survey selection
-                    if pbom in ['350000062773', '350000062776']:
-                        if is_mw_reroute:
-                            if pbom == '350000062776' and '_LOS' not in site_id.upper():
-                                continue
-                            if pbom == '350000062773' and '_LOS' in site_id.upper():
-                                continue
-                        else:
-                            if pbom != '350000062773':
-                                continue
-                    
-                    # 3. Quantity verification
-                    if pbom in ['350000589343', '350000589344']:
-                        expected_qty = 1.5 if is_mw_reroute else 1.0
-                        if qty != expected_qty:
-                            continue
-                matched_items.append(item)
+        upgrade_scope = str(row.get('TX Upgrade Scope', '')).strip()
+        matched_items = select_tss_items_for_site(site_id, sow, upgrade_scope, tss_models)
     else:
         if is_mw_reroute_row(row):
             matched_items, mw_review_reasons, install_result, decom_result = match_mw_reroute_models(

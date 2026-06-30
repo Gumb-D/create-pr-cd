@@ -1,5 +1,4 @@
 ~$*.*
-tests/
 debug_*.py
 validate_*.py
 inspect_*.py
