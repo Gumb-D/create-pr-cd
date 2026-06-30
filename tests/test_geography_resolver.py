@@ -302,9 +302,9 @@ class TestGeographyResolver(unittest.TestCase):
         self.assertEqual(res["state"], "Sabah")
 
     def test_excel_route_bucket_mapping(self):
-        """Verify Excel business mapping is used before nearest-distance fallback."""
+        """Verify Excel business mapping survives through resolve_material_code()."""
 
-        # Sabah example
+        # Sabah (Inbound)
         row = {
             "customer site code": "BFT01",
             "region": "Sabah",
@@ -313,14 +313,17 @@ class TestGeographyResolver(unittest.TestCase):
             "Longitude (East Plus West Minus)": 115.75,
         }
 
-        res = self.resolver.resolve_coordinate(row)
+        res = self.resolver.resolve_material_code(
+            row,
+            "inbound_route"
+        )
 
         self.assertEqual(res["status"], "RESOLVED")
         self.assertEqual(res["city_or_district"], "Beaufort")
         self.assertEqual(res["route_bucket"], "Kota Kinabalu")
         self.assertEqual(res["resolution_method"], "excel_mapping")
 
-        # Sarawak example
+        # Sarawak (Outbound)
         row = {
             "customer site code": "SER01",
             "region": "Sarawak",
@@ -329,13 +332,36 @@ class TestGeographyResolver(unittest.TestCase):
             "Longitude (East Plus West Minus)": 110.48,
         }
 
-        res = self.resolver.resolve_coordinate(row)
+        res = self.resolver.resolve_material_code(
+            row,
+            "outbound_route"
+        )
 
         self.assertEqual(res["status"], "RESOLVED")
         self.assertEqual(res["city_or_district"], "Samarahan")
         self.assertEqual(res["route_bucket"], "Kuching")
-        self.assertEqual(res["resolution_method"], "excel_mapping")
+        self.assertEqual(res["resolution_method"], "excel_mapping")    
+        
+    def test_nearest_bucket_resolution_method(self):
+        """Verify nearest bucket resolution survives through resolve_material_code()."""
 
+        row = {
+            "customer site code": "TEST01",
+            "region": "Sabah",
+            "Province/State": "Sabah",
+            "Latitude (North Plus South Minus)": 6.35,
+            "Longitude (East Plus West Minus)": 116.43,
+        }
+
+        res = self.resolver.resolve_material_code(
+            row,
+            "inbound_route"
+        )
+
+        self.assertEqual(res["status"], "RESOLVED")
+        self.assertEqual(res["route_bucket"], "Kota Kinabalu")
+        self.assertEqual(res["resolution_method"], "nearest_bucket")
+        
     def test_unsupported_district_route_mapping_missing(self):
         row = {
             "customer site code": "BFT01",
@@ -354,6 +380,7 @@ class TestGeographyResolver(unittest.TestCase):
             res["route_bucket"],
             ["Kota Kinabalu", "Sandakan", "Tawau"]
         )
+
     def test_mapping_validation_missing_warehouse_and_material_code(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = Path(tmpdir) / "mapping.json"

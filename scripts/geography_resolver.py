@@ -786,7 +786,7 @@ class GeographyResolver:
             self._set_last_error(result, route_type)
             return result
 
-        return self._base_result(
+        result = self._base_result(
             "RESOLVED",
             "SUCCESS",
             site_code=bucket_res.get("site_code"),
@@ -795,5 +795,14 @@ class GeographyResolver:
             route_bucket=bucket_name,
             warehouse=warehouse,
             material_code=material_code,
-            technical_detail=f"route_type={route_type}; bucket={bucket_name}; material_code={material_code}",
+            technical_detail=(
+                f"route_type={route_type}; "
+                f"bucket={bucket_name}; "
+                f"material_code={material_code}; "
+                f"resolution_method={bucket_res.get('resolution_method')}"
+            ),
         )
+
+        result["resolution_method"] = bucket_res.get("resolution_method")
+
+        return result
