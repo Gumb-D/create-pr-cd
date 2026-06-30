@@ -301,6 +301,41 @@ class TestGeographyResolver(unittest.TestCase):
         self.assertEqual(res["reason_code"], "RESOLVED_STATE_MISMATCH")
         self.assertEqual(res["state"], "Sabah")
 
+    def test_excel_route_bucket_mapping(self):
+        """Verify Excel business mapping is used before nearest-distance fallback."""
+
+        # Sabah example
+        row = {
+            "customer site code": "BFT01",
+            "region": "Sabah",
+            "Province/State": "Sabah",
+            "Latitude (North Plus South Minus)": 5.35,
+            "Longitude (East Plus West Minus)": 115.75,
+        }
+
+        res = self.resolver.resolve_coordinate(row)
+
+        self.assertEqual(res["status"], "RESOLVED")
+        self.assertEqual(res["city_or_district"], "Beaufort")
+        self.assertEqual(res["route_bucket"], "Kota Kinabalu")
+        self.assertEqual(res["resolution_method"], "excel_mapping")
+
+        # Sarawak example
+        row = {
+            "customer site code": "SER01",
+            "region": "Sarawak",
+            "Province/State": "Sarawak",
+            "Latitude (North Plus South Minus)": 1.42,
+            "Longitude (East Plus West Minus)": 110.48,
+        }
+
+        res = self.resolver.resolve_coordinate(row)
+
+        self.assertEqual(res["status"], "RESOLVED")
+        self.assertEqual(res["city_or_district"], "Samarahan")
+        self.assertEqual(res["route_bucket"], "Kuching")
+        self.assertEqual(res["resolution_method"], "excel_mapping")
+
     def test_unsupported_district_route_mapping_missing(self):
         row = {
             "customer site code": "BFT01",

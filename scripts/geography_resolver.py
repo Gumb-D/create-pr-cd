@@ -455,7 +455,7 @@ class GeographyResolver:
             district
         )
 
-        resolution_method = "direct_mapping"
+        resolution_method = "district_mapping"
 
         # 1. Excel-derived business mapping
         if not route_bucket:
@@ -584,15 +584,17 @@ class GeographyResolver:
     def _excel_route_bucket(self, state, district):
         section = (
             self.mapping_data
-            .get("excel_route_bucket_mapping", {})
+                .get("coordinate_resolution", {})
+                .get("district_route_buckets", {})
+                .get("excel_route_bucket_mapping", {})
         )
 
         return (
             section
-            .get(state, {})
-            .get(district)
+                .get(state, {})
+                .get(district)
         )
-
+    
     def _district_route_bucket(self, state, district):
         section = self.mapping_data.get("coordinate_resolution", {}).get("district_route_buckets", {})
         return section.get(state, {}).get(district)
