@@ -401,7 +401,7 @@ def is_mw_reroute_row(row):
     """
     sow = str(row.get('Tx SOW', '')).strip().lower()
     # The SOW may contain "MW New Link / Reroute" or similar; we only care about "reroute"
-    return 'reroute' in sow
+    return "mw" in sow and 'reroute' in sow
 
 
 def get_text_value(row, column):
