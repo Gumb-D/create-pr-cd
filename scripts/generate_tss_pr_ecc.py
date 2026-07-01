@@ -673,6 +673,51 @@ def normalize_choice_category(text):
         return 'antenna'
     return 'choose'
 
+def ti_model_requires_antenna(sow, ti_models):
+    """
+    Returns True if the matching TI PR model contains
+    a mandatory antenna-dependent choose-one group.
+
+    This makes antenna validation conditional instead
+    of universally mandatory.
+    """
+
+    sow_upper = str(sow).strip().upper()
+
+    candidates = []
+
+    for item in ti_models:
+        item_sow = str(item["SOW"]).strip().upper()
+
+        if (
+            item["Is_Mandatory"]
+            and (
+                item_sow == sow_upper
+                or item_sow in sow_upper
+                or sow_upper in item_sow
+            )
+        ):
+            candidates.append(item)
+
+    for item in candidates:
+
+        rules = str(item.get("Rules", "")).lower()
+
+        if "choose" not in rules:
+            continue
+
+        category = normalize_choice_category(
+            " ".join([
+                str(item.get("SOW", "")),
+                str(item.get("Description", "")),
+                str(item.get("Rules", ""))
+            ])
+        )
+
+        if category == "antenna":
+            return True
+
+    return False
 
 def get_region_search_terms(region):
     if not region:
@@ -722,13 +767,22 @@ def filter_choose_group_items(group_items, chosen_size, region, row=None, resolv
         return group_items, False
 
     category = normalize_choice_category(' '.join([group_items[0].get('SOW', ''), group_items[0].get('Description', ''), group_items[0].get('Rules', '')]))
-    if category == 'antenna':
-        matched = [item for item in group_items if item_matches_chosen_size(item, chosen_size)]
+    if category == "antenna":
+
+        if chosen_size is None:
+            return [], True
+
+        matched = [
+            item
+            for item in group_items
+            if item_matches_chosen_size(item, chosen_size)
+        ]
+
         if len(matched) == 1:
             return matched, False
-        # Zero or multiple matched -> return empty, flag as ambiguous
-        return [], True
 
+        return [], True
+    
     if category == 'outbound_route':
         if row is not None and resolver is not None:
             res = resolver.resolve_material_code(row, "outbound_route")
@@ -822,6 +876,8 @@ def match_ti_models(sow, antenna_category, chosen_size, region, ti_models, row=N
             group_key = (item['PBOM_Code'],)
         grouped_candidates.setdefault(group_key, []).append(item)
 
+    requires_antenna = ti_model_requires_antenna(sow, ti_models)
+
     selected_items = []
     review_required = False
     choose_group_ambiguous = False
@@ -832,7 +888,26 @@ def match_ti_models(sow, antenna_category, chosen_size, region, ti_models, row=N
 
         rules = str(group_items[0].get('Rules', '')).lower()
         if 'choose' in rules:
-            chosen_items, ambiguous = filter_choose_group_items(group_items, chosen_size, region, row=row, resolver=resolver)
+            category = normalize_choice_category(
+                " ".join([
+                    str(group_items[0].get("SOW", "")),
+                    str(group_items[0].get("Description", "")),
+                    str(group_items[0].get("Rules", ""))
+                ])
+            )
+
+            if category == "antenna" and chosen_size is None:
+                review_required = True
+                choose_group_ambiguous = True
+                continue
+
+            chosen_items, ambiguous = filter_choose_group_items(
+                group_items,
+                chosen_size,
+                region,
+                row=row,
+                resolver=resolver
+            )            
             selected_items.extend(chosen_items)
             if ambiguous:
                 review_required = True
@@ -1195,19 +1270,38 @@ for idx in range(len(candidates)):
                         technical_detail='No valid mandatory TI PR model items matched'
                     )
         else:
-            antenna_category, antenna_remark, antenna_size = determine_ti_antenna_category(
-                row.get('MW Config Antenna Size NE', ''),
-                row.get('MW Config Antenna Size FE', '')
+            requires_antenna = ti_model_requires_antenna(
+                sow,
+                ti_models
             )
-            if antenna_remark:
-                remarks = antenna_remark
-            
-            if antenna_remark in ['Missing TI antenna size - review required', 'Incomplete TI antenna size - review required']:
-                unmatched_ti_items.append(add_review_fields(
-                    review_base,
-                    make_generic_review_reason(antenna_remark)
-                ))
-                continue
+
+            antenna_category = None
+            antenna_size = None
+            antenna_remark = None
+
+            if requires_antenna:
+
+                antenna_category, antenna_remark, antenna_size = determine_ti_antenna_category(
+                    row.get("MW Config Antenna Size NE", ""),
+                    row.get("MW Config Antenna Size FE", "")
+                )
+
+                if antenna_remark:
+                    remarks = antenna_remark
+
+                if antenna_remark in [
+                    "Missing TI antenna size - review required",
+                    "Incomplete TI antenna size - review required"
+                ]:
+
+                    unmatched_ti_items.append(
+                        add_review_fields(
+                            review_base,
+                            make_generic_review_reason(antenna_remark)
+                        )
+                    )
+
+                    continue
 
             matched_items, review_required = match_ti_models(
                 sow,
@@ -1218,9 +1312,9 @@ for idx in range(len(candidates)):
                 row=row,
                 resolver=resolver
             )
-            if review_required:
-                remarks = 'REVIEW_REQUIRED' if not remarks else f"{remarks}; REVIEW_REQUIRED"
 
+            if review_required:
+                remarks = "REVIEW_REQUIRED" if not remarks else f"{remarks}; REVIEW_REQUIRED"
             # Phase 2B-1: capture reason for unmatched TI candidates
             if not matched_items:
                 if resolver is not None and getattr(resolver, 'last_error', None) is not None:
@@ -1239,7 +1333,7 @@ for idx in range(len(candidates)):
                             'NO_MANDATORY_TI_ITEM_FOUND',
                             technical_detail='No mandatory TI item found'
                         )
-                    elif antenna_category and antenna_size is not None:
+                    elif requires_antenna:
                         unmatched_reason = make_review_reason(
                             'NO_MATCHING_ANTENNA_GROUP_ITEM',
                             technical_detail='No matching antenna group item'
