@@ -1267,13 +1267,19 @@ for idx in range(len(candidates)):
             'Subcontractor': matched_subcon,
             'Contract_Number': contract_number,
             'PBOM_Code': item['PBOM_Code'],
+
+            # PR Model description (Column K)
             'SOW': item['Description'],
+
+            # NEW - Original Tx SOW from site data (Column O)
+            'Source_Tx_SOW': sow,
+
             'Unit': item['Unit'],
             'Quantity': item['Quantity'],
             'Delivery_Unit_Code': delivery_unit,
             'Logical_Site_Name': logical_site,
             'Remarks': remarks
-        }
+        }        
         ecc_rows.append(ecc_row)
 
 print(f"✓ Built {len(ecc_rows)} ECC output rows")
@@ -1361,7 +1367,7 @@ for (region, subcon), rows in sorted(grouped.items()):
                 ecc_row['Unit'],
                 ecc_row['Quantity'],
                 ecc_row['Remarks'],
-                '',  # Column O (empty)
+                ecc_row['Source_Tx_SOW'],         # Column O
                 ecc_row['Contract_Number']  # Column P - Contract Number (same as *)
             ]
             
