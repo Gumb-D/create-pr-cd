@@ -4,8 +4,52 @@ Production-ready helper functions for PR generation logic.
 These functions are imported by both generate_tss_pr_ecc.py and unit tests.
 """
 
+from decimal import Decimal, InvalidOperation
+import math
+import numbers
 import re
 from typing import Dict, List, Tuple, Optional, Any
+
+
+def normalize_pbom_code(value: Any) -> str:
+    """
+    Normalize PBOM/material codes into a canonical string form.
+
+    Excel-derived numeric cells can surface as floats such as 350000062773.0.
+    This helper strips only the numeric formatting artifact while preserving
+    legitimate non-numeric codes unchanged.
+    """
+    if value is None:
+        return ''
+
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped or stripped.lower() == 'nan':
+            return ''
+        candidate = stripped
+    elif isinstance(value, numbers.Integral):
+        return str(int(value))
+    elif isinstance(value, numbers.Real):
+        if math.isnan(value) or not math.isfinite(value):
+            return ''
+        candidate = str(value)
+    else:
+        candidate = str(value).strip()
+        if not candidate or candidate.lower() == 'nan':
+            return ''
+
+    try:
+        decimal_value = Decimal(candidate)
+    except InvalidOperation:
+        return candidate
+
+    if not decimal_value.is_finite():
+        return ''
+
+    if decimal_value == decimal_value.to_integral_value():
+        return format(decimal_value.quantize(Decimal('1')), 'f')
+
+    return format(decimal_value.normalize(), 'f')
 
 
 def is_mw_reroute_row(row: Dict[str, Any]) -> bool:
@@ -59,7 +103,7 @@ def filter_tss_mw_new_link_reroute_items(
     filtered = []
 
     for item in matched_items:
-        pbom = item['PBOM_Code']
+        pbom = normalize_pbom_code(item.get('PBOM_Code'))
         qty = item['Quantity']
         remarks = item.get('Remarks', '').strip().lower()
 
@@ -104,7 +148,7 @@ def has_duplicate_pbom(items: List[Dict[str, Any]]) -> bool:
     Returns:
         True if any PBOM appears more than once, False otherwise
     """
-    pboms = [item['PBOM_Code'] for item in items]
+    pboms = [normalize_pbom_code(item.get('PBOM_Code')) for item in items]
     return len(pboms) != len(set(pboms))
 
 

@@ -1,7 +1,11 @@
 import unittest
 import sys
+import subprocess
+import tempfile
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, List
+from openpyxl import Workbook, load_workbook
+import pandas as pd
 
 # Add the scripts directory to path so we can import pr_helpers
 scripts_dir = Path(__file__).parent.parent / 'scripts'
@@ -333,6 +337,147 @@ class TestLOSDetection(unittest.TestCase):
 
         result = select_tss_items_for_site('site_los_001', 'MW New Link / Reroute', 'dismantle', tss_models)
         self.assertEqual(len(result), 1)
+
+
+class TestProductionExcelPBOMNormalization(unittest.TestCase):
+    """Regression coverage for Excel-loaded PBOM values through the real generator path."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.repo_root = Path(__file__).parent.parent
+        cls.sample_site_path = cls.repo_root / 'Info' / 'input' / 'site_pr_po_view.xlsx'
+        cls.mapping_path = cls.repo_root / 'Info' / 'input' / 'contract_info_reference.md'
+        cls.template_path = cls.repo_root / 'Info' / 'input' / 'ecc_template.xls'
+        cls.generator_path = cls.repo_root / 'scripts' / 'generate_tss_pr_ecc.py'
+        cls.scenario_rows = {
+            '4008B_AD': {'expected_survey_pbom': '350000062773', 'expected_qty': 1.0},
+            '1679H_LOS': {'expected_survey_pbom': '350000062773', 'expected_qty': 1.0},
+            '4982B': {'expected_survey_pbom': '350000062773', 'expected_qty': 1.5},
+            '1258H_LOS': {'expected_survey_pbom': '350000062776', 'expected_qty': 1.5},
+        }
+
+    def _build_temp_pr_model(self, workbook_path: Path) -> None:
+        wb = Workbook()
+        ws = wb.active
+        ws.title = 'TX Line Item (After 21-Apr 26)'
+
+        for _ in range(7):
+            ws.append([None] * 7)
+
+        # Force pandas to keep the PBOM column as floats when reading from Excel.
+        ws.append(['Other SOW', 1234567890.5, 'Ignore float coercion row', 'Each', 1.0, 'Optional', ''])
+        ws.append(['MW New Link / Reroute', 350000062773.0, 'LOS Survey', 'Each', 1.0, 'Mandatory', ''])
+        ws.append(['MW New Link / Reroute', 350000062776.0, 'LOS Survey LOS', 'Each', 1.0, 'Mandatory', ''])
+        ws.append(['MW New Link / Reroute', 350000589343.0, 'Item A', 'Each', 1.0, 'Mandatory', 'New Link'])
+        ws.append(['MW New Link / Reroute', 350000589344.0, 'Item B', 'Each', 1.0, 'Mandatory', 'New Link'])
+        ws.append(['MW New Link / Reroute', 350000589343.0, 'Item A', 'Each', 1.5, 'Mandatory', 'Reroute'])
+        ws.append(['MW New Link / Reroute', 350000589344.0, 'Item B', 'Each', 1.5, 'Mandatory', 'Reroute'])
+        ws.append([None] * 7)
+
+        wb.save(workbook_path)
+
+    def _build_temp_site_data(self, workbook_path: Path) -> None:
+        df = pd.read_excel(self.sample_site_path, sheet_name='data', header=3)
+        selected = df[df['customer site code'].isin(self.scenario_rows.keys())].copy()
+        self.assertEqual(len(selected), 4, 'Expected four site rows for the production regression fixture')
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = 'data'
+
+        for _ in range(3):
+            ws.append([None] * len(selected.columns))
+
+        ws.append(list(selected.columns))
+        for row in selected.itertuples(index=False, name=None):
+            ws.append(list(row))
+
+        wb.save(workbook_path)
+
+    def _run_generator(self, site_path: Path, pr_model_path: Path, output_dir: Path) -> None:
+        command = [
+            sys.executable,
+            str(self.generator_path),
+            '--site-data',
+            str(site_path),
+            '--pr-model',
+            str(pr_model_path),
+            '--template',
+            str(self.template_path),
+            '--mapping',
+            str(self.mapping_path),
+            '--output',
+            str(output_dir),
+            '--scope',
+            'TSS',
+            '--all-sites',
+        ]
+        result = subprocess.run(
+            command,
+            cwd=self.repo_root,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            self.fail(
+                f'Generator failed with exit code {result.returncode}\n'
+                f'STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}'
+            )
+
+    def _load_output_rows(self, output_dir: Path) -> List[Dict[str, Any]]:
+        rows: List[Dict[str, Any]] = []
+        for workbook_path in sorted(output_dir.glob('*.xlsx')):
+            wb = load_workbook(workbook_path, data_only=True)
+            ws = wb['details']
+            headers = [cell.value for cell in ws[1]]
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                if not any(value is not None and str(value).strip() != '' for value in row):
+                    continue
+                rows.append(dict(zip(headers, row)))
+        return rows
+
+    def test_generator_normalizes_excel_loaded_pbom_codes(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            temp_root = Path(tmpdir)
+            pr_model_path = temp_root / 'pr_model.xlsx'
+            site_path = temp_root / 'site_data.xlsx'
+            output_dir = temp_root / 'output'
+            output_dir.mkdir()
+
+            self._build_temp_pr_model(pr_model_path)
+            self._build_temp_site_data(site_path)
+            self._run_generator(site_path, pr_model_path, output_dir)
+
+            rows = self._load_output_rows(output_dir)
+            self.assertTrue(rows, 'Expected the generator to produce ECC output rows')
+
+            for site_id, expectation in self.scenario_rows.items():
+                site_rows = [row for row in rows if str(row['Site ID*']).strip() == site_id]
+                self.assertTrue(site_rows, f'Missing ECC rows for site {site_id}')
+
+                pboms = [str(row['PBOM Code*']).strip() for row in site_rows]
+                survey_pboms = [pbom for pbom in pboms if pbom.startswith('35000006277')]
+
+                self.assertEqual(
+                    survey_pboms.count(expectation['expected_survey_pbom']),
+                    1,
+                    f'{site_id} should include exactly one selected survey PBOM',
+                )
+                unwanted_pbom = '350000062776' if expectation['expected_survey_pbom'] == '350000062773' else '350000062773'
+                self.assertNotIn(unwanted_pbom, survey_pboms, f'{site_id} should exclude the unwanted survey PBOM')
+                self.assertNotIn('.0', ''.join(survey_pboms), f'{site_id} should emit canonical survey PBOM codes without .0')
+
+                for controlled_pbom in ('350000589343', '350000589344'):
+                    controlled_rows = [row for row in site_rows if str(row['PBOM Code*']).strip() == controlled_pbom]
+                    self.assertEqual(len(controlled_rows), 1, f'{site_id} should include {controlled_pbom} exactly once')
+                    self.assertEqual(
+                        float(controlled_rows[0]['Quantity*']),
+                        expectation['expected_qty'],
+                        f'{site_id} should emit qty {expectation["expected_qty"]} for {controlled_pbom}',
+                    )
+
+                self.assertEqual(len(pboms), len(set(pboms)), f'{site_id} should not contain duplicate PBOM rows')
 
 
 if __name__ == '__main__':

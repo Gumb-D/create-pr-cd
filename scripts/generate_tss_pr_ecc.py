@@ -22,6 +22,7 @@ import re
 import csv
 from geography_resolver import GeographyResolver
 from pr_helpers import (
+    normalize_pbom_code,
     is_mw_reroute_row,
     parse_mw_new_link_reroute,
     filter_tss_mw_new_link_reroute_items,
@@ -930,7 +931,7 @@ for idx in range(7, len(df_pr)):
     if pd.notna(pbom) and pd.notna(desc):
         tss_models.append({
             'SOW': str(sow).strip(),
-            'PBOM_Code': str(pbom).strip(),
+            'PBOM_Code': normalize_pbom_code(pbom),
             'Description': str(desc).strip(),
             'Unit': str(unit).strip() if pd.notna(unit) else 'Hop',
             'Quantity': float(qty) if pd.notna(qty) else 1,
@@ -963,7 +964,7 @@ if ti_header_idx is not None:
         if pd.notna(pbom) and pd.notna(desc):
             ti_models.append({
                 'SOW': str(sow).strip(),
-                'PBOM_Code': str(pbom).strip(),
+                'PBOM_Code': normalize_pbom_code(pbom),
                 'Description': str(desc).strip(),
                 'Unit': str(unit).strip() if pd.notna(unit) else 'Hop',
                 'Quantity': float(qty) if pd.notna(qty) else 1,
