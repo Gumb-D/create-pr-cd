@@ -77,9 +77,9 @@ questions:
       - PRC-MODEL-002
 
   - id: AQ-009
-    title: Incomplete TI antenna data never becomes a normal output
-    scenario: "One antenna side is blank."
-    expected: "The result is REVIEW_REQUIRED, not a normal generated TI model line."
+    title: Incomplete antenna data blocks only antenna-required TI models
+    scenario: "The strictly matched mandatory TI model contains an antenna-dependent choose-one group (for example MW Parallel Link) and one antenna side is blank."
+    expected: "The result is REVIEW_REQUIRED, not a normal generated TI model line. This question applies only to antenna-required TI models; antenna-independent SOWs are covered by AQ-020."
     priority: P0
     rule_ids:
       - PRC-ANT-001
@@ -165,3 +165,45 @@ questions:
     priority: P1
     rule_ids:
       - PRC-REV-001
+
+  - id: AQ-020
+    title: Antenna-independent TI models generate normally with blank or one-sided antenna input
+    scenario: "A site has Tx SOW 'BBU Patching' or 'MW IDU Patching' with MW Config Antenna Size NE and FE both blank, or only one side populated."
+    expected: "A normal TI ECC line is generated with no REVIEW_REQUIRED remark, because the strictly matched mandatory model has no antenna-dependent choose-one group."
+    priority: P0
+    rule_ids:
+      - PRC-ANT-001
+      - PRC-MODEL-002
+
+  - id: AQ-021
+    title: Strict TI SOW matching rejects supersets and normalizes case and whitespace
+    scenario: "Tx SOW values include exact matches with extra whitespace and case variation (for example '  bbu   patching  '), plus unsupported supersets such as 'BBU Patching Extended' and 'MW Parallel Link Extended'."
+    expected: "Case- and whitespace-normalized exact matches succeed; supersets and substrings never match and are REVIEW_REQUIRED with a matching-not-found reason."
+    priority: P0
+    rule_ids:
+      - PRC-MODEL-002
+
+  - id: AQ-022
+    title: Excel float-formatted PBOM values canonicalize through the real generator path
+    scenario: "A PR Model workbook stores a PBOM code as an Excel-derived float such as 350000062773.0."
+    expected: "The generated ECC output emits the canonical integer-form PBOM code with no residual '.0' and no digit loss."
+    priority: P0
+    rule_ids:
+      - PRC-DATA-001
+
+  - id: AQ-023
+    title: MW New Link / Reroute survey PBOM, quantity, and duplicate controls are deterministic
+    scenario: "Generate TSS output for MW New Link and MW Reroute sites, including a Reroute site with a '_LOS' site ID."
+    expected: "MW New Link selects PBOM 350000062773 with quantity 1.0 on controlled items; MW Reroute selects 350000062776 only for '_LOS' sites and otherwise 350000062773, with quantity 1.5 on controlled items; no PBOM code is duplicated in the output."
+    priority: P0
+    rule_ids:
+      - PRC-TSS-001
+      - PRC-DATA-001
+
+  - id: AQ-024
+    title: ECC Column O carries the source Tx SOW while Column K and Column P keep their intended values
+    scenario: "Generate a normal TSS or TI ECC row for a site with a known Tx SOW."
+    expected: "Column K contains the matched PR Model description, Column O contains the exact original site Tx SOW, and Column P contains the resolved Contract Number."
+    priority: P1
+    rule_ids:
+      - PRC-OUT-004

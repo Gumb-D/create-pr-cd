@@ -87,6 +87,16 @@ EXTRACTED → VERIFIED → APPROVED → IMPLEMENTED → REGRESSION_TESTED
 6. Add or update a regression fixture.
 7. Update `runtime_status` only after the implementation is merged and verified.
 
+## Baseline synchronization
+
+This KB baseline has been synchronized with the merged behavioural evidence from:
+
+- PR #8 — safe PBOM canonicalization and TSS MW New Link/Reroute selection behaviour (`PRC-DATA-001`, `PRC-TSS-001`).
+- PR #13 — strict canonical TI SOW matching and conditional antenna validation (`PRC-MODEL-002`, `PRC-ANT-001`, resolved `KB-DIV-005`).
+- PR #14 — source Tx SOW written to ECC Column O (`PRC-OUT-004`).
+
+Current runtime code on `main`, together with its committed regression tests, remains the execution authority. This synchronization records what the runtime now does; it does not change or supersede that runtime.
+
 ## First operating objective
 
 The first improvement is not “make an AI chatbot.”

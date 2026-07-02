@@ -95,6 +95,52 @@ rules:
     acceptance_question_ids:
       - AQ-003
 
+  - id: PRC-DATA-001
+    title: PBOM canonicalization for matching and duplicate prevention
+    domain: data
+    knowledge_status: VERIFIED
+    runtime_status: ACTIVE
+    statement: "Excel integer-like PBOM values such as 350000062773.0 must be canonicalized safely to 350000062773. Canonical PBOM values must be used at model-load, selection, and duplicate-prevention boundaries. Preserve all digits; do not use unsafe trimming or float conversion that can lose precision."
+    inputs:
+      - "PR Model PBOM Code column (TSS and TI)"
+      - "Site-derived material codes used in selection and duplicate checks"
+    expected_outcome: "PBOM codes are compared and emitted in one canonical string form with no precision loss and no residual '.0' formatting artifact."
+    risk: CRITICAL
+    source_references:
+      - "scripts/pr_helpers.py:14-52"
+      - "scripts/generate_tss_pr_ecc.py:1006"
+      - "scripts/generate_tss_pr_ecc.py:1039"
+      - "scripts/pr_helpers.py:161-212"
+      - "scripts/pr_helpers.py:215-226"
+      - "tests/test_mw_reroute.py:342-480"
+      - "tests/test_mw_reroute.py:279-312"
+    acceptance_question_ids:
+      - AQ-022
+      - AQ-023
+
+  - id: PRC-TSS-001
+    title: TSS MW New Link / Reroute survey PBOM and quantity selection
+    domain: matching
+    knowledge_status: VERIFIED
+    runtime_status: ACTIVE
+    statement: "Survey PBOM selection for MW New Link / Reroute is deterministic. MW New Link uses PBOM 350000062773. MW Reroute uses PBOM 350000062776 only for site IDs containing '_LOS'; otherwise MW Reroute uses 350000062773. PBOM 350000589343 and 350000589344 each appear once per site. Quantity is 1.0 for New Link and 1.5 for Reroute."
+    inputs:
+      - "Tx SOW"
+      - "TX Upgrade Scope"
+      - "Site identifier (for LOS detection)"
+      - "TSS PR Model rows"
+    expected_outcome: "Exactly one survey PBOM is selected per site, controlled quantity items are emitted with the correct quantity, and no PBOM is duplicated in the output."
+    risk: CRITICAL
+    source_references:
+      - "scripts/pr_helpers.py:144-158"
+      - "scripts/pr_helpers.py:161-212"
+      - "scripts/pr_helpers.py:229-264"
+      - "tests/test_mw_reroute.py:112-276"
+      - "tests/test_mw_reroute.py:300-312"
+      - "tests/test_mw_reroute.py:342-480"
+    acceptance_question_ids:
+      - AQ-023
+
   - id: PRC-SOW-001
     title: Primary Tx SOW selection
     domain: classification
@@ -132,43 +178,52 @@ rules:
   - id: PRC-MODEL-002
     title: TI PR model matching
     domain: matching
-    knowledge_status: EXTRACTED
+    knowledge_status: VERIFIED
     runtime_status: ACTIVE
-    statement: "Match TI by primary Tx SOW plus normalized antenna category; generate mandatory items only; set quantity to 1 per site per matched mandatory item."
+    statement: "TI mandatory model matching uses canonical, case-insensitive, whitespace-normalized exact Tx SOW equality. Unsupported substrings or supersets must not match a model; for example, 'BBU Patching Extended' must not match 'BBU Patching'. Antenna-dependent selection is evaluated only after a valid strict TI SOW match; generate mandatory items only; set quantity to 1 per site per matched mandatory item."
     inputs:
       - "Primary Tx SOW"
       - "MW Config Antenna Size NE"
       - "MW Config Antenna Size FE"
       - "TI PR Model rows"
-    expected_outcome: "An unambiguous mandatory TI model set is emitted."
-    exception: "No safe match or multiple matching model groups must be REVIEW_REQUIRED."
+    expected_outcome: "An unambiguous mandatory TI model set is emitted from strict canonical SOW equality; antenna data is consulted only when the matched model requires it."
+    exception: "No safe strict SOW match or multiple matching model groups must be REVIEW_REQUIRED."
     risk: CRITICAL
     source_references:
       - "create-pr-cd_SKILL.md:275-318"
-      - "scripts/generate_tss_pr_ecc.py:105-134"
+      - "scripts/pr_helpers.py:55-126"
+      - "scripts/generate_tss_pr_ecc.py:678-716"
+      - "scripts/generate_tss_pr_ecc.py:849-920"
       - "README.md:154-164"
+      - "tests/test_ti_sow_matching.py:47-53"
+      - "tests/test_ti_sow_matching.py:120-255"
     acceptance_question_ids:
       - AQ-008
       - AQ-009
       - AQ-010
+      - AQ-021
 
   - id: PRC-ANT-001
     title: TI antenna size selection
     domain: classification
-    knowledge_status: EXTRACTED
+    knowledge_status: VERIFIED
     runtime_status: ACTIVE
-    statement: "Where NE and FE sizes are present, use the larger normalized size. Missing either side must be treated as review-required."
+    statement: "Antenna input is required only when the strictly matched mandatory TI model contains an antenna-dependent choose-one group. For antenna-independent SOWs such as 'BBU Patching' and 'MW IDU Patching', blank or one-sided antenna input must not block valid ECC generation. For antenna-dependent models, where NE and FE sizes are both present use the larger normalized size; incomplete NE/FE data remains REVIEW_REQUIRED."
     inputs:
+      - "Primary Tx SOW"
       - "MW Config Antenna Size NE"
       - "MW Config Antenna Size FE"
-    expected_outcome: "A chosen size and category are produced only with a traceable review state for incomplete data."
+    expected_outcome: "A chosen size and category are produced only when the matched model is antenna-dependent, with a traceable review state for incomplete data on those models. Antenna-independent models generate normally regardless of antenna input."
     risk: CRITICAL
     source_references:
       - "create-pr-cd_SKILL.md:285-295"
-      - "scripts/generate_tss_pr_ecc.py:93-134"
+      - "scripts/generate_tss_pr_ecc.py:678-716"
+      - "scripts/generate_tss_pr_ecc.py:1279-1321"
+      - "tests/test_ti_sow_matching.py:120-255"
     acceptance_question_ids:
       - AQ-008
       - AQ-009
+      - AQ-020
 
   - id: PRC-ANT-002
     title: Runtime antenna category thresholds
@@ -334,6 +389,26 @@ rules:
       - "README.md:99-126"
     acceptance_question_ids:
       - AQ-018
+
+  - id: PRC-OUT-004
+    title: ECC source Tx SOW traceability
+    domain: output
+    knowledge_status: VERIFIED
+    runtime_status: ACTIVE
+    statement: "ECC Column K remains the matched PR Model description. ECC Column O contains the exact original source Tx SOW for every generated TSS and TI row. ECC Column P remains the Contract Number field."
+    inputs:
+      - "Matched PR Model description"
+      - "Site Tx SOW"
+      - "Resolved Contract Number"
+    expected_outcome: "Every generated row is traceable to the original site Tx SOW without altering the existing Column K or Column P meaning."
+    risk: HIGH
+    source_references:
+      - "scripts/generate_tss_pr_ecc.py:1373-1386"
+      - "scripts/generate_tss_pr_ecc.py:1442-1476"
+      - "tests/test_ti_sow_matching.py:104-109"
+      - "tests/test_ti_sow_matching.py:231-234"
+    acceptance_question_ids:
+      - AQ-024
 
   - id: PRC-REV-001
     title: Structured review-required reason
