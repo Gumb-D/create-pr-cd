@@ -236,7 +236,7 @@ rules:
     expected_outcome: "Categories are 0.3/0.6m, 0.9/1.2m, 1.8m, 2.4m, or <size>m."
     risk: HIGH
     source_references:
-      - "scripts/generate_tss_pr_ecc.py:121-134"
+      - "scripts/generate_tss_pr_ecc.py:374-403"
     acceptance_question_ids:
       - AQ-010
     notes: "The skill document's category wording differs; see KB-DIV-002."
