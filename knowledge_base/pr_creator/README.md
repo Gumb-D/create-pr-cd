@@ -9,7 +9,7 @@ It is not a replacement for the PR generator. It records the business rules, rul
 ## Why this exists
 
 The current PR Creator contains business knowledge across:
-- `create-pr-cd_SKILL.md`
+- `SKILL.md`
 - `README.md`
 - `scripts/generate_tss_pr_ecc.py`
 - PR model workbooks, contract mappings and ECC templates

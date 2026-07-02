@@ -55,7 +55,7 @@ rules:
     expected_outcome: "Eligible site-scope combinations proceed to TSS model matching; existing PRs are skipped."
     risk: HIGH
     source_references:
-      - "create-pr-cd_SKILL.md:151-162"
+      - "SKILL.md:151-159"
     acceptance_question_ids:
       - AQ-002
       - AQ-003
@@ -72,7 +72,7 @@ rules:
     expected_outcome: "Eligible site-scope combinations proceed to TI model matching; existing PRs are skipped."
     risk: HIGH
     source_references:
-      - "create-pr-cd_SKILL.md:163-172"
+      - "SKILL.md:161-169"
     acceptance_question_ids:
       - AQ-004
       - AQ-003
@@ -90,7 +90,7 @@ rules:
     expected_outcome: "The site-scope pair is skipped and traceable in the processing summary."
     risk: CRITICAL
     source_references:
-      - "create-pr-cd_SKILL.md:199-210"
+      - "SKILL.md:197-208"
       - "README.md:156-164"
     acceptance_question_ids:
       - AQ-003
@@ -152,7 +152,7 @@ rules:
     expected_outcome: "One primary SOW is selected for the current scope."
     risk: HIGH
     source_references:
-      - "create-pr-cd_SKILL.md:230-249"
+      - "SKILL.md:228-247"
     acceptance_question_ids:
       - AQ-005
 
@@ -169,7 +169,7 @@ rules:
     exception: "Multiple matching models must be REVIEW_REQUIRED."
     risk: HIGH
     source_references:
-      - "create-pr-cd_SKILL.md:251-274"
+      - "SKILL.md:251-285"
       - "README.md:177-186"
     acceptance_question_ids:
       - AQ-006
@@ -253,7 +253,7 @@ rules:
     exception: "An unresolved mandatory choose-one group must be REVIEW_REQUIRED."
     risk: CRITICAL
     source_references:
-      - "create-pr-cd_SKILL.md:357-367"
+      - "SKILL.md:369-379"
       - "README.md:158-162"
     acceptance_question_ids:
       - AQ-007
@@ -289,7 +289,7 @@ rules:
     risk: CRITICAL
     source_references:
       - "README.md:161-164"
-      - "create-pr-cd_SKILL.md:137-149"
+      - "SKILL.md:135-147"
     acceptance_question_ids:
       - AQ-013
 
@@ -306,8 +306,8 @@ rules:
     risk: HIGH
     source_references:
       - "README.md:188-192"
-      - "scripts/generate_tss_pr_ecc.py:73-93"
-      - "create-pr-cd_SKILL.md:394-403"
+      - "scripts/generate_tss_pr_ecc.py:83-103"
+      - "SKILL.md:406-415"
     acceptance_question_ids:
       - AQ-014
     notes: "Documented reference source and runtime reference source currently differ; see KB-DIV-001."
@@ -325,8 +325,8 @@ rules:
     risk: CRITICAL
     source_references:
       - "README.md:188-192"
-      - "scripts/generate_tss_pr_ecc.py:95-137"
-      - "create-pr-cd_SKILL.md:380-403"
+      - "scripts/generate_tss_pr_ecc.py:105-147"
+      - "SKILL.md:392-404"
     acceptance_question_ids:
       - AQ-015
     notes: "Whether fuzzy matches may be emitted without manual review needs an explicit business decision; see KB-DIV-003."
@@ -345,8 +345,8 @@ rules:
     expected_outcome: "A normal row has blank Remarks; incomplete rows remain visible with an explicit review reason."
     risk: CRITICAL
     source_references:
-      - "create-pr-cd_SKILL.md:405-431"
-      - "create-pr-cd_SKILL.md:422-427"
+      - "SKILL.md:417-436"
+      - "SKILL.md:438-443"
       - "README.md:194-203"
     acceptance_question_ids:
       - AQ-016
@@ -365,7 +365,7 @@ rules:
     expected_outcome: "Output groups are split into deterministic files when the 30-site limit is exceeded."
     risk: HIGH
     source_references:
-      - "create-pr-cd_SKILL.md:433-447"
+      - "SKILL.md:445-463"
       - "README.md:115-120"
       - "README.md:194-203"
     acceptance_question_ids:
@@ -385,7 +385,7 @@ rules:
     expected_outcome: "Each output file name identifies its group and scope."
     risk: MEDIUM
     source_references:
-      - "create-pr-cd_SKILL.md:449-471"
+      - "SKILL.md:465-479"
       - "README.md:99-126"
     acceptance_question_ids:
       - AQ-018
@@ -421,8 +421,8 @@ rules:
     expected_outcome: "Review output is actionable rather than a silent zero-row or generic error."
     risk: HIGH
     source_references:
-      - "scripts/generate_tss_pr_ecc.py:145-218"
-      - "create-pr-cd_SKILL.md:477-504"
+      - "scripts/generate_tss_pr_ecc.py:155-211"
+      - "SKILL.md:489-516"
     acceptance_question_ids:
       - AQ-016
       - AQ-019
@@ -438,7 +438,7 @@ rules:
     risk: HIGH
     source_references:
       - "README.md:141-150"
-      - "create-pr-cd_SKILL.md:97-118"
+      - "SKILL.md:95-115"
       - "scripts/generate_tss_pr_ecc.py:28-38"
     acceptance_question_ids:
       - AQ-001
