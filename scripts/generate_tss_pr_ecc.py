@@ -400,16 +400,6 @@ def determine_ti_antenna_category(ne_size, fe_size):
     return category, remark, chosen_size
 
 
-def is_mw_reroute_row(row):
-    """
-    Determine if a TI row should be processed as MW Reroute.
-    This function is used by the TI matching logic and checks the Tx SOW field,
-    NOT the TX Upgrade Scope (which is only relevant for TSS MW New Link / Reroute).
-    """
-    sow = str(row.get('Tx SOW', '')).strip().lower()
-    # The SOW may contain "MW New Link / Reroute" or similar; we only care about "reroute"
-    return "mw" in sow and 'reroute' in sow
-
 
 def get_text_value(row, column):
     value = row.get(column, '')
