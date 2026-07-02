@@ -23,6 +23,8 @@ import csv
 from geography_resolver import GeographyResolver
 from pr_helpers import (
     normalize_pbom_code,
+    normalize_ti_sow,
+    ti_sow_matches_model,
     is_mw_reroute_row,
     parse_mw_new_link_reroute,
     filter_tss_mw_new_link_reroute_items,
@@ -682,21 +684,15 @@ def ti_model_requires_antenna(sow, ti_models):
     of universally mandatory.
     """
 
-    sow_upper = str(sow).strip().upper()
+    sow_upper = normalize_ti_sow(sow)
+
+    if not sow_upper:
+        return False
 
     candidates = []
 
     for item in ti_models:
-        item_sow = str(item["SOW"]).strip().upper()
-
-        if (
-            item["Is_Mandatory"]
-            and (
-                item_sow == sow_upper
-                or item_sow in sow_upper
-                or sow_upper in item_sow
-            )
-        ):
+        if item["Is_Mandatory"] and ti_sow_matches_model(sow_upper, item.get("SOW", "")):
             candidates.append(item)
 
     for item in candidates:
@@ -851,11 +847,12 @@ def is_mw_hardware_cutover_item(item):
 
 
 def match_ti_models(sow, antenna_category, chosen_size, region, ti_models, row=None, resolver=None):
-    sow_upper = sow.upper()
+    sow_upper = normalize_ti_sow(sow)
+    if not sow_upper:
+        return [], False
     candidates = []
     for item in ti_models:
-        item_sow_upper = item['SOW'].upper()
-        if item_sow_upper == sow_upper or item_sow_upper in sow_upper or sow_upper in item_sow_upper:
+        if ti_sow_matches_model(sow_upper, item.get('SOW', '')):
             if item['Is_Mandatory']:
                 if not is_mw_hardware_cutover_item(item):
                      candidates.append(item)
@@ -1072,6 +1069,16 @@ if ti_models:
             ti_sow_groups[sow] = []
         ti_sow_groups[sow].append(item)
 
+
+def get_ti_sow_matches(sow, ti_models):
+    normalized_sow = normalize_ti_sow(sow)
+    if not normalized_sow:
+        return []
+    return [
+        item for item in ti_models
+        if ti_sow_matches_model(normalized_sow, item.get('SOW', ''))
+    ]
+
     print(f"[OK] Found {len(ti_sow_groups)} unique TI SOWs:")
     for sow in sorted(ti_sow_groups.keys()):
         mandatory_count = len([x for x in ti_sow_groups[sow] if x['Is_Mandatory']])
@@ -1253,7 +1260,7 @@ for idx in range(len(candidates)):
                 remarks = 'REVIEW_REQUIRED' if not remarks else f"{remarks}; REVIEW_REQUIRED"
 
             if not matched_items:
-                sow_matches = [m for m in ti_models if sow.upper() in m['SOW'].upper() or m['SOW'].upper() in sow.upper()]
+                sow_matches = get_ti_sow_matches(sow, ti_models)
                 if not sow_matches:
                     unmatched_reason = make_review_reason(
                         'NO_MATCHING_TI_PR_MODEL_ITEM',
@@ -1322,7 +1329,7 @@ for idx in range(len(candidates)):
                     unmatched_reason = make_route_review_reason(err, row)
                 else:
                     # Determine the reason for no matching items
-                    sow_matches = [m for m in ti_models if sow.upper() in m['SOW'].upper() or m['SOW'].upper() in sow.upper()]
+                    sow_matches = get_ti_sow_matches(sow, ti_models)
                     if not sow_matches:
                         unmatched_reason = make_review_reason(
                             'NO_MATCHING_TI_PR_MODEL_ITEM',

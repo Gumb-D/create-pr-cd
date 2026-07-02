@@ -8,7 +8,7 @@ from decimal import Decimal, InvalidOperation
 import math
 import numbers
 import re
-from typing import Dict, List, Tuple, Optional, Any
+from typing import Dict, List, Tuple, Optional, Any, Iterable
 
 
 def normalize_pbom_code(value: Any) -> str:
@@ -50,6 +50,80 @@ def normalize_pbom_code(value: Any) -> str:
         return format(decimal_value.quantize(Decimal('1')), 'f')
 
     return format(decimal_value.normalize(), 'f')
+
+
+def normalize_ti_sow(value: Any) -> str:
+    """
+    Normalize TI SOW text into a canonical uppercase form.
+
+    Matching intentionally allows only exact canonical equality with harmless
+    case and whitespace variation. Blank, NaN-like, and invalid values
+    normalize to an empty string.
+    """
+    if value is None:
+        return ''
+
+    if isinstance(value, str):
+        candidate = value.strip()
+    elif isinstance(value, numbers.Real):
+        if math.isnan(value) or not math.isfinite(value):
+            return ''
+        candidate = str(value).strip()
+    else:
+        candidate = str(value).strip()
+
+    if not candidate or candidate.lower() in {'nan', '<na>'}:
+        return ''
+
+    return ' '.join(candidate.split()).upper()
+
+
+def _normalize_ti_sow_alias_map(alias_map: Optional[Dict[str, Iterable[str]]]) -> Dict[str, set[str]]:
+    normalized: Dict[str, set[str]] = {}
+    if not alias_map:
+        return normalized
+
+    for raw_input, raw_aliases in alias_map.items():
+        normalized_input = normalize_ti_sow(raw_input)
+        if not normalized_input:
+            continue
+        aliases = {
+            alias
+            for alias in (normalize_ti_sow(value) for value in raw_aliases)
+            if alias
+        }
+        if aliases:
+            normalized[normalized_input] = aliases
+
+    return normalized
+
+
+TI_SOW_ALIAS_MAP: Dict[str, set[str]] = _normalize_ti_sow_alias_map({})
+
+
+def ti_sow_matches_model(
+    input_sow: Any,
+    model_sow: Any,
+    alias_map: Optional[Dict[str, Iterable[str]]] = None,
+) -> bool:
+    """
+    Return True only when a TI input SOW canonically matches a model SOW.
+
+    Matching is strict exact equality after normalization, with optional
+    explicit alias support if real model data ever requires it.
+    """
+    normalized_input = normalize_ti_sow(input_sow)
+    normalized_model = normalize_ti_sow(model_sow)
+
+    if not normalized_input or not normalized_model:
+        return False
+
+    if normalized_input == normalized_model:
+        return True
+
+    normalized_aliases = TI_SOW_ALIAS_MAP if alias_map is None else _normalize_ti_sow_alias_map(alias_map)
+    allowed_aliases = normalized_aliases.get(normalized_input, set())
+    return normalized_model in allowed_aliases
 
 
 def is_mw_reroute_row(row: Dict[str, Any]) -> bool:
