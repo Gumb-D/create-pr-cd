@@ -148,6 +148,17 @@ class TestTSSFiltering(unittest.TestCase):
 
         self.assertIn('350000062773', pboms)
         self.assertNotIn('350000062776', pboms)
+
+        # Check PBOM 350000589343: should have quantity 1.0 (New Link)
+        qty_343 = [item['Quantity'] for item in result if item['PBOM_Code'] == '350000589343']
+        self.assertIn(1.0, qty_343)
+        self.assertNotIn(1.5, qty_343)
+
+        # Check PBOM 350000589344: should have quantity 1.0 (New Link)
+        qty_344 = [item['Quantity'] for item in result if item['PBOM_Code'] == '350000589344']
+        self.assertIn(1.0, qty_344)
+        self.assertNotIn(1.5, qty_344)
+
         self.assertFalse(has_duplicate_pbom(result))
 
     def test_scenario_3_reroute_non_los_with_dismantle(self):
@@ -162,9 +173,17 @@ class TestTSSFiltering(unittest.TestCase):
 
         self.assertIn('350000062773', pboms)
         self.assertNotIn('350000062776', pboms)
+
+        # Check PBOM 350000589343: should have quantity 1.5 (Reroute)
         qty_343 = [item['Quantity'] for item in result if item['PBOM_Code'] == '350000589343']
         self.assertIn(1.5, qty_343)
         self.assertNotIn(1.0, qty_343)
+
+        # Check PBOM 350000589344: should have quantity 1.5 (Reroute)
+        qty_344 = [item['Quantity'] for item in result if item['PBOM_Code'] == '350000589344']
+        self.assertIn(1.5, qty_344)
+        self.assertNotIn(1.0, qty_344)
+
         self.assertFalse(has_duplicate_pbom(result))
 
     def test_scenario_4_reroute_with_los_with_dismantle(self):
@@ -179,9 +198,17 @@ class TestTSSFiltering(unittest.TestCase):
 
         self.assertNotIn('350000062773', pboms)
         self.assertIn('350000062776', pboms)
+
+        # Check PBOM 350000589343: should have quantity 1.5 (Reroute)
         qty_343 = [item['Quantity'] for item in result if item['PBOM_Code'] == '350000589343']
         self.assertIn(1.5, qty_343)
         self.assertNotIn(1.0, qty_343)
+
+        # Check PBOM 350000589344: should have quantity 1.5 (Reroute)
+        qty_344 = [item['Quantity'] for item in result if item['PBOM_Code'] == '350000589344']
+        self.assertIn(1.5, qty_344)
+        self.assertNotIn(1.0, qty_344)
+
         self.assertFalse(has_duplicate_pbom(result))
 
     def test_remarks_exclusion_new_link_excludes_reroute_remark(self):
@@ -278,27 +305,4 @@ class TestLOSDetection(unittest.TestCase):
 
     def test_los_site_detection(self):
         """Site IDs containing '_LOS' (case-insensitive) should be detected."""
-        tss_models = [
-            {'SOW': 'MW New Link / Reroute', 'PBOM_Code': '350000062776', 'Description': 'LOS Survey LOS', 'Unit': 'Each', 'Quantity': 1, 'Is_Mandatory': True, 'Remarks': ''},
-        ]
-
-        # Non-LOS site
-        result = select_tss_items_for_site('B00256', 'MW New Link / Reroute', 'dismantle something', tss_models)
-        self.assertEqual(len(result), 0)  # Should exclude 350000062776
-
-        # LOS site
-        result = select_tss_items_for_site('SITE_LOS_002', 'MW New Link / Reroute', 'dismantle something', tss_models)
-        self.assertEqual(len(result), 1)
-
-    def test_case_insensitive_los_detection(self):
-        """LOS detection should be case-insensitive."""
-        tss_models = [
-            {'SOW': 'MW New Link / Reroute', 'PBOM_Code': '350000062776', 'Description': 'LOS Survey LOS', 'Unit': 'Each', 'Quantity': 1, 'Is_Mandatory': True, 'Remarks': ''},
-        ]
-
-        result = select_tss_items_for_site('site_los_001', 'MW New Link / Reroute', 'dismantle', tss_models)
-        self.assertEqual(len(result), 1)
-
-
-if __name__ == '__main__':
-    unittest.main(verbosity=2)
+        tss_mod
