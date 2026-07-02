@@ -1,0 +1,369 @@
+knowledge_base:
+  id: PR-CREATOR-KB
+  title: CelcomDigi TX PR Creator Knowledge Base
+  version: 0.1.0
+  status: BASELINE_EXTRACTED
+  scope: TSS and TI runtime; Planning and Operation Backoffice documented as future scope
+  generated_from_branch: main
+  governance_owner_role: TX Program / Business Rule Owner
+  technical_owner_role: PR Creator Maintainer
+  last_reviewed: "2026-07-02"
+
+enums:
+  knowledge_status:
+    - EXTRACTED
+    - VERIFIED
+    - APPROVED
+    - DEPRECATED
+  runtime_status:
+    - ACTIVE
+    - PARTIAL
+    - DOCUMENTED_ONLY
+    - UNKNOWN
+  risk_levels:
+    - LOW
+    - MEDIUM
+    - HIGH
+    - CRITICAL
+
+rules:
+  - id: PRC-CLI-001
+    title: Runtime scope boundary
+    domain: runtime
+    knowledge_status: VERIFIED
+    runtime_status: ACTIVE
+    statement: "The current CLI accepts only TSS and TI scope values."
+    inputs:
+      - --scope
+    expected_outcome: "Reject unsupported scopes at argument parsing."
+    risk: LOW
+    source_references:
+      - "scripts/generate_tss_pr_ecc.py:28-38"
+      - "README.md:93-98"
+    acceptance_question_ids:
+      - AQ-001
+
+  - id: PRC-ELIG-001
+    title: TSS PR eligibility
+    domain: eligibility
+    knowledge_status: EXTRACTED
+    runtime_status: PARTIAL
+    statement: "Generate TSS only when a TSS subcontractor is present and no existing TSS PR status or number is present."
+    inputs:
+      - "SubCon - TSS Team"
+      - "TSS PR status / PR number field"
+    expected_outcome: "Eligible site-scope combinations proceed to TSS model matching; existing PRs are skipped."
+    risk: HIGH
+    source_references:
+      - "create-pr-cd_SKILL.md:151-162"
+    acceptance_question_ids:
+      - AQ-002
+      - AQ-003
+
+  - id: PRC-ELIG-002
+    title: TI PR eligibility
+    domain: eligibility
+    knowledge_status: EXTRACTED
+    runtime_status: PARTIAL
+    statement: "Generate TI only when a TI subcontractor is present and no existing TI PR status or number is present."
+    inputs:
+      - "SubCon - TI Team"
+      - "TI PR status / PR number field"
+    expected_outcome: "Eligible site-scope combinations proceed to TI model matching; existing PRs are skipped."
+    risk: HIGH
+    source_references:
+      - "create-pr-cd_SKILL.md:163-172"
+    acceptance_question_ids:
+      - AQ-004
+      - AQ-003
+
+  - id: PRC-DUP-001
+    title: Duplicate PR prevention
+    domain: eligibility
+    knowledge_status: EXTRACTED
+    runtime_status: ACTIVE
+    statement: "Do not generate the same site and scope when a PR number or status already exists; record the skip reason."
+    inputs:
+      - "Site identifier"
+      - "Scope"
+      - "Existing PR status / PR number"
+    expected_outcome: "The site-scope pair is skipped and traceable in the processing summary."
+    risk: CRITICAL
+    source_references:
+      - "create-pr-cd_SKILL.md:199-210"
+      - "README.md:156-164"
+    acceptance_question_ids:
+      - AQ-003
+
+  - id: PRC-SOW-001
+    title: Primary Tx SOW selection
+    domain: classification
+    knowledge_status: EXTRACTED
+    runtime_status: UNKNOWN
+    statement: "When multiple SOW keywords occur in Tx SOW, use the first identified SOW keyword and do not generate secondary SOWs."
+    inputs:
+      - "Tx SOW"
+    expected_outcome: "One primary SOW is selected for the current scope."
+    risk: HIGH
+    source_references:
+      - "create-pr-cd_SKILL.md:230-249"
+    acceptance_question_ids:
+      - AQ-005
+
+  - id: PRC-MODEL-001
+    title: TSS PR model matching
+    domain: matching
+    knowledge_status: EXTRACTED
+    runtime_status: PARTIAL
+    statement: "Match TSS by primary Tx SOW only; generate mandatory items only; set quantity to 1 per site per matched mandatory item."
+    inputs:
+      - "Primary Tx SOW"
+      - "TSS PR Model rows"
+    expected_outcome: "An unambiguous mandatory TSS model set is emitted."
+    exception: "Multiple matching models must be REVIEW_REQUIRED."
+    risk: HIGH
+    source_references:
+      - "create-pr-cd_SKILL.md:251-274"
+      - "README.md:177-186"
+    acceptance_question_ids:
+      - AQ-006
+      - AQ-007
+
+  - id: PRC-MODEL-002
+    title: TI PR model matching
+    domain: matching
+    knowledge_status: EXTRACTED
+    runtime_status: ACTIVE
+    statement: "Match TI by primary Tx SOW plus normalized antenna category; generate mandatory items only; set quantity to 1 per site per matched mandatory item."
+    inputs:
+      - "Primary Tx SOW"
+      - "MW Config Antenna Size NE"
+      - "MW Config Antenna Size FE"
+      - "TI PR Model rows"
+    expected_outcome: "An unambiguous mandatory TI model set is emitted."
+    exception: "No safe match or multiple matching model groups must be REVIEW_REQUIRED."
+    risk: CRITICAL
+    source_references:
+      - "create-pr-cd_SKILL.md:275-318"
+      - "scripts/generate_tss_pr_ecc.py:105-134"
+      - "README.md:154-164"
+    acceptance_question_ids:
+      - AQ-008
+      - AQ-009
+      - AQ-010
+
+  - id: PRC-ANT-001
+    title: TI antenna size selection
+    domain: classification
+    knowledge_status: EXTRACTED
+    runtime_status: ACTIVE
+    statement: "Where NE and FE sizes are present, use the larger normalized size. Missing either side must be treated as review-required."
+    inputs:
+      - "MW Config Antenna Size NE"
+      - "MW Config Antenna Size FE"
+    expected_outcome: "A chosen size and category are produced only with a traceable review state for incomplete data."
+    risk: CRITICAL
+    source_references:
+      - "create-pr-cd_SKILL.md:285-295"
+      - "scripts/generate_tss_pr_ecc.py:93-134"
+    acceptance_question_ids:
+      - AQ-008
+      - AQ-009
+
+  - id: PRC-ANT-002
+    title: Runtime antenna category thresholds
+    domain: classification
+    knowledge_status: VERIFIED
+    runtime_status: ACTIVE
+    statement: "Runtime category thresholds are <=0.6m, <=1.2m, <=1.8m, <=2.4m, otherwise an explicit size category."
+    inputs:
+      - "Chosen normalized antenna size"
+    expected_outcome: "Categories are 0.3/0.6m, 0.9/1.2m, 1.8m, 2.4m, or <size>m."
+    risk: HIGH
+    source_references:
+      - "scripts/generate_tss_pr_ecc.py:121-134"
+    acceptance_question_ids:
+      - AQ-010
+    notes: "The skill document's category wording differs; see KB-DIV-002."
+
+  - id: PRC-SEL-001
+    title: Mandatory line-item selection
+    domain: matching
+    knowledge_status: EXTRACTED
+    runtime_status: PARTIAL
+    statement: "Automatically generate only mandatory PR model line items. Do not auto-select optional, choose-one, or transportation items unless mandatory and deterministic."
+    inputs:
+      - "PR Model mandatory flag / group"
+    expected_outcome: "Only deterministic mandatory rows are produced."
+    exception: "An unresolved mandatory choose-one group must be REVIEW_REQUIRED."
+    risk: CRITICAL
+    source_references:
+      - "create-pr-cd_SKILL.md:357-367"
+      - "README.md:158-162"
+    acceptance_question_ids:
+      - AQ-007
+      - AQ-011
+
+  - id: PRC-TI-001
+    title: MW Reroute dual install and dismantle logic
+    domain: matching
+    knowledge_status: EXTRACTED
+    runtime_status: ACTIVE
+    statement: "MW Reroute requires separately controlled install and dismantle matching; missing or ambiguous antenna data must be review-required."
+    inputs:
+      - "Tx SOW"
+      - "Antenna information"
+      - "TI PR Model rows"
+    expected_outcome: "Both required components are emitted only when safely matched."
+    risk: CRITICAL
+    source_references:
+      - "README.md:158-163"
+      - "scripts/generate_tss_pr_ecc.py:151-156"
+    acceptance_question_ids:
+      - AQ-012
+
+  - id: PRC-TI-002
+    title: MW Re-engineering manual review boundary
+    domain: review
+    knowledge_status: EXTRACTED
+    runtime_status: ACTIVE
+    statement: "MW Re-engineering remains REVIEW_REQUIRED until business rules are confirmed."
+    inputs:
+      - "Tx SOW"
+    expected_outcome: "No automatic PR line is selected for MW Re-engineering."
+    risk: CRITICAL
+    source_references:
+      - "README.md:161-164"
+      - "create-pr-cd_SKILL.md:137-149"
+    acceptance_question_ids:
+      - AQ-013
+
+  - id: PRC-MAP-001
+    title: Region-to-purchasing-area mapping
+    domain: mapping
+    knowledge_status: EXTRACTED
+    runtime_status: ACTIVE
+    statement: "Purchasing Area is resolved from a region mapping loaded from the active mapping reference."
+    inputs:
+      - "Region"
+      - "Active mapping reference"
+    expected_outcome: "Purchasing Area is populated or review-required when unavailable."
+    risk: HIGH
+    source_references:
+      - "README.md:188-192"
+      - "scripts/generate_tss_pr_ecc.py:73-93"
+      - "create-pr-cd_SKILL.md:394-403"
+    acceptance_question_ids:
+      - AQ-014
+    notes: "Documented reference source and runtime reference source currently differ; see KB-DIV-001."
+
+  - id: PRC-MAP-002
+    title: Subcontractor-to-contract mapping
+    domain: mapping
+    knowledge_status: EXTRACTED
+    runtime_status: ACTIVE
+    statement: "Contract number is resolved from a subcontractor mapping. The current runtime has fuzzy matching with a 0.6 similarity threshold."
+    inputs:
+      - "Normalized subcontractor name"
+      - "Active subcontractor mapping reference"
+    expected_outcome: "A traceable contract mapping is selected."
+    risk: CRITICAL
+    source_references:
+      - "README.md:188-192"
+      - "scripts/generate_tss_pr_ecc.py:95-137"
+      - "create-pr-cd_SKILL.md:380-403"
+    acceptance_question_ids:
+      - AQ-015
+    notes: "Whether fuzzy matches may be emitted without manual review needs an explicit business decision; see KB-DIV-003."
+
+  - id: PRC-OUT-001
+    title: ECC required fields and review-preserving output
+    domain: output
+    knowledge_status: EXTRACTED
+    runtime_status: PARTIAL
+    statement: "Output rows must populate the ECC template fields from site data, mapping and matched model. Missing mandatory data must retain the row and use REVIEW_REQUIRED in Remarks."
+    inputs:
+      - "ECC template"
+      - "Site data"
+      - "PR model"
+      - "Mapping reference"
+    expected_outcome: "A normal row has blank Remarks; incomplete rows remain visible with an explicit review reason."
+    risk: CRITICAL
+    source_references:
+      - "create-pr-cd_SKILL.md:405-431"
+      - "create-pr-cd_SKILL.md:422-427"
+      - "README.md:194-203"
+    acceptance_question_ids:
+      - AQ-016
+
+  - id: PRC-OUT-002
+    title: ECC grouping and split
+    domain: output
+    knowledge_status: EXTRACTED
+    runtime_status: ACTIVE
+    statement: "TSS and TI outputs are grouped by scope, subcontractor and region, with at most 30 unique Site IDs per output file."
+    inputs:
+      - "Scope"
+      - "Subcontractor"
+      - "Region"
+      - "Site ID"
+    expected_outcome: "Output groups are split into deterministic files when the 30-site limit is exceeded."
+    risk: HIGH
+    source_references:
+      - "create-pr-cd_SKILL.md:433-447"
+      - "README.md:115-120"
+      - "README.md:194-203"
+    acceptance_question_ids:
+      - AQ-017
+
+  - id: PRC-OUT-003
+    title: ECC output naming
+    domain: output
+    knowledge_status: EXTRACTED
+    runtime_status: ACTIVE
+    statement: "TSS and TI files use <Region>-<Subcon> TX Mini Project <Scope> PR <YYYYMMDD>.xlsx."
+    inputs:
+      - "Region"
+      - "Subcontractor"
+      - "Scope"
+      - "Execution date"
+    expected_outcome: "Each output file name identifies its group and scope."
+    risk: MEDIUM
+    source_references:
+      - "create-pr-cd_SKILL.md:449-471"
+      - "README.md:99-126"
+    acceptance_question_ids:
+      - AQ-018
+
+  - id: PRC-REV-001
+    title: Structured review-required reason
+    domain: review
+    knowledge_status: VERIFIED
+    runtime_status: ACTIVE
+    statement: "Review-required cases use a normalized reason code, description, required action and technical detail."
+    inputs:
+      - "Detected exception"
+    expected_outcome: "Review output is actionable rather than a silent zero-row or generic error."
+    risk: HIGH
+    source_references:
+      - "scripts/generate_tss_pr_ecc.py:145-218"
+      - "create-pr-cd_SKILL.md:477-504"
+    acceptance_question_ids:
+      - AQ-016
+      - AQ-019
+
+  - id: PRC-ROADMAP-001
+    title: Planning and Operation Backoffice scope roadmap
+    domain: roadmap
+    knowledge_status: EXTRACTED
+    runtime_status: DOCUMENTED_ONLY
+    statement: "Planning and Operation Backoffice are documented target scopes but are not available in the current CLI."
+    inputs: []
+    expected_outcome: "No production user assumes these scopes are executable until CLI, mappings, rules and tests are implemented."
+    risk: HIGH
+    source_references:
+      - "README.md:141-150"
+      - "create-pr-cd_SKILL.md:97-118"
+      - "scripts/generate_tss_pr_ecc.py:28-38"
+    acceptance_question_ids:
+      - AQ-001
