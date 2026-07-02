@@ -255,15 +255,29 @@ TSS does not require antenna size.
 TSS PR model matching key:
 
 ```text
-Tx SOW only
+1. Tx SOW
+2. TX Upgrade Scope (only for MW New Link / Reroute)
+3. Site ID (for LOS Survey selection in MW Reroute)
 ```
 
 Steps:
-
 1. Read primary SOW from `Tx SOW`.
-2. Match the primary SOW against the TSS model section in the PR model reference.
-3. Select only mandatory line items.
-4. Quantity is always `1` per site per matched mandatory line item.
+2. For MW New Link / Reroute SOW (exact pattern: "MW New Link / Reroute"), read `TX Upgrade Scope`. If the field contains "dismantle" (case insensitive), it is a MW Reroute; otherwise, it is a MW New Link. **This classification only applies to TSS MW New Link / Reroute**.
+3. Match mandatory line items from the TSS model section where the item's `SOW` matches the site's `Tx SOW` (case-insensitive partial match).
+4. For MW New Link / Reroute, apply **model-driven filtering** using the PR model's `Remarks` column:
+   - Items with Remarks "Reroute" are only selected for MW Reroute projects.
+   - Items with Remarks "New Link" are only selected for MW New Link projects.
+   - Items without Remarks (e.g., LOS Survey items) are subject to an additional selection rule below.
+5. **LOS Survey exception**: For PBOMs 350000062773 and 350000062776 (which typically have empty Remarks), selection depends on both `is_mw_reroute` and Site ID pattern:
+   - If MW New Link: always select **350000062773** (ignore _LOS pattern).
+   - If MW Reroute:
+     - Site ID contains "_LOS" (case-insensitive) → select **350000062776**.
+     - Site ID does NOT contain "_LOS" → select **350000062773**.
+6. For additional safety, verify quantity consistency (optional):
+   - For PBOMs 350000589343 and 350000589344, the quantity must be 1.5 hop if `is_mw_reroute` is True, otherwise 1.0 hop.
+7. If multiple mandatory items with identical SOW still match after filtering, mark as `REVIEW_REQUIRED`.
+
+**Important**: The `Remarks` column in the PR model is the primary filter for distinguishing Reroute vs New Link items (except the LOS Survey items). Do not rely on hardcoded PBOM checks alone.
 
 If multiple TSS models match the same SOW:
 
