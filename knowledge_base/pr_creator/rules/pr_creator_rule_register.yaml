@@ -190,7 +190,7 @@ rules:
     exception: "No safe strict SOW match or multiple matching model groups must be REVIEW_REQUIRED."
     risk: CRITICAL
     source_references:
-      - "create-pr-cd_SKILL.md:275-318"
+      - "VALIDATION_REPORT.md:26-43"
       - "scripts/pr_helpers.py:55-126"
       - "scripts/generate_tss_pr_ecc.py:678-716"
       - "scripts/generate_tss_pr_ecc.py:849-920"
@@ -216,7 +216,7 @@ rules:
     expected_outcome: "A chosen size and category are produced only when the matched model is antenna-dependent, with a traceable review state for incomplete data on those models. Antenna-independent models generate normally regardless of antenna input."
     risk: CRITICAL
     source_references:
-      - "create-pr-cd_SKILL.md:285-295"
+      - "VALIDATION_REPORT.md:33-43"
       - "scripts/generate_tss_pr_ecc.py:678-716"
       - "scripts/generate_tss_pr_ecc.py:1279-1321"
       - "tests/test_ti_sow_matching.py:120-255"
