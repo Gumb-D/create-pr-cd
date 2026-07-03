@@ -161,11 +161,11 @@ rules:
     domain: matching
     knowledge_status: EXTRACTED
     runtime_status: PARTIAL
-    statement: "Match TSS by primary Tx SOW only; generate mandatory items only; set quantity to 1 per site per matched mandatory item."
+    statement: "Match TSS by primary Tx SOW only; generate mandatory items only. Match mandatory TSS items using the applicable TSS model logic and preserve the model-defined quantity. SOW-specific selection and quantity overrides, including MW New Link / Reroute controls, are governed by PRC-TSS-001."
     inputs:
       - "Primary Tx SOW"
       - "TSS PR Model rows"
-    expected_outcome: "An unambiguous mandatory TSS model set is emitted."
+    expected_outcome: "An unambiguous mandatory TSS model set is emitted with the model-defined quantity preserved for each item; this is not always quantity 1 where a SOW-specific override such as PRC-TSS-001 applies."
     exception: "Multiple matching models must be REVIEW_REQUIRED."
     risk: HIGH
     source_references:

@@ -48,9 +48,9 @@ questions:
       - PRC-SOW-001
 
   - id: AQ-006
-    title: TSS model produces mandatory items with quantity one
-    scenario: "One eligible TSS site has a single matching model group."
-    expected: "Every generated mandatory item has Quantity 1 and no optional item is included."
+    title: Standard TSS model preserves mandatory model quantities
+    scenario: "One eligible TSS site has a single matching mandatory model group that is not subject to a SOW-specific override such as MW New Link / Reroute."
+    expected: "Generated mandatory items retain the applicable PR Model quantity; for this standard fixture the quantity is 1, and no optional item is included."
     priority: P0
     rule_ids:
       - PRC-MODEL-001
