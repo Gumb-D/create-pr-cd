@@ -19,7 +19,6 @@
     "site_name": {"required": false, "source_candidates": [], "transforms": ["trim"]},
     "du_key": {"required": false, "source_candidates": [], "transforms": ["trim"]},
     "tx_sow_raw": {"required": true, "source_candidates": [], "transforms": ["trim"]},
-    "tx_sow_normalized": {"required": true, "source_candidates": [], "transforms": ["trim"]},
     "tx_upgrade_scope_raw": {"required": false, "source_candidates": [], "transforms": ["trim"]},
     "region": {"required": true, "source_candidates": [], "transforms": ["trim"]},
     "state": {"required": false, "source_candidates": [], "transforms": ["trim"]},
@@ -42,6 +41,7 @@
     "require_evidence_for_every_canonical_field": true,
     "profile_notes": [
       "No original iEPMS TX Mini export fixture has yet established these source fingerprints.",
+      "Tx SOW normalization is a controlled derived field and is not a separate source-column mapping.",
       "This profile is not production-ready and must never enable ECC generation."
     ]
   }
