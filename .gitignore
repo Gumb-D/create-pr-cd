@@ -16,5 +16,8 @@ output_tss_test/
 **/OPENCLAW_SKILL_DEVELOPMENT_GUIDELINE*.md
 output_ti_test/
 
+# Local-only iEPMS browser-session synchronization. Never commit credentials.
+scripts/api_auth.json
+
 __pycache__/
 *.pyc
