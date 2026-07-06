@@ -1,0 +1,209 @@
+acceptance_suite:
+  id: PRC-ACCEPTANCE-v0
+  status: SPECIFICATION_ONLY
+  purpose: "Business questions that will become deterministic regression fixtures before rules are moved from code to configuration."
+
+questions:
+  - id: AQ-001
+    title: Unsupported scope is rejected
+    scenario: "Run the CLI with Planning or Operation Backoffice."
+    expected: "Argument parsing rejects the scope and states that only TSS and TI are currently supported."
+    priority: P1
+    rule_ids:
+      - PRC-CLI-001
+      - PRC-ROADMAP-001
+
+  - id: AQ-002
+    title: TSS site with no subcontractor is not eligible
+    scenario: "A site has blank SubCon - TSS Team and no existing TSS PR."
+    expected: "No TSS ECC line is generated and the reason is traceable."
+    priority: P1
+    rule_ids:
+      - PRC-ELIG-001
+
+  - id: AQ-003
+    title: Existing PR prevents regeneration
+    scenario: "A TSS or TI eligible site already contains a PR number or status for the same scope."
+    expected: "No duplicate ECC line is generated and the processing summary records the skip."
+    priority: P0
+    rule_ids:
+      - PRC-ELIG-001
+      - PRC-ELIG-002
+      - PRC-DUP-001
+
+  - id: AQ-004
+    title: TI site with no subcontractor is not eligible
+    scenario: "A site has blank SubCon - TI Team and no existing TI PR."
+    expected: "No TI ECC line is generated and the reason is traceable."
+    priority: P1
+    rule_ids:
+      - PRC-ELIG-002
+
+  - id: AQ-005
+    title: Multiple SOW terms select only one primary SOW
+    scenario: "Tx SOW includes MW Swap and MW Decom."
+    expected: "Exactly one approved primary SOW is used; no secondary scope line is emitted."
+    priority: P0
+    rule_ids:
+      - PRC-SOW-001
+
+  - id: AQ-006
+    title: Standard TSS model preserves mandatory model quantities
+    scenario: "One eligible TSS site has a single matching mandatory model group that is not subject to a SOW-specific override such as MW New Link / Reroute."
+    expected: "Generated mandatory items retain the applicable PR Model quantity; for this standard fixture the quantity is 1, and no optional item is included."
+    priority: P0
+    rule_ids:
+      - PRC-MODEL-001
+      - PRC-SEL-001
+
+  - id: AQ-007
+    title: Ambiguous mandatory model selection is review-required
+    scenario: "Two TSS or TI mandatory model groups match the same evaluated key."
+    expected: "No arbitrary model is selected; output is REVIEW_REQUIRED with a specific code."
+    priority: P0
+    rule_ids:
+      - PRC-MODEL-001
+      - PRC-MODEL-002
+      - PRC-SEL-001
+
+  - id: AQ-008
+    title: TI antenna uses the larger size when both sides are complete
+    scenario: "NE is 1.2m and FE is 1.8m."
+    expected: "The selected category is based on 1.8m and the difference is traceable."
+    priority: P0
+    rule_ids:
+      - PRC-ANT-001
+      - PRC-ANT-002
+      - PRC-MODEL-002
+
+  - id: AQ-009
+    title: Incomplete antenna data blocks only antenna-required TI models
+    scenario: "The strictly matched mandatory TI model contains an antenna-dependent choose-one group (for example MW Parallel Link) and one antenna side is blank."
+    expected: "The result is REVIEW_REQUIRED, not a normal generated TI model line. This question applies only to antenna-required TI models; antenna-independent SOWs are covered by AQ-020."
+    priority: P0
+    rule_ids:
+      - PRC-ANT-001
+      - PRC-MODEL-002
+
+  - id: AQ-010
+    title: PR Model category labels align with runtime thresholds
+    scenario: "Test antenna sizes 0.3m, 0.6m, 0.9m, 1.2m, 1.8m and 2.4m against the active PR Model."
+    expected: "Each size has exactly one approved category and compatible model mapping."
+    priority: P0
+    rule_ids:
+      - PRC-ANT-002
+
+  - id: AQ-011
+    title: Unresolved choose-one groups require review
+    scenario: "A mandatory PR model group has more than one eligible alternative and no deterministic selector."
+    expected: "The generator reports REVIEW_REQUIRED and does not arbitrarily select an item."
+    priority: P0
+    rule_ids:
+      - PRC-SEL-001
+
+  - id: AQ-012
+    title: MW Reroute output contains validated install and dismantle logic
+    scenario: "A valid MW Reroute site has clear install and decom antenna information."
+    expected: "Both approved components are generated; missing or ambiguous values produce review-required."
+    priority: P0
+    rule_ids:
+      - PRC-TI-001
+
+  - id: AQ-013
+    title: MW Re-engineering remains blocked from automatic generation
+    scenario: "Tx SOW is MW Re-engineering."
+    expected: "No automatic normal line is emitted; item is review-required."
+    priority: P0
+    rule_ids:
+      - PRC-TI-002
+
+  - id: AQ-014
+    title: Region mapping is deterministic and versioned
+    scenario: "Known and unknown region values are processed."
+    expected: "Known values resolve to the approved Purchasing Area; unknown values are review-required."
+    priority: P0
+    rule_ids:
+      - PRC-MAP-001
+
+  - id: AQ-015
+    title: Fuzzy subcontractor mapping cannot silently misassign a contract
+    scenario: "A subcontractor name is similar to more than one reference value."
+    expected: "The result follows the approved fuzzy-match policy, exposes score and matched target, and defaults to review when confidence is insufficient."
+    priority: P0
+    rule_ids:
+      - PRC-MAP-002
+
+  - id: AQ-016
+    title: Missing mandatory ECC value remains visible for review
+    scenario: "A required output field such as Contract Number or Purchasing Area cannot be resolved."
+    expected: "The output row is retained and Remarks identifies the missing field and action."
+    priority: P0
+    rule_ids:
+      - PRC-OUT-001
+      - PRC-REV-001
+
+  - id: AQ-017
+    title: Output group respects the 30 unique Site ID limit
+    scenario: "One scope, subcontractor and region group contains 31 unique Site IDs."
+    expected: "The generator creates two deterministic output files; neither contains more than 30 unique Site IDs."
+    priority: P1
+    rule_ids:
+      - PRC-OUT-002
+
+  - id: AQ-018
+    title: Output filename identifies group and scope
+    scenario: "Generate a normal TSS or TI output."
+    expected: "Filename follows the approved Region-Subcontractor-Scope-date format."
+    priority: P2
+    rule_ids:
+      - PRC-OUT-003
+
+  - id: AQ-019
+    title: Review reason is structured and actionable
+    scenario: "Trigger a known review-required condition such as missing antenna data."
+    expected: "Reason code, description, action and technical detail are populated consistently."
+    priority: P1
+    rule_ids:
+      - PRC-REV-001
+
+  - id: AQ-020
+    title: Antenna-independent TI models generate normally with blank or one-sided antenna input
+    scenario: "A site has Tx SOW 'BBU Patching' or 'MW IDU Patching' with MW Config Antenna Size NE and FE both blank, or only one side populated."
+    expected: "A normal TI ECC line is generated with no REVIEW_REQUIRED remark, because the strictly matched mandatory model has no antenna-dependent choose-one group."
+    priority: P0
+    rule_ids:
+      - PRC-ANT-001
+      - PRC-MODEL-002
+
+  - id: AQ-021
+    title: Strict TI SOW matching rejects supersets and normalizes case and whitespace
+    scenario: "Tx SOW values include exact matches with extra whitespace and case variation (for example '  bbu   patching  '), plus unsupported supersets such as 'BBU Patching Extended' and 'MW Parallel Link Extended'."
+    expected: "Case- and whitespace-normalized exact matches succeed; supersets and substrings never match and are REVIEW_REQUIRED with a matching-not-found reason."
+    priority: P0
+    rule_ids:
+      - PRC-MODEL-002
+
+  - id: AQ-022
+    title: Excel float-formatted PBOM values canonicalize through the real generator path
+    scenario: "A PR Model workbook stores a PBOM code as an Excel-derived float such as 350000062773.0."
+    expected: "The generated ECC output emits the canonical integer-form PBOM code with no residual '.0' and no digit loss."
+    priority: P0
+    rule_ids:
+      - PRC-DATA-001
+
+  - id: AQ-023
+    title: MW New Link / Reroute survey PBOM, quantity, and duplicate controls are deterministic
+    scenario: "Generate TSS output for MW New Link and MW Reroute sites, including a Reroute site with a '_LOS' site ID."
+    expected: "MW New Link selects PBOM 350000062773 with quantity 1.0 on controlled items; MW Reroute selects 350000062776 only for '_LOS' sites and otherwise 350000062773, with quantity 1.5 on controlled items; no PBOM code is duplicated in the output."
+    priority: P0
+    rule_ids:
+      - PRC-TSS-001
+      - PRC-DATA-001
+
+  - id: AQ-024
+    title: ECC Column O carries the source Tx SOW while Column K and Column P keep their intended values
+    scenario: "Generate a normal TSS or TI ECC row for a site with a known Tx SOW."
+    expected: "Column K contains the matched PR Model description, Column O contains the exact original site Tx SOW, and Column P contains the resolved Contract Number."
+    priority: P1
+    rule_ids:
+      - PRC-OUT-004
