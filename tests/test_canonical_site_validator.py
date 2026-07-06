@@ -74,7 +74,7 @@ class TestCanonicalSiteValidator(unittest.TestCase):
         }
         gate = gate_canonical_site_record(record, draft_profile, scope="TI", dry_run=True)
         self.assertFalse(gate["allow_ecc_generation"])
-        self.assertEqual(gate["classification"], PR_INPUT_QUARANTED)
+        self.assertEqual(gate["classification"], PR_INPUT_QUARANTINED)
         self.assertEqual(gate_raw_iepms_export()["blocking_reasons"], ["RAW_IEPMS_EXPORT_DIRECT_ECC_PROHIBITED"])
 
     def test_changed_header_hash_is_quarantined_even_for_production_profile(self):
