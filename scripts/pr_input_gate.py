@@ -47,7 +47,7 @@ def gate_canonical_site_record(
     """Apply lifecycle, DU identity, header hash, and canonical contract controls."""
     if profile is None:
         result = {
-            "classification": PR_INPUT_QUARANTINED,
+            "classification": PR_INPUT_QUARANTED,
             "blocking_reasons": ["UNKNOWN_DU_PROFILE"],
             "warnings": [],
         }
@@ -73,7 +73,24 @@ def gate_canonical_site_record(
                 "warnings": ["Dry-run only; revalidate the DU profile before production use."] if dry_run else [],
             }
         else:
-            result = validate_canonical_site_record(record, scope)
+            evidence_fields = record.get("source_evidence", {}).get("fields", {})
+            unverified = []
+            if isinstance(evidence_fields, Mapping):
+                for field, evidence in evidence_fields.items():
+                    if not isinstance(evidence, Mapping):
+                        continue
+                    if evidence.get("mapping_status") == "UNVERIFIED":
+                        unverified.append(f"UNVERIFIED_SOURCE_MAPPING:{field}")
+                    if evidence.get("normalization_status") == "UNVERIFIED":
+                        unverified.append(f"UNVERIFIED_NORMALIZATION:{field}")
+            if unverified:
+                result = {
+                    "classification": PR_INPUT_QUARANTINED,
+                    "blocking_reasons": unverified,
+                    "warnings": [],
+                }
+            else:
+                result = validate_canonical_site_record(record, scope)
 
     updated = apply_validation_result(record, result)
     classification = result["classification"]
