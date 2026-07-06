@@ -99,6 +99,7 @@ def build_canonical_site_record(
             "source_header_fingerprint": deepcopy(source["fingerprint"]),
             "source_value": raw_value,
             "transformation": transformation,
+            "mapping_status": source.get("mapping_status", "UNVERIFIED"),
         }
 
     # The SOW normalizer remains a shared-engine concern. Preserve the raw value
@@ -112,7 +113,8 @@ def build_canonical_site_record(
             if raw_evidence:
                 record["source_evidence"]["fields"]["tx_sow_normalized"] = {
                     **raw_evidence,
-                    "transformation": "trim (unverified SOW normalization)",
+                    "transformation": "trim",
+                    "normalization_status": "UNVERIFIED",
                 }
 
     result = validate_canonical_site_record(record, scope)
