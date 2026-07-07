@@ -5,8 +5,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from canonical_site_validator import QUARANTINE_NO_ECC
-from du_export_adapter import build_canonical_site_record, resolve_profile_field_mappings
+from canonical_site_validator import QUARANTINE_NO_ECC, empty_canonical_site_record
+from du_export_adapter import (
+    PR_STATUS_EXISTS,
+    PR_STATUS_NONE,
+    PR_STATUS_NOT_REQUIRED,
+    build_canonical_site_record,
+    normalize_pr_reference_status,
+    resolve_profile_field_mappings,
+)
 from profile_du_export import fingerprint_key
 
 
@@ -87,6 +94,105 @@ class TestDuExportAdapter(unittest.TestCase):
         self.assertEqual(record["validation"]["mapping_version"], "test-mapping-v1")
         self.assertEqual(record["validation"]["pr_input_classification"], "PR_INPUT_INCOMPLETE")
         self.assertEqual(record["validation"]["output_decision"], QUARANTINE_NO_ECC)
+
+
+class TestPrReferenceStatusTransform(unittest.TestCase):
+    """Reference-presence rule approved by JJ on 2026-07-07."""
+
+    def test_non_blank_reference_means_pr_exists(self):
+        self.assertEqual(normalize_pr_reference_status("SQ202506180613-GTSB"), PR_STATUS_EXISTS)
+        self.assertEqual(normalize_pr_reference_status("  SQ202506160540-GCI  "), PR_STATUS_EXISTS)
+
+    def test_explicit_no_pr_required_marker(self):
+        self.assertEqual(
+            normalize_pr_reference_status("No PR required-Work at TSS only"), PR_STATUS_NOT_REQUIRED
+        )
+        self.assertEqual(normalize_pr_reference_status("NO PR REQUIRED"), PR_STATUS_NOT_REQUIRED)
+
+    def test_blank_and_nan_like_mean_no_pr(self):
+        self.assertEqual(normalize_pr_reference_status(""), PR_STATUS_NONE)
+        self.assertEqual(normalize_pr_reference_status("   "), PR_STATUS_NONE)
+        self.assertEqual(normalize_pr_reference_status(None), PR_STATUS_NONE)
+        self.assertEqual(normalize_pr_reference_status("nan"), PR_STATUS_NONE)
+
+    def test_transform_is_applied_through_profile_mapping_with_provenance(self):
+        status_fp = fp("SUBCON_PR_TSS")
+        profile = {
+            "profile_id": "test_profile",
+            "profile_version": "1.0.0",
+            "mapping_version": "test-mapping-v1",
+            "identity": {"project_key": "CelcomDigi_MW"},
+            "field_mapping": {
+                "existing_tss_pr_status": {"transforms": ["normalize_pr_reference_status"]},
+            },
+        }
+        resolved = {
+            "existing_tss_pr_status": {"status": "RESOLVED", "matches": [{"fingerprint": status_fp}]},
+        }
+        values = {fingerprint_key(status_fp): "SQ202506180613-GTSB"}
+        record = build_canonical_site_record(
+            values,
+            profile,
+            {"source_file_name": "source.xlsx", "source_file_hash": "hash", "header_hash": "header"},
+            scope="TSS",
+            resolved_mappings=resolved,
+        )
+        self.assertEqual(record["pr_context"]["existing_tss_pr_status"], PR_STATUS_EXISTS)
+        evidence = record["source_evidence"]["fields"]["existing_tss_pr_status"]
+        self.assertEqual(evidence["source_value"], "SQ202506180613-GTSB")
+        self.assertEqual(evidence["transformation"], "normalize_pr_reference_status")
+        # The transform never unlocks output by itself.
+        self.assertEqual(record["validation"]["output_decision"], QUARANTINE_NO_ECC)
+
+    def test_unknown_transform_still_fails_closed(self):
+        profile = {
+            "profile_id": "p",
+            "profile_version": "1",
+            "mapping_version": "m",
+            "field_mapping": {"site_code": {"transforms": ["invent_data"]}},
+        }
+        status_fp = fp("SITE_CODE")
+        resolved = {"site_code": {"status": "RESOLVED", "matches": [{"fingerprint": status_fp}]}}
+        with self.assertRaises(ValueError):
+            build_canonical_site_record(
+                {fingerprint_key(status_fp): "A0001"},
+                profile,
+                {},
+                scope="TSS",
+                resolved_mappings=resolved,
+            )
+
+
+class TestSubcontractorTssSchemaExtension(unittest.TestCase):
+    def test_canonical_record_carries_optional_subcontractor_tss(self):
+        record = empty_canonical_site_record()
+        self.assertIn("subcontractor_tss", record["pr_context"])
+        self.assertEqual(record["pr_context"]["subcontractor_tss"], "")
+
+    def test_subcontractor_tss_maps_through_adapter_with_provenance(self):
+        tss_fp = fp("SUBCON_TSS_TEAM")
+        profile = {
+            "profile_id": "test_profile",
+            "profile_version": "1.0.0",
+            "mapping_version": "test-mapping-v1",
+            "field_mapping": {"subcontractor_tss": {"transforms": ["trim"]}},
+        }
+        resolved = {"subcontractor_tss": {"status": "RESOLVED", "matches": [{"fingerprint": tss_fp}]}}
+        record = build_canonical_site_record(
+            {fingerprint_key(tss_fp): " GTSB "},
+            profile,
+            {"source_file_name": "source.xlsx", "source_file_hash": "hash", "header_hash": "header"},
+            scope="TSS",
+            resolved_mappings=resolved,
+        )
+        self.assertEqual(record["pr_context"]["subcontractor_tss"], "GTSB")
+        evidence = record["source_evidence"]["fields"]["subcontractor_tss"]
+        self.assertEqual(evidence["source_value"], " GTSB ")
+        # Optional field: its absence elsewhere must not change required-field rules.
+        self.assertNotIn(
+            "MISSING_PR_CRITICAL_FIELD:subcontractor_tss",
+            record["validation"]["blocking_reasons"],
+        )
 
 
 if __name__ == "__main__":

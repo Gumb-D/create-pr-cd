@@ -12,6 +12,28 @@ from canonical_site_validator import FIELD_PATHS, apply_validation_result, empty
 from profile_du_export import fingerprint_key
 
 
+PR_STATUS_EXISTS = "PR_EXISTS"
+PR_STATUS_NOT_REQUIRED = "NO_PR_REQUIRED"
+PR_STATUS_NONE = "NO_PR"
+
+_SUPPORTED_TRANSFORMS = {"trim", "uppercase", "parse_decimal", "normalize_pr_reference_status"}
+
+
+def normalize_pr_reference_status(value: Any) -> str:
+    """Reference-presence rule approved by JJ on 2026-07-07 for existing_*_pr_status.
+
+    The source columns carry PR references, not statuses: a non-blank reference
+    means a PR already exists (duplicate prevention must block), an explicit
+    "No PR required..." marker means no PR is needed, and blank means no PR yet.
+    """
+    text = "" if value is None else str(value).strip()
+    if not text or text.lower() in {"nan", "<na>"}:
+        return PR_STATUS_NONE
+    if text.lower().startswith("no pr required"):
+        return PR_STATUS_NOT_REQUIRED
+    return PR_STATUS_EXISTS
+
+
 def _apply_transforms(value: Any, transforms: list[str]) -> tuple[Any, str]:
     result = value
     applied = []
@@ -22,7 +44,9 @@ def _apply_transforms(value: Any, transforms: list[str]) -> tuple[Any, str]:
             result = result.strip().upper()
         elif transform == "parse_decimal" and result not in (None, ""):
             result = float(result)
-        elif transform not in {"trim", "uppercase", "parse_decimal"}:
+        elif transform == "normalize_pr_reference_status":
+            result = normalize_pr_reference_status(result)
+        elif transform not in _SUPPORTED_TRANSFORMS:
             raise ValueError(f"Unsupported foundation transform: {transform}")
         applied.append(transform)
     return result, "+".join(applied) if applied else "none"
