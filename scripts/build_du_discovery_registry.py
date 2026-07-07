@@ -148,7 +148,13 @@ def build_discovery_entry(profile_dir: Path) -> Dict[str, Any]:
 
 
 def build_discovery_registry(profile_root: Path) -> Dict[str, Any]:
-    entries = [build_discovery_entry(path) for path in sorted(profile_root.iterdir()) if path.is_dir()]
+    entries = [
+        build_discovery_entry(path)
+        for path in sorted(profile_root.iterdir())
+        # Only profiler artifact directories qualify; review packages and other
+        # local working folders under the same root are not DU export profiles.
+        if path.is_dir() and (path / "header_inventory.json").exists()
+    ]
     return {
         "schema_version": "1.0",
         "registry_type": "discovery_only",

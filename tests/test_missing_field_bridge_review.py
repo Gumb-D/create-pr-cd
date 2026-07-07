@@ -10,7 +10,9 @@ from build_missing_field_bridge_review import build_bridge_entry, build_bridge_r
 
 
 class TestMissingFieldBridgeReview(unittest.TestCase):
-    def test_tx_mini_bridge_prefers_tx_rollout_for_missing_pr_status_fields(self):
+    def test_tx_mini_bridge_is_empty_after_approved_pr_status_mappings(self):
+        # Since the 2026-07-07 approvals, TX Mini maps existing_*_pr_status from
+        # its own export, so it no longer needs cross-model donor fields.
         unresolved = json.loads(
             (ROOT / "config" / "registries" / "mw_du_unresolved_skill_field_review.yaml").read_text(encoding="utf-8")
         )
@@ -21,28 +23,19 @@ class TestMissingFieldBridgeReview(unittest.TestCase):
             (ROOT / "config" / "registries" / "mw_du_model_discovery_registry.yaml").read_text(encoding="utf-8")
         )
 
-        tx_entry = unresolved["entries"][0]
+        tx_entry = next(
+            entry for entry in unresolved["entries"] if entry.get("profile_id") == "tx_mini_pr_v1"
+        )
         bridge_entry = build_bridge_entry(tx_entry, grouping, discovery)
 
         self.assertEqual(bridge_entry["profile_id"], "tx_mini_pr_v1")
-        self.assertEqual(bridge_entry["profile_version"], "0.1.0")
-        self.assertEqual(bridge_entry["mapping_version"], "discovery-2026-07-06-tx-mini-v1")
+        self.assertEqual(bridge_entry["profile_version"], "0.2.0")
+        self.assertEqual(bridge_entry["mapping_version"], "approved-2026-07-07-tx-mini-v1")
         self.assertEqual(
             bridge_entry["observed_header_hash"],
             "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
         )
-        self.assertEqual(
-            bridge_entry["field_bridges"]["existing_tss_pr_status"]["best_source_export"]["du_model_name"],
-            "2023 TX Rollout",
-        )
-        self.assertEqual(
-            bridge_entry["field_bridges"]["existing_ti_pr_status"]["best_source_export"]["du_model_name"],
-            "2023 TX Rollout",
-        )
-        self.assertEqual(
-            bridge_entry["field_bridges"]["existing_tss_pr_status"]["bridge_status"],
-            "CROSS_MODEL_REVIEW_REQUIRED",
-        )
+        self.assertEqual(bridge_entry["field_bridges"], {})
 
     def test_mw_eos_bridge_uses_same_best_donor_but_stays_unapproved(self):
         unresolved = json.loads(

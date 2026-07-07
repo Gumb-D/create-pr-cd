@@ -21,7 +21,10 @@ class TestUnresolvedSkillFieldReview(unittest.TestCase):
 
         self.assertEqual(review_entry["profile_id"], "tx_mini_pr_v1")
         self.assertEqual(review_entry["source_file_name"], shortlist_entry["source_file_name"])
-        self.assertEqual(review_entry["summary"]["missing_required_fields"], ["existing_ti_pr_status", "existing_tss_pr_status"])
+        # PR-status sources were approved from the TX Mini export on 2026-07-07,
+        # so no required field is missing; keyword-level competing shortlist
+        # candidates remain flagged for review.
+        self.assertEqual(review_entry["summary"]["missing_required_fields"], [])
         self.assertIn("tx_sow_raw", review_entry["summary"]["competing_candidate_fields"])
         self.assertIn("subcontractor_ti", review_entry["summary"]["competing_candidate_fields"])
         self.assertIn("subcontractor_planning", review_entry["summary"]["competing_candidate_fields"])

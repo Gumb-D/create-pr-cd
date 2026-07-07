@@ -24,14 +24,17 @@ class TestProfileReadinessReview(unittest.TestCase):
 
         entry = build_readiness_entry(profile, unresolved_entry, bridge_entry)
 
+        # After the 2026-07-07 mapping approvals, TX Mini keeps an approved
+        # header hash and complete required mappings, but it stays fail-closed
+        # blocked: the profile is not PRODUCTION and keyword-level shortlist
+        # candidates still compete.
         self.assertEqual(entry["readiness_status"], "DISCOVERY_ONLY_BLOCKED")
         self.assertEqual(entry["profile_status"], "DRAFT")
-        self.assertIn("NO_APPROVED_HEADER_HASH", entry["blocker_summary"]["overall_blockers"])
-        self.assertIn("MISSING_REQUIRED_FIELDS", entry["blocker_summary"]["overall_blockers"])
         self.assertEqual(
-            entry["blocker_summary"]["cross_model_bridge_fields"],
-            ["existing_ti_pr_status", "existing_tss_pr_status"],
+            entry["blocker_summary"]["overall_blockers"],
+            ["PROFILE_NOT_PRODUCTION", "COMPETING_SHORTLIST_CANDIDATES"],
         )
+        self.assertEqual(entry["blocker_summary"]["cross_model_bridge_fields"], [])
 
     def test_mw_eos_entry_records_required_unapproved_fields(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "mw_eos_swap_pr_v1.yaml")

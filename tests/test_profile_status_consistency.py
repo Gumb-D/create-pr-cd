@@ -34,8 +34,7 @@ class TestProfileStatusConsistency(unittest.TestCase):
             validate_profile_status_consistency(profile, transition_entry)
 
         self.assertIn("PR_INPUT_READY", str(error.exception))
-        self.assertIn("NO_APPROVED_HEADER_HASH", str(error.exception))
-        self.assertIn("CROSS_MODEL_BRIDGE_ONLY_FIELDS", str(error.exception))
+        self.assertIn("COMPETING_SHORTLIST_CANDIDATES", str(error.exception))
 
     def test_missing_transition_entry_fails_closed(self):
         with tempfile.TemporaryDirectory() as tmpdir:

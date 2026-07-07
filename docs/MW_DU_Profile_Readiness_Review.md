@@ -6,14 +6,12 @@ Discovery-only summary of why the current priority DU profiles remain blocked fr
 
 - Readiness status: `DISCOVERY_ONLY_BLOCKED`
 - Profile status: `DRAFT`
-- Profile version: `0.1.0`
-- Mapping version: `discovery-2026-07-06-tx-mini-v1`
+- Profile version: `0.2.0`
+- Mapping version: `approved-2026-07-07-tx-mini-v1`
 - Observed header hash: `167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221`
-- Approved header hashes: `0`
-- Overall blockers: `PROFILE_NOT_PRODUCTION, NO_APPROVED_HEADER_HASH, REQUIRED_FIELDS_NOT_APPROVED, MISSING_REQUIRED_FIELDS, COMPETING_SHORTLIST_CANDIDATES, UNVERIFIED_SINGLE_CANDIDATE_FIELDS, CROSS_MODEL_BRIDGE_ONLY_FIELDS`
-- Missing required fields: `existing_ti_pr_status, existing_tss_pr_status`
+- Approved header hashes: `1`
+- Overall blockers: `PROFILE_NOT_PRODUCTION, COMPETING_SHORTLIST_CANDIDATES`
 - Competing candidate fields: `subcontractor_planning, subcontractor_ti, tx_sow_raw`
-- Cross-model bridge-only fields: `existing_ti_pr_status, existing_tss_pr_status`
 - Release prerequisites:
   - Approve the DU model identity and four-layer source mappings.
   - Approve at least one header hash for the profile version.

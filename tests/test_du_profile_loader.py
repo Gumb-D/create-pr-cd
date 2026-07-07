@@ -13,13 +13,18 @@ from du_profile_loader import ProfileValidationError, load_du_profile
 class TestDuProfileLoader(unittest.TestCase):
     def test_draft_tx_mini_profile_loads_without_claiming_production_readiness(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml")
+        # Mappings were human-approved on 2026-07-07, but lifecycle stays DRAFT
+        # until the machine-checked transition review permits promotion.
         self.assertEqual(profile["status"], "DRAFT")
-        self.assertEqual(profile["mapping_version"], "discovery-2026-07-06-tx-mini-v1")
+        self.assertEqual(profile["mapping_version"], "approved-2026-07-07-tx-mini-v1")
         self.assertEqual(profile["identity"]["accepted_view_ids"], ["2477626672974883536"])
         self.assertEqual(profile["export_structure"]["header_rows"], [0, 1, 2, 3])
-        self.assertEqual(profile["export_structure"]["approved_header_hashes"], [])
+        self.assertEqual(
+            profile["export_structure"]["approved_header_hashes"],
+            ["167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221"],
+        )
         self.assertEqual(profile["export_structure"]["observed_header_hash"], "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221")
-        self.assertEqual(profile["field_mapping"]["site_code"]["source_candidates"][0]["mapping_status"], "UNVERIFIED")
+        self.assertEqual(profile["field_mapping"]["site_code"]["source_candidates"][0]["mapping_status"], "APPROVED")
         self.assertEqual(
             profile["field_mapping"]["site_code"]["source_candidates"][0]["fingerprint"]["display_header"],
             "customer site code",
@@ -192,11 +197,23 @@ class TestDuProfileLoader(unittest.TestCase):
         )
 
     def test_production_profile_requires_approved_header_hash_and_approved_mapping(self):
-        profile = load_du_profile(ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml")
-        profile["status"] = "PRODUCTION"
+        base = load_du_profile(ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml")
         with tempfile.TemporaryDirectory() as tmpdir:
-            path = Path(tmpdir) / "unsafe.yaml"
-            path.write_text(json.dumps(profile), encoding="utf-8")
+            # Missing approved header hash blocks PRODUCTION.
+            no_hash = json.loads(json.dumps(base))
+            no_hash["status"] = "PRODUCTION"
+            no_hash["export_structure"]["approved_header_hashes"] = []
+            path = Path(tmpdir) / "no-hash.yaml"
+            path.write_text(json.dumps(no_hash), encoding="utf-8")
+            with self.assertRaises(ProfileValidationError):
+                load_du_profile(path)
+
+            # A required field with a non-APPROVED mapping blocks PRODUCTION.
+            unapproved = json.loads(json.dumps(base))
+            unapproved["status"] = "PRODUCTION"
+            unapproved["field_mapping"]["site_code"]["source_candidates"][0]["mapping_status"] = "UNVERIFIED"
+            path = Path(tmpdir) / "unapproved.yaml"
+            path.write_text(json.dumps(unapproved), encoding="utf-8")
             with self.assertRaises(ProfileValidationError):
                 load_du_profile(path)
 

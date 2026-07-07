@@ -5,7 +5,7 @@ Discovery-only deprecation review for the tracked DU profiles.
 ## tx_mini_pr_v1
 
 - Current status: `DRAFT`
-- Mapping version: `discovery-2026-07-06-tx-mini-v1`
+- Mapping version: `approved-2026-07-07-tx-mini-v1`
 - Observed header hash: `167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221`
 - Deprecation status: `NO_DEPRECATION_PLAN`
 - Note: No deprecation plan is recorded for this profile.

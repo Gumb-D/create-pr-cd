@@ -4,26 +4,21 @@
   "entries": [
     {
       "profile_id": "tx_mini_pr_v1",
-      "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-06-tx-mini-v1",
+      "profile_version": "0.2.0",
+      "mapping_version": "approved-2026-07-07-tx-mini-v1",
       "current_status": "DRAFT",
       "du_model_name": "TX Mini Project",
       "observed_header_hash": "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
       "transition_targets": [
         {
           "target_status": "PROFILED",
-          "eligible": false,
-          "denied_reasons": [
-            "MISSING_REQUIRED_FIELDS"
-          ]
+          "eligible": true,
+          "denied_reasons": []
         },
         {
           "target_status": "BUSINESS_VALIDATED",
           "eligible": false,
           "denied_reasons": [
-            "NO_APPROVED_HEADER_HASH",
-            "MISSING_REQUIRED_FIELDS",
-            "REQUIRED_FIELDS_NOT_APPROVED",
             "COMPETING_SHORTLIST_CANDIDATES"
           ]
         },
@@ -31,12 +26,7 @@
           "target_status": "PR_INPUT_READY",
           "eligible": false,
           "denied_reasons": [
-            "NO_APPROVED_HEADER_HASH",
-            "MISSING_REQUIRED_FIELDS",
-            "REQUIRED_FIELDS_NOT_APPROVED",
-            "COMPETING_SHORTLIST_CANDIDATES",
-            "UNVERIFIED_SINGLE_CANDIDATE_FIELDS",
-            "CROSS_MODEL_BRIDGE_ONLY_FIELDS"
+            "COMPETING_SHORTLIST_CANDIDATES"
           ]
         },
         {
@@ -44,12 +34,7 @@
           "eligible": false,
           "denied_reasons": [
             "PROFILE_NOT_PRODUCTION",
-            "NO_APPROVED_HEADER_HASH",
-            "MISSING_REQUIRED_FIELDS",
-            "REQUIRED_FIELDS_NOT_APPROVED",
-            "COMPETING_SHORTLIST_CANDIDATES",
-            "UNVERIFIED_SINGLE_CANDIDATE_FIELDS",
-            "CROSS_MODEL_BRIDGE_ONLY_FIELDS"
+            "COMPETING_SHORTLIST_CANDIDATES"
           ]
         }
       ],

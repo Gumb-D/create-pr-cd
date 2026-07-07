@@ -11,7 +11,7 @@ from du_profile_loader import load_du_profile
 
 
 class TestProfileActionQueue(unittest.TestCase):
-    def test_tx_mini_queue_starts_with_missing_required_fields(self):
+    def test_tx_mini_queue_has_no_missing_required_fields_after_approvals(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml")
         readiness = json.loads(
             (ROOT / "config" / "registries" / "mw_du_profile_readiness_review.yaml").read_text(encoding="utf-8")
@@ -28,10 +28,13 @@ class TestProfileActionQueue(unittest.TestCase):
 
         entry = build_action_queue_entry(profile, readiness_entry, unresolved_entry, bridge_entry)
 
-        first_two = entry["action_queue"][:2]
-        self.assertEqual(first_two[0]["action_type"], "RESOLVE_MISSING_REQUIRED_FIELD")
-        self.assertEqual(first_two[0]["field_name"], "existing_ti_pr_status")
-        self.assertEqual(first_two[1]["field_name"], "existing_tss_pr_status")
+        # PR-status sources were approved on 2026-07-07, so the queue no longer
+        # starts with missing required fields; keyword-level competing shortlist
+        # candidates remain the first review work, and promotion stays held.
+        action_types = [item["action_type"] for item in entry["action_queue"]]
+        self.assertNotIn("RESOLVE_MISSING_REQUIRED_FIELD", action_types)
+        self.assertEqual(entry["action_queue"][0]["action_type"], "CONFIRM_COMPETING_CANDIDATE")
+        self.assertEqual(entry["action_queue"][-1]["action_type"], "HOLD_LIFECYCLE_PROMOTION")
 
     def test_mw_eos_queue_contains_competing_and_header_actions(self):
         registry = json.loads(

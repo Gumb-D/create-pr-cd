@@ -292,8 +292,8 @@
       ],
       "profile_id": "tx_mini_pr_v1",
       "profile_status": "DRAFT",
-      "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-06-tx-mini-v1",
+      "profile_version": "0.2.0",
+      "mapping_version": "approved-2026-07-07-tx-mini-v1",
       "pr_input_status": "PR_INPUT_QUARANTINED",
       "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
       "skill_field_presence": {

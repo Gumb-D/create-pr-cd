@@ -5,8 +5,8 @@ Discovery-only audit of profile-version and header-hash traceability across gene
 ## tx_mini_pr_v1
 
 - Traceability status: `TRACEABLE`
-- Profile version: `0.1.0`
-- Mapping version: `discovery-2026-07-06-tx-mini-v1`
+- Profile version: `0.2.0`
+- Mapping version: `approved-2026-07-07-tx-mini-v1`
 - Observed header hash: `167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221`
 - Artifacts:
   - `discovery` `TRACEABLE` version=True mapping=True header_hash=True

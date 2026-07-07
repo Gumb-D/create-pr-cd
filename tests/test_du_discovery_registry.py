@@ -51,8 +51,8 @@ class TestDuDiscoveryRegistry(unittest.TestCase):
         self.assertEqual(entry["du_model_id"], "4188808420049567786")
         self.assertEqual(entry["view_id"], "2477626672974883536")
         self.assertEqual(entry["profile_id"], "tx_mini_pr_v1")
-        self.assertEqual(entry["profile_version"], "0.1.0")
-        self.assertEqual(entry["mapping_version"], "discovery-2026-07-06-tx-mini-v1")
+        self.assertEqual(entry["profile_version"], "0.2.0")
+        self.assertEqual(entry["mapping_version"], "approved-2026-07-07-tx-mini-v1")
         self.assertEqual(entry["pr_input_status"], "PR_INPUT_QUARANTINED")
         self.assertTrue(entry["skill_field_presence"]["site_id"])
 

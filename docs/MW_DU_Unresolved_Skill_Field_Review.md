@@ -6,36 +6,36 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 
 - Source file: `A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx`
 - Observed header hash: `167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221`
-- Missing required fields: existing_ti_pr_status, existing_tss_pr_status
+- Missing required fields: None
 - Competing candidate fields: subcontractor_planning, subcontractor_ti, tx_sow_raw
-- Single-candidate but unverified fields: antenna_size_fe, antenna_size_ne, du_key, region, site_code, site_name
+- Single-candidate but unverified fields: None
 
 ### `site_code`
 
 - Skill field: `site_id`
-- Review status: `REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE`
-- Reason: Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile.
+- Review status: `READY_IF_APPROVAL_EVIDENCE_EXISTS`
+- Reason: Profile-selected source matches the shortlist and is already approved.
 - Selected source: `site|fix00012|4188808420049567786|2477626672974883536 | Site Basic Info | Site Basic Info | customer site code`
 
 ### `site_name`
 
 - Skill field: `site_name`
-- Review status: `REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE`
-- Reason: Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile.
+- Review status: `READY_IF_APPROVAL_EVIDENCE_EXISTS`
+- Reason: Profile-selected source matches the shortlist and is already approved.
 - Selected source: `site|fix00015 | Site Basic Info | Site Basic Info | customer site name`
 
 ### `du_key`
 
 - Skill field: `du_code`
-- Review status: `REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE`
-- Reason: Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile.
+- Review status: `READY_IF_APPROVAL_EVIDENCE_EXISTS`
+- Reason: Profile-selected source matches the shortlist and is already approved.
 - Selected source: `du|du_code | Du | Du | du code`
 
 ### `region`
 
 - Skill field: `region`
-- Review status: `REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE`
-- Reason: Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile.
+- Review status: `READY_IF_APPROVAL_EVIDENCE_EXISTS`
+- Reason: Profile-selected source matches the shortlist and is already approved.
 - Selected source: `site|region_name | Site Basic Info | Site Basic Info | region`
 
 ### `tx_sow_raw`
@@ -71,30 +71,30 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 ### `antenna_size_ne`
 
 - Skill field: `antenna_size_ne`
-- Review status: `REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE`
-- Reason: Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile.
+- Review status: `READY_IF_APPROVAL_EVIDENCE_EXISTS`
+- Reason: Profile-selected source matches the shortlist and is already approved.
 - Selected source: `docata|ZDCSZ00969578 | Network Planning | Microwave | MW Config Antenna Size NE`
 
 ### `antenna_size_fe`
 
 - Skill field: `antenna_size_fe`
-- Review status: `REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE`
-- Reason: Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile.
+- Review status: `READY_IF_APPROVAL_EVIDENCE_EXISTS`
+- Reason: Profile-selected source matches the shortlist and is already approved.
 - Selected source: `docata|ZDCSZ00969579 | Network Planning | Microwave | MW Config Antenna Size FE`
 
 ### `existing_tss_pr_status`
 
 - Skill field: `existing_tss_pr`
-- Review status: `REVIEW_REQUIRED_MISSING_CANDIDATE`
-- Reason: Required profile field has no selected source candidate and no shortlist candidate.
-- Selected source: `None`
+- Review status: `READY_IF_APPROVAL_EVIDENCE_EXISTS`
+- Reason: Profile-selected source matches the shortlist and is already approved.
+- Selected source: `docata|ZDCSZ641766 | Installation | Wireless RAN | Subcon PR - TSS`
 
 ### `existing_ti_pr_status`
 
 - Skill field: `existing_ti_pr`
-- Review status: `REVIEW_REQUIRED_MISSING_CANDIDATE`
-- Reason: Required profile field has no selected source candidate and no shortlist candidate.
-- Selected source: `None`
+- Review status: `READY_IF_APPROVAL_EVIDENCE_EXISTS`
+- Reason: Profile-selected source matches the shortlist and is already approved.
+- Selected source: `docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI`
 
 
 ## mw_eos_swap_pr_v1 (MW EOS Swap)

@@ -74,7 +74,12 @@ class TestDiscoveryPacketConsistency(unittest.TestCase):
         rollback = self._registry("mw_du_profile_rollback_readiness.yaml")
         coverage = self._registry("mw_du_export_coverage_review.yaml")
         broken = copy.deepcopy(bridge)
-        del broken["entries"][0]["field_bridges"]["existing_ti_pr_status"]
+        # Use a profile that still needs cross-model donor fields; TX Mini's
+        # bridge is empty since its PR-status mappings were approved.
+        bridged_entry = next(
+            entry for entry in broken["entries"] if "existing_ti_pr_status" in entry.get("field_bridges", {})
+        )
+        del bridged_entry["field_bridges"]["existing_ti_pr_status"]
 
         with self.assertRaises(ProfileValidationError) as error:
             validate_discovery_packet_consistency(

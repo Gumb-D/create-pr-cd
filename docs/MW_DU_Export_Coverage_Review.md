@@ -76,7 +76,7 @@ Discovery-only coverage review across the 10 profiled DU exports.
 
 - Source file: `A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx`
 - Coverage status: `TRACKED_DRAFT_PROFILE`
-- Profile: `tx_mini_pr_v1` `0.1.0` (mapping `discovery-2026-07-06-tx-mini-v1`)
+- Profile: `tx_mini_pr_v1` `0.2.0` (mapping `approved-2026-07-07-tx-mini-v1`)
 - Observed header hash: `167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221`
 - Missing skill fields: `existing_tss_pr, existing_ti_pr`
 - Next action: Continue tracked profile review through the existing DRAFT discovery packet.

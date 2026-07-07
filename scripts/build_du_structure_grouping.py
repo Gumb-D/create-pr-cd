@@ -102,7 +102,12 @@ def build_grouping_entry(
 
 
 def build_grouping_registry(profile_root: Path) -> Dict[str, Any]:
-    artifacts = [load_profile_artifact(path) for path in sorted(profile_root.iterdir()) if path.is_dir()]
+    artifacts = [
+        load_profile_artifact(path)
+        for path in sorted(profile_root.iterdir())
+        # Skip non-profiler folders (e.g. local review packages) under the root.
+        if path.is_dir() and (path / "header_inventory.json").exists()
+    ]
     discovery_registry = build_discovery_registry(profile_root)
     discovery_by_source = {entry["source_file_name"]: entry for entry in discovery_registry.get("entries", [])}
     entries = [
