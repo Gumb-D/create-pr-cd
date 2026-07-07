@@ -49,9 +49,29 @@ def _require_string_list(value: Any, name: str) -> None:
         raise ProfileValidationError(f"{name} must be a list of strings.")
 
 
+def _validate_optional_deprecation(profile: Mapping[str, Any]) -> None:
+    status = str(profile.get("status", ""))
+    deprecation = profile.get("deprecation")
+    if deprecation is None:
+        if status == "DEPRECATED":
+            raise ProfileValidationError("A DEPRECATED profile requires deprecation metadata.")
+        return
+
+    deprecation_mapping = _require_mapping(deprecation, "deprecation")
+    _require_string(deprecation_mapping.get("reason"), "deprecation.reason")
+    _require_string(deprecation_mapping.get("successor_profile_id"), "deprecation.successor_profile_id")
+    _require_string(deprecation_mapping.get("successor_profile_version"), "deprecation.successor_profile_version")
+    _require_string(deprecation_mapping.get("rollback_profile_id"), "deprecation.rollback_profile_id")
+    _require_string(deprecation_mapping.get("rollback_profile_version"), "deprecation.rollback_profile_version")
+    _require_string_list(deprecation_mapping.get("superseded_header_hashes"), "deprecation.superseded_header_hashes")
+    if not deprecation_mapping.get("superseded_header_hashes"):
+        raise ProfileValidationError("deprecation.superseded_header_hashes must not be empty.")
+
+
 def validate_du_profile(profile: Mapping[str, Any]) -> None:
     _require_string(profile.get("profile_id"), "profile_id")
     _require_string(profile.get("profile_version"), "profile_version")
+    _require_string(profile.get("mapping_version"), "mapping_version")
     status = _require_string(profile.get("status"), "status")
     if status not in PROFILE_STATUSES:
         raise ProfileValidationError(f"status must be one of: {', '.join(sorted(PROFILE_STATUSES))}.")
@@ -104,6 +124,8 @@ def validate_du_profile(profile: Mapping[str, Any]) -> None:
                 raise ProfileValidationError(
                     f"A PRODUCTION profile requires APPROVED mappings for {canonical_field}."
                 )
+
+    _validate_optional_deprecation(profile)
 
 
 def load_du_profile(path: Path) -> Dict[str, Any]:

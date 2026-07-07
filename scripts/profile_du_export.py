@@ -285,6 +285,7 @@ def build_draft_du_profile(
     return {
         "profile_id": f"draft_{_slug(profile_name)}_v1",
         "profile_version": "0.1.0",
+        "mapping_version": "discovery-0.1.0",
         "status": "DRAFT",
         "identity": {
             "project_key": project_key or "UNVERIFIED",

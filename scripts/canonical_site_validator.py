@@ -9,6 +9,8 @@ PR_INPUT_READY = "PR_INPUT_READY"
 PR_INPUT_READY_WITH_REVIEW = "PR_INPUT_READY_WITH_REVIEW"
 PR_INPUT_INCOMPLETE = "PR_INPUT_INCOMPLETE"
 PR_INPUT_QUARANTINED = "PR_INPUT_QUARANTINED"
+ALLOW_ECC_OUTPUT = "ALLOW_ECC_OUTPUT"
+QUARANTINE_NO_ECC = "QUARANTINE_NO_ECC"
 
 SCOPE_REQUIRED_FIELDS = {
     "TSS": (
@@ -94,9 +96,11 @@ def empty_canonical_site_record() -> Dict[str, Any]:
         "validation": {
             "profile_id": "",
             "profile_version": "",
+            "mapping_version": "",
             "pr_input_classification": PR_INPUT_QUARANTINED,
             "blocking_reasons": [],
             "warnings": [],
+            "output_decision": QUARANTINE_NO_ECC,
         },
     }
 
@@ -140,6 +144,8 @@ def validate_canonical_site_record(record: Mapping[str, Any], scope: str) -> Dic
 
     if _is_blank(validation.get("profile_id")) or _is_blank(validation.get("profile_version")):
         blocking_reasons.append("UNKNOWN_OR_UNVERSIONED_DU_PROFILE")
+    if _is_blank(validation.get("mapping_version")):
+        blocking_reasons.append("MISSING_MAPPING_VERSION")
     if _is_blank(identity.get("header_hash")):
         blocking_reasons.append("MISSING_HEADER_HASH")
     if _is_blank(identity.get("source_file_hash")):
@@ -181,4 +187,7 @@ def apply_validation_result(record: Mapping[str, Any], result: Mapping[str, Any]
     updated["validation"]["pr_input_classification"] = result["classification"]
     updated["validation"]["blocking_reasons"] = list(result.get("blocking_reasons", []))
     updated["validation"]["warnings"] = list(result.get("warnings", []))
+    updated["validation"]["output_decision"] = str(
+        result.get("output_decision", updated["validation"].get("output_decision", QUARANTINE_NO_ECC))
+    )
     return updated

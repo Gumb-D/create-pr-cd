@@ -5,7 +5,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from canonical_site_validator import PR_INPUT_INCOMPLETE, PR_INPUT_QUARANTINED, PR_INPUT_READY, empty_canonical_site_record, validate_canonical_site_record
+from canonical_site_validator import (
+    ALLOW_ECC_OUTPUT,
+    PR_INPUT_INCOMPLETE,
+    PR_INPUT_QUARANTINED,
+    PR_INPUT_READY,
+    QUARANTINE_NO_ECC,
+    empty_canonical_site_record,
+    validate_canonical_site_record,
+)
 from pr_input_guard import block_raw_source, evaluate_record
 
 
@@ -21,7 +29,7 @@ class TestCanonicalSiteValidator(unittest.TestCase):
         record["pr_context"].update({"tx_sow_raw": "MW Swap", "tx_sow_normalized": "MW Swap", "region": "Northern", "subcontractor_ti": "GTSB", "existing_tss_pr_status": "", "existing_ti_pr_status": ""})
         required = ["site_code", "tx_sow_raw", "tx_sow_normalized", "region", "subcontractor_ti", "existing_tss_pr_status", "existing_ti_pr_status"]
         record["source_evidence"]["fields"] = {field: {"source_header_fingerprint": fingerprint(field), "source_value": record["site"].get(field) or record["pr_context"].get(field), "transformation": "trim"} for field in required}
-        record["validation"].update({"profile_id": "mw_eos_swap_pr_v1", "profile_version": "1.0.0"})
+        record["validation"].update({"profile_id": "mw_eos_swap_pr_v1", "profile_version": "1.0.0", "mapping_version": "test-mapping-v1"})
         return record
 
     def _profile(self, hashes=None, status="PRODUCTION"):
@@ -48,13 +56,17 @@ class TestCanonicalSiteValidator(unittest.TestCase):
         gate = evaluate_record(self._record(), self._profile(status="DRAFT"), scope="TI", dry_run=True)
         self.assertFalse(gate["allow_output"])
         self.assertEqual(gate["classification"], PR_INPUT_QUARANTINED)
+        self.assertEqual(gate["output_decision"], QUARANTINE_NO_ECC)
+        self.assertEqual(gate["record"]["validation"]["output_decision"], QUARANTINE_NO_ECC)
         self.assertFalse(block_raw_source()["allow_output"])
+        self.assertEqual(block_raw_source()["output_decision"], QUARANTINE_NO_ECC)
 
     def test_changed_header_hash_is_quarantined(self):
         gate = evaluate_record(self._record(), self._profile(hashes=["another-header-hash"]), scope="TI")
         self.assertFalse(gate["allow_output"])
         self.assertEqual(gate["classification"], PR_INPUT_QUARANTINED)
         self.assertIn("HEADER_HASH_REVALIDATION_REQUIRED", gate["blocking_reasons"])
+        self.assertEqual(gate["record"]["validation"]["output_decision"], QUARANTINE_NO_ECC)
 
     def test_unverified_normalization_is_quarantined(self):
         record = self._record()
@@ -62,6 +74,21 @@ class TestCanonicalSiteValidator(unittest.TestCase):
         gate = evaluate_record(record, self._profile(), scope="TI")
         self.assertFalse(gate["allow_output"])
         self.assertIn("UNVERIFIED_NORMALIZATION:tx_sow_normalized", gate["blocking_reasons"])
+        self.assertEqual(gate["output_decision"], QUARANTINE_NO_ECC)
+
+    def test_missing_mapping_version_is_incomplete(self):
+        record = self._record()
+        record["validation"]["mapping_version"] = ""
+        result = validate_canonical_site_record(record, "TI")
+        self.assertEqual(result["classification"], PR_INPUT_INCOMPLETE)
+        self.assertIn("MISSING_MAPPING_VERSION", result["blocking_reasons"])
+
+    def test_ready_production_gate_records_allow_output_decision(self):
+        gate = evaluate_record(self._record(), self._profile(), scope="TI")
+        self.assertTrue(gate["allow_output"])
+        self.assertEqual(gate["classification"], PR_INPUT_READY)
+        self.assertEqual(gate["output_decision"], ALLOW_ECC_OUTPUT)
+        self.assertEqual(gate["record"]["validation"]["output_decision"], ALLOW_ECC_OUTPUT)
 
 
 if __name__ == "__main__":

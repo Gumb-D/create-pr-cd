@@ -5,6 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
+from canonical_site_validator import QUARANTINE_NO_ECC
 from du_export_adapter import build_canonical_site_record, resolve_profile_field_mappings
 from profile_du_export import fingerprint_key
 
@@ -52,6 +53,7 @@ class TestDuExportAdapter(unittest.TestCase):
         profile = {
             "profile_id": "test_profile",
             "profile_version": "1.0.0",
+            "mapping_version": "test-mapping-v1",
             "identity": {"project_key": "CelcomDigi_MW"},
             "field_mapping": {
                 "site_code": {"transforms": ["trim", "uppercase"]},
@@ -82,7 +84,9 @@ class TestDuExportAdapter(unittest.TestCase):
         self.assertEqual(record["pr_context"]["tx_sow_raw"], "MW Swap")
         self.assertEqual(record["source_evidence"]["fields"]["site_code"]["source_value"], " a0001 ")
         self.assertEqual(record["source_evidence"]["fields"]["site_code"]["transformation"], "trim+uppercase")
+        self.assertEqual(record["validation"]["mapping_version"], "test-mapping-v1")
         self.assertEqual(record["validation"]["pr_input_classification"], "PR_INPUT_INCOMPLETE")
+        self.assertEqual(record["validation"]["output_decision"], QUARANTINE_NO_ECC)
 
 
 if __name__ == "__main__":

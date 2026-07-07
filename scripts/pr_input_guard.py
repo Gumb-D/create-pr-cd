@@ -2,11 +2,23 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-from canonical_site_validator import PR_INPUT_QUARANTINED, PR_INPUT_READY, apply_validation_result, validate_canonical_site_record
+from canonical_site_validator import (
+    ALLOW_ECC_OUTPUT,
+    PR_INPUT_QUARANTINED,
+    PR_INPUT_READY,
+    QUARANTINE_NO_ECC,
+    apply_validation_result,
+    validate_canonical_site_record,
+)
 
 
 def block_raw_source(*_: Any, **__: Any) -> dict:
-    return {"classification": PR_INPUT_QUARANTINED, "allow_output": False, "blocking_reasons": ["RAW_SOURCE_BLOCKED"]}
+    return {
+        "classification": PR_INPUT_QUARANTINED,
+        "allow_output": False,
+        "blocking_reasons": ["RAW_SOURCE_BLOCKED"],
+        "output_decision": QUARANTINE_NO_ECC,
+    }
 
 
 def _same_model(record: Mapping[str, Any], profile: Mapping[str, Any]) -> bool:
@@ -17,6 +29,12 @@ def _same_model(record: Mapping[str, Any], profile: Mapping[str, Any]) -> bool:
         if values and str(identity.get(key, "")) not in values:
             return False
     return True
+
+
+def _output_decision(classification: str, profile: Mapping[str, Any] | None) -> str:
+    if classification == PR_INPUT_READY and profile is not None and profile.get("status") == "PRODUCTION":
+        return ALLOW_ECC_OUTPUT
+    return QUARANTINE_NO_ECC
 
 
 def evaluate_record(record: Mapping[str, Any], profile: Mapping[str, Any] | None, *, scope: str, dry_run: bool = False) -> dict:
@@ -38,5 +56,15 @@ def evaluate_record(record: Mapping[str, Any], profile: Mapping[str, Any] | None
                 if isinstance(item, Mapping) and item.get("normalization_status") == "UNVERIFIED":
                     unsafe.append(f"UNVERIFIED_NORMALIZATION:{field}")
         result = {"classification": PR_INPUT_QUARANTINED, "blocking_reasons": unsafe, "warnings": []} if unsafe else validate_canonical_site_record(record, scope)
+    output_decision = _output_decision(str(result["classification"]), profile)
+    result = {**result, "output_decision": output_decision}
     updated = apply_validation_result(record, result)
-    return {"record": updated, "classification": result["classification"], "allow_output": result["classification"] == PR_INPUT_READY and profile is not None and profile.get("status") == "PRODUCTION", "blocking_reasons": list(result.get("blocking_reasons", [])), "warnings": list(result.get("warnings", []))}
+    allow_output = output_decision == ALLOW_ECC_OUTPUT
+    return {
+        "record": updated,
+        "classification": result["classification"],
+        "allow_output": allow_output,
+        "output_decision": output_decision,
+        "blocking_reasons": list(result.get("blocking_reasons", [])),
+        "warnings": list(result.get("warnings", [])),
+    }

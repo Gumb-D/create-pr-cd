@@ -79,6 +79,7 @@ def build_canonical_site_record(
     )
     record["validation"]["profile_id"] = profile.get("profile_id", "")
     record["validation"]["profile_version"] = profile.get("profile_version", "")
+    record["validation"]["mapping_version"] = profile.get("mapping_version", "")
 
     for canonical_field, mapping in resolved_mappings.items():
         status = mapping.get("status")
