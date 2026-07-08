@@ -6,19 +6,17 @@
       "profile_id": "tx_mini_pr_v1",
       "profile_version": "0.2.0",
       "mapping_version": "approved-2026-07-07-tx-mini-v1",
-      "current_status": "BUSINESS_VALIDATED",
+      "current_status": "PR_INPUT_READY",
       "observed_header_hash": "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
-      "rollback_readiness_status": "ROLLBACK_BLOCKED",
+      "rollback_readiness_status": "ROLLBACK_BASELINE_RECORDED",
       "rollback_target_profile_id": "tx_mini_pr_v1",
       "rollback_target_profile_version": "0.2.0",
       "rollback_target_header_hashes": [
         "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221"
       ],
-      "blockers": [
-        "PROFILE_NOT_RELEASED"
-      ],
+      "blockers": [],
       "notes": [
-        "Rollback remains blocked until an approved profile/header-hash baseline exists."
+        "Rollback baseline is documented from the current approved profile identity and header-hash set."
       ]
     },
     {

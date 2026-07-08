@@ -22,14 +22,16 @@ class TestProfileRollbackReadiness(unittest.TestCase):
         self.assertIn("NO_APPROVED_HEADER_HASH_BASELINE", entry["blockers"])
         self.assertIn("PROFILE_NOT_RELEASED", entry["blockers"])
 
-    def test_tx_mini_stays_blocked_by_release_state_despite_approved_hash(self):
+    def test_tx_mini_records_rollback_baseline_after_pr_input_ready(self):
+        # PR_INPUT_READY (2026-07-08) plus the approved header hash gives
+        # TX Mini a recorded rollback baseline.
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml")
 
         entry = evaluate_rollback_readiness(profile, None)
 
-        self.assertEqual(entry["rollback_readiness_status"], "ROLLBACK_BLOCKED")
-        self.assertNotIn("NO_APPROVED_HEADER_HASH_BASELINE", entry["blockers"])
-        self.assertIn("PROFILE_NOT_RELEASED", entry["blockers"])
+        self.assertEqual(entry["rollback_readiness_status"], "ROLLBACK_BASELINE_RECORDED")
+        self.assertEqual(entry["rollback_target_profile_id"], "tx_mini_pr_v1")
+        self.assertEqual(entry["rollback_target_profile_version"], "0.2.0")
 
     def test_profile_with_approved_header_hash_records_rollback_baseline(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml")

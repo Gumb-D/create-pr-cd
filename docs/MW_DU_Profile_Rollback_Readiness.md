@@ -4,15 +4,14 @@ Discovery-only rollback-readiness review for tracked DU profiles.
 
 ## tx_mini_pr_v1
 
-- Rollback readiness status: `ROLLBACK_BLOCKED`
-- Current status: `BUSINESS_VALIDATED`
+- Rollback readiness status: `ROLLBACK_BASELINE_RECORDED`
+- Current status: `PR_INPUT_READY`
 - Profile version: `0.2.0`
 - Mapping version: `approved-2026-07-07-tx-mini-v1`
 - Observed header hash: `167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221`
 - Rollback target: `tx_mini_pr_v1` `0.2.0`
 - Rollback target header hashes: `167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221`
-- Blockers: `PROFILE_NOT_RELEASED`
-- Note: Rollback remains blocked until an approved profile/header-hash baseline exists.
+- Note: Rollback baseline is documented from the current approved profile identity and header-hash set.
 
 ## mw_eos_swap_pr_v1
 

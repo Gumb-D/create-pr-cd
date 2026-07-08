@@ -237,11 +237,12 @@ Approval for merge is a human review outcome and is not yet evidenced in the rep
 - [x] Negative tests block changed headers, missing required fields, and ambiguous source mappings.
   Evidence note:
   `tests/test_tx_mini_negative_acceptance.py` (2026-07-08) runs the Section 8 minimum test matrix against the live `tx_mini_pr_v1` profile through the adapter and PR-input guard: changed header hash, unknown DU model/view, unknown profile, missing required field, blank required value, ambiguous duplicate fingerprint, unverified source mapping, unverified normalization, and the raw-source block all quarantine or block with the expected reason codes and `QUARANTINE_NO_ECC`. The sweep also proves the positive control is only reachable with a `PRODUCTION` profile that carries no `UNVERIFIED` candidates plus approved normalization — the live DRAFT profile always blocks output. The positive golden-parity scenario is evidenced by the parity harness. Full suite `Ran 221 tests` `OK` on 2026-07-08.
-- [ ] TX Mini is approved as the first controlled canonical-input model.
-  Note (2026-07-08): `tx_mini_pr_v1` is now `BUSINESS_VALIDATED` with every acceptance criterion above met; this final criterion closes when JJ declares `PR_INPUT_READY` after reviewing the parity report.
+- [x] TX Mini is approved as the first controlled canonical-input model.
+  Evidence note (2026-07-08):
+  JJ declared `tx_mini_pr_v1` `PR_INPUT_READY` (via `BUSINESS_VALIDATED`) after verifying the full evidence set: approved mappings and header hash, wired canonical SOW registry with no `UNVERIFIED` transform or mapping in the production candidate path, golden parity PASS (re-verified after the declaration), the negative-test acceptance sweep, `Ran 227 tests` `OK`, and a clean compile. The transition review permitted the declaration and the refreshed discovery packet plus both consistency guards accepted it. This is explicitly non-production: the PR-input guard continues to block all ECC output (`PROFILE_NOT_PRODUCTION`), and `PRODUCTION` additionally requires Phase 4 release governance and end-to-end UAT. The rollback-readiness review now records the first rollback baseline (`tx_mini_pr_v1` v0.2.0 with its approved header hash).
 
-Blocker:
-Formal approval/sanitization status for the external TX Mini export still needs confirmation. `Info/input/site_pr_po_view.xlsx` remains a normalized downstream file and is not sufficient evidence by itself for Phase 1 golden parity.
+Blocker (resolved 2026-07-07/08):
+JJ confirmed the external TX Mini export as approved development evidence by filename, and golden parity was proven against `site_pr_po_view.xlsx` — itself a TX Mini export snapshot — as dry-run validation evidence. Approval status for the remaining nine external exports is still deferred and gates Phase 2 onboarding.
 
 ---
 
@@ -523,7 +524,8 @@ DRAFT
 
 The extension is complete only when:
 
-- [ ] TX Mini runs through the canonical-input path with proven golden parity.
+- [x] TX Mini runs through the canonical-input path with proven golden parity.
+  Note: proven by the dry-run parity harness (TSS 87/87, TI 19/19 identical, cell-by-cell) and the `PR_INPUT_READY` declaration of 2026-07-08; switching the production runtime to consume canonical records is the Phase 4 integration activity and stays separately gated.
 - [ ] At least one new MW DU model, proposed as MW EOS Swap, is enabled through an approved profile.
 - [ ] Every enabled MW DU model is routed through a controlled DU Profile.
 - [ ] All enabled profiles have approved Header Hashes, mapping traceability, and regression tests.

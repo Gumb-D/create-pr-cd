@@ -6,7 +6,7 @@
       "profile_id": "tx_mini_pr_v1",
       "profile_version": "0.2.0",
       "mapping_version": "approved-2026-07-07-tx-mini-v1",
-      "current_status": "BUSINESS_VALIDATED",
+      "current_status": "PR_INPUT_READY",
       "observed_header_hash": "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
       "deprecation_status": "NO_DEPRECATION_PLAN",
       "superseded_header_hashes": [],
