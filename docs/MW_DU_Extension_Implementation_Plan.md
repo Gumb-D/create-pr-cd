@@ -230,7 +230,9 @@ Approval for merge is a human review outcome and is not yet evidenced in the rep
 - [x] TX Mini Header Hash is registered as approved for the profile version.
 - [ ] No unverified transform or source mapping remains in the production candidate path.
 - [x] Legacy and canonical-path ECC outputs are identical, except for explicitly approved non-functional metadata.
-- [ ] Negative tests block changed headers, missing required fields, and ambiguous source mappings.
+- [x] Negative tests block changed headers, missing required fields, and ambiguous source mappings.
+  Evidence note:
+  `tests/test_tx_mini_negative_acceptance.py` (2026-07-08) runs the Section 8 minimum test matrix against the live `tx_mini_pr_v1` profile through the adapter and PR-input guard: changed header hash, unknown DU model/view, unknown profile, missing required field, blank required value, ambiguous duplicate fingerprint, unverified source mapping, unverified normalization, and the raw-source block all quarantine or block with the expected reason codes and `QUARANTINE_NO_ECC`. The sweep also proves the positive control is only reachable with a `PRODUCTION` profile that carries no `UNVERIFIED` candidates plus approved normalization — the live DRAFT profile always blocks output. The positive golden-parity scenario is evidenced by the parity harness. Full suite `Ran 221 tests` `OK` on 2026-07-08.
 - [ ] TX Mini is approved as the first controlled canonical-input model.
 
 Blocker:
