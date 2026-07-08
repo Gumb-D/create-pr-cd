@@ -11,11 +11,12 @@ from du_profile_loader import ProfileValidationError, load_du_profile
 
 
 class TestDuProfileLoader(unittest.TestCase):
-    def test_draft_tx_mini_profile_loads_without_claiming_production_readiness(self):
+    def test_tx_mini_profile_loads_without_claiming_production_readiness(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml")
-        # Mappings were human-approved on 2026-07-07, but lifecycle stays DRAFT
-        # until the machine-checked transition review permits promotion.
-        self.assertEqual(profile["status"], "DRAFT")
+        # Promoted to BUSINESS_VALIDATED by JJ on 2026-07-08 after the completed
+        # field review and golden-parity evidence; still not PRODUCTION, so
+        # ECC output stays blocked by the guard.
+        self.assertEqual(profile["status"], "BUSINESS_VALIDATED")
         self.assertEqual(profile["mapping_version"], "approved-2026-07-07-tx-mini-v1")
         self.assertEqual(profile["identity"]["accepted_view_ids"], ["2477626672974883536"])
         self.assertEqual(profile["export_structure"]["header_rows"], [0, 1, 2, 3])

@@ -5,7 +5,7 @@ Discovery-only summary of why the current priority DU profiles remain blocked fr
 ## tx_mini_pr_v1 (TX Mini Project)
 
 - Readiness status: `DISCOVERY_ONLY_BLOCKED`
-- Profile status: `DRAFT`
+- Profile status: `BUSINESS_VALIDATED`
 - Profile version: `0.2.0`
 - Mapping version: `approved-2026-07-07-tx-mini-v1`
 - Observed header hash: `167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221`

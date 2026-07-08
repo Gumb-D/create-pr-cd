@@ -5,7 +5,7 @@ Discovery-only rollback-readiness review for tracked DU profiles.
 ## tx_mini_pr_v1
 
 - Rollback readiness status: `ROLLBACK_BLOCKED`
-- Current status: `DRAFT`
+- Current status: `BUSINESS_VALIDATED`
 - Profile version: `0.2.0`
 - Mapping version: `approved-2026-07-07-tx-mini-v1`
 - Observed header hash: `167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221`

@@ -24,11 +24,11 @@ class TestProfileReadinessReview(unittest.TestCase):
 
         entry = build_readiness_entry(profile, unresolved_entry, bridge_entry)
 
-        # All TX Mini mapping rulings landed by 2026-07-08: approved header
-        # hash, complete required mappings, no competing candidates. The only
-        # remaining fail-closed blocker is the non-production lifecycle state.
+        # All TX Mini mapping rulings landed by 2026-07-08 and JJ promoted the
+        # profile to BUSINESS_VALIDATED. The only remaining fail-closed blocker
+        # is the non-production lifecycle state, so output stays blocked.
         self.assertEqual(entry["readiness_status"], "DISCOVERY_ONLY_BLOCKED")
-        self.assertEqual(entry["profile_status"], "DRAFT")
+        self.assertEqual(entry["profile_status"], "BUSINESS_VALIDATED")
         self.assertEqual(entry["blocker_summary"]["overall_blockers"], ["PROFILE_NOT_PRODUCTION"])
         self.assertEqual(entry["blocker_summary"]["cross_model_bridge_fields"], [])
 
