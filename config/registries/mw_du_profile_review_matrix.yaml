@@ -1,0 +1,666 @@
+{
+  "schema_version": "1.0",
+  "registry_type": "discovery_profile_review_matrix",
+  "profile_count": 10,
+  "profile_summaries": [
+    {
+      "profile_id": "cd_consolidation_2023_decom_pr_v1",
+      "profile_version": "0.1.0",
+      "du_model_name": "CD consolidation 2023",
+      "mapping_version": "discovery-2026-07-07-cd-consolidation-2023-decom-v1",
+      "observed_header_hash": "b86cbc349db66154324092c843593137e83908c3b4b55c09305d6cf6046c7a16",
+      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
+      "action_count": 10,
+      "action_type_counts": {
+        "RESOLVE_MISSING_REQUIRED_FIELD": 2,
+        "CONFIRM_COMPETING_CANDIDATE": 4,
+        "VERIFY_SINGLE_CANDIDATE": 2,
+        "APPROVE_HEADER_HASH": 1,
+        "HOLD_LIFECYCLE_PROMOTION": 1
+      }
+    },
+    {
+      "profile_id": "cd_consolidation_2023_rollout_pr_v1",
+      "profile_version": "0.1.0",
+      "du_model_name": "CD consolidation 2023",
+      "mapping_version": "discovery-2026-07-07-cd-consolidation-2023-rollout-v1",
+      "observed_header_hash": "d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1",
+      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
+      "action_count": 10,
+      "action_type_counts": {
+        "RESOLVE_MISSING_REQUIRED_FIELD": 2,
+        "CONFIRM_COMPETING_CANDIDATE": 3,
+        "VERIFY_SINGLE_CANDIDATE": 3,
+        "APPROVE_HEADER_HASH": 1,
+        "HOLD_LIFECYCLE_PROMOTION": 1
+      }
+    },
+    {
+      "profile_id": "celcomdigi_bau_2023_pr_v1",
+      "profile_version": "0.1.0",
+      "du_model_name": "2023 Celcomdigi BAU",
+      "mapping_version": "discovery-2026-07-07-2023-celcomdigi-bau-v1",
+      "observed_header_hash": "77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313",
+      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
+      "action_count": 13,
+      "action_type_counts": {
+        "RESOLVE_MISSING_REQUIRED_FIELD": 2,
+        "CONFIRM_COMPETING_CANDIDATE": 2,
+        "VERIFY_SINGLE_CANDIDATE": 7,
+        "APPROVE_HEADER_HASH": 1,
+        "HOLD_LIFECYCLE_PROMOTION": 1
+      }
+    },
+    {
+      "profile_id": "celcomdigi_bau_2024_pr_v1",
+      "profile_version": "0.1.0",
+      "du_model_name": "2024 Celcomdigi BAU",
+      "mapping_version": "discovery-2026-07-07-2024-celcomdigi-bau-v1",
+      "observed_header_hash": "b3677457da49e5de484976c3fdb7ad6f5dc19055f5339ec616407f5cbde89a86",
+      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
+      "action_count": 13,
+      "action_type_counts": {
+        "RESOLVE_MISSING_REQUIRED_FIELD": 2,
+        "CONFIRM_COMPETING_CANDIDATE": 3,
+        "VERIFY_SINGLE_CANDIDATE": 6,
+        "APPROVE_HEADER_HASH": 1,
+        "HOLD_LIFECYCLE_PROMOTION": 1
+      }
+    },
+    {
+      "profile_id": "celcomdigi_usp_pr_v1",
+      "profile_version": "0.1.0",
+      "du_model_name": "Celcomdigi USP",
+      "mapping_version": "discovery-2026-07-07-celcomdigi-usp-v1",
+      "observed_header_hash": "79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf",
+      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
+      "action_count": 13,
+      "action_type_counts": {
+        "RESOLVE_MISSING_REQUIRED_FIELD": 2,
+        "CONFIRM_COMPETING_CANDIDATE": 5,
+        "VERIFY_SINGLE_CANDIDATE": 4,
+        "APPROVE_HEADER_HASH": 1,
+        "HOLD_LIFECYCLE_PROMOTION": 1
+      }
+    },
+    {
+      "profile_id": "jendela_tx_migration_pr_v1",
+      "profile_version": "0.1.0",
+      "du_model_name": "Jendela TX Migration",
+      "mapping_version": "discovery-2026-07-07-jendela-tx-migration-v1",
+      "observed_header_hash": "904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3",
+      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
+      "action_count": 13,
+      "action_type_counts": {
+        "RESOLVE_MISSING_REQUIRED_FIELD": 2,
+        "CONFIRM_COMPETING_CANDIDATE": 4,
+        "VERIFY_SINGLE_CANDIDATE": 5,
+        "APPROVE_HEADER_HASH": 1,
+        "HOLD_LIFECYCLE_PROMOTION": 1
+      }
+    },
+    {
+      "profile_id": "mw_eos_swap_pr_v1",
+      "profile_version": "0.1.0",
+      "du_model_name": "MW EOS Swap",
+      "mapping_version": "discovery-2026-07-06-mw-eos-swap-v1",
+      "observed_header_hash": "46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a",
+      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
+      "action_count": 13,
+      "action_type_counts": {
+        "RESOLVE_MISSING_REQUIRED_FIELD": 2,
+        "CONFIRM_COMPETING_CANDIDATE": 5,
+        "VERIFY_SINGLE_CANDIDATE": 4,
+        "APPROVE_HEADER_HASH": 1,
+        "HOLD_LIFECYCLE_PROMOTION": 1
+      }
+    },
+    {
+      "profile_id": "tx_mini_pr_v1",
+      "profile_version": "0.2.0",
+      "du_model_name": "TX Mini Project",
+      "mapping_version": "approved-2026-07-07-tx-mini-v1",
+      "observed_header_hash": "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
+      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
+      "action_count": 1,
+      "action_type_counts": {
+        "HOLD_LIFECYCLE_PROMOTION": 1
+      }
+    },
+    {
+      "profile_id": "tx_rollout_2023_pr_v1",
+      "profile_version": "0.1.0",
+      "du_model_name": "2023 TX Rollout",
+      "mapping_version": "discovery-2026-07-06-2023-tx-rollout-v1",
+      "observed_header_hash": "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320",
+      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
+      "action_count": 11,
+      "action_type_counts": {
+        "CONFIRM_COMPETING_CANDIDATE": 5,
+        "VERIFY_SINGLE_CANDIDATE": 4,
+        "APPROVE_HEADER_HASH": 1,
+        "HOLD_LIFECYCLE_PROMOTION": 1
+      }
+    },
+    {
+      "profile_id": "zte_tx_mini_pr_v1",
+      "profile_version": "0.1.0",
+      "du_model_name": "ZTE TX MINI",
+      "mapping_version": "discovery-2026-07-06-zte-tx-mini-v1",
+      "observed_header_hash": "a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810",
+      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
+      "action_count": 13,
+      "action_type_counts": {
+        "RESOLVE_MISSING_REQUIRED_FIELD": 2,
+        "CONFIRM_COMPETING_CANDIDATE": 5,
+        "VERIFY_SINGLE_CANDIDATE": 4,
+        "APPROVE_HEADER_HASH": 1,
+        "HOLD_LIFECYCLE_PROMOTION": 1
+      }
+    }
+  ],
+  "batch_review_queue": [
+    {
+      "action_type": "RESOLVE_MISSING_REQUIRED_FIELD",
+      "field_name": "existing_ti_pr_status",
+      "summary": "Resolve required field `existing_ti_pr_status` before any lifecycle promotion.",
+      "profiles": [
+        "cd_consolidation_2023_decom_pr_v1",
+        "cd_consolidation_2023_rollout_pr_v1",
+        "celcomdigi_bau_2023_pr_v1",
+        "celcomdigi_bau_2024_pr_v1",
+        "celcomdigi_usp_pr_v1",
+        "jendela_tx_migration_pr_v1",
+        "mw_eos_swap_pr_v1",
+        "zte_tx_mini_pr_v1"
+      ],
+      "profile_priority_ids": [
+        "cd_consolidation_2023_decom_pr_v1:01",
+        "cd_consolidation_2023_rollout_pr_v1:01",
+        "celcomdigi_bau_2023_pr_v1:01",
+        "celcomdigi_bau_2024_pr_v1:01",
+        "celcomdigi_usp_pr_v1:01",
+        "jendela_tx_migration_pr_v1:01",
+        "mw_eos_swap_pr_v1:01",
+        "zte_tx_mini_pr_v1:01"
+      ],
+      "evidence_hints": [
+        "Review donor export 2023 TX Rollout with similarity 0.086 before deciding derived, manual, or blocking treatment.",
+        "Review donor export 2023 TX Rollout with similarity 0.000 before deciding derived, manual, or blocking treatment.",
+        "Review donor export 2023 TX Rollout with similarity 0.088 before deciding derived, manual, or blocking treatment."
+      ],
+      "profile_count": 8,
+      "batch_priority": 1
+    },
+    {
+      "action_type": "RESOLVE_MISSING_REQUIRED_FIELD",
+      "field_name": "existing_tss_pr_status",
+      "summary": "Resolve required field `existing_tss_pr_status` before any lifecycle promotion.",
+      "profiles": [
+        "cd_consolidation_2023_decom_pr_v1",
+        "cd_consolidation_2023_rollout_pr_v1",
+        "celcomdigi_bau_2023_pr_v1",
+        "celcomdigi_bau_2024_pr_v1",
+        "celcomdigi_usp_pr_v1",
+        "jendela_tx_migration_pr_v1",
+        "mw_eos_swap_pr_v1",
+        "zte_tx_mini_pr_v1"
+      ],
+      "profile_priority_ids": [
+        "cd_consolidation_2023_decom_pr_v1:02",
+        "cd_consolidation_2023_rollout_pr_v1:02",
+        "celcomdigi_bau_2023_pr_v1:02",
+        "celcomdigi_bau_2024_pr_v1:02",
+        "celcomdigi_usp_pr_v1:02",
+        "jendela_tx_migration_pr_v1:02",
+        "mw_eos_swap_pr_v1:02",
+        "zte_tx_mini_pr_v1:02"
+      ],
+      "evidence_hints": [
+        "Review donor export 2023 TX Rollout with similarity 0.086 before deciding derived, manual, or blocking treatment.",
+        "Review donor export 2023 TX Rollout with similarity 0.000 before deciding derived, manual, or blocking treatment.",
+        "Review donor export 2023 TX Rollout with similarity 0.088 before deciding derived, manual, or blocking treatment."
+      ],
+      "profile_count": 8,
+      "batch_priority": 2
+    },
+    {
+      "action_type": "CONFIRM_COMPETING_CANDIDATE",
+      "field_name": "tx_sow_raw",
+      "summary": "Choose one exact four-layer source for `tx_sow_raw` from the competing shortlist candidates.",
+      "profiles": [
+        "cd_consolidation_2023_decom_pr_v1",
+        "cd_consolidation_2023_rollout_pr_v1",
+        "celcomdigi_bau_2023_pr_v1",
+        "celcomdigi_bau_2024_pr_v1",
+        "celcomdigi_usp_pr_v1",
+        "jendela_tx_migration_pr_v1",
+        "mw_eos_swap_pr_v1",
+        "tx_rollout_2023_pr_v1",
+        "zte_tx_mini_pr_v1"
+      ],
+      "profile_priority_ids": [
+        "cd_consolidation_2023_decom_pr_v1:06",
+        "cd_consolidation_2023_rollout_pr_v1:05",
+        "celcomdigi_bau_2023_pr_v1:04",
+        "celcomdigi_bau_2024_pr_v1:05",
+        "celcomdigi_usp_pr_v1:07",
+        "jendela_tx_migration_pr_v1:06",
+        "mw_eos_swap_pr_v1:07",
+        "tx_rollout_2023_pr_v1:05",
+        "zte_tx_mini_pr_v1:07"
+      ],
+      "evidence_hints": [
+        "Use the unresolved review packet to compare the currently selected source against alternates."
+      ],
+      "profile_count": 9,
+      "batch_priority": 3
+    },
+    {
+      "action_type": "CONFIRM_COMPETING_CANDIDATE",
+      "field_name": "subcontractor_planning",
+      "summary": "Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.",
+      "profiles": [
+        "celcomdigi_bau_2023_pr_v1",
+        "celcomdigi_bau_2024_pr_v1",
+        "celcomdigi_usp_pr_v1",
+        "jendela_tx_migration_pr_v1",
+        "mw_eos_swap_pr_v1",
+        "tx_rollout_2023_pr_v1",
+        "zte_tx_mini_pr_v1"
+      ],
+      "profile_priority_ids": [
+        "celcomdigi_bau_2023_pr_v1:03",
+        "celcomdigi_bau_2024_pr_v1:03",
+        "celcomdigi_usp_pr_v1:05",
+        "jendela_tx_migration_pr_v1:04",
+        "mw_eos_swap_pr_v1:05",
+        "tx_rollout_2023_pr_v1:03",
+        "zte_tx_mini_pr_v1:05"
+      ],
+      "evidence_hints": [
+        "Use the unresolved review packet to compare the currently selected source against alternates."
+      ],
+      "profile_count": 7,
+      "batch_priority": 4
+    },
+    {
+      "action_type": "CONFIRM_COMPETING_CANDIDATE",
+      "field_name": "subcontractor_ti",
+      "summary": "Choose one exact four-layer source for `subcontractor_ti` from the competing shortlist candidates.",
+      "profiles": [
+        "celcomdigi_bau_2024_pr_v1",
+        "celcomdigi_usp_pr_v1",
+        "jendela_tx_migration_pr_v1",
+        "mw_eos_swap_pr_v1",
+        "tx_rollout_2023_pr_v1",
+        "zte_tx_mini_pr_v1"
+      ],
+      "profile_priority_ids": [
+        "celcomdigi_bau_2024_pr_v1:04",
+        "celcomdigi_usp_pr_v1:06",
+        "jendela_tx_migration_pr_v1:05",
+        "mw_eos_swap_pr_v1:06",
+        "tx_rollout_2023_pr_v1:04",
+        "zte_tx_mini_pr_v1:06"
+      ],
+      "evidence_hints": [
+        "Use the unresolved review packet to compare the currently selected source against alternates."
+      ],
+      "profile_count": 6,
+      "batch_priority": 5
+    },
+    {
+      "action_type": "CONFIRM_COMPETING_CANDIDATE",
+      "field_name": "site_code",
+      "summary": "Choose one exact four-layer source for `site_code` from the competing shortlist candidates.",
+      "profiles": [
+        "cd_consolidation_2023_decom_pr_v1",
+        "cd_consolidation_2023_rollout_pr_v1",
+        "celcomdigi_usp_pr_v1",
+        "mw_eos_swap_pr_v1",
+        "zte_tx_mini_pr_v1"
+      ],
+      "profile_priority_ids": [
+        "cd_consolidation_2023_decom_pr_v1:04",
+        "cd_consolidation_2023_rollout_pr_v1:04",
+        "celcomdigi_usp_pr_v1:03",
+        "mw_eos_swap_pr_v1:03",
+        "zte_tx_mini_pr_v1:03"
+      ],
+      "evidence_hints": [
+        "Use the unresolved review packet to compare the currently selected source against alternates."
+      ],
+      "profile_count": 5,
+      "batch_priority": 6
+    },
+    {
+      "action_type": "CONFIRM_COMPETING_CANDIDATE",
+      "field_name": "site_name",
+      "summary": "Choose one exact four-layer source for `site_name` from the competing shortlist candidates.",
+      "profiles": [
+        "cd_consolidation_2023_decom_pr_v1",
+        "celcomdigi_usp_pr_v1",
+        "jendela_tx_migration_pr_v1",
+        "mw_eos_swap_pr_v1",
+        "zte_tx_mini_pr_v1"
+      ],
+      "profile_priority_ids": [
+        "cd_consolidation_2023_decom_pr_v1:05",
+        "celcomdigi_usp_pr_v1:04",
+        "jendela_tx_migration_pr_v1:03",
+        "mw_eos_swap_pr_v1:04",
+        "zte_tx_mini_pr_v1:04"
+      ],
+      "evidence_hints": [
+        "Use the unresolved review packet to compare the currently selected source against alternates."
+      ],
+      "profile_count": 5,
+      "batch_priority": 7
+    },
+    {
+      "action_type": "CONFIRM_COMPETING_CANDIDATE",
+      "field_name": "region",
+      "summary": "Choose one exact four-layer source for `region` from the competing shortlist candidates.",
+      "profiles": [
+        "cd_consolidation_2023_decom_pr_v1",
+        "cd_consolidation_2023_rollout_pr_v1"
+      ],
+      "profile_priority_ids": [
+        "cd_consolidation_2023_decom_pr_v1:03",
+        "cd_consolidation_2023_rollout_pr_v1:03"
+      ],
+      "evidence_hints": [
+        "Use the unresolved review packet to compare the currently selected source against alternates."
+      ],
+      "profile_count": 2,
+      "batch_priority": 8
+    },
+    {
+      "action_type": "CONFIRM_COMPETING_CANDIDATE",
+      "field_name": "existing_ti_pr_status",
+      "summary": "Choose one exact four-layer source for `existing_ti_pr_status` from the competing shortlist candidates.",
+      "profiles": [
+        "tx_rollout_2023_pr_v1"
+      ],
+      "profile_priority_ids": [
+        "tx_rollout_2023_pr_v1:01"
+      ],
+      "evidence_hints": [
+        "Use the unresolved review packet to compare the currently selected source against alternates."
+      ],
+      "profile_count": 1,
+      "batch_priority": 9
+    },
+    {
+      "action_type": "CONFIRM_COMPETING_CANDIDATE",
+      "field_name": "existing_tss_pr_status",
+      "summary": "Choose one exact four-layer source for `existing_tss_pr_status` from the competing shortlist candidates.",
+      "profiles": [
+        "tx_rollout_2023_pr_v1"
+      ],
+      "profile_priority_ids": [
+        "tx_rollout_2023_pr_v1:02"
+      ],
+      "evidence_hints": [
+        "Use the unresolved review packet to compare the currently selected source against alternates."
+      ],
+      "profile_count": 1,
+      "batch_priority": 10
+    },
+    {
+      "action_type": "VERIFY_SINGLE_CANDIDATE",
+      "field_name": "du_key",
+      "summary": "Verify the current single shortlist-aligned source for `du_key`.",
+      "profiles": [
+        "cd_consolidation_2023_decom_pr_v1",
+        "cd_consolidation_2023_rollout_pr_v1",
+        "celcomdigi_bau_2023_pr_v1",
+        "celcomdigi_bau_2024_pr_v1",
+        "celcomdigi_usp_pr_v1",
+        "jendela_tx_migration_pr_v1",
+        "mw_eos_swap_pr_v1",
+        "tx_rollout_2023_pr_v1",
+        "zte_tx_mini_pr_v1"
+      ],
+      "profile_priority_ids": [
+        "cd_consolidation_2023_decom_pr_v1:07",
+        "cd_consolidation_2023_rollout_pr_v1:06",
+        "celcomdigi_bau_2023_pr_v1:07",
+        "celcomdigi_bau_2024_pr_v1:08",
+        "celcomdigi_usp_pr_v1:10",
+        "jendela_tx_migration_pr_v1:09",
+        "mw_eos_swap_pr_v1:10",
+        "tx_rollout_2023_pr_v1:06",
+        "zte_tx_mini_pr_v1:10"
+      ],
+      "evidence_hints": [
+        "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+      ],
+      "profile_count": 9,
+      "batch_priority": 11
+    },
+    {
+      "action_type": "VERIFY_SINGLE_CANDIDATE",
+      "field_name": "region",
+      "summary": "Verify the current single shortlist-aligned source for `region`.",
+      "profiles": [
+        "celcomdigi_bau_2023_pr_v1",
+        "celcomdigi_bau_2024_pr_v1",
+        "celcomdigi_usp_pr_v1",
+        "jendela_tx_migration_pr_v1",
+        "mw_eos_swap_pr_v1",
+        "tx_rollout_2023_pr_v1",
+        "zte_tx_mini_pr_v1"
+      ],
+      "profile_priority_ids": [
+        "celcomdigi_bau_2023_pr_v1:08",
+        "celcomdigi_bau_2024_pr_v1:09",
+        "celcomdigi_usp_pr_v1:11",
+        "jendela_tx_migration_pr_v1:10",
+        "mw_eos_swap_pr_v1:11",
+        "tx_rollout_2023_pr_v1:07",
+        "zte_tx_mini_pr_v1:11"
+      ],
+      "evidence_hints": [
+        "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+      ],
+      "profile_count": 7,
+      "batch_priority": 12
+    },
+    {
+      "action_type": "VERIFY_SINGLE_CANDIDATE",
+      "field_name": "antenna_size_fe",
+      "summary": "Verify the current single shortlist-aligned source for `antenna_size_fe`.",
+      "profiles": [
+        "celcomdigi_bau_2023_pr_v1",
+        "celcomdigi_bau_2024_pr_v1",
+        "celcomdigi_usp_pr_v1",
+        "jendela_tx_migration_pr_v1",
+        "mw_eos_swap_pr_v1",
+        "zte_tx_mini_pr_v1"
+      ],
+      "profile_priority_ids": [
+        "celcomdigi_bau_2023_pr_v1:05",
+        "celcomdigi_bau_2024_pr_v1:06",
+        "celcomdigi_usp_pr_v1:08",
+        "jendela_tx_migration_pr_v1:07",
+        "mw_eos_swap_pr_v1:08",
+        "zte_tx_mini_pr_v1:08"
+      ],
+      "evidence_hints": [
+        "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+      ],
+      "profile_count": 6,
+      "batch_priority": 13
+    },
+    {
+      "action_type": "VERIFY_SINGLE_CANDIDATE",
+      "field_name": "antenna_size_ne",
+      "summary": "Verify the current single shortlist-aligned source for `antenna_size_ne`.",
+      "profiles": [
+        "celcomdigi_bau_2023_pr_v1",
+        "celcomdigi_bau_2024_pr_v1",
+        "celcomdigi_usp_pr_v1",
+        "jendela_tx_migration_pr_v1",
+        "mw_eos_swap_pr_v1",
+        "zte_tx_mini_pr_v1"
+      ],
+      "profile_priority_ids": [
+        "celcomdigi_bau_2023_pr_v1:06",
+        "celcomdigi_bau_2024_pr_v1:07",
+        "celcomdigi_usp_pr_v1:09",
+        "jendela_tx_migration_pr_v1:08",
+        "mw_eos_swap_pr_v1:09",
+        "zte_tx_mini_pr_v1:09"
+      ],
+      "evidence_hints": [
+        "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+      ],
+      "profile_count": 6,
+      "batch_priority": 14
+    },
+    {
+      "action_type": "VERIFY_SINGLE_CANDIDATE",
+      "field_name": "site_code",
+      "summary": "Verify the current single shortlist-aligned source for `site_code`.",
+      "profiles": [
+        "celcomdigi_bau_2023_pr_v1",
+        "celcomdigi_bau_2024_pr_v1",
+        "jendela_tx_migration_pr_v1",
+        "tx_rollout_2023_pr_v1"
+      ],
+      "profile_priority_ids": [
+        "celcomdigi_bau_2023_pr_v1:09",
+        "celcomdigi_bau_2024_pr_v1:10",
+        "jendela_tx_migration_pr_v1:11",
+        "tx_rollout_2023_pr_v1:08"
+      ],
+      "evidence_hints": [
+        "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+      ],
+      "profile_count": 4,
+      "batch_priority": 15
+    },
+    {
+      "action_type": "VERIFY_SINGLE_CANDIDATE",
+      "field_name": "site_name",
+      "summary": "Verify the current single shortlist-aligned source for `site_name`.",
+      "profiles": [
+        "cd_consolidation_2023_rollout_pr_v1",
+        "celcomdigi_bau_2023_pr_v1",
+        "celcomdigi_bau_2024_pr_v1",
+        "tx_rollout_2023_pr_v1"
+      ],
+      "profile_priority_ids": [
+        "cd_consolidation_2023_rollout_pr_v1:07",
+        "celcomdigi_bau_2023_pr_v1:10",
+        "celcomdigi_bau_2024_pr_v1:11",
+        "tx_rollout_2023_pr_v1:09"
+      ],
+      "evidence_hints": [
+        "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+      ],
+      "profile_count": 4,
+      "batch_priority": 16
+    },
+    {
+      "action_type": "VERIFY_SINGLE_CANDIDATE",
+      "field_name": "subcontractor_ti",
+      "summary": "Verify the current single shortlist-aligned source for `subcontractor_ti`.",
+      "profiles": [
+        "cd_consolidation_2023_decom_pr_v1",
+        "cd_consolidation_2023_rollout_pr_v1",
+        "celcomdigi_bau_2023_pr_v1"
+      ],
+      "profile_priority_ids": [
+        "cd_consolidation_2023_decom_pr_v1:08",
+        "cd_consolidation_2023_rollout_pr_v1:08",
+        "celcomdigi_bau_2023_pr_v1:11"
+      ],
+      "evidence_hints": [
+        "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+      ],
+      "profile_count": 3,
+      "batch_priority": 17
+    },
+    {
+      "action_type": "APPROVE_HEADER_HASH",
+      "field_name": null,
+      "summary": "Approve at least one header hash for this profile version after the field review is complete.",
+      "profiles": [
+        "cd_consolidation_2023_decom_pr_v1",
+        "cd_consolidation_2023_rollout_pr_v1",
+        "celcomdigi_bau_2023_pr_v1",
+        "celcomdigi_bau_2024_pr_v1",
+        "celcomdigi_usp_pr_v1",
+        "jendela_tx_migration_pr_v1",
+        "mw_eos_swap_pr_v1",
+        "tx_rollout_2023_pr_v1",
+        "zte_tx_mini_pr_v1"
+      ],
+      "profile_priority_ids": [
+        "cd_consolidation_2023_decom_pr_v1:09",
+        "cd_consolidation_2023_rollout_pr_v1:09",
+        "celcomdigi_bau_2023_pr_v1:12",
+        "celcomdigi_bau_2024_pr_v1:12",
+        "celcomdigi_usp_pr_v1:12",
+        "jendela_tx_migration_pr_v1:12",
+        "mw_eos_swap_pr_v1:12",
+        "tx_rollout_2023_pr_v1:10",
+        "zte_tx_mini_pr_v1:12"
+      ],
+      "evidence_hints": [
+        "Current observed header hash: 46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a",
+        "Current observed header hash: 8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320",
+        "Current observed header hash: 904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3",
+        "Current observed header hash: a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810",
+        "Current observed header hash: 77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313",
+        "Current observed header hash: b3677457da49e5de484976c3fdb7ad6f5dc19055f5339ec616407f5cbde89a86",
+        "Current observed header hash: 79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf",
+        "Current observed header hash: b86cbc349db66154324092c843593137e83908c3b4b55c09305d6cf6046c7a16",
+        "Current observed header hash: d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1"
+      ],
+      "profile_count": 9,
+      "batch_priority": 18
+    },
+    {
+      "action_type": "HOLD_LIFECYCLE_PROMOTION",
+      "field_name": null,
+      "summary": "Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.",
+      "profiles": [
+        "cd_consolidation_2023_decom_pr_v1",
+        "cd_consolidation_2023_rollout_pr_v1",
+        "celcomdigi_bau_2023_pr_v1",
+        "celcomdigi_bau_2024_pr_v1",
+        "celcomdigi_usp_pr_v1",
+        "jendela_tx_migration_pr_v1",
+        "mw_eos_swap_pr_v1",
+        "tx_mini_pr_v1",
+        "tx_rollout_2023_pr_v1",
+        "zte_tx_mini_pr_v1"
+      ],
+      "profile_priority_ids": [
+        "cd_consolidation_2023_decom_pr_v1:10",
+        "cd_consolidation_2023_rollout_pr_v1:10",
+        "celcomdigi_bau_2023_pr_v1:13",
+        "celcomdigi_bau_2024_pr_v1:13",
+        "celcomdigi_usp_pr_v1:13",
+        "jendela_tx_migration_pr_v1:13",
+        "mw_eos_swap_pr_v1:13",
+        "tx_mini_pr_v1:01",
+        "tx_rollout_2023_pr_v1:11",
+        "zte_tx_mini_pr_v1:13"
+      ],
+      "evidence_hints": [
+        "Use the transition review as the final stop/go check before any status change."
+      ],
+      "profile_count": 10,
+      "batch_priority": 19
+    }
+  ],
+  "notes": [
+    "This review matrix is discovery-only and batches repeated manual-review themes across current DRAFT profiles.",
+    "Batch priorities are review-order guidance only and do not approve any mapping, header hash, or lifecycle transition."
+  ]
+}

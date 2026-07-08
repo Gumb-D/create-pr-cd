@@ -1,0 +1,397 @@
+{
+  "schema_version": "1.0",
+  "registry_type": "discovery_only",
+  "generated_from": "output\\du-20260706-profile",
+  "entries": [
+    {
+      "project_key": "Malaysia_CelcomDigi_Project",
+      "project_reference": "A-P202202168750_D002",
+      "du_model_name": "2023 Celcomdigi BAU",
+      "du_model_id": "8296022438223590261",
+      "view_label": "2023 Celcomdigi BAU_(TX)",
+      "view_id": "6611960521271999255",
+      "source_file_name": "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx",
+      "source_file_hash": "bd80c3d3cb1d935f9195b95483fe89f867c642946646f054de36a6a43cdcfc4a",
+      "observed_header_hash": "77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313",
+      "sheet_names": [
+        "data",
+        "drop_down"
+      ],
+      "profile_id": "celcomdigi_bau_2023_pr_v1",
+      "profile_status": "DRAFT",
+      "profile_version": "0.1.0",
+      "mapping_version": "discovery-2026-07-07-2023-celcomdigi-bau-v1",
+      "pr_input_status": "PR_INPUT_QUARANTINED",
+      "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
+      "skill_field_presence": {
+        "site_id": true,
+        "site_name": true,
+        "du_code": true,
+        "region": true,
+        "tx_sow": true,
+        "antenna_size_ne": true,
+        "antenna_size_fe": true,
+        "subcon_tss_team": true,
+        "subcon_ti_team": true,
+        "subcon_planning": true,
+        "existing_tss_pr": false,
+        "existing_ti_pr": false
+      },
+      "notes": [
+        "Discovery-only metadata derived from local profiler artifacts.",
+        "No header hash, field mapping, or profile in this entry is approved for production use."
+      ]
+    },
+    {
+      "project_key": "Malaysia_CelcomDigi_Project",
+      "project_reference": "A-P202202168750_D002",
+      "du_model_name": "2023 TX Rollout",
+      "du_model_id": "1027190858144623081",
+      "view_label": "TX Rollout PR_PO View",
+      "view_id": "8530399820526021092",
+      "source_file_name": "A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx",
+      "source_file_hash": "be54f219b0ff9eead10ceaa666269d51ecab2385b133c46f374300b6c9391ff3",
+      "observed_header_hash": "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320",
+      "sheet_names": [
+        "data",
+        "drop_down"
+      ],
+      "profile_id": "tx_rollout_2023_pr_v1",
+      "profile_status": "DRAFT",
+      "profile_version": "0.1.0",
+      "mapping_version": "discovery-2026-07-06-2023-tx-rollout-v1",
+      "pr_input_status": "PR_INPUT_QUARANTINED",
+      "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
+      "skill_field_presence": {
+        "site_id": true,
+        "site_name": true,
+        "du_code": true,
+        "region": true,
+        "tx_sow": true,
+        "antenna_size_ne": false,
+        "antenna_size_fe": false,
+        "subcon_tss_team": true,
+        "subcon_ti_team": true,
+        "subcon_planning": true,
+        "existing_tss_pr": true,
+        "existing_ti_pr": true
+      },
+      "notes": [
+        "Discovery-only metadata derived from local profiler artifacts.",
+        "No header hash, field mapping, or profile in this entry is approved for production use."
+      ]
+    },
+    {
+      "project_key": "Malaysia_CelcomDigi_Project",
+      "project_reference": "A-P202202168750_D002",
+      "du_model_name": "2024 Celcomdigi BAU",
+      "du_model_id": "7278317398457076992",
+      "view_label": "2024 BAU Rollout (TX)",
+      "view_id": "1090541706000906451",
+      "source_file_name": "A-P202202168750_D002-2024 Celcomdigi BAU-2024 BAU Rollout (TX)-20260703160253.xlsx",
+      "source_file_hash": "337f53fe63554aa1909af20522dc14f2c9a2d8eec0f7819f6210a40c7988c7d9",
+      "observed_header_hash": "b3677457da49e5de484976c3fdb7ad6f5dc19055f5339ec616407f5cbde89a86",
+      "sheet_names": [
+        "data",
+        "drop_down"
+      ],
+      "profile_id": "celcomdigi_bau_2024_pr_v1",
+      "profile_status": "DRAFT",
+      "profile_version": "0.1.0",
+      "mapping_version": "discovery-2026-07-07-2024-celcomdigi-bau-v1",
+      "pr_input_status": "PR_INPUT_QUARANTINED",
+      "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
+      "skill_field_presence": {
+        "site_id": true,
+        "site_name": true,
+        "du_code": true,
+        "region": true,
+        "tx_sow": true,
+        "antenna_size_ne": true,
+        "antenna_size_fe": true,
+        "subcon_tss_team": true,
+        "subcon_ti_team": true,
+        "subcon_planning": true,
+        "existing_tss_pr": false,
+        "existing_ti_pr": false
+      },
+      "notes": [
+        "Discovery-only metadata derived from local profiler artifacts.",
+        "No header hash, field mapping, or profile in this entry is approved for production use."
+      ]
+    },
+    {
+      "project_key": "Malaysia_CelcomDigi_Project",
+      "project_reference": "A-P202202168750_D002",
+      "du_model_name": "CD consolidation 2023",
+      "du_model_id": "8359047522524182050",
+      "view_label": "CD 2023 Decom Site",
+      "view_id": "702960351133798763",
+      "source_file_name": "A-P202202168750_D002-CD consolidation 2023-CD 2023 Decom Site-20260703160415.xlsx",
+      "source_file_hash": "8b08b98aa2cb9b827c5c89947b1f641d72499e5694ddda45b33303115d9e1ff0",
+      "observed_header_hash": "b86cbc349db66154324092c843593137e83908c3b4b55c09305d6cf6046c7a16",
+      "sheet_names": [
+        "data",
+        "drop_down"
+      ],
+      "profile_id": "cd_consolidation_2023_decom_pr_v1",
+      "profile_status": "DRAFT",
+      "profile_version": "0.1.0",
+      "mapping_version": "discovery-2026-07-07-cd-consolidation-2023-decom-v1",
+      "pr_input_status": "PR_INPUT_QUARANTINED",
+      "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
+      "skill_field_presence": {
+        "site_id": true,
+        "site_name": true,
+        "du_code": true,
+        "region": true,
+        "tx_sow": true,
+        "antenna_size_ne": false,
+        "antenna_size_fe": false,
+        "subcon_tss_team": true,
+        "subcon_ti_team": true,
+        "subcon_planning": false,
+        "existing_tss_pr": false,
+        "existing_ti_pr": false
+      },
+      "notes": [
+        "Discovery-only metadata derived from local profiler artifacts.",
+        "No header hash, field mapping, or profile in this entry is approved for production use."
+      ]
+    },
+    {
+      "project_key": "Malaysia_CelcomDigi_Project",
+      "project_reference": "A-P202202168750_D002",
+      "du_model_name": "CD consolidation 2023",
+      "du_model_id": "8359047522524182050",
+      "view_label": "CD consolidation 2023 Rollout",
+      "view_id": "8359047522524230651",
+      "source_file_name": "A-P202202168750_D002-CD consolidation 2023-CD consolidation 2023 Rollout-20260703160351.xlsx",
+      "source_file_hash": "340ae76862990096ee1659ef9d238906d8e305d3e1f859444797caebd7cb99fd",
+      "observed_header_hash": "d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1",
+      "sheet_names": [
+        "data",
+        "drop_down"
+      ],
+      "profile_id": "cd_consolidation_2023_rollout_pr_v1",
+      "profile_status": "DRAFT",
+      "profile_version": "0.1.0",
+      "mapping_version": "discovery-2026-07-07-cd-consolidation-2023-rollout-v1",
+      "pr_input_status": "PR_INPUT_QUARANTINED",
+      "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
+      "skill_field_presence": {
+        "site_id": true,
+        "site_name": true,
+        "du_code": true,
+        "region": true,
+        "tx_sow": true,
+        "antenna_size_ne": false,
+        "antenna_size_fe": false,
+        "subcon_tss_team": true,
+        "subcon_ti_team": true,
+        "subcon_planning": false,
+        "existing_tss_pr": false,
+        "existing_ti_pr": false
+      },
+      "notes": [
+        "Discovery-only metadata derived from local profiler artifacts.",
+        "No header hash, field mapping, or profile in this entry is approved for production use."
+      ]
+    },
+    {
+      "project_key": "Malaysia_CelcomDigi_Project",
+      "project_reference": "A-P202202168750_D002",
+      "du_model_name": "Celcomdigi USP",
+      "du_model_id": "3765504705612341090",
+      "view_label": "Celcomdigi USP (TX)",
+      "view_id": "703232142435130905",
+      "source_file_name": "A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx",
+      "source_file_hash": "09f488207242cbb45030d447eb3490c3a6d8433ec0eb91729186340c8761871e",
+      "observed_header_hash": "79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf",
+      "sheet_names": [
+        "data",
+        "drop_down"
+      ],
+      "profile_id": "celcomdigi_usp_pr_v1",
+      "profile_status": "DRAFT",
+      "profile_version": "0.1.0",
+      "mapping_version": "discovery-2026-07-07-celcomdigi-usp-v1",
+      "pr_input_status": "PR_INPUT_QUARANTINED",
+      "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
+      "skill_field_presence": {
+        "site_id": true,
+        "site_name": true,
+        "du_code": true,
+        "region": true,
+        "tx_sow": true,
+        "antenna_size_ne": true,
+        "antenna_size_fe": true,
+        "subcon_tss_team": true,
+        "subcon_ti_team": true,
+        "subcon_planning": true,
+        "existing_tss_pr": false,
+        "existing_ti_pr": false
+      },
+      "notes": [
+        "Discovery-only metadata derived from local profiler artifacts.",
+        "No header hash, field mapping, or profile in this entry is approved for production use."
+      ]
+    },
+    {
+      "project_key": "Malaysia_CelcomDigi_Project",
+      "project_reference": "A-P202202168750_D002",
+      "du_model_name": "Jendela TX Migration",
+      "du_model_id": "4972593269368006257",
+      "view_label": "Migration Rollout (TX)",
+      "view_id": "4026888666764910245",
+      "source_file_name": "A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260703160246.xlsx",
+      "source_file_hash": "7be5335dcec9add2acdb4f924d15b75597a4a66543698f362390dfd3843ac665",
+      "observed_header_hash": "904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3",
+      "sheet_names": [
+        "data",
+        "drop_down"
+      ],
+      "profile_id": "jendela_tx_migration_pr_v1",
+      "profile_status": "DRAFT",
+      "profile_version": "0.1.0",
+      "mapping_version": "discovery-2026-07-07-jendela-tx-migration-v1",
+      "pr_input_status": "PR_INPUT_QUARANTINED",
+      "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
+      "skill_field_presence": {
+        "site_id": true,
+        "site_name": true,
+        "du_code": true,
+        "region": true,
+        "tx_sow": true,
+        "antenna_size_ne": true,
+        "antenna_size_fe": true,
+        "subcon_tss_team": true,
+        "subcon_ti_team": true,
+        "subcon_planning": true,
+        "existing_tss_pr": false,
+        "existing_ti_pr": false
+      },
+      "notes": [
+        "Discovery-only metadata derived from local profiler artifacts.",
+        "No header hash, field mapping, or profile in this entry is approved for production use."
+      ]
+    },
+    {
+      "project_key": "Malaysia_CelcomDigi_Project",
+      "project_reference": "A-P202202168750_D002",
+      "du_model_name": "TX Mini Project",
+      "du_model_id": "4188808420049567786",
+      "view_label": "TX Mini PR_PO View",
+      "view_id": "2477626672974883536",
+      "source_file_name": "A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx",
+      "source_file_hash": "81de6ba3673dad406e7824727c5c8492dd06b3ef60d088a6e9d680af6c35f8ab",
+      "observed_header_hash": "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
+      "sheet_names": [
+        "data",
+        "drop_down"
+      ],
+      "profile_id": "tx_mini_pr_v1",
+      "profile_status": "PR_INPUT_READY",
+      "profile_version": "0.2.0",
+      "mapping_version": "approved-2026-07-07-tx-mini-v1",
+      "pr_input_status": "PR_INPUT_QUARANTINED",
+      "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
+      "skill_field_presence": {
+        "site_id": true,
+        "site_name": true,
+        "du_code": true,
+        "region": true,
+        "tx_sow": true,
+        "antenna_size_ne": true,
+        "antenna_size_fe": true,
+        "subcon_tss_team": true,
+        "subcon_ti_team": true,
+        "subcon_planning": true,
+        "existing_tss_pr": false,
+        "existing_ti_pr": false
+      },
+      "notes": [
+        "Discovery-only metadata derived from local profiler artifacts.",
+        "No header hash, field mapping, or profile in this entry is approved for production use."
+      ]
+    },
+    {
+      "project_key": "CelcomDigi_MW",
+      "project_reference": "A-P202211283695_D002",
+      "du_model_name": "MW EOS Swap",
+      "du_model_id": "5440935430300168497",
+      "view_label": "MW EOS Swap Rollout",
+      "view_id": "7476572371505372260",
+      "source_file_name": "A-P202211283695_D002-MW EOS Swap-MW EOS Swap Rollout-20260703160307.xlsx",
+      "source_file_hash": "22fa6f6dcf04eb3e1f7f37dbb24ac2e52db9f0fbb884efde8aedc17f56e626a8",
+      "observed_header_hash": "46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a",
+      "sheet_names": [
+        "data",
+        "drop_down"
+      ],
+      "profile_id": "mw_eos_swap_pr_v1",
+      "profile_status": "DRAFT",
+      "profile_version": "0.1.0",
+      "mapping_version": "discovery-2026-07-06-mw-eos-swap-v1",
+      "pr_input_status": "PR_INPUT_QUARANTINED",
+      "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
+      "skill_field_presence": {
+        "site_id": true,
+        "site_name": true,
+        "du_code": true,
+        "region": true,
+        "tx_sow": true,
+        "antenna_size_ne": true,
+        "antenna_size_fe": true,
+        "subcon_tss_team": true,
+        "subcon_ti_team": true,
+        "subcon_planning": true,
+        "existing_tss_pr": false,
+        "existing_ti_pr": false
+      },
+      "notes": [
+        "Discovery-only metadata derived from local profiler artifacts.",
+        "No header hash, field mapping, or profile in this entry is approved for production use."
+      ]
+    },
+    {
+      "project_key": "CelcomDigi_MW",
+      "project_reference": "A-P202211283695_D002",
+      "du_model_name": "ZTE TX MINI",
+      "du_model_id": "8638668101234290847",
+      "view_label": "ZTE TX MINI v1",
+      "view_id": "2279585426760368522",
+      "source_file_name": "A-P202211283695_D002-ZTE TX MINI-ZTE TX MINI v1-20260703160312.xlsx",
+      "source_file_hash": "1091a2fcf9ac2e7d67552778d2902edafc025810c4a3f1e0ecfc94974787cd24",
+      "observed_header_hash": "a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810",
+      "sheet_names": [
+        "data",
+        "drop_down"
+      ],
+      "profile_id": "zte_tx_mini_pr_v1",
+      "profile_status": "DRAFT",
+      "profile_version": "0.1.0",
+      "mapping_version": "discovery-2026-07-06-zte-tx-mini-v1",
+      "pr_input_status": "PR_INPUT_QUARANTINED",
+      "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
+      "skill_field_presence": {
+        "site_id": true,
+        "site_name": true,
+        "du_code": true,
+        "region": true,
+        "tx_sow": true,
+        "antenna_size_ne": true,
+        "antenna_size_fe": true,
+        "subcon_tss_team": true,
+        "subcon_ti_team": true,
+        "subcon_planning": true,
+        "existing_tss_pr": false,
+        "existing_ti_pr": false
+      },
+      "notes": [
+        "Discovery-only metadata derived from local profiler artifacts.",
+        "No header hash, field mapping, or profile in this entry is approved for production use."
+      ]
+    }
+  ]
+}

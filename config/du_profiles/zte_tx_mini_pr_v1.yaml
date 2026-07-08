@@ -1,0 +1,51 @@
+{
+  "profile_id": "zte_tx_mini_pr_v1",
+  "profile_version": "0.1.0",
+  "mapping_version": "discovery-2026-07-06-zte-tx-mini-v1",
+  "status": "DRAFT",
+  "identity": {
+    "project_key": "CelcomDigi_MW",
+    "accepted_du_models": ["ZTE TX MINI"],
+    "accepted_du_model_ids": ["8638668101234290847"],
+    "accepted_view_ids": ["2279585426760368522"]
+  },
+  "export_structure": {
+    "sheet_selector": null,
+    "header_rows": [0, 1, 2, 3],
+    "header_hash_policy": "strict",
+    "observed_header_hash": "a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810",
+    "approved_header_hashes": []
+  },
+  "field_mapping": {
+    "site_code": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|fix00012|8638668101234290847|2279585426760368522", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "customer site code"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim", "uppercase"]},
+    "site_name": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00015", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "customer site name"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "du_key": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "du|du_code", "wbs_stage": "Du", "task_name": "Du", "display_header": "du code"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "tx_sow_raw": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01079155", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "Microwave Tx SOW"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "tx_upgrade_scope_raw": {"required": false, "source_candidates": [], "transforms": ["trim"]},
+    "region": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|region_name", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "region"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "state": {"required": false, "source_candidates": [], "transforms": ["trim"]},
+    "subcontractor_ti": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00970184", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "Subcon - TI"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "subcontractor_planning": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01087327", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "Subcon - Planning"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "existing_tss_pr_status": {"required": true, "source_candidates": [], "transforms": ["trim"]},
+    "existing_ti_pr_status": {"required": true, "source_candidates": [], "transforms": ["trim"]},
+    "latitude": {"required": false, "source_candidates": [], "transforms": ["parse_decimal"]},
+    "longitude": {"required": false, "source_candidates": [], "transforms": ["parse_decimal"]},
+    "antenna_size_ne": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01093667", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "MW Antenna Size NE"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "antenna_size_fe": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01093668", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "MW Antenna Size FE"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "boq_configuration": {"required": false, "source_candidates": [], "transforms": ["trim"]},
+    "tx_sow_details": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01079156", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "TX SOW Details"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "ne_sow_details": {"required": false, "source_candidates": [], "transforms": ["trim"]},
+    "fe_sow_details": {"required": false, "source_candidates": [], "transforms": ["trim"]}
+  },
+  "validation": {
+    "reject_unknown_headers": true,
+    "reject_ambiguous_source_mapping": true,
+    "require_evidence_for_every_canonical_field": true,
+    "profile_notes": [
+      "Source candidates were populated from local discovery-only profiler outputs and remain UNVERIFIED.",
+      "No approval evidence has yet established these ZTE TX MINI source fingerprints or header hash for production use.",
+      "Tx SOW normalization is a controlled derived field and is not a separate source-column mapping.",
+      "This profile is not production-ready and must never enable ECC generation."
+    ]
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0",
+  "registry_type": "canonical_sow_registry",
+  "approved_by": "JJ",
+  "approved_date": "2026-07-07",
+  "source_profile": "tx_mini_pr_v1",
+  "source_evidence": "Local TX Mini mapping-decision package (output/du-20260706-profile/tx-mini-mapping-review/, rounds 3-4); raw values cross-checked against Info/input/pr_model.xlsx sheet 'TX Line Item (After 21-Apr 26)'.",
+  "normalization_rule": "trim + collapse internal whitespace + UPPERCASE, then exact registry lookup",
+  "unknown_value_policy": "REVIEW_REQUIRED",
+  "entries": [
+    {"raw_value": "MW Swap", "canonical_sow": "MW SWAP", "classification": "PR_TRIGGER"},
+    {"raw_value": "MW New Link / Reroute", "canonical_sow": "MW NEW LINK / REROUTE", "classification": "PR_TRIGGER"},
+    {"raw_value": "MW Parallel Link", "canonical_sow": "MW PARALLEL LINK", "classification": "PR_TRIGGER"},
+    {"raw_value": "MW IDU Patching", "canonical_sow": "MW IDU PATCHING", "classification": "PR_TRIGGER"},
+    {"raw_value": "MW Re-engineering", "canonical_sow": "MW RE-ENGINEERING", "classification": "PR_TRIGGER"},
+    {"raw_value": "MW Hardware Upgrade", "canonical_sow": "MW HARDWARE UPGRADE", "classification": "PR_TRIGGER"},
+    {"raw_value": "IDU-IPRAN", "canonical_sow": "IDU-IPRAN", "classification": "PR_TRIGGER"},
+    {"raw_value": "BBU Patching", "canonical_sow": "BBU PATCHING", "classification": "PR_TRIGGER"},
+    {"raw_value": "MW IDU Relocation", "canonical_sow": "MW IDU RELOCATION", "classification": "PR_TRIGGER"},
+    {"raw_value": "IPRAN Port Upgrade", "canonical_sow": "IPRAN PORT UPGRADE", "classification": "PR_TRIGGER"},
+    {"raw_value": "MW Dismantle", "canonical_sow": "MW DISMANTLE", "classification": "PR_TRIGGER"},
+    {"raw_value": "Cancel / Drop", "canonical_sow": "CANCEL / DROP", "classification": "NO_PR_TRIGGER"},
+    {"raw_value": "MW Remote Upgrade", "canonical_sow": "MW REMOTE UPGRADE", "classification": "REVIEW_REQUIRED"},
+    {"raw_value": "New Starlink", "canonical_sow": "NEW STARLINK", "classification": "REVIEW_REQUIRED"},
+    {"raw_value": "Under NIC", "canonical_sow": "UNDER NIC", "classification": "REVIEW_REQUIRED"},
+    {"raw_value": "Existing TX", "canonical_sow": "EXISTING TX", "classification": "REVIEW_REQUIRED"}
+  ],
+  "notes": [
+    "PR_TRIGGER entries match an existing PR-model SOW exactly after normalization; identity normalization approved by JJ on 2026-07-07.",
+    "NO_PR_TRIGGER is an intentional skip: no PR output, no quarantine.",
+    "REVIEW_REQUIRED entries have no PR-model SOW and quarantine fail-closed until a business rule exists.",
+    "Values absent from this registry always classify as REVIEW_REQUIRED; the registry never guesses.",
+    "This registry records the value-level business ruling only; it does not enable ECC output and does not change the tx_mini_pr_v1 lifecycle status."
+  ]
+}

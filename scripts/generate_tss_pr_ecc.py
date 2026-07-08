@@ -1532,7 +1532,10 @@ if scope_name == 'TI' and (review_required_items or duplicates_skipped or unmatc
             'Material_Code',
             'Source_Scope'
         ]
-        with open(review_file, 'w', newline='') as f:
+        # utf-8-sig: site data can contain characters (e.g. U+200B) that the
+        # Windows default cp1252 encoding cannot write, and the BOM keeps the
+        # file readable in Excel.
+        with open(review_file, 'w', newline='', encoding='utf-8-sig') as f:
             writer = csv.DictWriter(f, fieldnames=review_fieldnames)
             writer.writeheader()
             for item in combined_review:
@@ -1570,7 +1573,7 @@ if scope_name == 'TI' and (review_required_items or duplicates_skipped or unmatc
         timestamp = datetime.now().strftime('%Y%m%d')
         dups_file = output_dir / f"DUPLICATES_SKIPPED_TI_{timestamp}.csv"
         
-        with open(dups_file, 'w', newline='') as f:
+        with open(dups_file, 'w', newline='', encoding='utf-8-sig') as f:
             writer = csv.DictWriter(f, fieldnames=['Site_ID', 'Region', 'SubCon_TI', 'Tx_SOW', 'Existing_PR', 'Reason'])
             writer.writeheader()
             for item in duplicates_skipped:

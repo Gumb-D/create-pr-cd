@@ -1,0 +1,631 @@
+{
+  "schema_version": "1.0",
+  "registry_type": "discovery_profile_readiness_review",
+  "entries": [
+    {
+      "profile_id": "tx_mini_pr_v1",
+      "profile_version": "0.2.0",
+      "mapping_version": "approved-2026-07-07-tx-mini-v1",
+      "profile_status": "PR_INPUT_READY",
+      "du_model_name": "TX Mini Project",
+      "source_file_name": "A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx",
+      "observed_header_hash": "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
+      "approved_header_hashes": [
+        "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221"
+      ],
+      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
+      "blocker_summary": {
+        "overall_blockers": [
+          "PROFILE_NOT_PRODUCTION"
+        ],
+        "lifecycle_blockers": [
+          "PROFILE_NOT_PRODUCTION"
+        ],
+        "missing_required_fields": [],
+        "unapproved_required_fields": [],
+        "competing_candidate_fields": [],
+        "single_candidate_unverified_fields": [],
+        "no_profile_selection_fields": [],
+        "shortlist_mismatch_fields": [],
+        "cross_model_bridge_fields": []
+      },
+      "release_prerequisites": [
+        "Approve the DU model identity and four-layer source mappings.",
+        "Approve at least one header hash for the profile version.",
+        "Resolve missing required fields or keep the profile blocked.",
+        "Remove DRAFT-only and UNVERIFIED mapping conditions before runtime enablement.",
+        "Complete regression verification and UAT before any lifecycle promotion."
+      ],
+      "notes": [
+        "This readiness review is discovery-only and does not approve any mapping, header hash, lifecycle transition, or cross-model reuse.",
+        "A profile can remain structurally informative while still being blocked from any production path."
+      ]
+    },
+    {
+      "profile_id": "mw_eos_swap_pr_v1",
+      "profile_version": "0.1.0",
+      "mapping_version": "discovery-2026-07-06-mw-eos-swap-v1",
+      "profile_status": "DRAFT",
+      "du_model_name": "MW EOS Swap",
+      "source_file_name": "A-P202211283695_D002-MW EOS Swap-MW EOS Swap Rollout-20260703160307.xlsx",
+      "observed_header_hash": "46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a",
+      "approved_header_hashes": [],
+      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
+      "blocker_summary": {
+        "overall_blockers": [
+          "PROFILE_NOT_PRODUCTION",
+          "NO_APPROVED_HEADER_HASH",
+          "REQUIRED_FIELDS_NOT_APPROVED",
+          "MISSING_REQUIRED_FIELDS",
+          "COMPETING_SHORTLIST_CANDIDATES",
+          "UNVERIFIED_SINGLE_CANDIDATE_FIELDS",
+          "CROSS_MODEL_BRIDGE_ONLY_FIELDS"
+        ],
+        "lifecycle_blockers": [
+          "PROFILE_NOT_PRODUCTION",
+          "NO_APPROVED_HEADER_HASH"
+        ],
+        "missing_required_fields": [
+          "existing_ti_pr_status",
+          "existing_tss_pr_status"
+        ],
+        "unapproved_required_fields": [
+          "region",
+          "site_code",
+          "subcontractor_ti",
+          "tx_sow_raw"
+        ],
+        "competing_candidate_fields": [
+          "site_code",
+          "site_name",
+          "subcontractor_planning",
+          "subcontractor_ti",
+          "tx_sow_raw"
+        ],
+        "single_candidate_unverified_fields": [
+          "antenna_size_fe",
+          "antenna_size_ne",
+          "du_key",
+          "region"
+        ],
+        "no_profile_selection_fields": [],
+        "shortlist_mismatch_fields": [],
+        "cross_model_bridge_fields": [
+          "existing_ti_pr_status",
+          "existing_tss_pr_status"
+        ]
+      },
+      "release_prerequisites": [
+        "Approve the DU model identity and four-layer source mappings.",
+        "Approve at least one header hash for the profile version.",
+        "Resolve missing required fields or keep the profile blocked.",
+        "Remove DRAFT-only and UNVERIFIED mapping conditions before runtime enablement.",
+        "Complete regression verification and UAT before any lifecycle promotion."
+      ],
+      "notes": [
+        "This readiness review is discovery-only and does not approve any mapping, header hash, lifecycle transition, or cross-model reuse.",
+        "A profile can remain structurally informative while still being blocked from any production path."
+      ]
+    },
+    {
+      "profile_id": "tx_rollout_2023_pr_v1",
+      "profile_version": "0.1.0",
+      "mapping_version": "discovery-2026-07-06-2023-tx-rollout-v1",
+      "profile_status": "DRAFT",
+      "du_model_name": "2023 TX Rollout",
+      "source_file_name": "A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx",
+      "observed_header_hash": "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320",
+      "approved_header_hashes": [],
+      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
+      "blocker_summary": {
+        "overall_blockers": [
+          "PROFILE_NOT_PRODUCTION",
+          "NO_APPROVED_HEADER_HASH",
+          "REQUIRED_FIELDS_NOT_APPROVED",
+          "COMPETING_SHORTLIST_CANDIDATES",
+          "UNVERIFIED_SINGLE_CANDIDATE_FIELDS"
+        ],
+        "lifecycle_blockers": [
+          "PROFILE_NOT_PRODUCTION",
+          "NO_APPROVED_HEADER_HASH"
+        ],
+        "missing_required_fields": [],
+        "unapproved_required_fields": [
+          "existing_ti_pr_status",
+          "existing_tss_pr_status",
+          "region",
+          "site_code",
+          "subcontractor_ti",
+          "tx_sow_raw"
+        ],
+        "competing_candidate_fields": [
+          "existing_ti_pr_status",
+          "existing_tss_pr_status",
+          "subcontractor_planning",
+          "subcontractor_ti",
+          "tx_sow_raw"
+        ],
+        "single_candidate_unverified_fields": [
+          "du_key",
+          "region",
+          "site_code",
+          "site_name"
+        ],
+        "no_profile_selection_fields": [],
+        "shortlist_mismatch_fields": [],
+        "cross_model_bridge_fields": []
+      },
+      "release_prerequisites": [
+        "Approve the DU model identity and four-layer source mappings.",
+        "Approve at least one header hash for the profile version.",
+        "Resolve missing required fields or keep the profile blocked.",
+        "Remove DRAFT-only and UNVERIFIED mapping conditions before runtime enablement.",
+        "Complete regression verification and UAT before any lifecycle promotion."
+      ],
+      "notes": [
+        "This readiness review is discovery-only and does not approve any mapping, header hash, lifecycle transition, or cross-model reuse.",
+        "A profile can remain structurally informative while still being blocked from any production path."
+      ]
+    },
+    {
+      "profile_id": "jendela_tx_migration_pr_v1",
+      "profile_version": "0.1.0",
+      "mapping_version": "discovery-2026-07-07-jendela-tx-migration-v1",
+      "profile_status": "DRAFT",
+      "du_model_name": "Jendela TX Migration",
+      "source_file_name": "A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260703160246.xlsx",
+      "observed_header_hash": "904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3",
+      "approved_header_hashes": [],
+      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
+      "blocker_summary": {
+        "overall_blockers": [
+          "PROFILE_NOT_PRODUCTION",
+          "NO_APPROVED_HEADER_HASH",
+          "REQUIRED_FIELDS_NOT_APPROVED",
+          "MISSING_REQUIRED_FIELDS",
+          "COMPETING_SHORTLIST_CANDIDATES",
+          "UNVERIFIED_SINGLE_CANDIDATE_FIELDS",
+          "CROSS_MODEL_BRIDGE_ONLY_FIELDS"
+        ],
+        "lifecycle_blockers": [
+          "PROFILE_NOT_PRODUCTION",
+          "NO_APPROVED_HEADER_HASH"
+        ],
+        "missing_required_fields": [
+          "existing_ti_pr_status",
+          "existing_tss_pr_status"
+        ],
+        "unapproved_required_fields": [
+          "region",
+          "site_code",
+          "subcontractor_ti",
+          "tx_sow_raw"
+        ],
+        "competing_candidate_fields": [
+          "site_name",
+          "subcontractor_planning",
+          "subcontractor_ti",
+          "tx_sow_raw"
+        ],
+        "single_candidate_unverified_fields": [
+          "antenna_size_fe",
+          "antenna_size_ne",
+          "du_key",
+          "region",
+          "site_code"
+        ],
+        "no_profile_selection_fields": [],
+        "shortlist_mismatch_fields": [],
+        "cross_model_bridge_fields": [
+          "existing_ti_pr_status",
+          "existing_tss_pr_status"
+        ]
+      },
+      "release_prerequisites": [
+        "Approve the DU model identity and four-layer source mappings.",
+        "Approve at least one header hash for the profile version.",
+        "Resolve missing required fields or keep the profile blocked.",
+        "Remove DRAFT-only and UNVERIFIED mapping conditions before runtime enablement.",
+        "Complete regression verification and UAT before any lifecycle promotion."
+      ],
+      "notes": [
+        "This readiness review is discovery-only and does not approve any mapping, header hash, lifecycle transition, or cross-model reuse.",
+        "A profile can remain structurally informative while still being blocked from any production path."
+      ]
+    },
+    {
+      "profile_id": "zte_tx_mini_pr_v1",
+      "profile_version": "0.1.0",
+      "mapping_version": "discovery-2026-07-06-zte-tx-mini-v1",
+      "profile_status": "DRAFT",
+      "du_model_name": "ZTE TX MINI",
+      "source_file_name": "A-P202211283695_D002-ZTE TX MINI-ZTE TX MINI v1-20260703160312.xlsx",
+      "observed_header_hash": "a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810",
+      "approved_header_hashes": [],
+      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
+      "blocker_summary": {
+        "overall_blockers": [
+          "PROFILE_NOT_PRODUCTION",
+          "NO_APPROVED_HEADER_HASH",
+          "REQUIRED_FIELDS_NOT_APPROVED",
+          "MISSING_REQUIRED_FIELDS",
+          "COMPETING_SHORTLIST_CANDIDATES",
+          "UNVERIFIED_SINGLE_CANDIDATE_FIELDS",
+          "CROSS_MODEL_BRIDGE_ONLY_FIELDS"
+        ],
+        "lifecycle_blockers": [
+          "PROFILE_NOT_PRODUCTION",
+          "NO_APPROVED_HEADER_HASH"
+        ],
+        "missing_required_fields": [
+          "existing_ti_pr_status",
+          "existing_tss_pr_status"
+        ],
+        "unapproved_required_fields": [
+          "region",
+          "site_code",
+          "subcontractor_ti",
+          "tx_sow_raw"
+        ],
+        "competing_candidate_fields": [
+          "site_code",
+          "site_name",
+          "subcontractor_planning",
+          "subcontractor_ti",
+          "tx_sow_raw"
+        ],
+        "single_candidate_unverified_fields": [
+          "antenna_size_fe",
+          "antenna_size_ne",
+          "du_key",
+          "region"
+        ],
+        "no_profile_selection_fields": [],
+        "shortlist_mismatch_fields": [],
+        "cross_model_bridge_fields": [
+          "existing_ti_pr_status",
+          "existing_tss_pr_status"
+        ]
+      },
+      "release_prerequisites": [
+        "Approve the DU model identity and four-layer source mappings.",
+        "Approve at least one header hash for the profile version.",
+        "Resolve missing required fields or keep the profile blocked.",
+        "Remove DRAFT-only and UNVERIFIED mapping conditions before runtime enablement.",
+        "Complete regression verification and UAT before any lifecycle promotion."
+      ],
+      "notes": [
+        "This readiness review is discovery-only and does not approve any mapping, header hash, lifecycle transition, or cross-model reuse.",
+        "A profile can remain structurally informative while still being blocked from any production path."
+      ]
+    },
+    {
+      "profile_id": "celcomdigi_bau_2023_pr_v1",
+      "profile_version": "0.1.0",
+      "mapping_version": "discovery-2026-07-07-2023-celcomdigi-bau-v1",
+      "profile_status": "DRAFT",
+      "du_model_name": "2023 Celcomdigi BAU",
+      "source_file_name": "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx",
+      "observed_header_hash": "77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313",
+      "approved_header_hashes": [],
+      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
+      "blocker_summary": {
+        "overall_blockers": [
+          "PROFILE_NOT_PRODUCTION",
+          "NO_APPROVED_HEADER_HASH",
+          "REQUIRED_FIELDS_NOT_APPROVED",
+          "MISSING_REQUIRED_FIELDS",
+          "COMPETING_SHORTLIST_CANDIDATES",
+          "UNVERIFIED_SINGLE_CANDIDATE_FIELDS",
+          "CROSS_MODEL_BRIDGE_ONLY_FIELDS"
+        ],
+        "lifecycle_blockers": [
+          "PROFILE_NOT_PRODUCTION",
+          "NO_APPROVED_HEADER_HASH"
+        ],
+        "missing_required_fields": [
+          "existing_ti_pr_status",
+          "existing_tss_pr_status"
+        ],
+        "unapproved_required_fields": [
+          "region",
+          "site_code",
+          "subcontractor_ti",
+          "tx_sow_raw"
+        ],
+        "competing_candidate_fields": [
+          "subcontractor_planning",
+          "tx_sow_raw"
+        ],
+        "single_candidate_unverified_fields": [
+          "antenna_size_fe",
+          "antenna_size_ne",
+          "du_key",
+          "region",
+          "site_code",
+          "site_name",
+          "subcontractor_ti"
+        ],
+        "no_profile_selection_fields": [],
+        "shortlist_mismatch_fields": [],
+        "cross_model_bridge_fields": [
+          "existing_ti_pr_status",
+          "existing_tss_pr_status"
+        ]
+      },
+      "release_prerequisites": [
+        "Approve the DU model identity and four-layer source mappings.",
+        "Approve at least one header hash for the profile version.",
+        "Resolve missing required fields or keep the profile blocked.",
+        "Remove DRAFT-only and UNVERIFIED mapping conditions before runtime enablement.",
+        "Complete regression verification and UAT before any lifecycle promotion."
+      ],
+      "notes": [
+        "This readiness review is discovery-only and does not approve any mapping, header hash, lifecycle transition, or cross-model reuse.",
+        "A profile can remain structurally informative while still being blocked from any production path."
+      ]
+    },
+    {
+      "profile_id": "celcomdigi_bau_2024_pr_v1",
+      "profile_version": "0.1.0",
+      "mapping_version": "discovery-2026-07-07-2024-celcomdigi-bau-v1",
+      "profile_status": "DRAFT",
+      "du_model_name": "2024 Celcomdigi BAU",
+      "source_file_name": "A-P202202168750_D002-2024 Celcomdigi BAU-2024 BAU Rollout (TX)-20260703160253.xlsx",
+      "observed_header_hash": "b3677457da49e5de484976c3fdb7ad6f5dc19055f5339ec616407f5cbde89a86",
+      "approved_header_hashes": [],
+      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
+      "blocker_summary": {
+        "overall_blockers": [
+          "PROFILE_NOT_PRODUCTION",
+          "NO_APPROVED_HEADER_HASH",
+          "REQUIRED_FIELDS_NOT_APPROVED",
+          "MISSING_REQUIRED_FIELDS",
+          "COMPETING_SHORTLIST_CANDIDATES",
+          "UNVERIFIED_SINGLE_CANDIDATE_FIELDS",
+          "CROSS_MODEL_BRIDGE_ONLY_FIELDS"
+        ],
+        "lifecycle_blockers": [
+          "PROFILE_NOT_PRODUCTION",
+          "NO_APPROVED_HEADER_HASH"
+        ],
+        "missing_required_fields": [
+          "existing_ti_pr_status",
+          "existing_tss_pr_status"
+        ],
+        "unapproved_required_fields": [
+          "region",
+          "site_code",
+          "subcontractor_ti",
+          "tx_sow_raw"
+        ],
+        "competing_candidate_fields": [
+          "subcontractor_planning",
+          "subcontractor_ti",
+          "tx_sow_raw"
+        ],
+        "single_candidate_unverified_fields": [
+          "antenna_size_fe",
+          "antenna_size_ne",
+          "du_key",
+          "region",
+          "site_code",
+          "site_name"
+        ],
+        "no_profile_selection_fields": [],
+        "shortlist_mismatch_fields": [],
+        "cross_model_bridge_fields": [
+          "existing_ti_pr_status",
+          "existing_tss_pr_status"
+        ]
+      },
+      "release_prerequisites": [
+        "Approve the DU model identity and four-layer source mappings.",
+        "Approve at least one header hash for the profile version.",
+        "Resolve missing required fields or keep the profile blocked.",
+        "Remove DRAFT-only and UNVERIFIED mapping conditions before runtime enablement.",
+        "Complete regression verification and UAT before any lifecycle promotion."
+      ],
+      "notes": [
+        "This readiness review is discovery-only and does not approve any mapping, header hash, lifecycle transition, or cross-model reuse.",
+        "A profile can remain structurally informative while still being blocked from any production path."
+      ]
+    },
+    {
+      "profile_id": "celcomdigi_usp_pr_v1",
+      "profile_version": "0.1.0",
+      "mapping_version": "discovery-2026-07-07-celcomdigi-usp-v1",
+      "profile_status": "DRAFT",
+      "du_model_name": "Celcomdigi USP",
+      "source_file_name": "A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx",
+      "observed_header_hash": "79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf",
+      "approved_header_hashes": [],
+      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
+      "blocker_summary": {
+        "overall_blockers": [
+          "PROFILE_NOT_PRODUCTION",
+          "NO_APPROVED_HEADER_HASH",
+          "REQUIRED_FIELDS_NOT_APPROVED",
+          "MISSING_REQUIRED_FIELDS",
+          "COMPETING_SHORTLIST_CANDIDATES",
+          "UNVERIFIED_SINGLE_CANDIDATE_FIELDS",
+          "CROSS_MODEL_BRIDGE_ONLY_FIELDS"
+        ],
+        "lifecycle_blockers": [
+          "PROFILE_NOT_PRODUCTION",
+          "NO_APPROVED_HEADER_HASH"
+        ],
+        "missing_required_fields": [
+          "existing_ti_pr_status",
+          "existing_tss_pr_status"
+        ],
+        "unapproved_required_fields": [
+          "region",
+          "site_code",
+          "subcontractor_ti",
+          "tx_sow_raw"
+        ],
+        "competing_candidate_fields": [
+          "site_code",
+          "site_name",
+          "subcontractor_planning",
+          "subcontractor_ti",
+          "tx_sow_raw"
+        ],
+        "single_candidate_unverified_fields": [
+          "antenna_size_fe",
+          "antenna_size_ne",
+          "du_key",
+          "region"
+        ],
+        "no_profile_selection_fields": [],
+        "shortlist_mismatch_fields": [],
+        "cross_model_bridge_fields": [
+          "existing_ti_pr_status",
+          "existing_tss_pr_status"
+        ]
+      },
+      "release_prerequisites": [
+        "Approve the DU model identity and four-layer source mappings.",
+        "Approve at least one header hash for the profile version.",
+        "Resolve missing required fields or keep the profile blocked.",
+        "Remove DRAFT-only and UNVERIFIED mapping conditions before runtime enablement.",
+        "Complete regression verification and UAT before any lifecycle promotion."
+      ],
+      "notes": [
+        "This readiness review is discovery-only and does not approve any mapping, header hash, lifecycle transition, or cross-model reuse.",
+        "A profile can remain structurally informative while still being blocked from any production path."
+      ]
+    },
+    {
+      "profile_id": "cd_consolidation_2023_decom_pr_v1",
+      "profile_version": "0.1.0",
+      "mapping_version": "discovery-2026-07-07-cd-consolidation-2023-decom-v1",
+      "profile_status": "DRAFT",
+      "du_model_name": "CD consolidation 2023",
+      "source_file_name": "A-P202202168750_D002-CD consolidation 2023-CD 2023 Decom Site-20260703160415.xlsx",
+      "observed_header_hash": "b86cbc349db66154324092c843593137e83908c3b4b55c09305d6cf6046c7a16",
+      "approved_header_hashes": [],
+      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
+      "blocker_summary": {
+        "overall_blockers": [
+          "PROFILE_NOT_PRODUCTION",
+          "NO_APPROVED_HEADER_HASH",
+          "REQUIRED_FIELDS_NOT_APPROVED",
+          "MISSING_REQUIRED_FIELDS",
+          "COMPETING_SHORTLIST_CANDIDATES",
+          "UNVERIFIED_SINGLE_CANDIDATE_FIELDS",
+          "CROSS_MODEL_BRIDGE_ONLY_FIELDS"
+        ],
+        "lifecycle_blockers": [
+          "PROFILE_NOT_PRODUCTION",
+          "NO_APPROVED_HEADER_HASH"
+        ],
+        "missing_required_fields": [
+          "existing_ti_pr_status",
+          "existing_tss_pr_status"
+        ],
+        "unapproved_required_fields": [
+          "region",
+          "site_code",
+          "subcontractor_ti",
+          "tx_sow_raw"
+        ],
+        "competing_candidate_fields": [
+          "region",
+          "site_code",
+          "site_name",
+          "tx_sow_raw"
+        ],
+        "single_candidate_unverified_fields": [
+          "du_key",
+          "subcontractor_ti"
+        ],
+        "no_profile_selection_fields": [],
+        "shortlist_mismatch_fields": [],
+        "cross_model_bridge_fields": [
+          "existing_ti_pr_status",
+          "existing_tss_pr_status"
+        ]
+      },
+      "release_prerequisites": [
+        "Approve the DU model identity and four-layer source mappings.",
+        "Approve at least one header hash for the profile version.",
+        "Resolve missing required fields or keep the profile blocked.",
+        "Remove DRAFT-only and UNVERIFIED mapping conditions before runtime enablement.",
+        "Complete regression verification and UAT before any lifecycle promotion."
+      ],
+      "notes": [
+        "This readiness review is discovery-only and does not approve any mapping, header hash, lifecycle transition, or cross-model reuse.",
+        "A profile can remain structurally informative while still being blocked from any production path."
+      ]
+    },
+    {
+      "profile_id": "cd_consolidation_2023_rollout_pr_v1",
+      "profile_version": "0.1.0",
+      "mapping_version": "discovery-2026-07-07-cd-consolidation-2023-rollout-v1",
+      "profile_status": "DRAFT",
+      "du_model_name": "CD consolidation 2023",
+      "source_file_name": "A-P202202168750_D002-CD consolidation 2023-CD consolidation 2023 Rollout-20260703160351.xlsx",
+      "observed_header_hash": "d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1",
+      "approved_header_hashes": [],
+      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
+      "blocker_summary": {
+        "overall_blockers": [
+          "PROFILE_NOT_PRODUCTION",
+          "NO_APPROVED_HEADER_HASH",
+          "REQUIRED_FIELDS_NOT_APPROVED",
+          "MISSING_REQUIRED_FIELDS",
+          "COMPETING_SHORTLIST_CANDIDATES",
+          "UNVERIFIED_SINGLE_CANDIDATE_FIELDS",
+          "CROSS_MODEL_BRIDGE_ONLY_FIELDS"
+        ],
+        "lifecycle_blockers": [
+          "PROFILE_NOT_PRODUCTION",
+          "NO_APPROVED_HEADER_HASH"
+        ],
+        "missing_required_fields": [
+          "existing_ti_pr_status",
+          "existing_tss_pr_status"
+        ],
+        "unapproved_required_fields": [
+          "region",
+          "site_code",
+          "subcontractor_ti",
+          "tx_sow_raw"
+        ],
+        "competing_candidate_fields": [
+          "region",
+          "site_code",
+          "tx_sow_raw"
+        ],
+        "single_candidate_unverified_fields": [
+          "du_key",
+          "site_name",
+          "subcontractor_ti"
+        ],
+        "no_profile_selection_fields": [],
+        "shortlist_mismatch_fields": [],
+        "cross_model_bridge_fields": [
+          "existing_ti_pr_status",
+          "existing_tss_pr_status"
+        ]
+      },
+      "release_prerequisites": [
+        "Approve the DU model identity and four-layer source mappings.",
+        "Approve at least one header hash for the profile version.",
+        "Resolve missing required fields or keep the profile blocked.",
+        "Remove DRAFT-only and UNVERIFIED mapping conditions before runtime enablement.",
+        "Complete regression verification and UAT before any lifecycle promotion."
+      ],
+      "notes": [
+        "This readiness review is discovery-only and does not approve any mapping, header hash, lifecycle transition, or cross-model reuse.",
+        "A profile can remain structurally informative while still being blocked from any production path."
+      ]
+    }
+  ],
+  "notes": [
+    "Discovery-only readiness summary for priority DU profiles.",
+    "Readiness here means approval-preparation visibility, not production eligibility."
+  ]
+}

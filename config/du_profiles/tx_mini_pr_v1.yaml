@@ -1,0 +1,57 @@
+{
+  "profile_id": "tx_mini_pr_v1",
+  "profile_version": "0.2.0",
+  "mapping_version": "approved-2026-07-07-tx-mini-v1",
+  "status": "PR_INPUT_READY",
+  "identity": {
+    "project_key": "Malaysia_CelcomDigi_Project",
+    "accepted_du_models": ["TX Mini Project"],
+    "accepted_du_model_ids": ["4188808420049567786"],
+    "accepted_view_ids": ["2477626672974883536"]
+  },
+  "export_structure": {
+    "sheet_selector": null,
+    "header_rows": [0, 1, 2, 3],
+    "header_hash_policy": "strict",
+    "observed_header_hash": "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
+    "approved_header_hashes": ["167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221"]
+  },
+  "field_mapping": {
+    "site_code": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|fix00012|4188808420049567786|2477626672974883536", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "customer site code"}, "mapping_status": "APPROVED"}], "transforms": ["trim", "uppercase"]},
+    "site_name": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00015", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "customer site name"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
+    "du_key": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "du|du_code", "wbs_stage": "Du", "task_name": "Du", "display_header": "du code"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
+    "tx_sow_raw": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00815532", "wbs_stage": "Installation", "task_name": "Microwave", "display_header": "Tx SOW"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
+    "tx_upgrade_scope_raw": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ0656912", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "TX Upgrade Scope"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
+    "region": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|region_name", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "region"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
+    "state": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00008", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "Province/State"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
+    "subcontractor_ti": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ0657771", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "SubCon - TI Team"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
+    "subcontractor_tss": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ0657770", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "SubCon - TSS Team"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
+    "subcontractor_planning": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01027586", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "Subcon - Planning"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
+    "existing_tss_pr_status": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ641766", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Subcon PR - TSS"}, "mapping_status": "APPROVED"}], "transforms": ["normalize_pr_reference_status"]},
+    "existing_ti_pr_status": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ641765", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Subcon PR - TI"}, "mapping_status": "APPROVED"}], "transforms": ["normalize_pr_reference_status"]},
+    "latitude": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00013", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "Latitude (North Plus South Minus)"}, "mapping_status": "APPROVED"}], "transforms": ["parse_decimal"]},
+    "longitude": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00010", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "Longitude (East Plus West Minus)"}, "mapping_status": "APPROVED"}], "transforms": ["parse_decimal"]},
+    "antenna_size_ne": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00969578", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "MW Config Antenna Size NE"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
+    "antenna_size_fe": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00969579", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "MW Config Antenna Size FE"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
+    "boq_configuration": {"required": false, "source_candidates": [], "transforms": ["trim"]},
+    "tx_sow_details": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ642123", "wbs_stage": "TX Solution", "task_name": "TX SOW Details", "display_header": "TX SOW Details"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
+    "ne_sow_details": {"required": false, "source_candidates": [], "transforms": ["trim"]},
+    "fe_sow_details": {"required": false, "source_candidates": [], "transforms": ["trim"]}
+  },
+  "normalization": {
+    "sow_registry": "config/registries/canonical_sow_registry.yaml"
+  },
+  "validation": {
+    "reject_unknown_headers": true,
+    "reject_ambiguous_source_mapping": true,
+    "require_evidence_for_every_canonical_field": true,
+    "profile_notes": [
+      "Source mappings were approved field-by-field by JJ on 2026-07-07; the decision evidence lives in the local TX Mini mapping-decision package and docs/MW_DU_Extension_Implementation_Plan.md.",
+      "The approved header hash records the reviewed TX Mini export structure; any header change re-quarantines the model.",
+      "Tx SOW normalization is controlled by config/registries/canonical_sow_registry.yaml; values outside the registry classify REVIEW_REQUIRED.",
+      "existing_*_pr_status use the approved normalize_pr_reference_status transform over the Subcon PR reference columns.",
+      "TX SOW Details is an approved evidence/decision-support field (JJ 2026-07-08): a short description that future item-code selection logic will interpret, combined with other approved columns. It is explicitly not the PR trigger source; any automated (LLM-assisted) item-code inference over it requires human approval before driving output.",
+      "Lifecycle promoted DRAFT -> BUSINESS_VALIDATED -> PR_INPUT_READY by JJ on 2026-07-08 after the completed field-by-field validation, golden-parity PASS, negative-test acceptance sweep, and a transition review that permits the declaration. This is a non-production readiness state: ECC output remains blocked until PRODUCTION status plus release governance and UAT."
+    ]
+  }
+}

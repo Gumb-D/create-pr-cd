@@ -1,0 +1,144 @@
+{
+  "schema_version": "1.0",
+  "registry_type": "discovery_mw_pair_divergence_review",
+  "pair_reviews": [
+    {
+      "left_profile_id": "mw_eos_swap_pr_v1",
+      "right_profile_id": "zte_tx_mini_pr_v1",
+      "left_profile_version": "0.1.0",
+      "right_profile_version": "0.1.0",
+      "left_mapping_version": "discovery-2026-07-06-mw-eos-swap-v1",
+      "right_mapping_version": "discovery-2026-07-06-zte-tx-mini-v1",
+      "left_observed_header_hash": "46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a",
+      "right_observed_header_hash": "a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810",
+      "left_du_model_name": "MW EOS Swap",
+      "right_du_model_name": "ZTE TX MINI",
+      "summary": {
+        "shared_missing_required_fields": [
+          "existing_ti_pr_status",
+          "existing_tss_pr_status"
+        ]
+      },
+      "field_differences": {
+        "antenna_size_fe": {
+          "comparison_status": "DIFFERENT_SELECTED_SOURCE",
+          "left_display_header": "MW Antenna Size FE",
+          "right_display_header": "MW Antenna Size FE",
+          "review_reason": "The two MW profiles currently select different source columns for the same canonical field."
+        },
+        "antenna_size_ne": {
+          "comparison_status": "DIFFERENT_SELECTED_SOURCE",
+          "left_display_header": "MW Antenna Size NE",
+          "right_display_header": "MW Antenna Size NE",
+          "review_reason": "The two MW profiles currently select different source columns for the same canonical field."
+        },
+        "boq_configuration": {
+          "comparison_status": "BOTH_MISSING_OPTIONAL",
+          "left_display_header": null,
+          "right_display_header": null,
+          "review_reason": "Neither profile currently selects a source candidate for this non-required field."
+        },
+        "du_key": {
+          "comparison_status": "MATCHING_SELECTED_SOURCE",
+          "left_display_header": "du code",
+          "right_display_header": "du code",
+          "review_reason": "Both MW-family DRAFT profiles currently select the same exact four-layer fingerprint for this canonical field."
+        },
+        "existing_ti_pr_status": {
+          "comparison_status": "BOTH_MISSING_REQUIRED",
+          "left_display_header": null,
+          "right_display_header": null,
+          "review_reason": "Both MW-family DRAFT profiles are still missing a selected source candidate for this required field."
+        },
+        "existing_tss_pr_status": {
+          "comparison_status": "BOTH_MISSING_REQUIRED",
+          "left_display_header": null,
+          "right_display_header": null,
+          "review_reason": "Both MW-family DRAFT profiles are still missing a selected source candidate for this required field."
+        },
+        "fe_sow_details": {
+          "comparison_status": "BOTH_MISSING_OPTIONAL",
+          "left_display_header": null,
+          "right_display_header": null,
+          "review_reason": "Neither profile currently selects a source candidate for this non-required field."
+        },
+        "latitude": {
+          "comparison_status": "BOTH_MISSING_OPTIONAL",
+          "left_display_header": null,
+          "right_display_header": null,
+          "review_reason": "Neither profile currently selects a source candidate for this non-required field."
+        },
+        "longitude": {
+          "comparison_status": "BOTH_MISSING_OPTIONAL",
+          "left_display_header": null,
+          "right_display_header": null,
+          "review_reason": "Neither profile currently selects a source candidate for this non-required field."
+        },
+        "ne_sow_details": {
+          "comparison_status": "BOTH_MISSING_OPTIONAL",
+          "left_display_header": null,
+          "right_display_header": null,
+          "review_reason": "Neither profile currently selects a source candidate for this non-required field."
+        },
+        "region": {
+          "comparison_status": "MATCHING_SELECTED_SOURCE",
+          "left_display_header": "region",
+          "right_display_header": "region",
+          "review_reason": "Both MW-family DRAFT profiles currently select the same exact four-layer fingerprint for this canonical field."
+        },
+        "site_code": {
+          "comparison_status": "DIFFERENT_SELECTED_SOURCE",
+          "left_display_header": "customer site code",
+          "right_display_header": "customer site code",
+          "review_reason": "The two MW profiles currently select different source columns for the same canonical field."
+        },
+        "site_name": {
+          "comparison_status": "MATCHING_SELECTED_SOURCE",
+          "left_display_header": "customer site name",
+          "right_display_header": "customer site name",
+          "review_reason": "Both MW-family DRAFT profiles currently select the same exact four-layer fingerprint for this canonical field."
+        },
+        "state": {
+          "comparison_status": "BOTH_MISSING_OPTIONAL",
+          "left_display_header": null,
+          "right_display_header": null,
+          "review_reason": "Neither profile currently selects a source candidate for this non-required field."
+        },
+        "subcontractor_planning": {
+          "comparison_status": "MATCHING_SELECTED_SOURCE",
+          "left_display_header": "Subcon - Planning",
+          "right_display_header": "Subcon - Planning",
+          "review_reason": "Both MW-family DRAFT profiles currently select the same exact four-layer fingerprint for this canonical field."
+        },
+        "subcontractor_ti": {
+          "comparison_status": "DIFFERENT_SELECTED_SOURCE",
+          "left_display_header": "Subcon - TI",
+          "right_display_header": "Subcon - TI",
+          "review_reason": "The two MW profiles currently select different source columns for the same canonical field."
+        },
+        "tx_sow_details": {
+          "comparison_status": "MATCHING_SELECTED_SOURCE",
+          "left_display_header": "TX SOW Details",
+          "right_display_header": "TX SOW Details",
+          "review_reason": "Both MW-family DRAFT profiles currently select the same exact four-layer fingerprint for this canonical field."
+        },
+        "tx_sow_raw": {
+          "comparison_status": "DIFFERENT_SELECTED_SOURCE",
+          "left_display_header": "Microwave Tx SOW-1",
+          "right_display_header": "Microwave Tx SOW",
+          "review_reason": "The two MW profiles currently select different source columns for the same canonical field."
+        },
+        "tx_upgrade_scope_raw": {
+          "comparison_status": "BOTH_MISSING_OPTIONAL",
+          "left_display_header": null,
+          "right_display_header": null,
+          "review_reason": "Neither profile currently selects a source candidate for this non-required field."
+        }
+      },
+      "notes": [
+        "This MW pair review is discovery-only and does not approve profile reuse.",
+        "Matching selected sources still require header-hash approval, four-layer verification, and business validation."
+      ]
+    }
+  ]
+}

@@ -201,10 +201,22 @@ canonical_pr_site_record:
   validation:
     profile_id: "<profile id>"
     profile_version: "1.0"
+    mapping_version: "<approved or discovery mapping snapshot>"
     pr_input_classification: "PR_INPUT_READY"
     blocking_reasons: []
     warnings: []
 ```
+
+Blocked records should also be renderable into a quarantine review packet that
+captures:
+
+- source export identity
+- DU profile identity and lifecycle status
+- mapping version
+- validation classification
+- blocking reasons and warnings
+- output decision
+- skill-relevant field provenance for site identity, SOW, subcontractor, PR-status, and TI antenna review fields
 
 ### Required canonical fields by scope
 
