@@ -215,17 +215,21 @@ Approval for merge is a human review outcome and is not yet evidenced in the rep
 - [ ] Update `tx_mini_pr_v1` from `DRAFT` to a controlled validation profile only after review.
   Blocker:
   The unresolved-review builder now recognizes human approval (2026-07-08): an `APPROVED` profile selection resolves its shortlist competition and is recorded as `RESOLVED_BY_APPROVED_MAPPING` with the rejected alternates kept for traceability, while `UNVERIFIED` selections with alternates still flag `REVIEW_REQUIRED_COMPETING_CANDIDATES` and approved-but-shortlist-mismatched selections stay flagged as a typo safety net (`tests/test_unresolved_skill_field_review.py` covers both directions). JJ then ruled the final open field on 2026-07-08 (round 5): `subcontractor_planning` => `docata|ZDCSZ01027586 | Network Planning | Microwave | Subcon - Planning` (col EO), rejecting the `Subcon PR - Planning` variant; the mapping is `APPROVED` in the profile and recorded in the local decision workbook. After the packet refresh the transition review now shows TX Mini eligible for `PROFILED`, `BUSINESS_VALIDATED`, and `PR_INPUT_READY`, with `PRODUCTION` denied only by the declared non-production lifecycle state. The remaining gate is therefore purely the controlled lifecycle-promotion decision itself (JJ/maintainer), plus the golden-parity evidence expected before any `PR_INPUT_READY` claim is exercised; the profile file stays `DRAFT` until that explicit promotion.
-- [ ] Build Canonical PR Site Records from the TX Mini export.
-- [ ] Compare canonical records against the present normalized input contract, `site_pr_po_view.xlsx`.
-- [ ] Run the existing PR/ECC generator with legacy and canonical-path inputs.
-- [ ] Compare ECC output content, line count, quantities, and key formatting.
+- [x] Build Canonical PR Site Records from the TX Mini export.
+- [x] Compare canonical records against the present normalized input contract, `site_pr_po_view.xlsx`.
+- [x] Run the existing PR/ECC generator with legacy and canonical-path inputs.
+- [x] Compare ECC output content, line count, quantities, and key formatting.
+  Evidence note (golden parity, 2026-07-08):
+  `scripts/run_tx_mini_golden_parity.py` ran the full dry-run parity harness against `Info/input/site_pr_po_view.xlsx`, which is itself a TX Mini iEPMS export snapshot (older header structure; its header hash `fbc04bc1...` is NOT approved, so this is validation dry-run evidence only, exactly as the header-change control prescribes). All 16 mapped profile fingerprints resolved uniquely in that view, and the 15 canonical business columns are exactly the site-view columns `scripts/generate_tss_pr_ecc.py` consumes (verified by source inspection, including duplicate prevention on blank/non-blank `Subcon PR - *`, which matches the approved reference-presence rule). The harness built 2,554 Canonical PR Site Records (1,894 `PR_INPUT_READY`, 660 `PR_INPUT_INCOMPLETE` from rows with blank required values), re-rendered the mapped columns from record source evidence into a canonical-path view (43,418 cells), then ran the unchanged generator on both inputs for both scopes. Result: **golden parity PASS** — TSS 87/87 output files identical, TI 19/19 identical, compared cell-by-cell across all sheets plus CSV review files. Local-only artifacts: `output/du-20260706-profile/tx-mini-golden-parity/TX_MINI_GOLDEN_PARITY_REPORT.{md,json}` plus the generated ECC sets. `tests/test_tx_mini_golden_parity.py` covers fingerprint-resolution gating, canonical-record evidence, the render round trip, and difference detection; full suite `Ran 210 tests` `OK`.
+  Defect found (pre-existing, legacy generator):
+  `scripts/generate_tss_pr_ecc.py` crashes while writing `REVIEW_REQUIRED_TI_*.csv` when site data contains U+200B (zero-width space) under the default Windows cp1252 file encoding — this affects current production TI runs on the live view data. The parity harness works around it symmetrically via `PYTHONUTF8=1` in the subprocess environment without changing generator source. A production fix (explicit `encoding="utf-8"` on the CSV writers) requires an approved change to the frozen generator — owner: JJ decision.
 
 ### Acceptance Criteria
 
 - [x] All required TX Mini canonical fields are mapped with approved status.
 - [x] TX Mini Header Hash is registered as approved for the profile version.
 - [ ] No unverified transform or source mapping remains in the production candidate path.
-- [ ] Legacy and canonical-path ECC outputs are identical, except for explicitly approved non-functional metadata.
+- [x] Legacy and canonical-path ECC outputs are identical, except for explicitly approved non-functional metadata.
 - [ ] Negative tests block changed headers, missing required fields, and ambiguous source mappings.
 - [ ] TX Mini is approved as the first controlled canonical-input model.
 
