@@ -7,8 +7,9 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 - Source file: `A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx`
 - Observed header hash: `167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221`
 - Missing required fields: None
-- Competing candidate fields: subcontractor_planning, subcontractor_ti, tx_sow_raw
+- Competing candidate fields: subcontractor_planning
 - Single-candidate but unverified fields: None
+- Resolved by approved mapping (alternates rejected): subcontractor_ti, tx_sow_raw
 
 ### `site_code`
 
@@ -41,8 +42,8 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 ### `tx_sow_raw`
 
 - Skill field: `tx_sow`
-- Review status: `REVIEW_REQUIRED_COMPETING_CANDIDATES`
-- Reason: Profile-selected source has alternate shortlist candidates that still require four-layer confirmation.
+- Review status: `RESOLVED_BY_APPROVED_MAPPING`
+- Reason: Profile-selected source is human-approved; the remaining shortlist alternates were rejected by that recorded decision.
 - Selected source: `docata|ZDCSZ00815532 | Installation | Microwave | Tx SOW`
 - Alternate shortlist candidates:
   - score 45: `docata|ZDCSZ642123 | TX Solution | TX SOW Details | TX SOW Details`
@@ -51,8 +52,8 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 ### `subcontractor_ti`
 
 - Skill field: `subcon_ti_team`
-- Review status: `REVIEW_REQUIRED_COMPETING_CANDIDATES`
-- Reason: Profile-selected source has alternate shortlist candidates that still require four-layer confirmation.
+- Review status: `RESOLVED_BY_APPROVED_MAPPING`
+- Reason: Profile-selected source is human-approved; the remaining shortlist alternates were rejected by that recorded decision.
 - Selected source: `docata|ZDCSZ0657771 | Installation | Wireless RAN | SubCon - TI Team`
 - Alternate shortlist candidates:
   - score 55: `docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI`
@@ -104,6 +105,7 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 - Missing required fields: existing_ti_pr_status, existing_tss_pr_status
 - Competing candidate fields: site_code, site_name, subcontractor_planning, subcontractor_ti, tx_sow_raw
 - Single-candidate but unverified fields: antenna_size_fe, antenna_size_ne, du_key, region
+- Resolved by approved mapping (alternates rejected): None
 
 ### `site_code`
 
@@ -205,6 +207,7 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 - Missing required fields: None
 - Competing candidate fields: existing_ti_pr_status, existing_tss_pr_status, subcontractor_planning, subcontractor_ti, tx_sow_raw
 - Single-candidate but unverified fields: du_key, region, site_code, site_name
+- Resolved by approved mapping (alternates rejected): None
 
 ### `site_code`
 
@@ -308,6 +311,7 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 - Missing required fields: existing_ti_pr_status, existing_tss_pr_status
 - Competing candidate fields: site_name, subcontractor_planning, subcontractor_ti, tx_sow_raw
 - Single-candidate but unverified fields: antenna_size_fe, antenna_size_ne, du_key, region, site_code
+- Resolved by approved mapping (alternates rejected): None
 
 ### `site_code`
 
@@ -406,6 +410,7 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 - Missing required fields: existing_ti_pr_status, existing_tss_pr_status
 - Competing candidate fields: site_code, site_name, subcontractor_planning, subcontractor_ti, tx_sow_raw
 - Single-candidate but unverified fields: antenna_size_fe, antenna_size_ne, du_key, region
+- Resolved by approved mapping (alternates rejected): None
 
 ### `site_code`
 
@@ -507,6 +512,7 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 - Missing required fields: existing_ti_pr_status, existing_tss_pr_status
 - Competing candidate fields: subcontractor_planning, tx_sow_raw
 - Single-candidate but unverified fields: antenna_size_fe, antenna_size_ne, du_key, region, site_code, site_name, subcontractor_ti
+- Resolved by approved mapping (alternates rejected): None
 
 ### `site_code`
 
@@ -599,6 +605,7 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 - Missing required fields: existing_ti_pr_status, existing_tss_pr_status
 - Competing candidate fields: subcontractor_planning, subcontractor_ti, tx_sow_raw
 - Single-candidate but unverified fields: antenna_size_fe, antenna_size_ne, du_key, region, site_code, site_name
+- Resolved by approved mapping (alternates rejected): None
 
 ### `site_code`
 
@@ -694,6 +701,7 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 - Missing required fields: existing_ti_pr_status, existing_tss_pr_status
 - Competing candidate fields: site_code, site_name, subcontractor_planning, subcontractor_ti, tx_sow_raw
 - Single-candidate but unverified fields: antenna_size_fe, antenna_size_ne, du_key, region
+- Resolved by approved mapping (alternates rejected): None
 
 ### `site_code`
 
@@ -799,6 +807,7 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 - Missing required fields: existing_ti_pr_status, existing_tss_pr_status
 - Competing candidate fields: region, site_code, site_name, tx_sow_raw
 - Single-candidate but unverified fields: du_key, subcontractor_ti
+- Resolved by approved mapping (alternates rejected): None
 
 ### `site_code`
 
@@ -901,6 +910,7 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 - Missing required fields: existing_ti_pr_status, existing_tss_pr_status
 - Competing candidate fields: region, site_code, tx_sow_raw
 - Single-candidate but unverified fields: du_key, site_name, subcontractor_ti
+- Resolved by approved mapping (alternates rejected): None
 
 ### `site_code`
 

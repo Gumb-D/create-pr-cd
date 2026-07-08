@@ -13,13 +13,15 @@
       "summary": {
         "missing_required_fields": [],
         "competing_candidate_fields": [
-          "subcontractor_planning",
-          "subcontractor_ti",
-          "tx_sow_raw"
+          "subcontractor_planning"
         ],
         "single_candidate_unverified_fields": [],
         "no_profile_selection_fields": [],
-        "shortlist_mismatch_fields": []
+        "shortlist_mismatch_fields": [],
+        "resolved_by_approval_fields": [
+          "subcontractor_ti",
+          "tx_sow_raw"
+        ]
       },
       "field_reviews": {
         "site_code": {
@@ -119,8 +121,8 @@
               }
             }
           ],
-          "review_status": "REVIEW_REQUIRED_COMPETING_CANDIDATES",
-          "review_reason": "Profile-selected source has alternate shortlist candidates that still require four-layer confirmation."
+          "review_status": "RESOLVED_BY_APPROVED_MAPPING",
+          "review_reason": "Profile-selected source is human-approved; the remaining shortlist alternates were rejected by that recorded decision."
         },
         "subcontractor_ti": {
           "skill_field": "subcon_ti_team",
@@ -151,8 +153,8 @@
               }
             }
           ],
-          "review_status": "REVIEW_REQUIRED_COMPETING_CANDIDATES",
-          "review_reason": "Profile-selected source has alternate shortlist candidates that still require four-layer confirmation."
+          "review_status": "RESOLVED_BY_APPROVED_MAPPING",
+          "review_reason": "Profile-selected source is human-approved; the remaining shortlist alternates were rejected by that recorded decision."
         },
         "subcontractor_planning": {
           "skill_field": "subcon_planning",
@@ -287,7 +289,8 @@
           "region"
         ],
         "no_profile_selection_fields": [],
-        "shortlist_mismatch_fields": []
+        "shortlist_mismatch_fields": [],
+        "resolved_by_approval_fields": []
       },
       "field_reviews": {
         "site_code": {
@@ -566,7 +569,8 @@
           "site_name"
         ],
         "no_profile_selection_fields": [],
-        "shortlist_mismatch_fields": []
+        "shortlist_mismatch_fields": [],
+        "resolved_by_approval_fields": []
       },
       "field_reviews": {
         "site_code": {
@@ -862,7 +866,8 @@
           "site_code"
         ],
         "no_profile_selection_fields": [],
-        "shortlist_mismatch_fields": []
+        "shortlist_mismatch_fields": [],
+        "resolved_by_approval_fields": []
       },
       "field_reviews": {
         "site_code": {
@@ -1129,7 +1134,8 @@
           "region"
         ],
         "no_profile_selection_fields": [],
-        "shortlist_mismatch_fields": []
+        "shortlist_mismatch_fields": [],
+        "resolved_by_approval_fields": []
       },
       "field_reviews": {
         "site_code": {
@@ -1411,7 +1417,8 @@
           "subcontractor_ti"
         ],
         "no_profile_selection_fields": [],
-        "shortlist_mismatch_fields": []
+        "shortlist_mismatch_fields": [],
+        "resolved_by_approval_fields": []
       },
       "field_reviews": {
         "site_code": {
@@ -1648,7 +1655,8 @@
           "site_name"
         ],
         "no_profile_selection_fields": [],
-        "shortlist_mismatch_fields": []
+        "shortlist_mismatch_fields": [],
+        "resolved_by_approval_fields": []
       },
       "field_reviews": {
         "site_code": {
@@ -1900,7 +1908,8 @@
           "region"
         ],
         "no_profile_selection_fields": [],
-        "shortlist_mismatch_fields": []
+        "shortlist_mismatch_fields": [],
+        "resolved_by_approval_fields": []
       },
       "field_reviews": {
         "site_code": {
@@ -2207,7 +2216,8 @@
           "subcontractor_ti"
         ],
         "no_profile_selection_fields": [],
-        "shortlist_mismatch_fields": []
+        "shortlist_mismatch_fields": [],
+        "resolved_by_approval_fields": []
       },
       "field_reviews": {
         "site_code": {
@@ -2475,7 +2485,8 @@
           "subcontractor_ti"
         ],
         "no_profile_selection_fields": [],
-        "shortlist_mismatch_fields": []
+        "shortlist_mismatch_fields": [],
+        "resolved_by_approval_fields": []
       },
       "field_reviews": {
         "site_code": {

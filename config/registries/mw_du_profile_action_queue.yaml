@@ -20,20 +20,6 @@
         },
         {
           "priority_id": "tx_mini_pr_v1:02",
-          "action_type": "CONFIRM_COMPETING_CANDIDATE",
-          "summary": "Choose one exact four-layer source for `subcontractor_ti` from the competing shortlist candidates.",
-          "field_name": "subcontractor_ti",
-          "evidence_hint": "Use the unresolved review packet to compare the currently selected source against alternates."
-        },
-        {
-          "priority_id": "tx_mini_pr_v1:03",
-          "action_type": "CONFIRM_COMPETING_CANDIDATE",
-          "summary": "Choose one exact four-layer source for `tx_sow_raw` from the competing shortlist candidates.",
-          "field_name": "tx_sow_raw",
-          "evidence_hint": "Use the unresolved review packet to compare the currently selected source against alternates."
-        },
-        {
-          "priority_id": "tx_mini_pr_v1:04",
           "action_type": "HOLD_LIFECYCLE_PROMOTION",
           "summary": "Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.",
           "evidence_hint": "Use the transition review as the final stop/go check before any status change."

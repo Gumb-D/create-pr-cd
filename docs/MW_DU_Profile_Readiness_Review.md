@@ -11,7 +11,7 @@ Discovery-only summary of why the current priority DU profiles remain blocked fr
 - Observed header hash: `167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221`
 - Approved header hashes: `1`
 - Overall blockers: `PROFILE_NOT_PRODUCTION, COMPETING_SHORTLIST_CANDIDATES`
-- Competing candidate fields: `subcontractor_planning, subcontractor_ti, tx_sow_raw`
+- Competing candidate fields: `subcontractor_planning`
 - Release prerequisites:
   - Approve the DU model identity and four-layer source mappings.
   - Approve at least one header hash for the profile version.

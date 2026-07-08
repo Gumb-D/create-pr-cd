@@ -47,6 +47,7 @@ def build_review_entry(profile: Mapping[str, Any], shortlist_entry: Mapping[str,
     single_candidate_unverified_fields: List[str] = []
     no_profile_selection_fields: List[str] = []
     shortlist_mismatch_fields: List[str] = []
+    resolved_by_approval_fields: List[str] = []
 
     for profile_field_name, skill_field_name in PROFILE_TO_SKILL_FIELD.items():
         profile_field = profile.get("field_mapping", {}).get(profile_field_name, {})
@@ -71,18 +72,26 @@ def build_review_entry(profile: Mapping[str, Any], shortlist_entry: Mapping[str,
             matched_shortlist = [candidate for candidate in shortlist_candidates if _same_fingerprint(selected_fp, candidate.get("fingerprint", {}))]
             alternate_candidates = [candidate for candidate in shortlist_candidates if not _same_fingerprint(selected_fp, candidate.get("fingerprint", {}))]
 
+            approved = selected.get("mapping_status") == "APPROVED"
             if shortlist_candidates and not matched_shortlist:
+                # A human-approved source that keyword discovery never surfaced
+                # still needs reconciliation visibility; a mismatch can hide a
+                # mistyped fingerprint.
                 review_status = "REVIEW_REQUIRED_PROFILE_SHORTLIST_MISMATCH"
                 review_reason = "Profile-selected source does not match the current shortlist candidates and needs manual reconciliation."
                 shortlist_mismatch_fields.append(profile_field_name)
-            elif alternate_candidates:
+            elif alternate_candidates and not approved:
                 review_status = "REVIEW_REQUIRED_COMPETING_CANDIDATES"
                 review_reason = "Profile-selected source has alternate shortlist candidates that still require four-layer confirmation."
                 competing_candidate_fields.append(profile_field_name)
-            elif selected.get("mapping_status") != "APPROVED":
+            elif not approved:
                 review_status = "REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE"
                 review_reason = "Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile."
                 single_candidate_unverified_fields.append(profile_field_name)
+            elif alternate_candidates:
+                review_status = "RESOLVED_BY_APPROVED_MAPPING"
+                review_reason = "Profile-selected source is human-approved; the remaining shortlist alternates were rejected by that recorded decision."
+                resolved_by_approval_fields.append(profile_field_name)
             else:
                 review_status = "READY_IF_APPROVAL_EVIDENCE_EXISTS"
                 review_reason = "Profile-selected source matches the shortlist and is already approved."
@@ -111,6 +120,7 @@ def build_review_entry(profile: Mapping[str, Any], shortlist_entry: Mapping[str,
             "single_candidate_unverified_fields": sorted(single_candidate_unverified_fields),
             "no_profile_selection_fields": sorted(no_profile_selection_fields),
             "shortlist_mismatch_fields": sorted(shortlist_mismatch_fields),
+            "resolved_by_approval_fields": sorted(resolved_by_approval_fields),
         },
         "field_reviews": field_reviews,
         "notes": [
@@ -159,6 +169,7 @@ def review_markdown(registry: Mapping[str, Any]) -> str:
                 f"- Missing required fields: {', '.join(entry['summary']['missing_required_fields']) or 'None'}",
                 f"- Competing candidate fields: {', '.join(entry['summary']['competing_candidate_fields']) or 'None'}",
                 f"- Single-candidate but unverified fields: {', '.join(entry['summary']['single_candidate_unverified_fields']) or 'None'}",
+                f"- Resolved by approved mapping (alternates rejected): {', '.join(entry['summary'].get('resolved_by_approval_fields', [])) or 'None'}",
                 "",
             ]
         )

@@ -10,6 +10,74 @@ from build_unresolved_skill_field_review import build_review_entry, build_review
 
 
 class TestUnresolvedSkillFieldReview(unittest.TestCase):
+    def test_approval_resolves_competition_but_unverified_selection_does_not(self):
+        def profile_with_status(mapping_status):
+            return {
+                "profile_id": "synthetic_pr_v1",
+                "profile_version": "0.1.0",
+                "mapping_version": "synthetic-v1",
+                "status": "DRAFT",
+                "identity": {"accepted_du_models": ["Synthetic DU"]},
+                "export_structure": {"observed_header_hash": "synthetic-hash"},
+                "field_mapping": {
+                    "tx_sow_raw": {
+                        "required": True,
+                        "source_candidates": [
+                            {
+                                "fingerprint": {
+                                    "field_code": "docata|SOW1",
+                                    "wbs_stage": "Installation",
+                                    "task_name": "Microwave",
+                                    "display_header": "Tx SOW",
+                                },
+                                "mapping_status": mapping_status,
+                            }
+                        ],
+                    }
+                },
+            }
+
+        shortlist_entry = {
+            "source_file_name": "synthetic.xlsx",
+            "skill_field_shortlists": {
+                "tx_sow": [
+                    {
+                        "score": 100,
+                        "reason": "Direct Tx SOW field.",
+                        "fingerprint": {
+                            "field_code": "docata|SOW1",
+                            "wbs_stage": "Installation",
+                            "task_name": "Microwave",
+                            "display_header": "Tx SOW",
+                        },
+                    },
+                    {
+                        "score": 45,
+                        "reason": "SOW details field.",
+                        "fingerprint": {
+                            "field_code": "docata|SOW2",
+                            "wbs_stage": "TX Solution",
+                            "task_name": "TX SOW Details",
+                            "display_header": "TX SOW Details",
+                        },
+                    },
+                ]
+            },
+        }
+
+        unverified = build_review_entry(profile_with_status("UNVERIFIED"), shortlist_entry)
+        self.assertEqual(
+            unverified["field_reviews"]["tx_sow_raw"]["review_status"], "REVIEW_REQUIRED_COMPETING_CANDIDATES"
+        )
+        self.assertEqual(unverified["summary"]["competing_candidate_fields"], ["tx_sow_raw"])
+
+        approved = build_review_entry(profile_with_status("APPROVED"), shortlist_entry)
+        self.assertEqual(
+            approved["field_reviews"]["tx_sow_raw"]["review_status"], "RESOLVED_BY_APPROVED_MAPPING"
+        )
+        self.assertEqual(approved["summary"]["competing_candidate_fields"], [])
+        self.assertEqual(approved["summary"]["resolved_by_approval_fields"], ["tx_sow_raw"])
+
     def test_tx_mini_entry_flags_missing_and_competing_fields(self):
         shortlist_registry = json.loads(
             (ROOT / "config" / "registries" / "mw_du_priority_skill_field_shortlists.yaml").read_text(encoding="utf-8")
@@ -22,12 +90,22 @@ class TestUnresolvedSkillFieldReview(unittest.TestCase):
         self.assertEqual(review_entry["profile_id"], "tx_mini_pr_v1")
         self.assertEqual(review_entry["source_file_name"], shortlist_entry["source_file_name"])
         # PR-status sources were approved from the TX Mini export on 2026-07-07,
-        # so no required field is missing; keyword-level competing shortlist
-        # candidates remain flagged for review.
+        # so no required field is missing. Human-approved selections resolve
+        # their shortlist competition (alternates were rejected by that
+        # decision); only the never-ruled subcontractor_planning still competes.
         self.assertEqual(review_entry["summary"]["missing_required_fields"], [])
-        self.assertIn("tx_sow_raw", review_entry["summary"]["competing_candidate_fields"])
-        self.assertIn("subcontractor_ti", review_entry["summary"]["competing_candidate_fields"])
-        self.assertIn("subcontractor_planning", review_entry["summary"]["competing_candidate_fields"])
+        self.assertEqual(review_entry["summary"]["competing_candidate_fields"], ["subcontractor_planning"])
+        self.assertEqual(
+            review_entry["summary"]["resolved_by_approval_fields"], ["subcontractor_ti", "tx_sow_raw"]
+        )
+        self.assertEqual(
+            review_entry["field_reviews"]["tx_sow_raw"]["review_status"], "RESOLVED_BY_APPROVED_MAPPING"
+        )
+        # Rejected alternates stay listed for traceability.
+        self.assertEqual(
+            review_entry["field_reviews"]["tx_sow_raw"]["alternate_candidates"][0]["fingerprint"]["display_header"],
+            "TX SOW Details",
+        )
         self.assertEqual(
             review_entry["field_reviews"]["site_code"]["recommended_source"]["fingerprint"]["display_header"],
             "customer site code",

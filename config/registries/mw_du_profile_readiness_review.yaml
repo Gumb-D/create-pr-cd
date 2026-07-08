@@ -25,9 +25,7 @@
         "missing_required_fields": [],
         "unapproved_required_fields": [],
         "competing_candidate_fields": [
-          "subcontractor_planning",
-          "subcontractor_ti",
-          "tx_sow_raw"
+          "subcontractor_planning"
         ],
         "single_candidate_unverified_fields": [],
         "no_profile_selection_fields": [],

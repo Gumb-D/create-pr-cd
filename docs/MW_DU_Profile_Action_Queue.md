@@ -11,11 +11,7 @@ Discovery-only prioritized manual action queue for the current DRAFT profiles.
 - Action queue:
   - `tx_mini_pr_v1:01` `CONFIRM_COMPETING_CANDIDATE` `subcontractor_planning`: Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.
     hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `tx_mini_pr_v1:02` `CONFIRM_COMPETING_CANDIDATE` `subcontractor_ti`: Choose one exact four-layer source for `subcontractor_ti` from the competing shortlist candidates.
-    hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `tx_mini_pr_v1:03` `CONFIRM_COMPETING_CANDIDATE` `tx_sow_raw`: Choose one exact four-layer source for `tx_sow_raw` from the competing shortlist candidates.
-    hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `tx_mini_pr_v1:04` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
+  - `tx_mini_pr_v1:02` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
     hint: Use the transition review as the final stop/go check before any status change.
 
 ## mw_eos_swap_pr_v1 (MW EOS Swap)
