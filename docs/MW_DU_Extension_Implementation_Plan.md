@@ -1,8 +1,8 @@
 # MW DU Export Extension — Implementation Plan
 
 **Repository:** `Gumb-D/create-pr-cd`  
-**Current foundation PR:** Draft PR [#16](https://github.com/Gumb-D/create-pr-cd/pull/16)  
-**Status:** Foundation implemented; discovery registry, DU inventory, 10 discovery-only DRAFT profiles, and manual-review scaffolding are now in place from the 10 local DU exports; rollout remains approval-gated.  
+**Foundation PR:** PR [#16](https://github.com/Gumb-D/create-pr-cd/pull/16) — merged into `main`  
+**Status:** Phase 1 TX Mini canonical-input validation is complete. `tx_mini_pr_v1` is `PR_INPUT_READY` and explicitly non-production; no profile is `PRODUCTION`, so all ECC output remains blocked (`PROFILE_NOT_PRODUCTION`). Phase 2 (MW EOS Swap) is the next open phase.  
 **Primary objective:** Extend PR creation from the current TX Mini DU input model to multiple MW-related DU models without weakening existing PR and ECC output controls.
 
 ---
@@ -72,7 +72,7 @@ A field mapping must not depend only on column position, a partial label, or an 
 
 ---
 
-## 4. Current Baseline — Draft PR #16
+## 4. Current Baseline — PR #16 (Merged)
 
 ### 4.1 Completed Foundation Items
 
@@ -103,17 +103,17 @@ A field mapping must not depend only on column position, a partial label, or an 
 
 ### 4.2 Current Constraints
 
-- [x] Draft PR #16 has not changed the existing ECC generation runtime path.
-- [x] `scripts/generate_tss_pr_ecc.py` has no branch diff relative to the working tree review performed on 2026-07-06.
+- [x] PR #16 did not change the existing ECC generation runtime path, except the explicitly approved review-file-only TI CSV UTF-8 encoding fix recorded in the Phase 1 evidence.
 - [x] No new MW DU model is active.
-- [x] TX Mini profile remains `DRAFT`.
-- [x] No production Header Hash has been approved.
-- [x] No customer source export or credential has been committed in the foundation branch diff.
+- [x] `tx_mini_pr_v1` is `PR_INPUT_READY` and explicitly non-production.
+- [x] The approved TX Mini header hash is registered in `tx_mini_pr_v1`.
+- [x] The other nine DU profiles remain `DRAFT` and discovery-only.
+- [x] No customer source export or credential has been committed.
 - [x] Full existing repository regression suite has run in the actual local repository checkout.
-- [ ] PR #16 still requires human code review before it can be made ready for merge.
+- [x] PR #16 was human-reviewed and merged into `main`.
 
-Blocker:
-Human review and merge authorization are still required; Phase 0 can verify readiness but cannot self-approve the PR.
+Note:
+No profile is `PRODUCTION`, so all ECC output remains blocked by `PROFILE_NOT_PRODUCTION`.
 
 ---
 
@@ -132,10 +132,9 @@ Human review and merge authorization are still required; Phase 0 can verify read
 - [x] Confirm `.gitignore` covers local authentication/session files.
 - [x] Perform secret and customer-data scan of the PR diff.
 - [x] Review module boundaries: profiler, profile loader, adapter, validator, and gate.
-- [ ] Decide whether to squash the foundation branch’s granular commits before ready-for-review status.
-
-Blocker:
-Do not rewrite branch history without explicit instruction. Commit-squash choice remains a maintainer decision.
+- [x] Decide whether to squash the foundation branch’s granular commits before ready-for-review status.
+  Resolution note:
+  The commit-strategy decision was made by the maintainer as part of the human-controlled merge; PR #16 was merged into `main`.
 
 ### Acceptance Criteria
 
@@ -143,10 +142,9 @@ Do not rewrite branch history without explicit instruction. Commit-squash choice
 - [x] No production PR/ECC output behaviour changes are introduced.
 - [x] Raw source exports cannot bypass the guard.
 - [x] No customer data, credentials, tokens, cookies, or browser-session data exist in the current PR diff.
-- [ ] PR #16 is approved for merge as an architecture-only foundation.
-
-Blocker:
-Approval for merge is a human review outcome and is not yet evidenced in the repository state.
+- [x] PR #16 is approved for merge as an architecture-only foundation.
+  Resolution note:
+  The merge decision was human-controlled: PR #16 was reviewed and merged into `main`. Phase 0 is complete.
 
 ### Phase 0 Evidence
 
@@ -162,11 +160,11 @@ Approval for merge is a human review outcome and is not yet evidenced in the rep
 
 ### Phase 0 Readiness Assessment
 
-- Technical readiness: **Ready for human review as an architecture-only foundation**
-- Remaining non-code risks:
-  - Human reviewers still need to confirm whether the current granular commit stack should remain as-is or be reorganized later
-  - No sanitized original TX Mini iEPMS export is yet available, so Phase 1 golden-parity work remains blocked by external artifact availability
-  - Later-phase discovery and governance scaffolding have expanded the repository footprint, so human reviewers should keep the foundation-only boundary in mind when deciding whether to review this work as one stream or as smaller stacked follow-up diffs
+- Outcome: **Human review completed; PR #16 merged into `main` as an architecture-only foundation**
+- The non-code risks recorded during review were resolved before or by the merge:
+  - The granular-commit-stack question was settled by the maintainer's human-controlled merge decision
+  - The TX Mini export was confirmed as approved development evidence on 2026-07-07, unblocking Phase 1 golden-parity work (since completed)
+  - The expanded discovery and governance scaffolding was reviewed as one stream within PR #16
 
 ---
 
@@ -176,9 +174,9 @@ Approval for merge is a human review outcome and is not yet evidenced in the rep
 
 ### Activities
 
-- [ ] Obtain an approved, sanitized TX Mini iEPMS export fixture.
+- [x] Obtain an approved, sanitized TX Mini iEPMS export fixture.
   Local discovery note:
-  On 2026-07-06, a local external folder containing 10 DU exports was profiled in read-only mode under `output/du-20260706-profile/`, including a TX Mini export and an MW EOS Swap export. These source files remain external and uncommitted; business approval/sanitization status still needs confirmation before they can serve as formal repository evidence.
+  On 2026-07-06, a local external folder containing 10 DU exports was profiled in read-only mode under `output/du-20260706-profile/`, including a TX Mini export and an MW EOS Swap export. On 2026-07-07 JJ confirmed the TX Mini export as approved development evidence (by filename); it remains external and uncommitted, and approval for the other nine exports is explicitly deferred.
 - [x] Run the profiler against the approved fixture.
   Evidence note:
   A discovery-only profiler pass has already been executed locally against the available TX Mini export and the other nine DU exports. Result artifacts include `header_inventory.json`, `header_inventory.md`, `header_hash.txt`, `canonical_field_candidates.json`, `missing_pr_critical_fields.md`, and `draft_du_profile.yaml` per file under `output/du-20260706-profile/`.
@@ -214,9 +212,9 @@ Approval for merge is a human review outcome and is not yet evidenced in the rep
   The completed field review found every required TX Mini canonical field present in the source export — including the PR-status duplicate-prevention fields, which resolve from the `Subcon PR - TSS` / `Subcon PR - TI` reference columns via the approved transform. Only optional evidence fields (`boq_configuration`, `ne_sow_details`, `fe_sow_details`) remain unmapped, and `subcontractor_planning` stays `UNVERIFIED`; none of these block the TSS/TI scopes.
 - [x] Update `tx_mini_pr_v1` from `DRAFT` to a controlled validation profile only after review.
   Evidence note (2026-07-08):
-  JJ promoted `tx_mini_pr_v1` from `DRAFT` to `BUSINESS_VALIDATED` after the completed field-by-field validation, the approved header hash and SOW registry, the golden-parity PASS, and the negative-test acceptance sweep. The machine-checked transition review permitted the promotion (eligible up to `PR_INPUT_READY`), the refreshed discovery packet and both consistency guards accepted the new declared status, and the PR-input guard still blocks all ECC output (`PROFILE_NOT_PRODUCTION`). The `PR_INPUT_READY` declaration remains a separate explicit step, and `PRODUCTION` additionally requires release governance and UAT per Phase 4.
+  JJ promoted `tx_mini_pr_v1` from `DRAFT` to `BUSINESS_VALIDATED` after the completed field-by-field validation, the approved header hash and SOW registry, the golden-parity PASS, and the negative-test acceptance sweep. The machine-checked transition review permitted the promotion (eligible up to `PR_INPUT_READY`), the refreshed discovery packet and both consistency guards accepted the new declared status, and the PR-input guard still blocks all ECC output (`PROFILE_NOT_PRODUCTION`). The intermediate `BUSINESS_VALIDATED` state was superseded by the controlled `PR_INPUT_READY` declaration on 2026-07-08: `tx_mini_pr_v1` is now `PR_INPUT_READY`, still non-production, and `PROFILE_NOT_PRODUCTION` continues to block ECC output. `PRODUCTION` additionally requires release governance and UAT per Phase 4.
   Historical blocker (resolved):
-  The unresolved-review builder now recognizes human approval (2026-07-08): an `APPROVED` profile selection resolves its shortlist competition and is recorded as `RESOLVED_BY_APPROVED_MAPPING` with the rejected alternates kept for traceability, while `UNVERIFIED` selections with alternates still flag `REVIEW_REQUIRED_COMPETING_CANDIDATES` and approved-but-shortlist-mismatched selections stay flagged as a typo safety net (`tests/test_unresolved_skill_field_review.py` covers both directions). JJ then ruled the final open field on 2026-07-08 (round 5): `subcontractor_planning` => `docata|ZDCSZ01027586 | Network Planning | Microwave | Subcon - Planning` (col EO), rejecting the `Subcon PR - Planning` variant; the mapping is `APPROVED` in the profile and recorded in the local decision workbook. After the packet refresh the transition review now shows TX Mini eligible for `PROFILED`, `BUSINESS_VALIDATED`, and `PR_INPUT_READY`, with `PRODUCTION` denied only by the declared non-production lifecycle state. The remaining gate is therefore purely the controlled lifecycle-promotion decision itself (JJ/maintainer), plus the golden-parity evidence expected before any `PR_INPUT_READY` claim is exercised; the profile file stays `DRAFT` until that explicit promotion.
+  The unresolved-review builder now recognizes human approval (2026-07-08): an `APPROVED` profile selection resolves its shortlist competition and is recorded as `RESOLVED_BY_APPROVED_MAPPING` with the rejected alternates kept for traceability, while `UNVERIFIED` selections with alternates still flag `REVIEW_REQUIRED_COMPETING_CANDIDATES` and approved-but-shortlist-mismatched selections stay flagged as a typo safety net (`tests/test_unresolved_skill_field_review.py` covers both directions). JJ then ruled the final open field on 2026-07-08 (round 5): `subcontractor_planning` => `docata|ZDCSZ01027586 | Network Planning | Microwave | Subcon - Planning` (col EO), rejecting the `Subcon PR - Planning` variant; the mapping is `APPROVED` in the profile and recorded in the local decision workbook. After the packet refresh the transition review now shows TX Mini eligible for `PROFILED`, `BUSINESS_VALIDATED`, and `PR_INPUT_READY`, with `PRODUCTION` denied only by the declared non-production lifecycle state. That controlled lifecycle-promotion decision has since been exercised: with the golden-parity evidence in place, `tx_mini_pr_v1` was declared `PR_INPUT_READY` on 2026-07-08. The profile remains explicitly non-production and `PROFILE_NOT_PRODUCTION` continues to block all ECC output.
 - [x] Build Canonical PR Site Records from the TX Mini export.
 - [x] Compare canonical records against the present normalized input contract, `site_pr_po_view.xlsx`.
 - [x] Run the existing PR/ECC generator with legacy and canonical-path inputs.
@@ -510,13 +508,13 @@ DRAFT
 
 ## 9. Immediate Next Actions
 
-1. Confirm whether the 10 external DU exports in `C:\Users\Win11-JJ\Downloads\du-20260706` are approved sanitized fixtures for development evidence.
-2. Review the generated profiler outputs under `output/du-20260706-profile/`, starting with TX Mini and MW EOS Swap, to convert the keyword-discovery shortlist and unresolved review packet into explicit four-layer source-field decisions. For TX Mini this review input now exists as the local-only mapping-decision package under `output/du-20260706-profile/tx-mini-mapping-review/`; JJ's `Decision_Log` entries there are the next required input before any mapping can be written back to `tx_mini_pr_v1`.
+1. Confirm approval/sanitization status for the remaining nine external DU exports in `C:\Users\Win11-JJ\Downloads\du-20260706` (the TX Mini export was confirmed as approved development evidence on 2026-07-07; the others remain deferred).
+2. Review the generated profiler outputs under `output/du-20260706-profile/`, starting with MW EOS Swap, to convert the keyword-discovery shortlist and unresolved review packet into explicit four-layer source-field decisions. For TX Mini this review is complete: the `Decision_Log` rulings in the local mapping-decision package under `output/du-20260706-profile/tx-mini-mapping-review/` were written back to `tx_mini_pr_v1`, which is now `PR_INPUT_READY`; the TX Mini package pattern is the donor review template for the next DU reviews.
 3. Use `scripts/build_du_discovery_registry.py` as the repeatable path for refreshing `config/registries/mw_du_model_discovery_registry.yaml` and `docs/MW_DU_Discovery_Inventory.md` whenever new DU exports are profiled.
 4. Use `scripts/build_skill_field_shortlists.py`, `scripts/build_unresolved_skill_field_review.py`, `scripts/build_du_structure_grouping.py`, and `scripts/build_missing_field_bridge_review.py` with their companion docs as the review starting point for TX Mini, MW EOS Swap, 2023 TX Rollout, Jendela TX Migration, ZTE TX MINI, and the next reuse-candidate DU validation sessions.
 5. Review `2023 TX Rollout` as the first donor-reference export for missing PR-status fields on TX Mini, MW EOS Swap, Jendela TX Migration, and ZTE TX MINI, while keeping cross-model reuse explicitly unapproved until four-layer field confirmation and business validation exist.
 6. Use `docs/MW_DU_MW_Pair_Divergence_Review.md` as the review checklist for MW EOS Swap vs ZTE TX MINI before attempting any shared-profile or shared-rule claim, especially around `tx_sow_raw`, `site_code`, `subcontractor_ti`, and the antenna fields.
-7. Keep `tx_mini_pr_v1`, `mw_eos_swap_pr_v1`, `tx_rollout_2023_pr_v1`, `jendela_tx_migration_pr_v1`, `zte_tx_mini_pr_v1`, `celcomdigi_bau_2023_pr_v1`, `celcomdigi_bau_2024_pr_v1`, `celcomdigi_usp_pr_v1`, `cd_consolidation_2023_decom_pr_v1`, and `cd_consolidation_2023_rollout_pr_v1` in `DRAFT` and preserve fail-closed blocking tests until approved source evidence exists for validation work.
+7. Keep `mw_eos_swap_pr_v1`, `tx_rollout_2023_pr_v1`, `jendela_tx_migration_pr_v1`, `zte_tx_mini_pr_v1`, `celcomdigi_bau_2023_pr_v1`, `celcomdigi_bau_2024_pr_v1`, `celcomdigi_usp_pr_v1`, `cd_consolidation_2023_decom_pr_v1`, and `cd_consolidation_2023_rollout_pr_v1` in `DRAFT` and preserve fail-closed blocking tests until approved source evidence exists for validation work. `tx_mini_pr_v1` is `PR_INPUT_READY` and remains explicitly non-production; `PROFILE_NOT_PRODUCTION` continues to block all ECC output.
 
 ---
 
