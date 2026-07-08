@@ -34,12 +34,15 @@ class TestProfileTransitionReview(unittest.TestCase):
         )
         tx_entry = next(entry for entry in registry["entries"] if entry["profile_id"] == "tx_mini_pr_v1")
         production = next(item for item in tx_entry["transition_targets"] if item["target_status"] == "PRODUCTION")
-        # Mappings and the header hash are approved, but production stays
-        # denied by the non-production lifecycle state and the remaining
-        # keyword-level competing shortlist candidates.
+        # All mappings are approved (2026-07-08), so intermediate targets are
+        # eligible, but production stays denied by the explicit non-production
+        # lifecycle state until a controlled promotion happens.
+        business_validated = next(
+            item for item in tx_entry["transition_targets"] if item["target_status"] == "BUSINESS_VALIDATED"
+        )
+        self.assertTrue(business_validated["eligible"])
         self.assertFalse(production["eligible"])
-        self.assertIn("PROFILE_NOT_PRODUCTION", production["denied_reasons"])
-        self.assertIn("COMPETING_SHORTLIST_CANDIDATES", production["denied_reasons"])
+        self.assertEqual(production["denied_reasons"], ["PROFILE_NOT_PRODUCTION"])
 
     def test_markdown_mentions_denied_transition(self):
         registry = json.loads(

@@ -122,9 +122,8 @@
       "mapping_version": "approved-2026-07-07-tx-mini-v1",
       "observed_header_hash": "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
       "readiness_status": "DISCOVERY_ONLY_BLOCKED",
-      "action_count": 2,
+      "action_count": 1,
       "action_type_counts": {
-        "CONFIRM_COMPETING_CANDIDATE": 1,
         "HOLD_LIFECYCLE_PROMOTION": 1
       }
     },
@@ -267,7 +266,6 @@
         "celcomdigi_usp_pr_v1",
         "jendela_tx_migration_pr_v1",
         "mw_eos_swap_pr_v1",
-        "tx_mini_pr_v1",
         "tx_rollout_2023_pr_v1",
         "zte_tx_mini_pr_v1"
       ],
@@ -277,14 +275,13 @@
         "celcomdigi_usp_pr_v1:05",
         "jendela_tx_migration_pr_v1:04",
         "mw_eos_swap_pr_v1:05",
-        "tx_mini_pr_v1:01",
         "tx_rollout_2023_pr_v1:03",
         "zte_tx_mini_pr_v1:05"
       ],
       "evidence_hints": [
         "Use the unresolved review packet to compare the currently selected source against alternates."
       ],
-      "profile_count": 8,
+      "profile_count": 7,
       "batch_priority": 4
     },
     {
@@ -651,7 +648,7 @@
         "celcomdigi_usp_pr_v1:13",
         "jendela_tx_migration_pr_v1:13",
         "mw_eos_swap_pr_v1:13",
-        "tx_mini_pr_v1:02",
+        "tx_mini_pr_v1:01",
         "tx_rollout_2023_pr_v1:11",
         "zte_tx_mini_pr_v1:13"
       ],

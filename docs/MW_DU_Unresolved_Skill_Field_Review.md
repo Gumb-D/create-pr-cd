@@ -7,9 +7,9 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 - Source file: `A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx`
 - Observed header hash: `167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221`
 - Missing required fields: None
-- Competing candidate fields: subcontractor_planning
+- Competing candidate fields: None
 - Single-candidate but unverified fields: None
-- Resolved by approved mapping (alternates rejected): subcontractor_ti, tx_sow_raw
+- Resolved by approved mapping (alternates rejected): subcontractor_planning, subcontractor_ti, tx_sow_raw
 
 ### `site_code`
 
@@ -62,8 +62,8 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 ### `subcontractor_planning`
 
 - Skill field: `subcon_planning`
-- Review status: `REVIEW_REQUIRED_COMPETING_CANDIDATES`
-- Reason: Profile-selected source has alternate shortlist candidates that still require four-layer confirmation.
+- Review status: `RESOLVED_BY_APPROVED_MAPPING`
+- Reason: Profile-selected source is human-approved; the remaining shortlist alternates were rejected by that recorded decision.
 - Selected source: `docata|ZDCSZ01027586 | Network Planning | Microwave | Subcon - Planning`
 - Alternate shortlist candidates:
   - score 55: `docata|ZDCSZ01027605 | Network Planning | Microwave | Subcon PR - Planning`

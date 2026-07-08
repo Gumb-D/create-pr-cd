@@ -28,12 +28,11 @@ class TestProfileActionQueue(unittest.TestCase):
 
         entry = build_action_queue_entry(profile, readiness_entry, unresolved_entry, bridge_entry)
 
-        # PR-status sources were approved on 2026-07-07, so the queue no longer
-        # starts with missing required fields; keyword-level competing shortlist
-        # candidates remain the first review work, and promotion stays held.
+        # Every TX Mini mapping ruling landed by 2026-07-08, so no field work
+        # remains in the queue; only the explicit lifecycle-promotion hold.
         action_types = [item["action_type"] for item in entry["action_queue"]]
         self.assertNotIn("RESOLVE_MISSING_REQUIRED_FIELD", action_types)
-        self.assertEqual(entry["action_queue"][0]["action_type"], "CONFIRM_COMPETING_CANDIDATE")
+        self.assertNotIn("CONFIRM_COMPETING_CANDIDATE", action_types)
         self.assertEqual(entry["action_queue"][-1]["action_type"], "HOLD_LIFECYCLE_PROMOTION")
 
     def test_mw_eos_queue_contains_competing_and_header_actions(self):

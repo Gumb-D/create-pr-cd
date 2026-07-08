@@ -12,13 +12,12 @@
       "observed_header_hash": "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
       "summary": {
         "missing_required_fields": [],
-        "competing_candidate_fields": [
-          "subcontractor_planning"
-        ],
+        "competing_candidate_fields": [],
         "single_candidate_unverified_fields": [],
         "no_profile_selection_fields": [],
         "shortlist_mismatch_fields": [],
         "resolved_by_approval_fields": [
+          "subcontractor_planning",
           "subcontractor_ti",
           "tx_sow_raw"
         ]
@@ -159,7 +158,7 @@
         "subcontractor_planning": {
           "skill_field": "subcon_planning",
           "required": false,
-          "selected_status": "UNVERIFIED",
+          "selected_status": "APPROVED",
           "recommended_source": {
             "fingerprint": {
               "field_code": "docata|ZDCSZ01027586",
@@ -167,7 +166,7 @@
               "task_name": "Microwave",
               "display_header": "Subcon - Planning"
             },
-            "mapping_status": "UNVERIFIED"
+            "mapping_status": "APPROVED"
           },
           "alternate_candidates": [
             {
@@ -185,8 +184,8 @@
               }
             }
           ],
-          "review_status": "REVIEW_REQUIRED_COMPETING_CANDIDATES",
-          "review_reason": "Profile-selected source has alternate shortlist candidates that still require four-layer confirmation."
+          "review_status": "RESOLVED_BY_APPROVED_MAPPING",
+          "review_reason": "Profile-selected source is human-approved; the remaining shortlist alternates were rejected by that recorded decision."
         },
         "antenna_size_ne": {
           "skill_field": "antenna_size_ne",

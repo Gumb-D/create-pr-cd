@@ -8,9 +8,9 @@ Discovery-only lifecycle promotion review for the current priority DU profiles.
 - Mapping version: `approved-2026-07-07-tx-mini-v1`
 - Observed header hash: `167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221`
 - `PROFILED`: `ELIGIBLE`
-- `BUSINESS_VALIDATED`: `DENIED` because `COMPETING_SHORTLIST_CANDIDATES`
-- `PR_INPUT_READY`: `DENIED` because `COMPETING_SHORTLIST_CANDIDATES`
-- `PRODUCTION`: `DENIED` because `PROFILE_NOT_PRODUCTION, COMPETING_SHORTLIST_CANDIDATES`
+- `BUSINESS_VALIDATED`: `ELIGIBLE`
+- `PR_INPUT_READY`: `ELIGIBLE`
+- `PRODUCTION`: `DENIED` because `PROFILE_NOT_PRODUCTION`
 
 ## mw_eos_swap_pr_v1 (MW EOS Swap)
 

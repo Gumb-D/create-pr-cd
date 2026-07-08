@@ -9,9 +9,7 @@ Discovery-only prioritized manual action queue for the current DRAFT profiles.
 - Mapping version: `approved-2026-07-07-tx-mini-v1`
 - Observed header hash: `167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221`
 - Action queue:
-  - `tx_mini_pr_v1:01` `CONFIRM_COMPETING_CANDIDATE` `subcontractor_planning`: Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.
-    hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `tx_mini_pr_v1:02` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
+  - `tx_mini_pr_v1:01` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
     hint: Use the transition review as the final stop/go check before any status change.
 
 ## mw_eos_swap_pr_v1 (MW EOS Swap)

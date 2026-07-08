@@ -16,17 +16,14 @@
       "readiness_status": "DISCOVERY_ONLY_BLOCKED",
       "blocker_summary": {
         "overall_blockers": [
-          "PROFILE_NOT_PRODUCTION",
-          "COMPETING_SHORTLIST_CANDIDATES"
+          "PROFILE_NOT_PRODUCTION"
         ],
         "lifecycle_blockers": [
           "PROFILE_NOT_PRODUCTION"
         ],
         "missing_required_fields": [],
         "unapproved_required_fields": [],
-        "competing_candidate_fields": [
-          "subcontractor_planning"
-        ],
+        "competing_candidate_fields": [],
         "single_candidate_unverified_fields": [],
         "no_profile_selection_fields": [],
         "shortlist_mismatch_fields": [],

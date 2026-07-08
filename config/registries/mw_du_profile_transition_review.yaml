@@ -17,24 +17,19 @@
         },
         {
           "target_status": "BUSINESS_VALIDATED",
-          "eligible": false,
-          "denied_reasons": [
-            "COMPETING_SHORTLIST_CANDIDATES"
-          ]
+          "eligible": true,
+          "denied_reasons": []
         },
         {
           "target_status": "PR_INPUT_READY",
-          "eligible": false,
-          "denied_reasons": [
-            "COMPETING_SHORTLIST_CANDIDATES"
-          ]
+          "eligible": true,
+          "denied_reasons": []
         },
         {
           "target_status": "PRODUCTION",
           "eligible": false,
           "denied_reasons": [
-            "PROFILE_NOT_PRODUCTION",
-            "COMPETING_SHORTLIST_CANDIDATES"
+            "PROFILE_NOT_PRODUCTION"
           ]
         }
       ],

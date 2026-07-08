@@ -89,14 +89,14 @@ class TestUnresolvedSkillFieldReview(unittest.TestCase):
 
         self.assertEqual(review_entry["profile_id"], "tx_mini_pr_v1")
         self.assertEqual(review_entry["source_file_name"], shortlist_entry["source_file_name"])
-        # PR-status sources were approved from the TX Mini export on 2026-07-07,
-        # so no required field is missing. Human-approved selections resolve
-        # their shortlist competition (alternates were rejected by that
-        # decision); only the never-ruled subcontractor_planning still competes.
+        # Every TX Mini ruling landed by 2026-07-08: nothing is missing or
+        # competing, and the human-approved selections record their rejected
+        # shortlist alternates as resolved-by-approval.
         self.assertEqual(review_entry["summary"]["missing_required_fields"], [])
-        self.assertEqual(review_entry["summary"]["competing_candidate_fields"], ["subcontractor_planning"])
+        self.assertEqual(review_entry["summary"]["competing_candidate_fields"], [])
         self.assertEqual(
-            review_entry["summary"]["resolved_by_approval_fields"], ["subcontractor_ti", "tx_sow_raw"]
+            review_entry["summary"]["resolved_by_approval_fields"],
+            ["subcontractor_planning", "subcontractor_ti", "tx_sow_raw"],
         )
         self.assertEqual(
             review_entry["field_reviews"]["tx_sow_raw"]["review_status"], "RESOLVED_BY_APPROVED_MAPPING"
