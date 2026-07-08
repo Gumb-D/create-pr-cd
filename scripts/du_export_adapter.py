@@ -10,6 +10,7 @@ from typing import Any, Dict, Mapping
 
 from canonical_site_validator import FIELD_PATHS, apply_validation_result, empty_canonical_site_record, validate_canonical_site_record
 from profile_du_export import fingerprint_key
+from sow_normalization import normalize_tx_sow
 
 
 PR_STATUS_EXISTS = "PR_EXISTS"
@@ -85,6 +86,7 @@ def build_canonical_site_record(
     *,
     scope: str,
     resolved_mappings: Mapping[str, Any],
+    sow_registry: Mapping[str, Any] | None = None,
 ) -> Dict[str, Any]:
     """Build one traceable record from exact resolved mappings, then validate it."""
     record = empty_canonical_site_record()
@@ -127,14 +129,26 @@ def build_canonical_site_record(
             "mapping_status": source.get("mapping_status", "UNVERIFIED"),
         }
 
-    # The SOW normalizer remains a shared-engine concern. Preserve the raw value
-    # as controlled evidence; a production adapter profile must supply an approved
-    # normalization policy before automatic ECC is possible.
     if not record["pr_context"]["tx_sow_normalized"]:
         raw_sow = record["pr_context"]["tx_sow_raw"]
-        if isinstance(raw_sow, str) and raw_sow.strip():
+        raw_evidence = record["source_evidence"]["fields"].get("tx_sow_raw")
+        if sow_registry is not None:
+            # Controlled normalization through the approved canonical SOW
+            # registry: only PR_TRIGGER values normalize with APPROVED status;
+            # everything else stays fail-closed for output.
+            normalized = normalize_tx_sow(raw_sow, sow_registry)
+            record["pr_context"]["tx_sow_normalized"] = normalized["canonical_sow"]
+            if raw_evidence:
+                record["source_evidence"]["fields"]["tx_sow_normalized"] = {
+                    **raw_evidence,
+                    "transformation": "canonical_sow_registry",
+                    "normalization_status": normalized["normalization_status"],
+                    "sow_classification": normalized["classification"],
+                }
+        elif isinstance(raw_sow, str) and raw_sow.strip():
+            # No registry supplied: preserve the raw value as controlled
+            # evidence only; the guard blocks unverified normalization.
             record["pr_context"]["tx_sow_normalized"] = raw_sow.strip()
-            raw_evidence = record["source_evidence"]["fields"].get("tx_sow_raw")
             if raw_evidence:
                 record["source_evidence"]["fields"]["tx_sow_normalized"] = {
                     **raw_evidence,

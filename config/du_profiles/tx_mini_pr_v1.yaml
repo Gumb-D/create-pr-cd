@@ -34,7 +34,7 @@
     "antenna_size_ne": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00969578", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "MW Config Antenna Size NE"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "antenna_size_fe": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00969579", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "MW Config Antenna Size FE"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "boq_configuration": {"required": false, "source_candidates": [], "transforms": ["trim"]},
-    "tx_sow_details": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ642123", "wbs_stage": "TX Solution", "task_name": "TX SOW Details", "display_header": "TX SOW Details"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "tx_sow_details": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ642123", "wbs_stage": "TX Solution", "task_name": "TX SOW Details", "display_header": "TX SOW Details"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "ne_sow_details": {"required": false, "source_candidates": [], "transforms": ["trim"]},
     "fe_sow_details": {"required": false, "source_candidates": [], "transforms": ["trim"]}
   },
@@ -50,7 +50,7 @@
       "The approved header hash records the reviewed TX Mini export structure; any header change re-quarantines the model.",
       "Tx SOW normalization is controlled by config/registries/canonical_sow_registry.yaml; values outside the registry classify REVIEW_REQUIRED.",
       "existing_*_pr_status use the approved normalize_pr_reference_status transform over the Subcon PR reference columns.",
-      "TX SOW Details remains evidence-only and was explicitly rejected as the PR trigger source.",
+      "TX SOW Details is an approved evidence/decision-support field (JJ 2026-07-08): a short description that future item-code selection logic will interpret, combined with other approved columns. It is explicitly not the PR trigger source; any automated (LLM-assisted) item-code inference over it requires human approval before driving output.",
       "Lifecycle status remains DRAFT until the machine-checked transition review permits promotion; ECC output stays blocked."
     ]
   }

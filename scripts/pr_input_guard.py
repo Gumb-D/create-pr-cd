@@ -51,10 +51,19 @@ def evaluate_record(record: Mapping[str, Any], profile: Mapping[str, Any] | None
         unsafe = []
         if isinstance(evidence, Mapping):
             for field, item in evidence.items():
-                if isinstance(item, Mapping) and item.get("mapping_status") == "UNVERIFIED":
+                if not isinstance(item, Mapping):
+                    continue
+                if item.get("mapping_status") == "UNVERIFIED":
                     unsafe.append(f"UNVERIFIED_SOURCE_MAPPING:{field}")
-                if isinstance(item, Mapping) and item.get("normalization_status") == "UNVERIFIED":
+                normalization_status = item.get("normalization_status")
+                if normalization_status == "UNVERIFIED":
                     unsafe.append(f"UNVERIFIED_NORMALIZATION:{field}")
+                elif normalization_status == "REVIEW_REQUIRED":
+                    unsafe.append(f"SOW_NORMALIZATION_REVIEW_REQUIRED:{field}")
+                elif normalization_status == "APPROVED_NO_OUTPUT":
+                    # Intentional business skip (e.g. Cancel / Drop): valid
+                    # record, but it must never produce ECC output.
+                    unsafe.append(f"SOW_NO_PR_TRIGGER:{field}")
         result = {"classification": PR_INPUT_QUARANTINED, "blocking_reasons": unsafe, "warnings": []} if unsafe else validate_canonical_site_record(record, scope)
     output_decision = _output_decision(str(result["classification"]), profile)
     result = {**result, "output_decision": output_decision}

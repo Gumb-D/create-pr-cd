@@ -163,6 +163,61 @@ class TestPrReferenceStatusTransform(unittest.TestCase):
             )
 
 
+class TestSowRegistryWiring(unittest.TestCase):
+    REGISTRY = {
+        "registry_type": "canonical_sow_registry",
+        "entries": [
+            {"raw_value": "MW Swap", "canonical_sow": "MW SWAP", "classification": "PR_TRIGGER"},
+            {"raw_value": "Cancel / Drop", "canonical_sow": "CANCEL / DROP", "classification": "NO_PR_TRIGGER"},
+            {"raw_value": "Under NIC", "canonical_sow": "UNDER NIC", "classification": "REVIEW_REQUIRED"},
+        ],
+    }
+
+    def _record_for(self, raw_sow, registry=None):
+        sow_fp = fp("TX_SOW")
+        profile = {
+            "profile_id": "p",
+            "profile_version": "1",
+            "mapping_version": "m",
+            "field_mapping": {"tx_sow_raw": {"transforms": ["trim"]}},
+        }
+        resolved = {"tx_sow_raw": {"status": "RESOLVED", "matches": [{"fingerprint": sow_fp, "mapping_status": "APPROVED"}]}}
+        return build_canonical_site_record(
+            {fingerprint_key(sow_fp): raw_sow},
+            profile,
+            {"source_file_name": "s.xlsx", "source_file_hash": "h", "header_hash": "hh"},
+            scope="TSS",
+            resolved_mappings=resolved,
+            sow_registry=registry,
+        )
+
+    def test_pr_trigger_value_normalizes_with_approved_status(self):
+        record = self._record_for(" mw   swap ", self.REGISTRY)
+        self.assertEqual(record["pr_context"]["tx_sow_normalized"], "MW SWAP")
+        evidence = record["source_evidence"]["fields"]["tx_sow_normalized"]
+        self.assertEqual(evidence["normalization_status"], "APPROVED")
+        self.assertEqual(evidence["sow_classification"], "PR_TRIGGER")
+        self.assertEqual(evidence["transformation"], "canonical_sow_registry")
+
+    def test_no_pr_trigger_value_marks_intentional_no_output(self):
+        record = self._record_for("Cancel / Drop", self.REGISTRY)
+        evidence = record["source_evidence"]["fields"]["tx_sow_normalized"]
+        self.assertEqual(evidence["normalization_status"], "APPROVED_NO_OUTPUT")
+        self.assertEqual(evidence["sow_classification"], "NO_PR_TRIGGER")
+
+    def test_unknown_value_stays_review_required_and_blank(self):
+        record = self._record_for("MW Teleportation", self.REGISTRY)
+        self.assertEqual(record["pr_context"]["tx_sow_normalized"], "")
+        evidence = record["source_evidence"]["fields"]["tx_sow_normalized"]
+        self.assertEqual(evidence["normalization_status"], "REVIEW_REQUIRED")
+
+    def test_without_registry_fallback_stays_unverified(self):
+        record = self._record_for("MW Swap", None)
+        self.assertEqual(record["pr_context"]["tx_sow_normalized"], "MW Swap")
+        evidence = record["source_evidence"]["fields"]["tx_sow_normalized"]
+        self.assertEqual(evidence["normalization_status"], "UNVERIFIED")
+
+
 class TestSubcontractorTssSchemaExtension(unittest.TestCase):
     def test_canonical_record_carries_optional_subcontractor_tss(self):
         record = empty_canonical_site_record()

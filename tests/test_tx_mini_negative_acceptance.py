@@ -19,8 +19,10 @@ from du_export_adapter import build_canonical_site_record, resolve_profile_field
 from du_profile_loader import load_du_profile
 from pr_input_guard import block_raw_source, evaluate_record
 from profile_du_export import fingerprint_key
+from sow_normalization import load_canonical_sow_registry
 
 PROFILE_PATH = ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml"
+SOW_REGISTRY = load_canonical_sow_registry(ROOT / "config" / "registries" / "canonical_sow_registry.yaml")
 
 COMPLETE_ROW = {
     "site_code": "A0001",
@@ -88,7 +90,7 @@ def _context(profile, header_hash=None):
     }
 
 
-def _build_record(profile, overrides=None, header_hash=None, inventory=None):
+def _build_record(profile, overrides=None, header_hash=None, inventory=None, sow_registry=SOW_REGISTRY):
     inventory = inventory or _inventory_from_profile(profile)
     resolved = resolve_profile_field_mappings(inventory, profile)
     return build_canonical_site_record(
@@ -97,6 +99,7 @@ def _build_record(profile, overrides=None, header_hash=None, inventory=None):
         _context(profile, header_hash=header_hash),
         scope="TSS",
         resolved_mappings=resolved,
+        sow_registry=sow_registry,
     )
 
 
@@ -116,11 +119,6 @@ def _production_copy(profile):
     return clone
 
 
-def _approve_normalization(record):
-    evidence = record["source_evidence"]["fields"].get("tx_sow_normalized")
-    if evidence is not None:
-        evidence["normalization_status"] = "APPROVED"
-    return record
 
 
 class TestTxMiniNegativeAcceptance(unittest.TestCase):
@@ -138,21 +136,23 @@ class TestTxMiniNegativeAcceptance(unittest.TestCase):
 
     def test_positive_control_requires_production_and_approved_normalization(self):
         production = _production_copy(self.profile)
-        record = _approve_normalization(_build_record(production))
+        record = _build_record(production)
+        # The registry normalizes the PR_TRIGGER value with APPROVED status.
+        self.assertEqual(record["pr_context"]["tx_sow_normalized"], "MW SWAP")
         gate = evaluate_record(record, production, scope="TSS")
         self.assertTrue(gate["allow_output"])
         self.assertEqual(gate["output_decision"], ALLOW_ECC_OUTPUT)
 
     def test_changed_header_hash_quarantines_even_for_production(self):
         production = _production_copy(self.profile)
-        record = _approve_normalization(_build_record(production, header_hash="changed-header-hash"))
+        record = _build_record(production, header_hash="changed-header-hash")
         gate = evaluate_record(record, production, scope="TSS")
         self.assertFalse(gate["allow_output"])
         self.assertIn("HEADER_HASH_REVALIDATION_REQUIRED", gate["blocking_reasons"])
 
     def test_unknown_du_model_or_view_quarantines(self):
         production = _production_copy(self.profile)
-        record = _approve_normalization(_build_record(production))
+        record = _build_record(production)
         record["identity"]["view_id"] = "9999999999999999999"
         gate = evaluate_record(record, production, scope="TSS")
         self.assertFalse(gate["allow_output"])
@@ -191,7 +191,7 @@ class TestTxMiniNegativeAcceptance(unittest.TestCase):
 
     def test_unverified_source_mapping_blocks_output_for_production(self):
         production = _production_copy(self.profile)
-        record = _approve_normalization(_build_record(production))
+        record = _build_record(production)
         record["source_evidence"]["fields"]["region"]["mapping_status"] = "UNVERIFIED"
         gate = evaluate_record(record, production, scope="TSS")
         self.assertFalse(gate["allow_output"])
@@ -199,13 +199,28 @@ class TestTxMiniNegativeAcceptance(unittest.TestCase):
 
     def test_unverified_normalization_blocks_output_for_production(self):
         production = _production_copy(self.profile)
-        record = _build_record(production)  # adapter fallback leaves it UNVERIFIED
+        # No registry supplied: the adapter fallback leaves normalization UNVERIFIED.
+        record = _build_record(production, sow_registry=None)
         self.assertEqual(
             record["source_evidence"]["fields"]["tx_sow_normalized"]["normalization_status"], "UNVERIFIED"
         )
         gate = evaluate_record(record, production, scope="TSS")
         self.assertFalse(gate["allow_output"])
         self.assertIn("UNVERIFIED_NORMALIZATION:tx_sow_normalized", gate["blocking_reasons"])
+
+    def test_no_pr_trigger_sow_is_intentionally_blocked_for_production(self):
+        production = _production_copy(self.profile)
+        record = _build_record(production, overrides={"tx_sow_raw": "Cancel / Drop"})
+        gate = evaluate_record(record, production, scope="TSS")
+        self.assertFalse(gate["allow_output"])
+        self.assertIn("SOW_NO_PR_TRIGGER:tx_sow_normalized", gate["blocking_reasons"])
+
+    def test_review_required_sow_blocks_output_for_production(self):
+        production = _production_copy(self.profile)
+        record = _build_record(production, overrides={"tx_sow_raw": "MW Remote Upgrade"})
+        gate = evaluate_record(record, production, scope="TSS")
+        self.assertFalse(gate["allow_output"])
+        self.assertIn("SOW_NORMALIZATION_REVIEW_REQUIRED:tx_sow_normalized", gate["blocking_reasons"])
 
     def test_raw_source_export_cannot_reach_ecc(self):
         gate = block_raw_source("any raw export payload")

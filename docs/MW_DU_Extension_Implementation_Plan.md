@@ -228,7 +228,9 @@ Approval for merge is a human review outcome and is not yet evidenced in the rep
 
 - [x] All required TX Mini canonical fields are mapped with approved status.
 - [x] TX Mini Header Hash is registered as approved for the profile version.
-- [ ] No unverified transform or source mapping remains in the production candidate path.
+- [x] No unverified transform or source mapping remains in the production candidate path.
+  Evidence note (2026-07-08):
+  `scripts/du_export_adapter.py` now performs Tx SOW normalization through the approved `canonical_sow_registry.yaml` when a registry is supplied (referenced by `tx_mini_pr_v1` `normalization.sow_registry`): `PR_TRIGGER` values normalize with `APPROVED` status, `NO_PR_TRIGGER` values mark `APPROVED_NO_OUTPUT`, and review-required or unknown values mark `REVIEW_REQUIRED` — the trim fallback (still `UNVERIFIED`) applies only when no registry is supplied. `scripts/pr_input_guard.py` blocks output for every non-approved normalization state with distinct reasons (`UNVERIFIED_NORMALIZATION`, `SOW_NORMALIZATION_REVIEW_REQUIRED`, `SOW_NO_PR_TRIGGER` for the intentional Cancel / Drop skip). JJ also ruled `tx_sow_details` on 2026-07-08: `APPROVED` as an evidence/decision-support field — a short description that future item-code selection logic will interpret (planned LLM-assisted interpretation combining the approved columns; any such inference still requires human approval before driving output, per the AI-inference risk control). Every source candidate in `tx_mini_pr_v1` is now `APPROVED`. Golden parity re-verified **PASS** with the registry wired in (TSS 87/87, TI 19/19). Coverage: `tests/test_du_export_adapter.py` (registry wiring states) and `tests/test_tx_mini_negative_acceptance.py` (guard blocking per state, positive control through the real registry). Full suite `Ran 227 tests` `OK` on 2026-07-08.
 - [x] Legacy and canonical-path ECC outputs are identical, except for explicitly approved non-functional metadata.
 - [x] Negative tests block changed headers, missing required fields, and ambiguous source mappings.
   Evidence note:

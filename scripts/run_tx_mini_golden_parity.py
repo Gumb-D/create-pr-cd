@@ -63,7 +63,11 @@ def _column_index_by_fingerprint(inventory: Mapping[str, Any]) -> Dict[str, int]
 
 
 def build_canonical_records(
-    view_path: Path, profile: Mapping[str, Any], inventory: Mapping[str, Any], resolved: Mapping[str, Any]
+    view_path: Path,
+    profile: Mapping[str, Any],
+    inventory: Mapping[str, Any],
+    resolved: Mapping[str, Any],
+    sow_registry: Optional[Mapping[str, Any]] = None,
 ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
     """Build one TSS-scope record per data row; return records plus stats."""
     from openpyxl import load_workbook
@@ -104,6 +108,7 @@ def build_canonical_records(
                 {**context_base, "source_row_number": row_number},
                 scope="TSS",
                 resolved_mappings=resolved,
+                sow_registry=sow_registry,
             )
             classification = record["validation"]["pr_input_classification"]
             classification_counts[classification] = classification_counts.get(classification, 0) + 1
@@ -320,7 +325,13 @@ def run_parity(
             + ", ".join(resolution["unresolved_mapped_fields"])
         )
     resolved = resolution["resolved_mappings"]
-    records, canonical_stats = build_canonical_records(site_view, profile, inventory, resolved)
+    sow_registry = None
+    registry_reference = profile.get("normalization", {}).get("sow_registry")
+    if registry_reference:
+        from sow_normalization import load_canonical_sow_registry
+
+        sow_registry = load_canonical_sow_registry(repo_root / registry_reference)
+    records, canonical_stats = build_canonical_records(site_view, profile, inventory, resolved, sow_registry)
     canonical_view = work_dir / "canonical_path_site_view.xlsx"
     render_stats = render_canonical_path_view(site_view, records, resolved, inventory, canonical_view)
 
