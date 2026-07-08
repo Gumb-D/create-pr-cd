@@ -112,7 +112,9 @@ class TestProductionTiSowMatching(unittest.TestCase):
             review_rows = []
             review_files = sorted(output_dir.glob("REVIEW_REQUIRED_TI_*.csv"))
             if review_files:
-                with review_files[0].open(newline="", encoding="utf-8") as handle:
+                # utf-8-sig: review CSVs carry a BOM since the approved
+                # 2026-07-08 encoding fix.
+                with review_files[0].open(newline="", encoding="utf-8-sig") as handle:
                     review_rows = list(csv.DictReader(handle))
 
             return result, workbook_rows, review_rows

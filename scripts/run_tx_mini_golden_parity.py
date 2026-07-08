@@ -16,7 +16,6 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import os
 import re
 import subprocess
 import sys
@@ -162,12 +161,10 @@ def run_generator(site_data: Path, output_dir: Path, scope: str, repo_root: Path
         "--scope",
         scope,
     ]
-    # PYTHONUTF8=1 works around a pre-existing legacy defect: the generator
-    # writes review CSVs without an explicit encoding, and site data containing
-    # U+200B crashes it under the default Windows cp1252 file encoding. The
-    # workaround applies identically to both parity paths and changes no source.
-    environment = {**os.environ, "PYTHONUTF8": "1"}
-    completed = subprocess.run(command, cwd=repo_root, capture_output=True, text=True, env=environment)
+    # The generator runs under the default platform encoding on purpose: its
+    # review CSVs carry an explicit utf-8-sig encoding since the approved
+    # 2026-07-08 fix, and this harness re-verifies that with every run.
+    completed = subprocess.run(command, cwd=repo_root, capture_output=True, text=True)
     return {
         "scope": scope,
         "returncode": completed.returncode,
