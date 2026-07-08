@@ -1,6 +1,6 @@
 # DU Export Adapter Foundation
 
-This change introduces only a safe foundation. The current runtime remains unchanged: it accepts the existing normalized site input and supports only TSS and TI.
+This document describes the architecture foundation introduced by PR [#16](https://github.com/Gumb-D/create-pr-cd/pull/16) (merged into `main`). The foundation itself introduced no production runtime change: it accepted the existing normalized site input and supported only TSS and TI. Since the merge, Phase 1 TX Mini canonical-input validation has completed — see [MW_DU_Extension_Implementation_Plan.md](/C:/dev/create-pr-cd/docs/MW_DU_Extension_Implementation_Plan.md) for current status. The runtime output path is still unchanged: ECC output remains blocked for every profile by `PROFILE_NOT_PRODUCTION`.
 
 Target flow:
 
@@ -21,6 +21,6 @@ Controls:
 - Draft profiles cannot allow automatic output.
 - The profiler emits only UNVERIFIED suggestions.
 
-The initial TX Mini profile is deliberately DRAFT. It contains no approved fingerprints or Header Hash because no original four-header source fixture is committed in this repository.
+At foundation merge time, the initial TX Mini profile was deliberately `DRAFT` with no approved fingerprints or Header Hash, because no original four-header source fixture was committed in this repository. That has since changed: `tx_mini_pr_v1` is now `PR_INPUT_READY`, with an approved Header Hash and fully approved field mappings, proven against golden-parity evidence (TSS 87/87, TI 19/19 identical). It remains explicitly non-production; `PROFILE_NOT_PRODUCTION` still blocks all ECC output. No source export fixture is committed to this repository — approved evidence remains local-only per the foundation's controls.
 
-Next delivery: formalize TX Mini source fingerprints and prove golden output equality before any runtime integration.
+Next delivery: Phase 2 (MW EOS Swap) onboarding, which is open and not yet started.

@@ -201,11 +201,11 @@ Do not:
 
 ## 10. Current Limits
 
-The current repository still does not prove:
+As of the PR #16 merge and the completed Phase 1 TX Mini validation, the repository proves TX Mini golden parity (TSS 87/87, TI 19/19 identical) and carries a fully approved TX Mini mapping set; `tx_mini_pr_v1` is `PR_INPUT_READY` and explicitly non-production. The repository still does not prove:
 
-- golden parity for TX Mini canonical-path generation
-- approved production mappings for TX Mini, MW EOS Swap, or ZTE TX MINI
+- approved production mappings for MW EOS Swap or ZTE TX MINI (both remain `DRAFT`, discovery-only)
 - UAT completion for any newly profiled MW DU model
-- production release authorization for the discovery-only DRAFT profiles
+- `PRODUCTION` release authorization for any profile, including TX Mini (`PROFILE_NOT_PRODUCTION` still blocks all ECC output)
+- production release authorization for the remaining discovery-only DRAFT profiles
 
 This runbook is therefore a safe operating procedure for continued rollout preparation, not a declaration that the rollout is complete.
