@@ -8,14 +8,60 @@ Build a discovery-only, human-reviewable all-MW-DU mapping recommendation matrix
 
 Each autonomous wake-up performs exactly one bounded continuation step, updates this state packet, and creates a checkpoint commit if intended changes exist.
 
+## Confirmed Implementation Path
+
+The safest path is to add one new discovery-only builder and wire it into the existing refresh pipeline instead of altering production profile logic or repurposing the current cross-profile action review matrix.
+
+### Existing inputs to reuse
+
+- `config/registries/mw_du_model_discovery_registry.yaml`
+  - authoritative per-export/profile identity, source file names, and profile ids
+- `config/registries/mw_du_structure_grouping_review.yaml`
+  - current exact-fingerprint structural similarity evidence
+- `config/registries/mw_du_unresolved_skill_field_review.yaml`
+  - current per-profile unresolved field review state
+- `config/registries/mw_du_missing_field_bridge_review.yaml`
+  - donor/bridge hints for missing PR-critical fields
+- `config/du_profiles/*.yaml`
+  - read-only required/conditional flags and transform seeds
+- `output/du-20260706-profile/*/header_inventory.json`
+  - exact four-layer fingerprints for every export column
+- `output/du-20260706-profile/*/canonical_field_candidates.json`
+  - discovery candidates and ambiguity/missing signals per field
+- `output/local_du_reference_inventory.json`
+  - optional local relative paths under `Info/reference` when present
+
+### Planned code changes
+
+- Create `scripts/build_all_du_mapping_recommendation_matrix.py`
+  - read the existing discovery-only registries plus profiler artifacts
+  - produce one sanitized machine-readable matrix registry
+  - render one committed markdown report and optional local-only output copies under `output/`
+- Modify `scripts/refresh_mw_du_discovery_packet.py`
+  - call the new builder as part of the single refresh path
+- Create `tests/test_all_du_mapping_recommendation_matrix.py`
+  - verify recommendation classification, grouping assignment, and sanitized row rendering
+- Modify `tests/test_refresh_mw_du_discovery_packet.py`
+  - lock the new refresh call order into the orchestration test
+- Create `docs/MW_DU_All_DU_Discovery_Mapping_Review.md`
+  - committed sanitized report for human review
+- Create `docs/pr19-all-mw-du-discovery/mapping-review-schema.json`
+  - committed schema/template for the matrix row contract
+
+### Why this path is the narrowest safe change
+
+- `scripts/build_profile_review_matrix.py` batches action-queue themes across profiles, but it does not produce one row per canonical field per DU export, so repurposing it would distort an existing artifact.
+- `scripts/build_mapping_decision_workbook.py` already solves candidate ranking, four-layer fingerprint handling, and masking patterns, so the new builder should reuse its concepts rather than invent new field-review semantics.
+- `scripts/refresh_mw_du_discovery_packet.py` is already the single refresh entrypoint for tracked discovery artifacts, so adding one new discovery-only output there preserves operator expectations and test coverage.
+
 ## Step Sequence
 
 1. Completed: initialize branch, heartbeat, and persistent mission state.
-2. Review existing builders, registries, and tests that already describe DU discovery coverage and unresolved mapping evidence.
-3. Define the sanitized schema for the all-DU mapping recommendation matrix and identify whether a new helper script or an extension to an existing script is the smallest safe change.
-4. Implement metadata-only matrix generation logic under `scripts/` without touching production generation behavior.
-5. Add or extend targeted unit tests for the new helper logic.
-6. Generate committed sanitized docs for the matrix review and DU grouping summary.
+2. Completed: inspect the current discovery packet builders and choose the narrowest safe implementation path.
+3. Define and commit the sanitized matrix row schema plus builder interfaces.
+4. Implement `build_all_du_mapping_recommendation_matrix.py` and wire it into `refresh_mw_du_discovery_packet.py`.
+5. Add targeted tests for the new builder and refresh orchestration.
+6. Generate committed sanitized docs and optional local-only matrix outputs.
 7. Run verification commands and record results.
 8. Prepare final report, create `COMPLETED`, push branch, and open the draft PR.
 
@@ -25,7 +71,8 @@ Each autonomous wake-up performs exactly one bounded continuation step, updates 
 - Treat TX Mini and MW EOS Swap as semantic donors only, never as automatic approval proof.
 - Preserve fail-closed behavior and local-only raw-reference handling.
 - Keep committed artifacts sanitized and metadata-only.
+- Use four-layer fingerprints as the only authoritative source-column identity; never use column index as evidence.
 
 ## Next Bounded Step
 
-Review the existing discovery packet builders and choose the narrowest safe implementation path for the all-DU matrix outputs.
+Define the matrix schema and implement the new discovery-only builder skeleton plus refresh-pipeline hook.

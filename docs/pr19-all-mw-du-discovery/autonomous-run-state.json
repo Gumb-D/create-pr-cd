@@ -12,22 +12,21 @@
   "heartbeat_automation_id": "create-pr-cd-pr19-all-du-discovery-hourly-follow-up",
   "heartbeat_rrule": "FREQ=HOURLY;INTERVAL=1",
   "thread_goal_objective": "Complete Issue #19 in C:\\dev\\create-pr-cd as a discovery-only PR by building the all-MW-DU discovery and AI mapping recommendation matrix on feat/all-mw-du-discovery-matrix, using persistent state and bounded autonomous continuation steps.",
-  "bounded_step_counter": 1,
-  "current_status": "initialized",
+  "bounded_step_counter": 2,
+  "current_status": "planned",
   "current_step": {
-    "id": "step-001",
-    "name": "Initialize persistent mission state and execution scaffold",
-    "type": "setup",
+    "id": "step-002",
+    "name": "Inspect discovery builders and choose the all-DU matrix implementation path",
+    "type": "planning",
     "status": "completed",
     "started_on": "2026-07-09",
     "completed_on": "2026-07-09",
     "notes": [
-      "Read the master prompt fresh before any repo work.",
-      "Confirmed Issue #19 live scope from GitHub.",
-      "Verified main is clean and at the PR #18 merge baseline.",
-      "Created and switched to feat/all-mw-du-discovery-matrix.",
-      "Created the hourly thread heartbeat automation.",
-      "Recorded the persistent state scaffold for autonomous continuation."
+      "Read the master prompt fresh and resumed from the committed state scaffold.",
+      "Confirmed the existing refresh script is the single discovery-packet orchestration path.",
+      "Confirmed the current profile review matrix batches action-queue themes and is not the required Issue #19 matrix contract.",
+      "Confirmed the unresolved review, grouping review, shortlist builder, and local-only decision workbook provide reusable discovery-only inputs and semantics.",
+      "Selected a new discovery-only all-DU matrix builder wired into the refresh pipeline as the narrowest safe implementation path."
     ]
   },
   "repo_baseline": {
@@ -71,7 +70,7 @@
       "mw_eos_swap_pr_v1"
     ]
   },
-  "next_action": "Review the existing discovery packet builders and design the sanitized all-DU mapping recommendation matrix outputs without changing production behavior.",
+  "next_action": "Define the committed matrix row schema and implement the new discovery-only all-DU mapping recommendation builder plus refresh-pipeline hook.",
   "remaining_acceptance_gates": [
     "inventory all available local DU reference files for this issue run",
     "group DU models by similarity using explicit evidence",

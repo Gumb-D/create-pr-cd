@@ -27,8 +27,10 @@
 
 ## Current Status
 
-- Bounded step completed: initialize persistent mission state and execution scaffold
-- Next action: review the existing discovery packet builders and design the sanitized all-DU mapping recommendation matrix outputs
+- Bounded steps completed:
+  - initialize persistent mission state and execution scaffold
+  - inspect the discovery packet builders and select the narrowest safe implementation path
+- Next action: define the matrix schema and implement the new discovery-only builder skeleton in the refresh pipeline
 
 ## Non-Negotiable Constraints
 
