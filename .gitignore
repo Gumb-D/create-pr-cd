@@ -21,3 +21,6 @@ scripts/api_auth.json
 
 __pycache__/
 *.pyc
+
+# Info/reference is a local-only DU reference area and must never be committed.
+Info/reference/**
