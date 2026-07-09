@@ -29,6 +29,15 @@ def _profile_unverified_required_fields(profile: Mapping[str, Any]) -> list[str]
     return sorted(fields)
 
 
+def _required_subset(profile: Mapping[str, Any], field_names: list[str]) -> list[str]:
+    required_fields = {
+        str(canonical_field)
+        for canonical_field, config in profile.get("field_mapping", {}).items()
+        if config.get("required")
+    }
+    return sorted(field_name for field_name in field_names if field_name in required_fields)
+
+
 def build_readiness_entry(
     profile: Mapping[str, Any],
     unresolved_entry: Mapping[str, Any],
@@ -84,9 +93,13 @@ def build_readiness_entry(
             "missing_required_fields": missing_required_fields,
             "unapproved_required_fields": _profile_unverified_required_fields(profile),
             "competing_candidate_fields": competing_candidate_fields,
+            "required_competing_candidate_fields": _required_subset(profile, competing_candidate_fields),
             "single_candidate_unverified_fields": single_candidate_unverified_fields,
+            "required_single_candidate_unverified_fields": _required_subset(profile, single_candidate_unverified_fields),
             "no_profile_selection_fields": no_profile_selection_fields,
+            "required_no_profile_selection_fields": _required_subset(profile, no_profile_selection_fields),
             "shortlist_mismatch_fields": shortlist_mismatch_fields,
+            "required_shortlist_mismatch_fields": _required_subset(profile, shortlist_mismatch_fields),
             "cross_model_bridge_fields": bridge_fields,
         },
         "release_prerequisites": [

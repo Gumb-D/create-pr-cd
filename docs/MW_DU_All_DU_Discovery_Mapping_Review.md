@@ -25,7 +25,7 @@ Discovery-only summary for the all-MW-DU mapping recommendation matrix generated
 
 - DU models: 2023 TX Rollout, TX Mini Project
 - Reference files: A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx, A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx
-- PR-critical blockers: existing_ti_pr_status, existing_tss_pr_status, subcontractor_planning, subcontractor_ti, tx_sow_raw
+- PR-critical blockers: subcontractor_planning
 - Recommended next sequence: Start with the highest-confidence rows in this group, then review ambiguous PR-critical fields before any profile implementation.
 
 ## Export Summary
@@ -33,7 +33,7 @@ Discovery-only summary for the all-MW-DU mapping recommendation matrix generated
 | DU model | Group | High | Medium | Low | Missing | Ambiguous |
 |---|---|---:|---:|---:|---:|---:|
 | 2023 Celcomdigi BAU | Missing PR-critical fields / quarantine candidate | 0 | 0 | 8 | 1 | 9 |
-| 2023 TX Rollout | Same or highly similar to TX Mini | 0 | 1 | 7 | 3 | 7 |
+| 2023 TX Rollout | Same or highly similar to TX Mini | 1 | 0 | 7 | 3 | 7 |
 | 2024 Celcomdigi BAU | Missing PR-critical fields / quarantine candidate | 0 | 0 | 9 | 0 | 9 |
 | CD consolidation 2023 | Duplicate or competing export variants | 0 | 0 | 5 | 4 | 9 |
 | CD consolidation 2023 | Duplicate or competing export variants | 0 | 0 | 3 | 8 | 7 |

@@ -44,6 +44,26 @@ class TestProfileTransitionReview(unittest.TestCase):
         self.assertFalse(production["eligible"])
         self.assertEqual(production["denied_reasons"], ["PROFILE_NOT_PRODUCTION"])
 
+    def test_pr_input_ready_ignores_optional_competing_and_unverified_fields(self):
+        readiness_entry = {
+            "blocker_summary": {
+                "lifecycle_blockers": ["PROFILE_NOT_PRODUCTION"],
+                "missing_required_fields": [],
+                "unapproved_required_fields": [],
+                "competing_candidate_fields": ["subcontractor_planning"],
+                "required_competing_candidate_fields": [],
+                "single_candidate_unverified_fields": ["site_name"],
+                "required_single_candidate_unverified_fields": [],
+                "no_profile_selection_fields": [],
+                "required_no_profile_selection_fields": [],
+                "shortlist_mismatch_fields": [],
+                "required_shortlist_mismatch_fields": [],
+                "cross_model_bridge_fields": [],
+            }
+        }
+        result = evaluate_transition(readiness_entry, "PR_INPUT_READY")
+        self.assertTrue(result["eligible"])
+
     def test_markdown_mentions_denied_transition(self):
         registry = json.loads(
             (ROOT / "config" / "registries" / "mw_du_profile_transition_review.yaml").read_text(encoding="utf-8")

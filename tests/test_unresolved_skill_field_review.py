@@ -145,7 +145,7 @@ class TestUnresolvedSkillFieldReview(unittest.TestCase):
         self.assertIn("tx_sow_raw", review_entry["summary"]["competing_candidate_fields"])
         self.assertIn("subcontractor_ti", review_entry["summary"]["competing_candidate_fields"])
 
-    def test_2023_tx_rollout_entry_carries_duplicate_status_and_missing_antenna_fields(self):
+    def test_2023_tx_rollout_entry_records_human_approved_pr_critical_sources(self):
         shortlist_registry = json.loads(
             (ROOT / "config" / "registries" / "mw_du_priority_skill_field_shortlists.yaml").read_text(encoding="utf-8")
         )
@@ -159,14 +159,22 @@ class TestUnresolvedSkillFieldReview(unittest.TestCase):
         self.assertEqual(review_entry["profile_id"], "tx_rollout_2023_pr_v1")
         self.assertEqual(review_entry["summary"]["missing_required_fields"], [])
         self.assertEqual(review_entry["summary"]["no_profile_selection_fields"], [])
-        self.assertIn("tx_sow_raw", review_entry["summary"]["competing_candidate_fields"])
+        self.assertNotIn("tx_sow_raw", review_entry["summary"]["competing_candidate_fields"])
         self.assertEqual(
             review_entry["field_reviews"]["existing_tss_pr_status"]["recommended_source"]["fingerprint"]["display_header"],
-            "PR TSS Status",
+            "Subcon PR - TSS",
         )
         self.assertEqual(
             review_entry["field_reviews"]["existing_ti_pr_status"]["recommended_source"]["fingerprint"]["display_header"],
-            "PR TI Status",
+            "Subcon PR - TI",
+        )
+        self.assertEqual(
+            review_entry["field_reviews"]["tx_sow_raw"]["recommended_source"]["fingerprint"]["display_header"],
+            "Post MOCN TX SOW (LLD)",
+        )
+        self.assertEqual(
+            review_entry["field_reviews"]["tx_sow_raw"]["review_status"],
+            "RESOLVED_BY_APPROVED_MAPPING",
         )
 
     def test_jendela_entry_captures_missing_pr_status_fields_and_competing_subcon_fields(self):

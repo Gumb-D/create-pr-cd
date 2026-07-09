@@ -4,12 +4,12 @@ Discovery-only prioritized manual action queue for the current DRAFT profiles.
 
 ## tx_mini_pr_v1 (TX Mini Project)
 
-- Readiness status: `PR_INPUT_READY_NON_PRODUCTION`
+- Readiness status: `DISCOVERY_ONLY_BLOCKED`
 - Profile status: `PR_INPUT_READY`
 - Mapping version: `approved-2026-07-07-tx-mini-v1`
 - Observed header hash: `167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221`
 - Action queue:
-  - `tx_mini_pr_v1:01` `HOLD_LIFECYCLE_PROMOTION`: Mapping review, header-hash approval, and regression (golden parity) evidence are complete; the profile is `PR_INPUT_READY` and non-production. Keep the profile blocked from `PRODUCTION` promotion until Phase 4 release governance and end-to-end UAT evidence exist.
+  - `tx_mini_pr_v1:01` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
     hint: Use the transition review as the final stop/go check before any status change.
 
 ## mw_eos_swap_pr_v1 (MW EOS Swap)
@@ -49,31 +49,17 @@ Discovery-only prioritized manual action queue for the current DRAFT profiles.
 ## tx_rollout_2023_pr_v1 (2023 TX Rollout)
 
 - Readiness status: `DISCOVERY_ONLY_BLOCKED`
-- Profile status: `DRAFT`
-- Mapping version: `discovery-2026-07-06-2023-tx-rollout-v1`
+- Profile status: `PR_INPUT_READY`
+- Mapping version: `approved-2026-07-09-2023-tx-rollout-v1`
 - Observed header hash: `8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320`
 - Action queue:
-  - `tx_rollout_2023_pr_v1:01` `CONFIRM_COMPETING_CANDIDATE` `existing_ti_pr_status`: Choose one exact four-layer source for `existing_ti_pr_status` from the competing shortlist candidates.
+  - `tx_rollout_2023_pr_v1:01` `CONFIRM_COMPETING_CANDIDATE` `subcontractor_planning`: Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.
     hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `tx_rollout_2023_pr_v1:02` `CONFIRM_COMPETING_CANDIDATE` `existing_tss_pr_status`: Choose one exact four-layer source for `existing_tss_pr_status` from the competing shortlist candidates.
-    hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `tx_rollout_2023_pr_v1:03` `CONFIRM_COMPETING_CANDIDATE` `subcontractor_planning`: Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.
-    hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `tx_rollout_2023_pr_v1:04` `CONFIRM_COMPETING_CANDIDATE` `subcontractor_ti`: Choose one exact four-layer source for `subcontractor_ti` from the competing shortlist candidates.
-    hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `tx_rollout_2023_pr_v1:05` `CONFIRM_COMPETING_CANDIDATE` `tx_sow_raw`: Choose one exact four-layer source for `tx_sow_raw` from the competing shortlist candidates.
-    hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `tx_rollout_2023_pr_v1:06` `VERIFY_SINGLE_CANDIDATE` `du_key`: Verify the current single shortlist-aligned source for `du_key`.
+  - `tx_rollout_2023_pr_v1:02` `VERIFY_SINGLE_CANDIDATE` `du_key`: Verify the current single shortlist-aligned source for `du_key`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `tx_rollout_2023_pr_v1:07` `VERIFY_SINGLE_CANDIDATE` `region`: Verify the current single shortlist-aligned source for `region`.
+  - `tx_rollout_2023_pr_v1:03` `VERIFY_SINGLE_CANDIDATE` `site_name`: Verify the current single shortlist-aligned source for `site_name`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `tx_rollout_2023_pr_v1:08` `VERIFY_SINGLE_CANDIDATE` `site_code`: Verify the current single shortlist-aligned source for `site_code`.
-    hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `tx_rollout_2023_pr_v1:09` `VERIFY_SINGLE_CANDIDATE` `site_name`: Verify the current single shortlist-aligned source for `site_name`.
-    hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `tx_rollout_2023_pr_v1:10` `APPROVE_HEADER_HASH`: Approve at least one header hash for this profile version after the field review is complete.
-    hint: Current observed header hash: 8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320
-  - `tx_rollout_2023_pr_v1:11` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
+  - `tx_rollout_2023_pr_v1:04` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
     hint: Use the transition review as the final stop/go check before any status change.
 
 ## jendela_tx_migration_pr_v1 (Jendela TX Migration)

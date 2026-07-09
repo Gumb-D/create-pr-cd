@@ -31,7 +31,7 @@ Discovery-only bridge guidance for required fields that are still missing in pri
 ## tx_rollout_2023_pr_v1 (2023 TX Rollout)
 
 - Profile version: `0.1.0`
-- Mapping version: `discovery-2026-07-06-2023-tx-rollout-v1`
+- Mapping version: `approved-2026-07-09-2023-tx-rollout-v1`
 - Observed header hash: `8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320`
 
 

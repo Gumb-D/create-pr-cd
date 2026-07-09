@@ -25,13 +25,14 @@ Discovery-only rollback-readiness review for tracked DU profiles.
 
 ## tx_rollout_2023_pr_v1
 
-- Rollback readiness status: `ROLLBACK_BLOCKED`
-- Current status: `DRAFT`
+- Rollback readiness status: `ROLLBACK_BASELINE_RECORDED`
+- Current status: `PR_INPUT_READY`
 - Profile version: `0.1.0`
-- Mapping version: `discovery-2026-07-06-2023-tx-rollout-v1`
+- Mapping version: `approved-2026-07-09-2023-tx-rollout-v1`
 - Observed header hash: `8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320`
-- Blockers: `NO_APPROVED_HEADER_HASH_BASELINE, PROFILE_NOT_RELEASED`
-- Note: Rollback remains blocked until an approved profile/header-hash baseline exists.
+- Rollback target: `tx_rollout_2023_pr_v1` `0.1.0`
+- Rollback target header hashes: `8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320`
+- Note: Rollback baseline is documented from the current approved profile identity and header-hash set.
 
 ## jendela_tx_migration_pr_v1
 

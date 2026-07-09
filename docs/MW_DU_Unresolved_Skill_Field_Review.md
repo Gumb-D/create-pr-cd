@@ -205,15 +205,15 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 - Source file: `A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx`
 - Observed header hash: `8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320`
 - Missing required fields: None
-- Competing candidate fields: existing_ti_pr_status, existing_tss_pr_status, subcontractor_planning, subcontractor_ti, tx_sow_raw
-- Single-candidate but unverified fields: du_key, region, site_code, site_name
-- Resolved by approved mapping (alternates rejected): None
+- Competing candidate fields: subcontractor_planning
+- Single-candidate but unverified fields: du_key, site_name
+- Resolved by approved mapping (alternates rejected): existing_ti_pr_status, existing_tss_pr_status, subcontractor_ti, tx_sow_raw
 
 ### `site_code`
 
 - Skill field: `site_id`
-- Review status: `REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE`
-- Reason: Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile.
+- Review status: `READY_IF_APPROVAL_EVIDENCE_EXISTS`
+- Reason: Profile-selected source matches the shortlist and is already approved.
 - Selected source: `site|fix00012|1027190858144623081|8530399820526021092 | Site Basic Info | Site Basic Info | customer site code`
 
 ### `site_name`
@@ -233,27 +233,25 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 ### `region`
 
 - Skill field: `region`
-- Review status: `REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE`
-- Reason: Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile.
+- Review status: `READY_IF_APPROVAL_EVIDENCE_EXISTS`
+- Reason: Profile-selected source matches the shortlist and is already approved.
 - Selected source: `site|region_name | Site Basic Info | Site Basic Info | region`
 
 ### `tx_sow_raw`
 
 - Skill field: `tx_sow`
-- Review status: `REVIEW_REQUIRED_COMPETING_CANDIDATES`
-- Reason: Profile-selected source has alternate shortlist candidates that still require four-layer confirmation.
-- Selected source: `docata|ZDCSZ0656921 | Network Planning | Microwave | Plan TX SOW (HLD)`
+- Review status: `RESOLVED_BY_APPROVED_MAPPING`
+- Reason: Profile-selected source is human-approved; the remaining shortlist alternates were rejected by that recorded decision.
+- Selected source: `docata|ZDCSZ0690241 | Network Planning | Microwave | Post MOCN TX SOW (LLD)`
 - Alternate shortlist candidates:
-  - score 80: `docata|ZDCSZ0690241 | Network Planning | Microwave | Post MOCN TX SOW (LLD)`
-    reason: Likely direct SOW planning field.
-  - score 80: `docata|ZDCSZ640870 | Network Planning | Microwave | TX SOW (LLD)`
+  - score 80: `docata|ZDCSZ0656921 | Network Planning | Microwave | Plan TX SOW (HLD)`
     reason: Likely direct SOW planning field.
 
 ### `subcontractor_ti`
 
 - Skill field: `subcon_ti_team`
-- Review status: `REVIEW_REQUIRED_COMPETING_CANDIDATES`
-- Reason: Profile-selected source has alternate shortlist candidates that still require four-layer confirmation.
+- Review status: `RESOLVED_BY_APPROVED_MAPPING`
+- Reason: Profile-selected source is human-approved; the remaining shortlist alternates were rejected by that recorded decision.
 - Selected source: `docata|ZDCSZ640242 | Subcon Info | SubCon - TI | SubCon - TI`
 - Alternate shortlist candidates:
   - score 55: `docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI`
@@ -286,20 +284,24 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 ### `existing_tss_pr_status`
 
 - Skill field: `existing_tss_pr`
-- Review status: `REVIEW_REQUIRED_COMPETING_CANDIDATES`
-- Reason: Profile-selected source has alternate shortlist candidates that still require four-layer confirmation.
-- Selected source: `docata|ZDCSZ00904401 | Acceptance | Microwave | PR TSS Status`
+- Review status: `RESOLVED_BY_APPROVED_MAPPING`
+- Reason: Profile-selected source is human-approved and still appears in the current export under a different shortlist bucket; the designated shortlist alternates were not selected.
+- Selected source: `docata|ZDCSZ641766 | Installation | Wireless RAN | Subcon PR - TSS`
 - Alternate shortlist candidates:
+  - score 100: `docata|ZDCSZ00904401 | Acceptance | Microwave | PR TSS Status`
+    reason: Exact TSS PR status field.
   - score 65: `docata|ZDCSZ00904399 | Acceptance | Microwave | PR TSS rectification status`
     reason: TSS rectification status field.
 
 ### `existing_ti_pr_status`
 
 - Skill field: `existing_ti_pr`
-- Review status: `REVIEW_REQUIRED_COMPETING_CANDIDATES`
-- Reason: Profile-selected source has alternate shortlist candidates that still require four-layer confirmation.
-- Selected source: `docata|ZDCSZ00904402 | Acceptance | Microwave | PR TI Status`
+- Review status: `RESOLVED_BY_APPROVED_MAPPING`
+- Reason: Profile-selected source is human-approved and still appears in the current export under a different shortlist bucket; the designated shortlist alternates were not selected.
+- Selected source: `docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI`
 - Alternate shortlist candidates:
+  - score 100: `docata|ZDCSZ00904402 | Acceptance | Microwave | PR TI Status`
+    reason: Exact TI PR status field.
   - score 65: `docata|ZDCSZ00904400 | Acceptance | Microwave | PR TI rectification status`
     reason: TI rectification status field.
 

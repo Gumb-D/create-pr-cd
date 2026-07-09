@@ -34,13 +34,20 @@ def _same_fingerprint(left: Mapping[str, Any], right: Mapping[str, Any]) -> bool
     return _fingerprint_signature(left) == _fingerprint_signature(right)
 
 
-def _profile_candidate(profile_field: Mapping[str, Any]) -> Mapping[str, Any] | None:
+def _profile_candidates(profile_field: Mapping[str, Any]) -> List[Mapping[str, Any]]:
     candidates = profile_field.get("source_candidates", [])
-    return candidates[0] if candidates else None
+    return [candidate for candidate in candidates if isinstance(candidate, Mapping)]
 
 
 def build_review_entry(profile: Mapping[str, Any], shortlist_entry: Mapping[str, Any]) -> Dict[str, Any]:
     shortlist_map = shortlist_entry.get("skill_field_shortlists", {})
+    all_shortlist_candidates = [
+        candidate
+        for candidates in shortlist_map.values()
+        if isinstance(candidates, list)
+        for candidate in candidates
+        if isinstance(candidate, Mapping)
+    ]
     field_reviews: Dict[str, Dict[str, Any]] = {}
     missing_required_fields: List[str] = []
     competing_candidate_fields: List[str] = []
@@ -52,7 +59,8 @@ def build_review_entry(profile: Mapping[str, Any], shortlist_entry: Mapping[str,
     for profile_field_name, skill_field_name in PROFILE_TO_SKILL_FIELD.items():
         profile_field = profile.get("field_mapping", {}).get(profile_field_name, {})
         shortlist_candidates = shortlist_map.get(skill_field_name, [])
-        selected = _profile_candidate(profile_field)
+        selected_candidates = _profile_candidates(profile_field)
+        selected = selected_candidates[0] if selected_candidates else None
         required = bool(profile_field.get("required", False))
         alternate_candidates: List[Dict[str, Any]] = []
         review_status = "NO_REVIEW_REQUIRED"
@@ -68,12 +76,29 @@ def build_review_entry(profile: Mapping[str, Any], shortlist_entry: Mapping[str,
             no_profile_selection_fields.append(profile_field_name)
             alternate_candidates = shortlist_candidates
         elif selected is not None:
-            selected_fp = selected.get("fingerprint", {})
-            matched_shortlist = [candidate for candidate in shortlist_candidates if _same_fingerprint(selected_fp, candidate.get("fingerprint", {}))]
-            alternate_candidates = [candidate for candidate in shortlist_candidates if not _same_fingerprint(selected_fp, candidate.get("fingerprint", {}))]
+            selected_fingerprints = [
+                candidate.get("fingerprint", {})
+                for candidate in selected_candidates
+                if isinstance(candidate.get("fingerprint"), Mapping)
+            ]
+            matched_shortlist = [
+                candidate
+                for candidate in shortlist_candidates
+                if any(_same_fingerprint(fingerprint, candidate.get("fingerprint", {})) for fingerprint in selected_fingerprints)
+            ]
+            matched_any_shortlist = [
+                candidate
+                for candidate in all_shortlist_candidates
+                if any(_same_fingerprint(fingerprint, candidate.get("fingerprint", {})) for fingerprint in selected_fingerprints)
+            ]
+            alternate_candidates = [
+                candidate
+                for candidate in shortlist_candidates
+                if not any(_same_fingerprint(fingerprint, candidate.get("fingerprint", {})) for fingerprint in selected_fingerprints)
+            ]
 
-            approved = selected.get("mapping_status") == "APPROVED"
-            if shortlist_candidates and not matched_shortlist:
+            approved = all(candidate.get("mapping_status") == "APPROVED" for candidate in selected_candidates)
+            if shortlist_candidates and not matched_shortlist and not matched_any_shortlist:
                 # A human-approved source that keyword discovery never surfaced
                 # still needs reconciliation visibility; a mismatch can hide a
                 # mistyped fingerprint.
@@ -88,6 +113,10 @@ def build_review_entry(profile: Mapping[str, Any], shortlist_entry: Mapping[str,
                 review_status = "REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE"
                 review_reason = "Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile."
                 single_candidate_unverified_fields.append(profile_field_name)
+            elif alternate_candidates and not matched_shortlist:
+                review_status = "RESOLVED_BY_APPROVED_MAPPING"
+                review_reason = "Profile-selected source is human-approved and still appears in the current export under a different shortlist bucket; the designated shortlist alternates were not selected."
+                resolved_by_approval_fields.append(profile_field_name)
             elif alternate_candidates:
                 review_status = "RESOLVED_BY_APPROVED_MAPPING"
                 review_reason = "Profile-selected source is human-approved; the remaining shortlist alternates were rejected by that recorded decision."
