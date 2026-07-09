@@ -116,6 +116,30 @@
 
 - The branch is pushed, the draft PR is open, the completion marker exists, and the repo-local verification evidence remains green
 
+## 2026-07-09 PR #22 P1 Refresh Guard Fix
+
+- Root cause review
+  - Result: `scripts/refresh_mw_du_discovery_packet.py` unconditionally called `write_all_du_mapping_review_outputs(...)` with `output/local_du_reference_inventory.json`, even though that inventory is a local-only ignored artifact and may be absent on a clean checkout
+- Fix applied
+  - Result: the refresh entrypoint now skips only the all-DU matrix step when `output/local_du_reference_inventory.json` is missing and prints `Skipped all-DU mapping recommendation matrix because output/local_du_reference_inventory.json is missing.`
+- `python -m py_compile scripts/refresh_mw_du_discovery_packet.py scripts/build_all_du_mapping_recommendation_matrix.py`
+  - Result: success
+- `python -m unittest tests.test_refresh_mw_du_discovery_packet`
+  - Result: `Ran 4 tests` `OK`
+- `python -m unittest tests.test_discover_local_du_references tests.test_all_du_mapping_recommendation_matrix tests.test_refresh_mw_du_discovery_packet tests.test_du_discovery_registry`
+  - Result: `Ran 20 tests` `OK`
+- `git diff --check origin/main..HEAD`
+  - Result: clean
+- `git status --short`
+  - Result before commit: only `scripts/refresh_mw_du_discovery_packet.py` and `tests/test_refresh_mw_du_discovery_packet.py` modified for the P1 fix
+- `git diff --name-status origin/main..HEAD`
+  - Result: no new scope expansion beyond the existing discovery-only PR files plus the targeted refresh/test changes
+
+## P1 Resolution Conclusion
+
+- PR #22 no longer depends on the local-only inventory artifact for the main discovery packet refresh path
+- Existing registries, docs, validation guards, and matrix generation behavior remain unchanged when the local inventory exists
+
 ## 2026-07-09 Bounded Step 6
 
 - `git check-ignore -v Info/reference/du-20260706-profile/`

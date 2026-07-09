@@ -49,7 +49,16 @@ class TestRefreshMwDuDiscoveryPacket(unittest.TestCase):
             patch("refresh_mw_du_discovery_packet.write_rollback_outputs", mark("rollback")),
             patch("refresh_mw_du_discovery_packet.validate_profiles_against_transition_registry", mark("status_guard")),
             patch("refresh_mw_du_discovery_packet.validate_live_discovery_packets", mark("packet_guard")),
+            patch("refresh_mw_du_discovery_packet.Path.exists", autospec=True) as exists,
         ):
+            def fake_exists(path_self):
+                path_text = str(path_self).replace("/", "\\")
+                return path_text in {
+                    "output\\du-20260706-profile",
+                    "output\\local_du_reference_inventory.json",
+                }
+
+            exists.side_effect = fake_exists
             refresh_discovery_packet()
 
         self.assertEqual(
@@ -74,6 +83,105 @@ class TestRefreshMwDuDiscoveryPacket(unittest.TestCase):
                 "packet_guard",
             ],
         )
+
+    def test_refresh_skips_all_du_matrix_when_local_inventory_is_missing(self):
+        calls = []
+
+        def mark(name):
+            def _inner(*args, **kwargs):
+                calls.append(name)
+            return _inner
+
+        with (
+            patch("refresh_mw_du_discovery_packet.write_registry_outputs", mark("discovery")),
+            patch("refresh_mw_du_discovery_packet.write_shortlist_outputs", mark("shortlist")),
+            patch("refresh_mw_du_discovery_packet.write_review_outputs", mark("unresolved")),
+            patch("refresh_mw_du_discovery_packet.write_grouping_outputs", mark("grouping")),
+            patch("refresh_mw_du_discovery_packet.write_bridge_outputs", mark("bridge")),
+            patch("refresh_mw_du_discovery_packet.write_pair_outputs", mark("pair")),
+            patch("refresh_mw_du_discovery_packet.write_readiness_outputs", mark("readiness")),
+            patch("refresh_mw_du_discovery_packet.write_action_queue_outputs", mark("action_queue")),
+            patch("refresh_mw_du_discovery_packet.write_review_matrix_outputs", mark("review_matrix")),
+            patch("refresh_mw_du_discovery_packet.write_coverage_outputs", mark("coverage")),
+            patch("refresh_mw_du_discovery_packet.write_all_du_mapping_review_outputs", mark("all_du_matrix")),
+            patch("refresh_mw_du_discovery_packet.write_transition_outputs", mark("transition")),
+            patch("refresh_mw_du_discovery_packet.write_deprecation_outputs", mark("deprecation")),
+            patch("refresh_mw_du_discovery_packet.write_traceability_outputs", mark("traceability")),
+            patch("refresh_mw_du_discovery_packet.write_rollback_outputs", mark("rollback")),
+            patch("refresh_mw_du_discovery_packet.validate_profiles_against_transition_registry", mark("status_guard")),
+            patch("refresh_mw_du_discovery_packet.validate_live_discovery_packets", mark("packet_guard")),
+            patch("builtins.print") as print_mock,
+            patch("refresh_mw_du_discovery_packet.Path.exists", autospec=True) as exists,
+        ):
+            def fake_exists(path_self):
+                path_text = str(path_self).replace("/", "\\")
+                if path_text == "output\\du-20260706-profile":
+                    return True
+                if path_text == "output\\local_du_reference_inventory.json":
+                    return False
+                return False
+
+            exists.side_effect = fake_exists
+            refresh_discovery_packet()
+
+        self.assertNotIn("all_du_matrix", calls)
+        self.assertEqual(
+            calls,
+            [
+                "discovery",
+                "shortlist",
+                "unresolved",
+                "grouping",
+                "bridge",
+                "pair",
+                "readiness",
+                "action_queue",
+                "review_matrix",
+                "coverage",
+                "transition",
+                "deprecation",
+                "rollback",
+                "traceability",
+                "status_guard",
+                "packet_guard",
+            ],
+        )
+        print_mock.assert_any_call(
+            "Skipped all-DU mapping recommendation matrix because output/local_du_reference_inventory.json is missing."
+        )
+
+    def test_refresh_runs_all_du_matrix_when_local_inventory_exists(self):
+        with (
+            patch("refresh_mw_du_discovery_packet.write_registry_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_shortlist_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_review_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_grouping_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_bridge_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_pair_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_readiness_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_action_queue_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_review_matrix_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_coverage_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_all_du_mapping_review_outputs") as matrix_mock,
+            patch("refresh_mw_du_discovery_packet.write_transition_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_deprecation_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_traceability_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_rollback_outputs"),
+            patch("refresh_mw_du_discovery_packet.validate_profiles_against_transition_registry"),
+            patch("refresh_mw_du_discovery_packet.validate_live_discovery_packets"),
+            patch("refresh_mw_du_discovery_packet.Path.exists", autospec=True) as exists,
+        ):
+            def fake_exists(path_self):
+                path_text = str(path_self).replace("/", "\\")
+                return path_text in {
+                    "output\\du-20260706-profile",
+                    "output\\local_du_reference_inventory.json",
+                }
+
+            exists.side_effect = fake_exists
+            refresh_discovery_packet()
+
+        matrix_mock.assert_called_once()
 
 
 if __name__ == "__main__":

@@ -29,6 +29,32 @@ def _find_profiler_root() -> Path:
     raise FileNotFoundError("No DU profiler artifact root found under output/ or Info/reference/.")
 
 
+def _write_all_du_matrix_if_inventory_present(
+    profile_root: Path,
+    profile_paths: list[Path],
+) -> None:
+    inventory_path = Path("output/local_du_reference_inventory.json")
+    if not inventory_path.exists():
+        print(
+            "Skipped all-DU mapping recommendation matrix because "
+            "output/local_du_reference_inventory.json is missing."
+        )
+        return
+
+    write_all_du_mapping_review_outputs(
+        profile_root,
+        Path("config/registries/mw_du_model_discovery_registry.yaml"),
+        Path("config/registries/mw_du_structure_grouping_review.yaml"),
+        Path("config/registries/mw_du_unresolved_skill_field_review.yaml"),
+        Path("config/registries/mw_du_missing_field_bridge_review.yaml"),
+        profile_paths,
+        inventory_path,
+        Path("docs/MW_DU_All_DU_Discovery_Mapping_Review.md"),
+        Path("output/all_du_mapping_recommendation_matrix.json"),
+        Path("output/all_du_mapping_recommendation_matrix.md"),
+    )
+
+
 def refresh_discovery_packet() -> None:
     profile_root = _find_profiler_root()
     profile_paths = [
@@ -115,18 +141,7 @@ def refresh_discovery_packet() -> None:
         Path("config/registries/mw_du_export_coverage_review.yaml"),
         Path("docs/MW_DU_Export_Coverage_Review.md"),
     )
-    write_all_du_mapping_review_outputs(
-        profile_root,
-        Path("config/registries/mw_du_model_discovery_registry.yaml"),
-        Path("config/registries/mw_du_structure_grouping_review.yaml"),
-        Path("config/registries/mw_du_unresolved_skill_field_review.yaml"),
-        Path("config/registries/mw_du_missing_field_bridge_review.yaml"),
-        profile_paths,
-        Path("output/local_du_reference_inventory.json"),
-        Path("docs/MW_DU_All_DU_Discovery_Mapping_Review.md"),
-        Path("output/all_du_mapping_recommendation_matrix.json"),
-        Path("output/all_du_mapping_recommendation_matrix.md"),
-    )
+    _write_all_du_matrix_if_inventory_present(profile_root, profile_paths)
     write_transition_outputs(
         profile_paths,
         Path("config/registries/mw_du_profile_readiness_review.yaml"),

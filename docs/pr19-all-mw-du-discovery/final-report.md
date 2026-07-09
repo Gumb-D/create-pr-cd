@@ -96,6 +96,10 @@ This report is the completion snapshot for Issue `#19`. The discovery-only imple
   - Result: generated `10` export summaries / `180` rows
 - `python scripts/refresh_mw_du_discovery_packet.py`
   - Result: success after local-profiler-root fallback fix
+- `python -m unittest tests.test_refresh_mw_du_discovery_packet`
+  - Result after P1 guard fix: `Ran 4 tests` `OK`
+- `python -m unittest tests.test_discover_local_du_references tests.test_all_du_mapping_recommendation_matrix tests.test_refresh_mw_du_discovery_packet tests.test_du_discovery_registry`
+  - Result after P1 guard fix: `Ran 20 tests` `OK`
 
 ## Safety Confirmations
 
@@ -104,9 +108,19 @@ This report is the completion snapshot for Issue `#19`. The discovery-only imple
 - Committed docs remain sanitized and metadata-only
 - No profile lifecycle promotion implemented
 - No ECC enablement implemented
-- No production PR-generation behavior intentionally changed
+- No production PR-generation behavior intentionally changed beyond making the local-only all-DU matrix step optional when its local-only input is missing
 - `git diff --check origin/main..HEAD` is clean
 - `git check-ignore -v` confirms both `Info/reference/du-20260706-profile/` and a sample raw workbook remain ignored by `Info/reference/**`
+
+## PR #22 P1 Review Fix
+
+- Resolved the P1 blocker in `scripts/refresh_mw_du_discovery_packet.py` by gating the all-DU matrix generation on the presence of `output/local_du_reference_inventory.json`
+- If the local inventory exists, the refresh still generates the all-DU matrix as before
+- If it is missing, the refresh now skips only that local-only matrix step and prints a clear message instead of failing the full discovery packet refresh
+- `tests/test_refresh_mw_du_discovery_packet.py` now covers both paths explicitly:
+  - skip when the local inventory is missing
+  - call the matrix builder when the local inventory exists
+  - preserve the existing builder/guard ordering expectation
 
 ## Completion Gate Snapshot
 
@@ -123,6 +137,7 @@ This report is the completion snapshot for Issue `#19`. The discovery-only imple
 
 - Mission closeout gates are satisfied.
 - The discovery matrix remains recommendation-only and still needs human review for ambiguous and missing rows before any follow-up implementation issue/PR is chosen.
+- The PR #22 P1 blocker for missing local inventory in the refresh path is resolved.
 
 ## Recommended Next PR / Issue
 
