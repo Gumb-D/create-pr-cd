@@ -64,6 +64,13 @@ def _load_json(path: Path) -> Dict[str, Any]:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
+def find_profiler_root() -> Path:
+    for candidate in (Path("output/du-20260706-profile"), Path("Info/reference/du-20260706-profile")):
+        if candidate.exists():
+            return candidate
+    raise FileNotFoundError("No DU profiler artifact root found under output/ or Info/reference/.")
+
+
 @lru_cache(maxsize=1)
 def _known_profiles() -> Dict[tuple[str, str, str], Dict[str, str]]:
     profile_dir = Path(__file__).resolve().parent.parent / "config" / "du_profiles"
@@ -207,7 +214,7 @@ def discovery_inventory_markdown(registry: Mapping[str, Any]) -> str:
 
 
 def main() -> int:
-    profile_root = Path("output/du-20260706-profile")
+    profile_root = find_profiler_root()
     registry_path = Path("config/registries/mw_du_model_discovery_registry.yaml")
     markdown_path = Path("docs/MW_DU_Discovery_Inventory.md")
     write_registry_outputs(profile_root, registry_path, markdown_path)

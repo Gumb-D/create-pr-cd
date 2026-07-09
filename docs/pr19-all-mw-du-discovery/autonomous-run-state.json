@@ -1,0 +1,87 @@
+{
+  "mission_id": "pr19-all-mw-du-discovery",
+  "issue_number": 19,
+  "issue_title": "Phase 2A: build all-MW-DU discovery and mapping recommendation matrix",
+  "goal_status": "active",
+  "completed": true,
+  "current_branch": "feat/all-mw-du-discovery-matrix",
+  "baseline_branch": "main",
+  "baseline_origin_main_commit": "8b1bae7aada12d566929e09e70461fd3a3edeaf4",
+  "master_prompt_path": "C:\\dev\\codex-prompts\\create-pr-cd-pr19-all-mw-du-discovery-master.md",
+  "heartbeat_automation_name": "create-pr-cd-pr19-all-du-discovery-hourly-follow-up",
+  "heartbeat_automation_id": "create-pr-cd-pr19-all-du-discovery-hourly-follow-up",
+  "heartbeat_rrule": "FREQ=HOURLY;INTERVAL=1",
+  "thread_goal_objective": "Complete Issue #19 in C:\\dev\\create-pr-cd as a discovery-only PR by building the all-MW-DU discovery and AI mapping recommendation matrix on feat/all-mw-du-discovery-matrix, using persistent state and bounded autonomous continuation steps.",
+  "bounded_step_counter": 8,
+  "current_status": "completed",
+  "current_step": {
+    "id": "step-008",
+    "name": "Push the branch, open the draft PR, and finalize the mission state",
+    "type": "completion",
+    "status": "completed",
+    "started_on": "2026-07-09",
+    "completed_on": "2026-07-09",
+    "notes": [
+      "Pushed feat/all-mw-du-discovery-matrix to origin successfully.",
+      "Created and verified draft PR #22 against main with the required summary, safety, grouping, blocker, and validation sections.",
+      "Marked the persistent mission state completed so future heartbeat wake-ups return NO_OP_COMPLETED."
+    ]
+  },
+  "repo_baseline": {
+    "git_status_short": "",
+    "git_branch_before_switch": "main",
+    "git_log_head": [
+      "8b1bae7 chore(du): guard local DU reference discovery inputs (#18)",
+      "c6753e0 docs: align MW DU documentation after PR16 merge",
+      "875336d docs: align MW DU implementation plan after PR16 merge",
+      "ca2dbce feat(pr-input): DU export adapter foundation + TX Mini canonical-input validation (#16)",
+      "1ac5b90 Merge branch 'main' of https://github.com/Gumb-D/create-pr-cd"
+    ],
+    "tracked_local_changes_before_branching": false,
+    "info_reference_untracked_listing_clean_for_git_status": true
+  },
+  "issue_scope_confirmation": {
+    "repository": "Gumb-D/create-pr-cd",
+    "issue_url": "https://github.com/Gumb-D/create-pr-cd/issues/19",
+    "scope_type": "discovery-review-only",
+    "accepted_outputs": [
+      "sanitized docs summary",
+      "mapping review template or matrix structure",
+      "helper logic and tests if needed",
+      "metadata-only summaries"
+    ],
+    "forbidden_changes": [
+      "committing Info/reference content",
+      "committing raw Excel/CSV/customer export data",
+      "automatic mapping approval",
+      "profile lifecycle promotion",
+      "ECC enablement",
+      "production generation behavior changes"
+    ]
+  },
+  "known_repo_evidence": {
+    "local_reference_root_present": true,
+    "existing_discovery_registry_entries": 10,
+    "existing_coverage_review_total_exports": 10,
+    "existing_priority_donor_profiles": [
+      "tx_mini_pr_v1",
+      "mw_eos_swap_pr_v1"
+    ]
+  },
+  "next_action": "NO_OP_COMPLETED",
+  "remaining_acceptance_gates": [],
+  "methodology": [
+    "superpowers:using-superpowers",
+    "superpowers:brainstorming",
+    "superpowers:writing-plans"
+  ],
+  "draft_pr": {
+    "number": 22,
+    "url": "https://github.com/Gumb-D/create-pr-cd/pull/22",
+    "title": "feat(du): add all-MW-DU discovery mapping matrix",
+    "is_draft": true,
+    "base_branch": "main",
+    "head_branch": "feat/all-mw-du-discovery-matrix"
+  },
+  "last_updated_on": "2026-07-09"
+}
