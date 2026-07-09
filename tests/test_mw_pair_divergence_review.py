@@ -33,10 +33,7 @@ class TestMwPairDivergenceReview(unittest.TestCase):
 
         review = build_pair_review(left, right)
 
-        self.assertEqual(
-            sorted(review["summary"]["shared_missing_required_fields"]),
-            ["existing_ti_pr_status", "existing_tss_pr_status"],
-        )
+        self.assertEqual(sorted(review["summary"]["shared_missing_required_fields"]), [])
 
     def test_markdown_mentions_difference_status(self):
         registry = {

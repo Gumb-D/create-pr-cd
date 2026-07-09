@@ -66,9 +66,9 @@ class TestDuDiscoveryRegistry(unittest.TestCase):
         entry = build_discovery_entry(profile_dir)
         self.assertEqual(entry["du_model_name"], "MW EOS Swap")
         self.assertEqual(entry["profile_id"], "mw_eos_swap_pr_v1")
-        self.assertEqual(entry["profile_status"], "DRAFT")
+        self.assertEqual(entry["profile_status"], "PR_INPUT_READY")
         self.assertEqual(entry["profile_version"], "0.1.0")
-        self.assertEqual(entry["mapping_version"], "discovery-2026-07-06-mw-eos-swap-v1")
+        self.assertEqual(entry["mapping_version"], "approved-2026-07-09-mw-eos-swap-v1")
 
     def test_build_discovery_entry_for_2023_tx_rollout_uses_existing_profile_file(self):
         profile_dir = self.profiler_root / "A-P202202168750_D002-2023_TX_Rollout-TX_Rollout_PR_PO_View-20260703160446"

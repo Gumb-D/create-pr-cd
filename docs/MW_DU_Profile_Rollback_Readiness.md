@@ -15,13 +15,14 @@ Discovery-only rollback-readiness review for tracked DU profiles.
 
 ## mw_eos_swap_pr_v1
 
-- Rollback readiness status: `ROLLBACK_BLOCKED`
-- Current status: `DRAFT`
+- Rollback readiness status: `ROLLBACK_BASELINE_RECORDED`
+- Current status: `PR_INPUT_READY`
 - Profile version: `0.1.0`
-- Mapping version: `discovery-2026-07-06-mw-eos-swap-v1`
+- Mapping version: `approved-2026-07-09-mw-eos-swap-v1`
 - Observed header hash: `46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a`
-- Blockers: `NO_APPROVED_HEADER_HASH_BASELINE, PROFILE_NOT_RELEASED`
-- Note: Rollback remains blocked until an approved profile/header-hash baseline exists.
+- Rollback target: `mw_eos_swap_pr_v1` `0.1.0`
+- Rollback target header hashes: `46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a`
+- Note: Rollback baseline is documented from the current approved profile identity and header-hash set.
 
 ## tx_rollout_2023_pr_v1
 

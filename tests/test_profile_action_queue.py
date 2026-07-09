@@ -35,14 +35,15 @@ class TestProfileActionQueue(unittest.TestCase):
         self.assertNotIn("CONFIRM_COMPETING_CANDIDATE", action_types)
         self.assertEqual(entry["action_queue"][-1]["action_type"], "HOLD_LIFECYCLE_PROMOTION")
 
-    def test_mw_eos_queue_contains_competing_and_header_actions(self):
+    def test_mw_eos_queue_contains_competing_but_no_header_or_missing_required_actions(self):
         registry = json.loads(
             (ROOT / "config" / "registries" / "mw_du_profile_action_queue.yaml").read_text(encoding="utf-8")
         )
         entry = next(item for item in registry["entries"] if item["profile_id"] == "mw_eos_swap_pr_v1")
         action_types = [item["action_type"] for item in entry["action_queue"]]
         self.assertIn("CONFIRM_COMPETING_CANDIDATE", action_types)
-        self.assertIn("APPROVE_HEADER_HASH", action_types)
+        self.assertNotIn("APPROVE_HEADER_HASH", action_types)
+        self.assertNotIn("RESOLVE_MISSING_REQUIRED_FIELD", action_types)
         self.assertEqual(entry["action_queue"][-1]["action_type"], "HOLD_LIFECYCLE_PROMOTION")
 
     def test_markdown_mentions_priority_ids_and_hints(self):

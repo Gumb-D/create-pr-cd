@@ -16,8 +16,8 @@ Discovery-only summary for the all-MW-DU mapping recommendation matrix generated
 
 ### Missing PR-critical fields / quarantine candidate
 
-- DU models: 2023 Celcomdigi BAU, 2024 Celcomdigi BAU, Celcomdigi USP, Jendela TX Migration, MW EOS Swap, ZTE TX MINI
-- Reference files: A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx, A-P202202168750_D002-2024 Celcomdigi BAU-2024 BAU Rollout (TX)-20260703160253.xlsx, A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx, A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260703160246.xlsx, A-P202211283695_D002-MW EOS Swap-MW EOS Swap Rollout-20260703160307.xlsx, A-P202211283695_D002-ZTE TX MINI-ZTE TX MINI v1-20260703160312.xlsx
+- DU models: 2023 Celcomdigi BAU, 2024 Celcomdigi BAU, Celcomdigi USP, Jendela TX Migration, ZTE TX MINI
+- Reference files: A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx, A-P202202168750_D002-2024 Celcomdigi BAU-2024 BAU Rollout (TX)-20260703160253.xlsx, A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx, A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260703160246.xlsx, A-P202211283695_D002-ZTE TX MINI-ZTE TX MINI v1-20260703160312.xlsx
 - PR-critical blockers: existing_ti_pr_status, existing_tss_pr_status, site_code, site_name, subcontractor_planning, subcontractor_ti, tx_sow_raw
 - Recommended next sequence: Start with the highest-confidence rows in this group, then review ambiguous PR-critical fields before any profile implementation.
 
@@ -26,6 +26,13 @@ Discovery-only summary for the all-MW-DU mapping recommendation matrix generated
 - DU models: 2023 TX Rollout, TX Mini Project
 - Reference files: A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx, A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx
 - PR-critical blockers: subcontractor_planning
+- Recommended next sequence: Start with the highest-confidence rows in this group, then review ambiguous PR-critical fields before any profile implementation.
+
+### Similar to MW EOS Swap
+
+- DU models: MW EOS Swap
+- Reference files: A-P202211283695_D002-MW EOS Swap-MW EOS Swap Rollout-20260703160307.xlsx
+- PR-critical blockers: site_name, subcontractor_planning
 - Recommended next sequence: Start with the highest-confidence rows in this group, then review ambiguous PR-critical fields before any profile implementation.
 
 ## Export Summary
@@ -40,7 +47,7 @@ Discovery-only summary for the all-MW-DU mapping recommendation matrix generated
 | Celcomdigi USP | Missing PR-critical fields / quarantine candidate | 0 | 0 | 7 | 0 | 11 |
 | Jendela TX Migration | Missing PR-critical fields / quarantine candidate | 0 | 0 | 7 | 2 | 9 |
 | TX Mini Project | Same or highly similar to TX Mini | 8 | 0 | 2 | 0 | 8 |
-| MW EOS Swap | Missing PR-critical fields / quarantine candidate | 0 | 1 | 7 | 1 | 9 |
+| MW EOS Swap | Similar to MW EOS Swap | 1 | 0 | 7 | 1 | 9 |
 | ZTE TX MINI | Missing PR-critical fields / quarantine candidate | 0 | 1 | 7 | 1 | 9 |
 
 ## Safety Notes

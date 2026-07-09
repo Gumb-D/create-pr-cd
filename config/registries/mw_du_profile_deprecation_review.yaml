@@ -23,8 +23,8 @@
     {
       "profile_id": "mw_eos_swap_pr_v1",
       "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-06-mw-eos-swap-v1",
-      "current_status": "DRAFT",
+      "mapping_version": "approved-2026-07-09-mw-eos-swap-v1",
+      "current_status": "PR_INPUT_READY",
       "observed_header_hash": "46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a",
       "deprecation_status": "NO_DEPRECATION_PLAN",
       "superseded_header_hashes": [],

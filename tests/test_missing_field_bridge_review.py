@@ -37,7 +37,7 @@ class TestMissingFieldBridgeReview(unittest.TestCase):
         )
         self.assertEqual(bridge_entry["field_bridges"], {})
 
-    def test_mw_eos_bridge_uses_same_best_donor_but_stays_unapproved(self):
+    def test_mw_eos_bridge_is_empty_after_approved_pr_status_mappings(self):
         unresolved = json.loads(
             (ROOT / "config" / "registries" / "mw_du_unresolved_skill_field_review.yaml").read_text(encoding="utf-8")
         )
@@ -53,18 +53,8 @@ class TestMissingFieldBridgeReview(unittest.TestCase):
 
         self.assertEqual(bridge_entry["profile_id"], "mw_eos_swap_pr_v1")
         self.assertEqual(bridge_entry["profile_version"], "0.1.0")
-        self.assertEqual(
-            bridge_entry["field_bridges"]["existing_ti_pr_status"]["best_source_export"]["du_model_name"],
-            "2023 TX Rollout",
-        )
-        self.assertEqual(
-            bridge_entry["field_bridges"]["existing_ti_pr_status"]["bridge_status"],
-            "CROSS_MODEL_REVIEW_REQUIRED",
-        )
-        self.assertGreater(
-            bridge_entry["field_bridges"]["existing_ti_pr_status"]["best_source_export"]["source_similarity_to_target"],
-            0.0,
-        )
+        self.assertEqual(bridge_entry["mapping_version"], "approved-2026-07-09-mw-eos-swap-v1")
+        self.assertEqual(bridge_entry["field_bridges"], {})
 
     def test_zte_bridge_uses_tx_rollout_as_current_best_donor(self):
         unresolved = json.loads(

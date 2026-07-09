@@ -8,7 +8,7 @@ Discovery-only comparison between the MW EOS Swap and ZTE TX MINI DRAFT profiles
 - Right profile version: `0.1.0`
 - Left observed header hash: `46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a`
 - Right observed header hash: `a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810`
-- Shared missing required fields: existing_ti_pr_status, existing_tss_pr_status
+- Shared missing required fields: None
 
 ### `antenna_size_fe`
 
@@ -40,17 +40,17 @@ Discovery-only comparison between the MW EOS Swap and ZTE TX MINI DRAFT profiles
 
 ### `existing_ti_pr_status`
 
-- Comparison status: `BOTH_MISSING_REQUIRED`
-- Left selected header: `None`
+- Comparison status: `ONE_SIDE_MISSING`
+- Left selected header: `Subcon PR - TI`
 - Right selected header: `None`
-- Reason: Both MW-family DRAFT profiles are still missing a selected source candidate for this required field.
+- Reason: One profile has a selected source candidate while the other still lacks one.
 
 ### `existing_tss_pr_status`
 
-- Comparison status: `BOTH_MISSING_REQUIRED`
-- Left selected header: `None`
+- Comparison status: `ONE_SIDE_MISSING`
+- Left selected header: `Subcon PR - TSS`
 - Right selected header: `None`
-- Reason: Both MW-family DRAFT profiles are still missing a selected source candidate for this required field.
+- Reason: One profile has a selected source candidate while the other still lacks one.
 
 ### `fe_sow_details`
 
