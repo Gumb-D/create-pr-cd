@@ -99,7 +99,13 @@
 
 - push the branch
 - open the draft PR
-- create the `COMPLETED` marker once all closeout gates are satisfied
+
+## 2026-07-09 Bounded Step 7
+
+- Created `docs/pr19-all-mw-du-discovery/COMPLETED`
+  - Result: completion marker now exists for the local mission state
+- Created `docs/pr19-all-mw-du-discovery/draft-pr-body.md`
+  - Result: required draft PR summary, safety, grouping, blocker, and validation sections are captured from current evidence
 
 ## 2026-07-09 Bounded Step 6
 

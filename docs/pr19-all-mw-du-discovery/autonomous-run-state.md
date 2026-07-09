@@ -34,7 +34,8 @@
   - run the broader required validation set and make the refresh path work with the live local profiler root
   - run the remaining broader relevant discovery-packet test subset and replace the final-report placeholder with a live progress snapshot
   - run the final local completion audit, confirm the remaining gates are operational closeout items only, and synchronize the persistent report/log state
-- Next action: create the `COMPLETED` marker when appropriate, then push the branch and open the required draft PR against `main`
+  - create the `COMPLETED` marker and the required draft PR body from current validated evidence
+- Next action: push the branch and open the required draft PR against `main`
 
 ## Non-Negotiable Constraints
 

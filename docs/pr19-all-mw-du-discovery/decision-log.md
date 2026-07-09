@@ -28,3 +28,5 @@
   - Rationale: the broader live validation showed the builder itself, not just the refresh wrapper, needs to understand the checkout's current artifact layout.
 - Decision: treat the next bounded continuation after the evidence audit as PR closeout work rather than further discovery logic changes.
   - Rationale: the local completion audit is now green for the implemented scope, so additional code churn would widen risk without helping the remaining gates.
+- Decision: commit the completion marker and the exact draft PR body as repository artifacts before pushing.
+  - Rationale: this preserves the completion claim and PR review framing in the same auditable history as the discovery-only implementation.
