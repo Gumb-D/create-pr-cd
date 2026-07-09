@@ -16,3 +16,7 @@
   - Rationale: the repo already treats that script as the single refresh entrypoint for tracked discovery artifacts, and `tests/test_refresh_mw_du_discovery_packet.py` already protects that orchestration contract.
 - Decision: reuse concepts from `build_mapping_decision_workbook.py` for candidate ranking, fingerprint presentation, and masking guidance.
   - Rationale: that existing local-only review packager already encodes the right discovery-only semantics for four-layer fingerprint review without writing back approvals.
+- Decision: use `Info/reference/du-20260706-profile` as the active profiler artifact root when `output/du-20260706-profile` is absent.
+  - Rationale: this checkout stores the live profiler artifacts under the ignored local reference tree, and the builder must follow the current evidence path rather than a preferred historical location.
+- Decision: keep the row-level matrix JSON and Markdown under ignored `output/`, while committing only the sanitized summary doc and the schema.
+  - Rationale: the full matrix is still discovery-only working material, while the committed summary remains smaller and easier to review for safety.

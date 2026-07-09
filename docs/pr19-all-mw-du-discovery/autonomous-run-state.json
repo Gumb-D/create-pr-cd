@@ -12,21 +12,22 @@
   "heartbeat_automation_id": "create-pr-cd-pr19-all-du-discovery-hourly-follow-up",
   "heartbeat_rrule": "FREQ=HOURLY;INTERVAL=1",
   "thread_goal_objective": "Complete Issue #19 in C:\\dev\\create-pr-cd as a discovery-only PR by building the all-MW-DU discovery and AI mapping recommendation matrix on feat/all-mw-du-discovery-matrix, using persistent state and bounded autonomous continuation steps.",
-  "bounded_step_counter": 2,
-  "current_status": "planned",
+  "bounded_step_counter": 3,
+  "current_status": "implementation_in_progress",
   "current_step": {
-    "id": "step-002",
-    "name": "Inspect discovery builders and choose the all-DU matrix implementation path",
-    "type": "planning",
+    "id": "step-003",
+    "name": "Implement the first all-DU matrix builder pass and generate live outputs",
+    "type": "implementation",
     "status": "completed",
     "started_on": "2026-07-09",
     "completed_on": "2026-07-09",
     "notes": [
-      "Read the master prompt fresh and resumed from the committed state scaffold.",
-      "Confirmed the existing refresh script is the single discovery-packet orchestration path.",
-      "Confirmed the current profile review matrix batches action-queue themes and is not the required Issue #19 matrix contract.",
-      "Confirmed the unresolved review, grouping review, shortlist builder, and local-only decision workbook provide reusable discovery-only inputs and semantics.",
-      "Selected a new discovery-only all-DU matrix builder wired into the refresh pipeline as the narrowest safe implementation path."
+      "Added the committed schema at docs/pr19-all-mw-du-discovery/mapping-review-schema.json.",
+      "Created scripts/build_all_du_mapping_recommendation_matrix.py and wired it into scripts/refresh_mw_du_discovery_packet.py.",
+      "Added targeted unit coverage for the new builder and refresh orchestration updates.",
+      "Confirmed the active profiler artifacts live under Info/reference/du-20260706-profile in this checkout.",
+      "Fixed an empty-source-candidates edge case found during the first live run.",
+      "Generated the first committed sanitized summary doc plus ignored local row-level matrix outputs for 10 exports and 180 rows."
     ]
   },
   "repo_baseline": {
@@ -70,7 +71,7 @@
       "mw_eos_swap_pr_v1"
     ]
   },
-  "next_action": "Define the committed matrix row schema and implement the new discovery-only all-DU mapping recommendation builder plus refresh-pipeline hook.",
+  "next_action": "Review the generated matrix quality, refine any weak grouping or blocker heuristics, and run the broader validation set for the updated discovery pipeline.",
   "remaining_acceptance_gates": [
     "inventory all available local DU reference files for this issue run",
     "group DU models by similarity using explicit evidence",

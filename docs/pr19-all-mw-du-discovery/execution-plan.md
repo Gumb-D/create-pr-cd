@@ -58,11 +58,11 @@ The safest path is to add one new discovery-only builder and wire it into the ex
 
 1. Completed: initialize branch, heartbeat, and persistent mission state.
 2. Completed: inspect the current discovery packet builders and choose the narrowest safe implementation path.
-3. Define and commit the sanitized matrix row schema plus builder interfaces.
-4. Implement `build_all_du_mapping_recommendation_matrix.py` and wire it into `refresh_mw_du_discovery_packet.py`.
-5. Add targeted tests for the new builder and refresh orchestration.
-6. Generate committed sanitized docs and optional local-only matrix outputs.
-7. Run verification commands and record results.
+3. Completed: define and commit the sanitized matrix row schema plus builder interfaces.
+4. Completed: implement `build_all_du_mapping_recommendation_matrix.py` and wire it into `refresh_mw_du_discovery_packet.py`.
+5. Completed: add targeted tests for the new builder and refresh orchestration.
+6. Completed: generate the first committed sanitized doc and local-only matrix outputs from the real profiler artifacts.
+7. Run broader verification commands, inspect the generated matrix quality, and tighten recommendation/grouping heuristics where the first pass is too coarse.
 8. Prepare final report, create `COMPLETED`, push branch, and open the draft PR.
 
 ## Decision Rules
@@ -75,4 +75,4 @@ The safest path is to add one new discovery-only builder and wire it into the ex
 
 ## Next Bounded Step
 
-Define the matrix schema and implement the new discovery-only builder skeleton plus refresh-pipeline hook.
+Review the generated matrix outputs, refine any weak grouping or blocker heuristics, and run the broader validation set for the updated discovery pipeline.

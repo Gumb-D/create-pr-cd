@@ -40,6 +40,25 @@
 - Rejected path: mutate `scripts/build_profile_review_matrix.py` into the new matrix output
   - Reason: that would overload an existing artifact with a different contract and make current docs/tests ambiguous
 
+## 2026-07-09 Bounded Step 3
+
+- `python -m py_compile scripts/build_all_du_mapping_recommendation_matrix.py scripts/refresh_mw_du_discovery_packet.py`
+  - Result: success
+- `python -m unittest tests.test_all_du_mapping_recommendation_matrix tests.test_refresh_mw_du_discovery_packet`
+  - Result: `Ran 2 tests` `OK`
+- `python scripts/build_all_du_mapping_recommendation_matrix.py`
+  - Result: success after one empty-source-candidates fix; generated `docs/MW_DU_All_DU_Discovery_Mapping_Review.md` and ignored local matrix outputs for `10` exports / `180` rows
+- `git diff --check`
+  - Result: clean aside from line-ending warnings from the working copy
+
+## Live Output Notes
+
+- The first committed summary doc exists at `docs/MW_DU_All_DU_Discovery_Mapping_Review.md`
+- Ignored local outputs now exist at:
+  - `output/all_du_mapping_recommendation_matrix.json`
+  - `output/all_du_mapping_recommendation_matrix.md`
+- Follow-up review is still needed for recommendation and grouping quality; the first pass is functional but intentionally conservative
+
 ## Validation Still Required
 
 - `git diff --name-status origin/main..HEAD`

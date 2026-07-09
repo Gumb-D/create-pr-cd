@@ -1,0 +1,120 @@
+{
+  "schema_version": "1.0",
+  "artifact_type": "all_du_mapping_recommendation_matrix",
+  "description": "Committed schema for the sanitized discovery-only all-DU mapping recommendation matrix used in PR #19.",
+  "row_contract": {
+    "du_model_candidate": "string",
+    "profile_id_candidate": "string",
+    "original_reference_file_name": "string",
+    "local_relative_path_under_info_reference": "string",
+    "sheet_or_view_candidate": "string",
+    "canonical_pr_field": "string",
+    "requirement_class": {
+      "type": "enum",
+      "values": [
+        "required",
+        "optional",
+        "conditional"
+      ]
+    },
+    "candidate_four_layer_fingerprint": {
+      "field_code": "string",
+      "wbs_stage": "string",
+      "task_name": "string",
+      "display_header": "string"
+    },
+    "source_header_values": [
+      "string",
+      "string",
+      "string",
+      "string"
+    ],
+    "transform_candidate": "string",
+    "similarity_to_tx_mini_approved_mapping": {
+      "type": "enum",
+      "values": [
+        "SELF_REFERENCE",
+        "EXACT_FINGERPRINT_MATCH",
+        "SAME_DISPLAY_HEADER",
+        "SAME_FIELD_CODE",
+        "DIFFERENT_FINGERPRINT",
+        "NO_DONOR_SOURCE"
+      ]
+    },
+    "similarity_to_mw_eos_discovered_mapping": {
+      "type": "enum",
+      "values": [
+        "SELF_REFERENCE",
+        "EXACT_FINGERPRINT_MATCH",
+        "SAME_DISPLAY_HEADER",
+        "SAME_FIELD_CODE",
+        "DIFFERENT_FINGERPRINT",
+        "NO_DONOR_SOURCE"
+      ]
+    },
+    "confidence_level": {
+      "type": "enum",
+      "values": [
+        "high",
+        "medium",
+        "low",
+        "none"
+      ]
+    },
+    "ambiguity_reason": "string",
+    "missing_field_reason": "string",
+    "ai_recommendation_class": {
+      "type": "enum",
+      "values": [
+        "HIGH_CONFIDENCE_MATCH",
+        "MEDIUM_CONFIDENCE_REVIEW",
+        "LOW_CONFIDENCE_REVIEW",
+        "MISSING",
+        "AMBIGUOUS",
+        "NOT_APPLICABLE"
+      ]
+    },
+    "human_decision": {
+      "type": "enum",
+      "values": [
+        "",
+        "APPROVED",
+        "REJECTED",
+        "NEED_REVIEW",
+        "NOT_APPLICABLE"
+      ]
+    },
+    "business_note": "string"
+  },
+  "group_contract": {
+    "group_id": {
+      "type": "enum",
+      "values": [
+        "same_or_highly_similar_to_tx_mini",
+        "similar_to_mw_eos_swap",
+        "different_structure_pr_critical_present",
+        "missing_pr_critical_fields_quarantine_candidate",
+        "unreadable_or_unsupported_source_format",
+        "duplicate_or_competing_export_variants"
+      ]
+    },
+    "group_label": "string",
+    "du_models": [
+      "string"
+    ],
+    "reference_files": [
+      "string"
+    ],
+    "shared_mapping_pattern": "string",
+    "differences_from_tx_mini": "string",
+    "differences_from_mw_eos": "string",
+    "pr_critical_blockers": [
+      "string"
+    ],
+    "recommended_next_implementation_sequence": "string"
+  },
+  "notes": [
+    "This schema defines a discovery-only review artifact. It does not approve mappings, header hashes, lifecycle transitions, or ECC eligibility.",
+    "Four-layer fingerprints are the only authoritative source-column identity. Excel column position is never approval evidence."
+  ]
+}

@@ -30,7 +30,8 @@
 - Bounded steps completed:
   - initialize persistent mission state and execution scaffold
   - inspect the discovery packet builders and select the narrowest safe implementation path
-- Next action: define the matrix schema and implement the new discovery-only builder skeleton in the refresh pipeline
+  - define the matrix schema, implement the new discovery-only builder, hook it into the refresh pipeline, and generate the first live matrix outputs
+- Next action: review the generated matrix quality, tighten any weak heuristics, and run the broader validation set
 
 ## Non-Negotiable Constraints
 
