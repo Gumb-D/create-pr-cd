@@ -90,20 +90,8 @@ Discovery-only bridge guidance for required fields that are still missing in pri
 ## celcomdigi_usp_pr_v1 (Celcomdigi USP)
 
 - Profile version: `0.1.0`
-- Mapping version: `discovery-2026-07-07-celcomdigi-usp-v1`
+- Mapping version: `approved-2026-07-09-celcomdigi-usp-v1`
 - Observed header hash: `79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf`
-
-### `existing_ti_pr_status`
-
-- Bridge status: `CROSS_MODEL_REVIEW_REQUIRED`
-- Reason: Another profiled export carries the missing field, but cross-model reuse is discovery-only and still requires manual four-layer review.
-- Best source export: `2023 TX Rollout` from `A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx` similarity=`0.000` profile=`tx_rollout_2023_pr_v1`
-
-### `existing_tss_pr_status`
-
-- Bridge status: `CROSS_MODEL_REVIEW_REQUIRED`
-- Reason: Another profiled export carries the missing field, but cross-model reuse is discovery-only and still requires manual four-layer review.
-- Best source export: `2023 TX Rollout` from `A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx` similarity=`0.000` profile=`tx_rollout_2023_pr_v1`
 
 
 ## cd_consolidation_2023_decom_pr_v1 (CD consolidation 2023)

@@ -152,7 +152,7 @@ class TestProfileReadinessReview(unittest.TestCase):
         )
         self.assertEqual(entry["blocker_summary"]["cross_model_bridge_fields"], [])
 
-    def test_celcomdigi_usp_entry_stays_discovery_only_blocked_with_missing_pr_status_fields(self):
+    def test_celcomdigi_usp_entry_stays_discovery_only_blocked_only_for_non_production_and_optional_review_work(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "celcomdigi_usp_pr_v1.yaml")
         unresolved = json.loads(
             (ROOT / "config" / "registries" / "mw_du_unresolved_skill_field_review.yaml").read_text(encoding="utf-8")
@@ -166,15 +166,22 @@ class TestProfileReadinessReview(unittest.TestCase):
         entry = build_readiness_entry(profile, unresolved_entry, bridge_entry)
 
         self.assertEqual(entry["readiness_status"], "DISCOVERY_ONLY_BLOCKED")
-        self.assertEqual(entry["profile_status"], "DRAFT")
-        self.assertIn("NO_APPROVED_HEADER_HASH", entry["blocker_summary"]["overall_blockers"])
-        self.assertIn("MISSING_REQUIRED_FIELDS", entry["blocker_summary"]["overall_blockers"])
+        self.assertEqual(entry["profile_status"], "PR_INPUT_READY")
+        self.assertIn("PROFILE_NOT_PRODUCTION", entry["blocker_summary"]["overall_blockers"])
+        self.assertEqual(entry["blocker_summary"]["missing_required_fields"], [])
+        self.assertEqual(entry["blocker_summary"]["unapproved_required_fields"], [])
+        self.assertEqual(entry["blocker_summary"]["required_competing_candidate_fields"], [])
+        self.assertEqual(entry["blocker_summary"]["required_single_candidate_unverified_fields"], [])
         self.assertIn("COMPETING_SHORTLIST_CANDIDATES", entry["blocker_summary"]["overall_blockers"])
-        self.assertIn("CROSS_MODEL_BRIDGE_ONLY_FIELDS", entry["blocker_summary"]["overall_blockers"])
         self.assertEqual(
-            entry["blocker_summary"]["cross_model_bridge_fields"],
-            ["existing_ti_pr_status", "existing_tss_pr_status"],
+            entry["blocker_summary"]["competing_candidate_fields"],
+            ["site_name", "subcontractor_planning"],
         )
+        self.assertEqual(
+            entry["blocker_summary"]["single_candidate_unverified_fields"],
+            ["antenna_size_fe", "antenna_size_ne", "du_key"],
+        )
+        self.assertEqual(entry["blocker_summary"]["cross_model_bridge_fields"], [])
 
     def test_cd_consolidation_2023_decom_entry_stays_discovery_only_blocked_with_competing_core_fields(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "cd_consolidation_2023_decom_pr_v1.yaml")

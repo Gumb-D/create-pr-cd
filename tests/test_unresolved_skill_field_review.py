@@ -259,7 +259,7 @@ class TestUnresolvedSkillFieldReview(unittest.TestCase):
             "MW Config Antenna Size NE",
         )
 
-    def test_celcomdigi_usp_entry_captures_missing_pr_status_fields_and_competing_site_fields(self):
+    def test_celcomdigi_usp_entry_records_human_approved_pr_critical_sources(self):
         shortlist_registry = json.loads(
             (ROOT / "config" / "registries" / "mw_du_priority_skill_field_shortlists.yaml").read_text(encoding="utf-8")
         )
@@ -271,12 +271,20 @@ class TestUnresolvedSkillFieldReview(unittest.TestCase):
         review_entry = build_review_entry(profile, shortlist_entry)
 
         self.assertEqual(review_entry["profile_id"], "celcomdigi_usp_pr_v1")
-        self.assertEqual(review_entry["summary"]["missing_required_fields"], ["existing_ti_pr_status", "existing_tss_pr_status"])
-        self.assertIn("site_code", review_entry["summary"]["competing_candidate_fields"])
+        self.assertEqual(review_entry["summary"]["missing_required_fields"], [])
+        self.assertNotIn("site_code", review_entry["summary"]["competing_candidate_fields"])
         self.assertIn("site_name", review_entry["summary"]["competing_candidate_fields"])
-        self.assertIn("tx_sow_raw", review_entry["summary"]["competing_candidate_fields"])
-        self.assertIn("subcontractor_ti", review_entry["summary"]["competing_candidate_fields"])
+        self.assertNotIn("tx_sow_raw", review_entry["summary"]["competing_candidate_fields"])
+        self.assertNotIn("subcontractor_ti", review_entry["summary"]["competing_candidate_fields"])
         self.assertIn("subcontractor_planning", review_entry["summary"]["competing_candidate_fields"])
+        self.assertEqual(
+            review_entry["field_reviews"]["existing_ti_pr_status"]["recommended_source"]["fingerprint"]["display_header"],
+            "Subcon PR - TI",
+        )
+        self.assertEqual(
+            review_entry["field_reviews"]["existing_ti_pr_status"]["review_status"],
+            "READY_IF_APPROVAL_EVIDENCE_EXISTS",
+        )
         self.assertEqual(
             review_entry["field_reviews"]["antenna_size_ne"]["recommended_source"]["fingerprint"]["display_header"],
             "Antenna Size NE",

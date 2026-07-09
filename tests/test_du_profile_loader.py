@@ -174,22 +174,30 @@ class TestDuProfileLoader(unittest.TestCase):
             "Subcon PR - TI",
         )
 
-    def test_draft_celcomdigi_usp_profile_loads_with_customer_site_and_direct_antenna_candidates(self):
+    def test_pr_input_ready_celcomdigi_usp_profile_loads_with_human_approved_pr_critical_mappings(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "celcomdigi_usp_pr_v1.yaml")
-        self.assertEqual(profile["status"], "DRAFT")
-        self.assertEqual(profile["mapping_version"], "discovery-2026-07-07-celcomdigi-usp-v1")
+        self.assertEqual(profile["status"], "PR_INPUT_READY")
+        self.assertEqual(profile["mapping_version"], "approved-2026-07-09-celcomdigi-usp-v1")
         self.assertEqual(profile["identity"]["accepted_du_models"], ["Celcomdigi USP"])
         self.assertEqual(profile["identity"]["accepted_du_model_ids"], ["3765504705612341090"])
         self.assertEqual(profile["identity"]["accepted_view_ids"], ["703232142435130905"])
-        self.assertEqual(profile["export_structure"]["approved_header_hashes"], [])
+        self.assertEqual(
+            profile["export_structure"]["approved_header_hashes"],
+            ["79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf"],
+        )
         self.assertEqual(profile["export_structure"]["observed_header_hash"], "79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf")
+        self.assertEqual(profile["field_mapping"]["site_code"]["source_candidates"][0]["mapping_status"], "APPROVED")
         self.assertEqual(
             profile["field_mapping"]["site_code"]["source_candidates"][0]["fingerprint"]["display_header"],
             "customer site code",
         )
         self.assertEqual(
-            profile["field_mapping"]["antenna_size_ne"]["source_candidates"][0]["fingerprint"]["display_header"],
-            "Antenna Size NE",
+            profile["field_mapping"]["existing_tss_pr_status"]["source_candidates"][0]["fingerprint"]["display_header"],
+            "Subcon PR - TSS",
+        )
+        self.assertEqual(
+            profile["field_mapping"]["existing_ti_pr_status"]["source_candidates"][0]["fingerprint"]["display_header"],
+            "Subcon PR - TI",
         )
 
     def test_draft_cd_consolidation_2023_decom_profile_loads_with_discovery_only_cd_fields(self):

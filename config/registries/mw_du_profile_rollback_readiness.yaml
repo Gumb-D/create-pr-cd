@@ -127,19 +127,18 @@
     {
       "profile_id": "celcomdigi_usp_pr_v1",
       "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-07-celcomdigi-usp-v1",
-      "current_status": "DRAFT",
+      "mapping_version": "approved-2026-07-09-celcomdigi-usp-v1",
+      "current_status": "PR_INPUT_READY",
       "observed_header_hash": "79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf",
-      "rollback_readiness_status": "ROLLBACK_BLOCKED",
-      "rollback_target_profile_id": null,
-      "rollback_target_profile_version": null,
-      "rollback_target_header_hashes": [],
-      "blockers": [
-        "NO_APPROVED_HEADER_HASH_BASELINE",
-        "PROFILE_NOT_RELEASED"
+      "rollback_readiness_status": "ROLLBACK_BASELINE_RECORDED",
+      "rollback_target_profile_id": "celcomdigi_usp_pr_v1",
+      "rollback_target_profile_version": "0.1.0",
+      "rollback_target_header_hashes": [
+        "79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf"
       ],
+      "blockers": [],
       "notes": [
-        "Rollback remains blocked until an approved profile/header-hash baseline exists."
+        "Rollback baseline is documented from the current approved profile identity and header-hash set."
       ]
     },
     {

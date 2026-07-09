@@ -58,7 +58,7 @@ Discovery-only coverage review across the 10 profiled DU exports.
 
 - Source file: `A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx`
 - Coverage status: `TRACKED_DRAFT_PROFILE`
-- Profile: `celcomdigi_usp_pr_v1` `0.1.0` (mapping `discovery-2026-07-07-celcomdigi-usp-v1`)
+- Profile: `celcomdigi_usp_pr_v1` `0.1.0` (mapping `approved-2026-07-09-celcomdigi-usp-v1`)
 - Observed header hash: `79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf`
 - Missing skill fields: `existing_tss_pr, existing_ti_pr`
 - Next action: Continue tracked profile review through the existing DRAFT discovery packet.
