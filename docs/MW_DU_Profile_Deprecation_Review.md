@@ -67,8 +67,8 @@ Discovery-only deprecation review for the tracked DU profiles.
 
 ## celcomdigi_usp_pr_v1
 
-- Current status: `DRAFT`
-- Mapping version: `discovery-2026-07-07-celcomdigi-usp-v1`
+- Current status: `PR_INPUT_READY`
+- Mapping version: `approved-2026-07-09-celcomdigi-usp-v1`
 - Observed header hash: `79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf`
 - Deprecation status: `NO_DEPRECATION_PLAN`
 - Note: No deprecation plan is recorded for this profile.

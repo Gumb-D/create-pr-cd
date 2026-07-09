@@ -94,9 +94,9 @@
       "source_file_name": "A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx",
       "coverage_status": "TRACKED_DRAFT_PROFILE",
       "profile_id": "celcomdigi_usp_pr_v1",
-      "profile_status": "DRAFT",
+      "profile_status": "PR_INPUT_READY",
       "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-07-celcomdigi-usp-v1",
+      "mapping_version": "approved-2026-07-09-celcomdigi-usp-v1",
       "observed_header_hash": "79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf",
       "missing_skill_fields": [
         "existing_tss_pr",

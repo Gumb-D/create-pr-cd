@@ -78,13 +78,14 @@ Discovery-only rollback-readiness review for tracked DU profiles.
 
 ## celcomdigi_usp_pr_v1
 
-- Rollback readiness status: `ROLLBACK_BLOCKED`
-- Current status: `DRAFT`
+- Rollback readiness status: `ROLLBACK_BASELINE_RECORDED`
+- Current status: `PR_INPUT_READY`
 - Profile version: `0.1.0`
-- Mapping version: `discovery-2026-07-07-celcomdigi-usp-v1`
+- Mapping version: `approved-2026-07-09-celcomdigi-usp-v1`
 - Observed header hash: `79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf`
-- Blockers: `NO_APPROVED_HEADER_HASH_BASELINE, PROFILE_NOT_RELEASED`
-- Note: Rollback remains blocked until an approved profile/header-hash baseline exists.
+- Rollback target: `celcomdigi_usp_pr_v1` `0.1.0`
+- Rollback target header hashes: `79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf`
+- Note: Rollback baseline is documented from the current approved profile identity and header-hash set.
 
 ## cd_consolidation_2023_decom_pr_v1
 
