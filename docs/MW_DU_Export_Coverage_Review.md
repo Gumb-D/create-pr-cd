@@ -31,7 +31,7 @@ Discovery-only coverage review across the 10 profiled DU exports.
 
 - Source file: `A-P202202168750_D002-2024 Celcomdigi BAU-2024 BAU Rollout (TX)-20260703160253.xlsx`
 - Coverage status: `TRACKED_DRAFT_PROFILE`
-- Profile: `celcomdigi_bau_2024_pr_v1` `0.1.0` (mapping `discovery-2026-07-07-2024-celcomdigi-bau-v1`)
+- Profile: `celcomdigi_bau_2024_pr_v1` `0.1.0` (mapping `approved-2026-07-09-2024-celcomdigi-bau-v1`)
 - Observed header hash: `b3677457da49e5de484976c3fdb7ad6f5dc19055f5339ec616407f5cbde89a86`
 - Missing skill fields: `existing_tss_pr, existing_ti_pr`
 - Next action: Continue tracked profile review through the existing DRAFT discovery packet.

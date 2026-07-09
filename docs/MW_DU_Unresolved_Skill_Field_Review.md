@@ -604,16 +604,16 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 
 - Source file: `A-P202202168750_D002-2024 Celcomdigi BAU-2024 BAU Rollout (TX)-20260703160253.xlsx`
 - Observed header hash: `b3677457da49e5de484976c3fdb7ad6f5dc19055f5339ec616407f5cbde89a86`
-- Missing required fields: existing_ti_pr_status, existing_tss_pr_status
-- Competing candidate fields: subcontractor_planning, subcontractor_ti, tx_sow_raw
-- Single-candidate but unverified fields: antenna_size_fe, antenna_size_ne, du_key, region, site_code, site_name
-- Resolved by approved mapping (alternates rejected): None
+- Missing required fields: None
+- Competing candidate fields: subcontractor_planning
+- Single-candidate but unverified fields: antenna_size_fe, antenna_size_ne, du_key, site_name
+- Resolved by approved mapping (alternates rejected): subcontractor_ti, tx_sow_raw
 
 ### `site_code`
 
 - Skill field: `site_id`
-- Review status: `REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE`
-- Reason: Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile.
+- Review status: `READY_IF_APPROVAL_EVIDENCE_EXISTS`
+- Reason: Profile-selected source matches the shortlist and is already approved.
 - Selected source: `site|fix00012|7278317398457076992|1090541706000906451 | Site Basic Info | Site Basic Info | customer site code`
 
 ### `site_name`
@@ -633,15 +633,15 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 ### `region`
 
 - Skill field: `region`
-- Review status: `REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE`
-- Reason: Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile.
+- Review status: `READY_IF_APPROVAL_EVIDENCE_EXISTS`
+- Reason: Profile-selected source matches the shortlist and is already approved.
 - Selected source: `site|region_name | Site Basic Info | Site Basic Info | region`
 
 ### `tx_sow_raw`
 
 - Skill field: `tx_sow`
-- Review status: `REVIEW_REQUIRED_COMPETING_CANDIDATES`
-- Reason: Profile-selected source has alternate shortlist candidates that still require four-layer confirmation.
+- Review status: `RESOLVED_BY_APPROVED_MAPPING`
+- Reason: Profile-selected source is human-approved; the remaining shortlist alternates were rejected by that recorded decision.
 - Selected source: `docata|ZDCSZ00815532 | Installation | Microwave | Tx SOW`
 - Alternate shortlist candidates:
   - score 45: `docata|ZDCSZ642123 | TX Solution | TX SOW Details | TX SOW Details`
@@ -650,8 +650,8 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 ### `subcontractor_ti`
 
 - Skill field: `subcon_ti_team`
-- Review status: `REVIEW_REQUIRED_COMPETING_CANDIDATES`
-- Reason: Profile-selected source has alternate shortlist candidates that still require four-layer confirmation.
+- Review status: `RESOLVED_BY_APPROVED_MAPPING`
+- Reason: Profile-selected source is human-approved; the remaining shortlist alternates were rejected by that recorded decision.
 - Selected source: `docata|ZDCSZ640242 | Installation | Wireless RAN | SubCon - TI`
 - Alternate shortlist candidates:
   - score 55: `docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI`
@@ -684,16 +684,16 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 ### `existing_tss_pr_status`
 
 - Skill field: `existing_tss_pr`
-- Review status: `REVIEW_REQUIRED_MISSING_CANDIDATE`
-- Reason: Required profile field has no selected source candidate and no shortlist candidate.
-- Selected source: `None`
+- Review status: `READY_IF_APPROVAL_EVIDENCE_EXISTS`
+- Reason: Profile-selected source matches the shortlist and is already approved.
+- Selected source: `docata|ZDCSZ641766 | Installation | Wireless RAN | Subcon PR - TSS`
 
 ### `existing_ti_pr_status`
 
 - Skill field: `existing_ti_pr`
-- Review status: `REVIEW_REQUIRED_MISSING_CANDIDATE`
-- Reason: Required profile field has no selected source candidate and no shortlist candidate.
-- Selected source: `None`
+- Review status: `READY_IF_APPROVAL_EVIDENCE_EXISTS`
+- Reason: Profile-selected source matches the shortlist and is already approved.
+- Selected source: `docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI`
 
 
 ## celcomdigi_usp_pr_v1 (Celcomdigi USP)

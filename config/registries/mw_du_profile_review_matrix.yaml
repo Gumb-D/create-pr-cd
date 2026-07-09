@@ -55,15 +55,13 @@
       "profile_id": "celcomdigi_bau_2024_pr_v1",
       "profile_version": "0.1.0",
       "du_model_name": "2024 Celcomdigi BAU",
-      "mapping_version": "discovery-2026-07-07-2024-celcomdigi-bau-v1",
+      "mapping_version": "approved-2026-07-09-2024-celcomdigi-bau-v1",
       "observed_header_hash": "b3677457da49e5de484976c3fdb7ad6f5dc19055f5339ec616407f5cbde89a86",
       "readiness_status": "DISCOVERY_ONLY_BLOCKED",
-      "action_count": 13,
+      "action_count": 6,
       "action_type_counts": {
-        "RESOLVE_MISSING_REQUIRED_FIELD": 2,
-        "CONFIRM_COMPETING_CANDIDATE": 3,
-        "VERIFY_SINGLE_CANDIDATE": 6,
-        "APPROVE_HEADER_HASH": 1,
+        "CONFIRM_COMPETING_CANDIDATE": 1,
+        "VERIFY_SINGLE_CANDIDATE": 4,
         "HOLD_LIFECYCLE_PROMOTION": 1
       }
     },
@@ -165,7 +163,6 @@
         "cd_consolidation_2023_decom_pr_v1",
         "cd_consolidation_2023_rollout_pr_v1",
         "celcomdigi_bau_2023_pr_v1",
-        "celcomdigi_bau_2024_pr_v1",
         "celcomdigi_usp_pr_v1",
         "jendela_tx_migration_pr_v1",
         "zte_tx_mini_pr_v1"
@@ -174,7 +171,6 @@
         "cd_consolidation_2023_decom_pr_v1:01",
         "cd_consolidation_2023_rollout_pr_v1:01",
         "celcomdigi_bau_2023_pr_v1:01",
-        "celcomdigi_bau_2024_pr_v1:01",
         "celcomdigi_usp_pr_v1:01",
         "jendela_tx_migration_pr_v1:01",
         "zte_tx_mini_pr_v1:01"
@@ -183,7 +179,7 @@
         "Review donor export 2023 TX Rollout with similarity 0.000 before deciding derived, manual, or blocking treatment.",
         "Review donor export 2023 TX Rollout with similarity 0.088 before deciding derived, manual, or blocking treatment."
       ],
-      "profile_count": 7,
+      "profile_count": 6,
       "batch_priority": 1
     },
     {
@@ -194,7 +190,6 @@
         "cd_consolidation_2023_decom_pr_v1",
         "cd_consolidation_2023_rollout_pr_v1",
         "celcomdigi_bau_2023_pr_v1",
-        "celcomdigi_bau_2024_pr_v1",
         "celcomdigi_usp_pr_v1",
         "jendela_tx_migration_pr_v1",
         "zte_tx_mini_pr_v1"
@@ -203,7 +198,6 @@
         "cd_consolidation_2023_decom_pr_v1:02",
         "cd_consolidation_2023_rollout_pr_v1:02",
         "celcomdigi_bau_2023_pr_v1:02",
-        "celcomdigi_bau_2024_pr_v1:02",
         "celcomdigi_usp_pr_v1:02",
         "jendela_tx_migration_pr_v1:02",
         "zte_tx_mini_pr_v1:02"
@@ -212,7 +206,7 @@
         "Review donor export 2023 TX Rollout with similarity 0.000 before deciding derived, manual, or blocking treatment.",
         "Review donor export 2023 TX Rollout with similarity 0.088 before deciding derived, manual, or blocking treatment."
       ],
-      "profile_count": 7,
+      "profile_count": 6,
       "batch_priority": 2
     },
     {
@@ -230,7 +224,7 @@
       ],
       "profile_priority_ids": [
         "celcomdigi_bau_2023_pr_v1:03",
-        "celcomdigi_bau_2024_pr_v1:03",
+        "celcomdigi_bau_2024_pr_v1:01",
         "celcomdigi_usp_pr_v1:05",
         "jendela_tx_migration_pr_v1:04",
         "mw_eos_swap_pr_v1:02",
@@ -251,7 +245,6 @@
         "cd_consolidation_2023_decom_pr_v1",
         "cd_consolidation_2023_rollout_pr_v1",
         "celcomdigi_bau_2023_pr_v1",
-        "celcomdigi_bau_2024_pr_v1",
         "celcomdigi_usp_pr_v1",
         "jendela_tx_migration_pr_v1",
         "zte_tx_mini_pr_v1"
@@ -260,7 +253,6 @@
         "cd_consolidation_2023_decom_pr_v1:06",
         "cd_consolidation_2023_rollout_pr_v1:05",
         "celcomdigi_bau_2023_pr_v1:04",
-        "celcomdigi_bau_2024_pr_v1:05",
         "celcomdigi_usp_pr_v1:07",
         "jendela_tx_migration_pr_v1:06",
         "zte_tx_mini_pr_v1:07"
@@ -268,7 +260,7 @@
       "evidence_hints": [
         "Use the unresolved review packet to compare the currently selected source against alternates."
       ],
-      "profile_count": 7,
+      "profile_count": 6,
       "batch_priority": 4
     },
     {
@@ -322,13 +314,11 @@
       "field_name": "subcontractor_ti",
       "summary": "Choose one exact four-layer source for `subcontractor_ti` from the competing shortlist candidates.",
       "profiles": [
-        "celcomdigi_bau_2024_pr_v1",
         "celcomdigi_usp_pr_v1",
         "jendela_tx_migration_pr_v1",
         "zte_tx_mini_pr_v1"
       ],
       "profile_priority_ids": [
-        "celcomdigi_bau_2024_pr_v1:04",
         "celcomdigi_usp_pr_v1:06",
         "jendela_tx_migration_pr_v1:05",
         "zte_tx_mini_pr_v1:06"
@@ -336,7 +326,7 @@
       "evidence_hints": [
         "Use the unresolved review packet to compare the currently selected source against alternates."
       ],
-      "profile_count": 4,
+      "profile_count": 3,
       "batch_priority": 7
     },
     {
@@ -376,7 +366,7 @@
         "cd_consolidation_2023_decom_pr_v1:07",
         "cd_consolidation_2023_rollout_pr_v1:06",
         "celcomdigi_bau_2023_pr_v1:07",
-        "celcomdigi_bau_2024_pr_v1:08",
+        "celcomdigi_bau_2024_pr_v1:04",
         "celcomdigi_usp_pr_v1:10",
         "jendela_tx_migration_pr_v1:09",
         "mw_eos_swap_pr_v1:05",
@@ -403,7 +393,7 @@
       ],
       "profile_priority_ids": [
         "celcomdigi_bau_2023_pr_v1:05",
-        "celcomdigi_bau_2024_pr_v1:06",
+        "celcomdigi_bau_2024_pr_v1:02",
         "celcomdigi_usp_pr_v1:08",
         "jendela_tx_migration_pr_v1:07",
         "mw_eos_swap_pr_v1:03",
@@ -429,7 +419,7 @@
       ],
       "profile_priority_ids": [
         "celcomdigi_bau_2023_pr_v1:06",
-        "celcomdigi_bau_2024_pr_v1:07",
+        "celcomdigi_bau_2024_pr_v1:03",
         "celcomdigi_usp_pr_v1:09",
         "jendela_tx_migration_pr_v1:08",
         "mw_eos_swap_pr_v1:04",
@@ -447,14 +437,12 @@
       "summary": "Verify the current single shortlist-aligned source for `region`.",
       "profiles": [
         "celcomdigi_bau_2023_pr_v1",
-        "celcomdigi_bau_2024_pr_v1",
         "celcomdigi_usp_pr_v1",
         "jendela_tx_migration_pr_v1",
         "zte_tx_mini_pr_v1"
       ],
       "profile_priority_ids": [
         "celcomdigi_bau_2023_pr_v1:08",
-        "celcomdigi_bau_2024_pr_v1:09",
         "celcomdigi_usp_pr_v1:11",
         "jendela_tx_migration_pr_v1:10",
         "zte_tx_mini_pr_v1:11"
@@ -462,7 +450,7 @@
       "evidence_hints": [
         "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
       ],
-      "profile_count": 5,
+      "profile_count": 4,
       "batch_priority": 12
     },
     {
@@ -478,7 +466,7 @@
       "profile_priority_ids": [
         "cd_consolidation_2023_rollout_pr_v1:07",
         "celcomdigi_bau_2023_pr_v1:10",
-        "celcomdigi_bau_2024_pr_v1:11",
+        "celcomdigi_bau_2024_pr_v1:05",
         "tx_rollout_2023_pr_v1:03"
       ],
       "evidence_hints": [
@@ -486,26 +474,6 @@
       ],
       "profile_count": 4,
       "batch_priority": 13
-    },
-    {
-      "action_type": "VERIFY_SINGLE_CANDIDATE",
-      "field_name": "site_code",
-      "summary": "Verify the current single shortlist-aligned source for `site_code`.",
-      "profiles": [
-        "celcomdigi_bau_2023_pr_v1",
-        "celcomdigi_bau_2024_pr_v1",
-        "jendela_tx_migration_pr_v1"
-      ],
-      "profile_priority_ids": [
-        "celcomdigi_bau_2023_pr_v1:09",
-        "celcomdigi_bau_2024_pr_v1:10",
-        "jendela_tx_migration_pr_v1:11"
-      ],
-      "evidence_hints": [
-        "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
-      ],
-      "profile_count": 3,
-      "batch_priority": 14
     },
     {
       "action_type": "VERIFY_SINGLE_CANDIDATE",
@@ -525,6 +493,24 @@
         "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
       ],
       "profile_count": 3,
+      "batch_priority": 14
+    },
+    {
+      "action_type": "VERIFY_SINGLE_CANDIDATE",
+      "field_name": "site_code",
+      "summary": "Verify the current single shortlist-aligned source for `site_code`.",
+      "profiles": [
+        "celcomdigi_bau_2023_pr_v1",
+        "jendela_tx_migration_pr_v1"
+      ],
+      "profile_priority_ids": [
+        "celcomdigi_bau_2023_pr_v1:09",
+        "jendela_tx_migration_pr_v1:11"
+      ],
+      "evidence_hints": [
+        "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+      ],
+      "profile_count": 2,
       "batch_priority": 15
     },
     {
@@ -535,7 +521,6 @@
         "cd_consolidation_2023_decom_pr_v1",
         "cd_consolidation_2023_rollout_pr_v1",
         "celcomdigi_bau_2023_pr_v1",
-        "celcomdigi_bau_2024_pr_v1",
         "celcomdigi_usp_pr_v1",
         "jendela_tx_migration_pr_v1",
         "zte_tx_mini_pr_v1"
@@ -544,7 +529,6 @@
         "cd_consolidation_2023_decom_pr_v1:09",
         "cd_consolidation_2023_rollout_pr_v1:09",
         "celcomdigi_bau_2023_pr_v1:12",
-        "celcomdigi_bau_2024_pr_v1:12",
         "celcomdigi_usp_pr_v1:12",
         "jendela_tx_migration_pr_v1:12",
         "zte_tx_mini_pr_v1:12"
@@ -553,12 +537,11 @@
         "Current observed header hash: 904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3",
         "Current observed header hash: a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810",
         "Current observed header hash: 77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313",
-        "Current observed header hash: b3677457da49e5de484976c3fdb7ad6f5dc19055f5339ec616407f5cbde89a86",
         "Current observed header hash: 79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf",
         "Current observed header hash: b86cbc349db66154324092c843593137e83908c3b4b55c09305d6cf6046c7a16",
         "Current observed header hash: d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1"
       ],
-      "profile_count": 7,
+      "profile_count": 6,
       "batch_priority": 16
     },
     {
@@ -581,7 +564,7 @@
         "cd_consolidation_2023_decom_pr_v1:10",
         "cd_consolidation_2023_rollout_pr_v1:10",
         "celcomdigi_bau_2023_pr_v1:13",
-        "celcomdigi_bau_2024_pr_v1:13",
+        "celcomdigi_bau_2024_pr_v1:06",
         "celcomdigi_usp_pr_v1:13",
         "jendela_tx_migration_pr_v1:13",
         "mw_eos_swap_pr_v1:06",

@@ -102,9 +102,9 @@ class TestDuDiscoveryRegistry(unittest.TestCase):
         entry = build_discovery_entry(profile_dir)
         self.assertEqual(entry["du_model_name"], "2024 Celcomdigi BAU")
         self.assertEqual(entry["profile_id"], "celcomdigi_bau_2024_pr_v1")
-        self.assertEqual(entry["profile_status"], "DRAFT")
+        self.assertEqual(entry["profile_status"], "PR_INPUT_READY")
         self.assertEqual(entry["profile_version"], "0.1.0")
-        self.assertEqual(entry["mapping_version"], "discovery-2026-07-07-2024-celcomdigi-bau-v1")
+        self.assertEqual(entry["mapping_version"], "approved-2026-07-09-2024-celcomdigi-bau-v1")
 
     def test_build_discovery_entry_for_celcomdigi_usp_uses_existing_profile_file(self):
         profile_dir = self.profiler_root / "A-P202202168750_D002-Celcomdigi_USP-Celcomdigi_USP_TX_-20260703160234"
