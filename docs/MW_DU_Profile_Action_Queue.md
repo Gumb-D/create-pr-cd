@@ -4,12 +4,12 @@ Discovery-only prioritized manual action queue for the current DRAFT profiles.
 
 ## tx_mini_pr_v1 (TX Mini Project)
 
-- Readiness status: `DISCOVERY_ONLY_BLOCKED`
+- Readiness status: `PR_INPUT_READY_NON_PRODUCTION`
 - Profile status: `PR_INPUT_READY`
 - Mapping version: `approved-2026-07-07-tx-mini-v1`
 - Observed header hash: `167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221`
 - Action queue:
-  - `tx_mini_pr_v1:01` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
+  - `tx_mini_pr_v1:01` `HOLD_LIFECYCLE_PROMOTION`: Mapping review, header-hash approval, and regression (golden parity) evidence are complete; the profile is `PR_INPUT_READY` and non-production. Keep the profile blocked from `PRODUCTION` promotion until Phase 4 release governance and end-to-end UAT evidence exist.
     hint: Use the transition review as the final stop/go check before any status change.
 
 ## mw_eos_swap_pr_v1 (MW EOS Swap)
