@@ -22,7 +22,5 @@ scripts/api_auth.json
 __pycache__/
 *.pyc
 
-# Local-only raw DU reference exports under Info/reference must never be committed.
-Info/reference/**/*.xlsx
-Info/reference/**/*.xlsm
-Info/reference/**/*.csv
+# Info/reference is a local-only DU reference area and must never be committed.
+Info/reference/**
