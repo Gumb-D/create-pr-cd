@@ -491,5 +491,193 @@ class TestTxRolloutApprovedProfileAdapter(unittest.TestCase):
         self.assertIn("HEADER_HASH_REVALIDATION_REQUIRED", gate["blocking_reasons"])
 
 
+class TestMwEosApprovedProfileAdapter(unittest.TestCase):
+    PROFILE_PATH = ROOT / "config" / "du_profiles" / "mw_eos_swap_pr_v1.yaml"
+
+    @classmethod
+    def setUpClass(cls):
+        cls.profile = load_du_profile(cls.PROFILE_PATH)
+
+    def _inventory_from_profile(self, *, include_alternates=False, missing_fields=None):
+        missing_fields = set(missing_fields or [])
+        columns = []
+        for field_name, config in self.profile["field_mapping"].items():
+            if field_name in missing_fields:
+                continue
+            for candidate in config.get("source_candidates", []):
+                columns.append(
+                    {
+                        "fingerprint": candidate["fingerprint"],
+                        "fingerprint_key": fingerprint_key(candidate["fingerprint"]),
+                    }
+                )
+        if include_alternates:
+            for fingerprint in (
+                {
+                    "field_code": "docata|ZDCSZ01079156",
+                    "wbs_stage": "Network Planning",
+                    "task_name": "Microwave",
+                    "display_header": "TX SOW Details",
+                },
+                {
+                    "field_code": "site|fix00015",
+                    "wbs_stage": "Site Basic Info",
+                    "task_name": "Site Basic Info",
+                    "display_header": "customer site name",
+                },
+            ):
+                columns.append({"fingerprint": fingerprint, "fingerprint_key": fingerprint_key(fingerprint)})
+        return {"sheets": [{"sheet_name": "MW EOS Swap", "columns": columns}]}
+
+    def _resolved(self, *, include_alternates=False, missing_fields=None):
+        return resolve_profile_field_mappings(
+            self._inventory_from_profile(include_alternates=include_alternates, missing_fields=missing_fields),
+            self.profile,
+        )
+
+    def _raw_values(self, overrides=None):
+        values = {
+            "site_code": "A0001",
+            "site_name": "Synthetic Site",
+            "du_key": "DU0001",
+            "tx_sow_raw": "MW Swap",
+            "region": "Northern",
+            "subcontractor_ti": "GTSB",
+            "subcontractor_planning": "GTSB",
+            "existing_tss_pr_status": "SQ202506180613-GTSB",
+            "existing_ti_pr_status": "No PR required-Work at TSS only",
+            "antenna_size_ne": "0.6m",
+            "antenna_size_fe": "0.6m",
+            "tx_sow_details": "detail",
+        }
+        values.update(overrides or {})
+        raw = {}
+        for field_name, config in self.profile["field_mapping"].items():
+            if field_name not in values:
+                continue
+            for candidate in config.get("source_candidates", []):
+                raw[fingerprint_key(candidate["fingerprint"])] = values[field_name]
+        return raw
+
+    def _context(self, *, header_hash=None):
+        identity = self.profile["identity"]
+        return {
+            "project_key": identity["project_key"],
+            "du_model_name": identity["accepted_du_models"][0],
+            "du_model_id": identity["accepted_du_model_ids"][0],
+            "view_id": identity["accepted_view_ids"][0],
+            "source_file_name": "synthetic-mw-eos.xlsx",
+            "source_file_hash": "synthetic-source-hash",
+            "header_hash": header_hash or self.profile["export_structure"]["approved_header_hashes"][0],
+            "source_row_number": 5,
+        }
+
+    def _build_record(self, overrides=None, *, profile=None, resolved=None, header_hash=None, scope="TSS"):
+        profile = profile or self.profile
+        return build_canonical_site_record(
+            self._raw_values(overrides),
+            profile,
+            self._context(header_hash=header_hash),
+            scope=scope,
+            resolved_mappings=resolved or self._resolved(),
+        )
+
+    def _production_copy(self):
+        clone = json.loads(json.dumps(self.profile))
+        clone["status"] = "PRODUCTION"
+        for config in clone["field_mapping"].values():
+            config["source_candidates"] = [
+                candidate
+                for candidate in config.get("source_candidates", [])
+                if candidate.get("mapping_status") == "APPROVED"
+            ]
+        return clone
+
+    def test_resolver_uses_only_approved_pr_critical_fingerprints(self):
+        resolved = self._resolved(include_alternates=True)
+        for field_name in (
+            "site_code",
+            "tx_sow_raw",
+            "region",
+            "subcontractor_ti",
+            "existing_tss_pr_status",
+            "existing_ti_pr_status",
+        ):
+            self.assertEqual(resolved[field_name]["status"], "RESOLVED")
+        self.assertEqual(
+            [match["fingerprint"]["display_header"] for match in resolved["tx_sow_raw"]["matches"]],
+            ["Microwave Tx SOW-1"],
+        )
+
+    def test_missing_approved_pr_critical_column_fails_closed(self):
+        resolved = self._resolved(missing_fields={"existing_ti_pr_status"})
+        self.assertEqual(resolved["existing_ti_pr_status"]["status"], "MISSING")
+        record = self._build_record(resolved=resolved, scope="TI")
+        self.assertIn("MISSING_SOURCE_EVIDENCE:existing_ti_pr_status", record["validation"]["blocking_reasons"])
+
+    def test_unapproved_alternate_candidates_do_not_unlock_pr_input(self):
+        inventory = {
+            "sheets": [
+                {
+                    "sheet_name": "Alternates only",
+                    "columns": [
+                        {
+                            "fingerprint": {
+                                "field_code": "docata|ZDCSZ01079156",
+                                "wbs_stage": "Network Planning",
+                                "task_name": "Microwave",
+                                "display_header": "TX SOW Details",
+                            },
+                            "fingerprint_key": "docata|ZDCSZ01079156|Network Planning|Microwave|TX SOW Details",
+                        },
+                        {
+                            "fingerprint": {
+                                "field_code": "site|fix00015",
+                                "wbs_stage": "Site Basic Info",
+                                "task_name": "Site Basic Info",
+                                "display_header": "customer site name",
+                            },
+                            "fingerprint_key": "site|fix00015|Site Basic Info|Site Basic Info|customer site name",
+                        },
+                    ],
+                }
+            ]
+        }
+        resolved = resolve_profile_field_mappings(inventory, self.profile)
+        self.assertEqual(resolved["tx_sow_raw"]["status"], "MISSING")
+        self.assertEqual(resolved["site_code"]["status"], "MISSING")
+
+    def test_pr_reference_fields_normalize_consistently(self):
+        record = self._build_record(
+            {
+                "existing_tss_pr_status": "SQ202506180613-GTSB",
+                "existing_ti_pr_status": "No PR required-Work at TSS only",
+            }
+        )
+        self.assertEqual(record["pr_context"]["existing_tss_pr_status"], PR_STATUS_EXISTS)
+        self.assertEqual(record["pr_context"]["existing_ti_pr_status"], PR_STATUS_NOT_REQUIRED)
+        self.assertEqual(
+            record["source_evidence"]["fields"]["existing_tss_pr_status"]["transformation"],
+            "normalize_pr_reference_status",
+        )
+        self.assertEqual(
+            record["source_evidence"]["fields"]["existing_ti_pr_status"]["transformation"],
+            "normalize_pr_reference_status",
+        )
+
+    def test_profile_remains_non_production_and_blocks_ecc_output(self):
+        record = self._build_record()
+        gate = evaluate_record(record, self.profile, scope="TSS")
+        self.assertFalse(gate["allow_output"])
+        self.assertIn("DU_PROFILE_NOT_PRODUCTION", gate["blocking_reasons"])
+
+    def test_changed_header_hash_still_fails_closed(self):
+        production = self._production_copy()
+        record = self._build_record(profile=production, header_hash="changed-header-hash")
+        gate = evaluate_record(record, production, scope="TSS")
+        self.assertFalse(gate["allow_output"])
+        self.assertIn("HEADER_HASH_REVALIDATION_REQUIRED", gate["blocking_reasons"])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -7,17 +7,14 @@
       "right_profile_id": "zte_tx_mini_pr_v1",
       "left_profile_version": "0.1.0",
       "right_profile_version": "0.1.0",
-      "left_mapping_version": "discovery-2026-07-06-mw-eos-swap-v1",
+      "left_mapping_version": "approved-2026-07-09-mw-eos-swap-v1",
       "right_mapping_version": "discovery-2026-07-06-zte-tx-mini-v1",
       "left_observed_header_hash": "46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a",
       "right_observed_header_hash": "a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810",
       "left_du_model_name": "MW EOS Swap",
       "right_du_model_name": "ZTE TX MINI",
       "summary": {
-        "shared_missing_required_fields": [
-          "existing_ti_pr_status",
-          "existing_tss_pr_status"
-        ]
+        "shared_missing_required_fields": []
       },
       "field_differences": {
         "antenna_size_fe": {
@@ -45,16 +42,16 @@
           "review_reason": "Both MW-family DRAFT profiles currently select the same exact four-layer fingerprint for this canonical field."
         },
         "existing_ti_pr_status": {
-          "comparison_status": "BOTH_MISSING_REQUIRED",
-          "left_display_header": null,
+          "comparison_status": "ONE_SIDE_MISSING",
+          "left_display_header": "Subcon PR - TI",
           "right_display_header": null,
-          "review_reason": "Both MW-family DRAFT profiles are still missing a selected source candidate for this required field."
+          "review_reason": "One profile has a selected source candidate while the other still lacks one."
         },
         "existing_tss_pr_status": {
-          "comparison_status": "BOTH_MISSING_REQUIRED",
-          "left_display_header": null,
+          "comparison_status": "ONE_SIDE_MISSING",
+          "left_display_header": "Subcon PR - TSS",
           "right_display_header": null,
-          "review_reason": "Both MW-family DRAFT profiles are still missing a selected source candidate for this required field."
+          "review_reason": "One profile has a selected source candidate while the other still lacks one."
         },
         "fe_sow_details": {
           "comparison_status": "BOTH_MISSING_OPTIONAL",

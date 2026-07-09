@@ -12,9 +12,9 @@ from du_profile_loader import load_du_profile
 
 class TestProfileRollbackReadiness(unittest.TestCase):
     def test_current_draft_profile_stays_blocked_without_approved_baseline(self):
-        # TX Mini now has an approved header hash, so use a profile that does
-        # not, to keep covering the missing-baseline blocker.
-        profile = load_du_profile(ROOT / "config" / "du_profiles" / "mw_eos_swap_pr_v1.yaml")
+        # MW EOS Swap now has an approved baseline too, so use a still-draft
+        # profile to keep covering the missing-baseline blocker.
+        profile = load_du_profile(ROOT / "config" / "du_profiles" / "jendela_tx_migration_pr_v1.yaml")
 
         entry = evaluate_rollback_readiness(profile, None)
 

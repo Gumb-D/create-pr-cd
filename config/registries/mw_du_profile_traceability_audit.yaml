@@ -84,7 +84,7 @@
     {
       "profile_id": "mw_eos_swap_pr_v1",
       "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-06-mw-eos-swap-v1",
+      "mapping_version": "approved-2026-07-09-mw-eos-swap-v1",
       "observed_header_hash": "46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a",
       "traceability_status": "TRACEABLE",
       "artifacts": [

@@ -13,8 +13,8 @@ Discovery-only deprecation review for the tracked DU profiles.
 
 ## mw_eos_swap_pr_v1
 
-- Current status: `DRAFT`
-- Mapping version: `discovery-2026-07-06-mw-eos-swap-v1`
+- Current status: `PR_INPUT_READY`
+- Mapping version: `approved-2026-07-09-mw-eos-swap-v1`
 - Observed header hash: `46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a`
 - Deprecation status: `NO_DEPRECATION_PLAN`
 - Note: No deprecation plan is recorded for this profile.

@@ -24,7 +24,7 @@ Discovery-only audit of profile-version and header-hash traceability across gene
 
 - Traceability status: `TRACEABLE`
 - Profile version: `0.1.0`
-- Mapping version: `discovery-2026-07-06-mw-eos-swap-v1`
+- Mapping version: `approved-2026-07-09-mw-eos-swap-v1`
 - Observed header hash: `46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a`
 - Artifacts:
   - `discovery` `TRACEABLE` version=True mapping=True header_hash=True

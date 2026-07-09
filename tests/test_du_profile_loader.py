@@ -35,15 +35,19 @@ class TestDuProfileLoader(unittest.TestCase):
             "Tx SOW",
         )
 
-    def test_draft_mw_eos_profile_loads_with_discovery_only_candidates(self):
+    def test_pr_input_ready_mw_eos_profile_loads_with_human_approved_pr_critical_mappings(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "mw_eos_swap_pr_v1.yaml")
-        self.assertEqual(profile["status"], "DRAFT")
-        self.assertEqual(profile["mapping_version"], "discovery-2026-07-06-mw-eos-swap-v1")
+        self.assertEqual(profile["status"], "PR_INPUT_READY")
+        self.assertEqual(profile["mapping_version"], "approved-2026-07-09-mw-eos-swap-v1")
         self.assertEqual(profile["identity"]["accepted_du_models"], ["MW EOS Swap"])
         self.assertEqual(profile["identity"]["accepted_du_model_ids"], ["5440935430300168497"])
         self.assertEqual(profile["identity"]["accepted_view_ids"], ["7476572371505372260"])
-        self.assertEqual(profile["export_structure"]["approved_header_hashes"], [])
+        self.assertEqual(
+            profile["export_structure"]["approved_header_hashes"],
+            ["46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a"],
+        )
         self.assertEqual(profile["export_structure"]["observed_header_hash"], "46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a")
+        self.assertEqual(profile["field_mapping"]["site_code"]["source_candidates"][0]["mapping_status"], "APPROVED")
         self.assertEqual(
             profile["field_mapping"]["site_code"]["source_candidates"][0]["fingerprint"]["display_header"],
             "customer site code",
@@ -51,6 +55,14 @@ class TestDuProfileLoader(unittest.TestCase):
         self.assertEqual(
             profile["field_mapping"]["subcontractor_ti"]["source_candidates"][0]["fingerprint"]["display_header"],
             "Subcon - TI",
+        )
+        self.assertEqual(
+            profile["field_mapping"]["existing_tss_pr_status"]["source_candidates"][0]["fingerprint"]["display_header"],
+            "Subcon PR - TSS",
+        )
+        self.assertEqual(
+            profile["field_mapping"]["existing_ti_pr_status"]["source_candidates"][0]["fingerprint"]["display_header"],
+            "Subcon PR - TI",
         )
 
     def test_draft_zte_tx_mini_profile_loads_with_discovery_only_candidates(self):
