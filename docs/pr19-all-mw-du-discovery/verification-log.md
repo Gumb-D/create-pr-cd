@@ -97,11 +97,28 @@
 
 ## Validation Still Required
 
+- push the branch
+- open the draft PR
+- create the `COMPLETED` marker once all closeout gates are satisfied
+
+## 2026-07-09 Bounded Step 6
+
+- `git check-ignore -v Info/reference/du-20260706-profile/`
+  - Result: ignored by `.gitignore` rule `Info/reference/**`
+- `git check-ignore -v "Info/reference/du_exports/A-P202211283695_D002-MW EOS Swap-MW EOS Swap Rollout-20260703160307.xlsx"`
+  - Result: ignored by `.gitignore` rule `Info/reference/**`
+- `python -m py_compile scripts/discover_local_du_references.py scripts/build_all_du_mapping_recommendation_matrix.py scripts/build_du_discovery_registry.py scripts/refresh_mw_du_discovery_packet.py`
+  - Result: success
+- `python -m unittest tests.test_discover_local_du_references tests.test_all_du_mapping_recommendation_matrix tests.test_refresh_mw_du_discovery_packet tests.test_du_discovery_registry`
+  - Result: `Ran 18 tests` `OK`
+- `git status --short`
+  - Result: clean working tree before mission-log updates
 - `git diff --name-status origin/main..HEAD`
+  - Result: limited to the intended Issue #19 docs/scripts/tests set
 - `git diff --check origin/main..HEAD`
-- `git check-ignore -v Info/reference/du-20260706-profile/` if present
-- `git check-ignore -v` for one sample raw workbook under `Info/reference`
-- `python -m py_compile scripts/discover_local_du_references.py`
-- `python -m py_compile` for any new or changed Python scripts
-- `python -m unittest tests.test_discover_local_du_references`
-- any new targeted unit tests added for PR #19
+  - Result: clean
+
+## Closeout Audit Conclusion
+
+- The implementation-side acceptance gates are now evidenced as complete in the local checkout
+- Remaining mission gates are the operational closeout items: `COMPLETED` marker creation, branch push, and draft PR creation

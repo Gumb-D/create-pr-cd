@@ -26,3 +26,5 @@
   - Rationale: the refresh validation should strengthen evidence for this mission without broadening the PR scope with unrelated generated-doc churn.
 - Decision: add the local-profiler-root fallback to `scripts/build_du_discovery_registry.py` rather than patching around the path assumption only in tests.
   - Rationale: the broader live validation showed the builder itself, not just the refresh wrapper, needs to understand the checkout's current artifact layout.
+- Decision: treat the next bounded continuation after the evidence audit as PR closeout work rather than further discovery logic changes.
+  - Rationale: the local completion audit is now green for the implemented scope, so additional code churn would widen risk without helping the remaining gates.

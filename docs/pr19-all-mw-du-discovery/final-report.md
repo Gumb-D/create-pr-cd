@@ -6,6 +6,7 @@ This report is an in-progress mission snapshot for Issue `#19`. The branch is no
 
 - Branch: `feat/all-mw-du-discovery-matrix`
 - Commits on top of `origin/main`:
+  - `1814b36` `test(du): validate broader discovery packet suite`
   - `6588261` `test(du): validate refresh fallback for local profiler root`
   - `b8bb18f` `feat(du): add all-du mapping matrix builder`
   - `6636cad` `docs(pr19): lock matrix implementation path`
@@ -82,6 +83,10 @@ This report is an in-progress mission snapshot for Issue `#19`. The branch is no
   - Result: `Ran 5 tests` `OK`
 - `python -m unittest tests.test_refresh_mw_du_discovery_packet tests.test_du_discovery_registry tests.test_du_export_coverage_review tests.test_missing_field_bridge_review tests.test_profile_readiness_review tests.test_profile_action_queue tests.test_profile_review_matrix tests.test_profile_traceability_audit tests.test_discovery_packet_consistency tests.test_profile_status_consistency tests.test_profile_transition_review tests.test_profile_deprecation_review tests.test_profile_rollback_readiness`
   - Result after discovery-registry fallback fix: `Ran 68 tests` `OK`
+- `python -m py_compile scripts/discover_local_du_references.py scripts/build_all_du_mapping_recommendation_matrix.py scripts/build_du_discovery_registry.py scripts/refresh_mw_du_discovery_packet.py`
+  - Result: success
+- `python -m unittest tests.test_discover_local_du_references tests.test_all_du_mapping_recommendation_matrix tests.test_refresh_mw_du_discovery_packet tests.test_du_discovery_registry`
+  - Result: `Ran 18 tests` `OK`
 - `python scripts/build_all_du_mapping_recommendation_matrix.py`
   - Result: generated `10` export summaries / `180` rows
 - `python scripts/refresh_mw_du_discovery_packet.py`
@@ -95,11 +100,24 @@ This report is an in-progress mission snapshot for Issue `#19`. The branch is no
 - No profile lifecycle promotion implemented
 - No ECC enablement implemented
 - No production PR-generation behavior intentionally changed
+- `git diff --check origin/main..HEAD` is clean
+- `git check-ignore -v` confirms both `Info/reference/du-20260706-profile/` and a sample raw workbook remain ignored by `Info/reference/**`
+
+## Completion Gate Snapshot
+
+- Discovery-only scope is implemented and documented
+- Local DU inventory, grouping, PR-critical field evaluation, and human-review matrix outputs exist
+- Current committed docs remain sanitized and exclude raw customer rows/site lists
+- Validation evidence is green for the touched discovery pipeline and broader relevant packet subset
+- Remaining closeout gates are operational rather than implementation-related:
+  - create `docs/pr19-all-mw-du-discovery/COMPLETED`
+  - push `feat/all-mw-du-discovery-matrix`
+  - open the required draft PR against `main`
+  - ensure the PR body carries the required summary, safety, blocker, and validation sections
 
 ## Open Blockers
 
 - Full mission completion still requires:
-  - final completion audit across every acceptance gate
   - `COMPLETED` marker creation
   - push of `feat/all-mw-du-discovery-matrix`
   - draft PR creation with the required title/body sections

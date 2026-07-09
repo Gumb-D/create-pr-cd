@@ -33,7 +33,8 @@
   - define the matrix schema, implement the new discovery-only builder, hook it into the refresh pipeline, and generate the first live matrix outputs
   - run the broader required validation set and make the refresh path work with the live local profiler root
   - run the remaining broader relevant discovery-packet test subset and replace the final-report placeholder with a live progress snapshot
-- Next action: perform the final completion audit, finish the report artifacts, and prepare the branch for push and draft PR creation
+  - run the final local completion audit, confirm the remaining gates are operational closeout items only, and synchronize the persistent report/log state
+- Next action: create the `COMPLETED` marker when appropriate, then push the branch and open the required draft PR against `main`
 
 ## Non-Negotiable Constraints
 
