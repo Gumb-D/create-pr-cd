@@ -114,7 +114,7 @@ Discovery-only audit of profile-version and header-hash traceability across gene
 
 - Traceability status: `TRACEABLE`
 - Profile version: `0.1.0`
-- Mapping version: `discovery-2026-07-07-2024-celcomdigi-bau-v1`
+- Mapping version: `approved-2026-07-09-2024-celcomdigi-bau-v1`
 - Observed header hash: `b3677457da49e5de484976c3fdb7ad6f5dc19055f5339ec616407f5cbde89a86`
 - Artifacts:
   - `discovery` `TRACEABLE` version=True mapping=True header_hash=True
