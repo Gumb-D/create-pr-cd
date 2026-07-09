@@ -159,11 +159,24 @@ def _choose_primary_candidate(
         for candidate in report_candidates:
             if _fingerprint_tuple(candidate.get("fingerprint", {})) == seeded_fp:
                 return candidate
-        return dict(seeded[0])
     plausible = [candidate for candidate in report_candidates if _candidate_is_plausible(candidate)]
     if plausible:
         return plausible[0]
     return report_candidates[0] if report_candidates else None
+
+
+def _seeded_fingerprint_missing_reason(
+    profile_field: Mapping[str, Any],
+    report_field: Mapping[str, Any],
+) -> str:
+    seeded = list(profile_field.get("source_candidates", []))
+    if not seeded:
+        return ""
+    seeded_fp = _fingerprint_tuple(seeded[0].get("fingerprint", {}))
+    for candidate in report_field.get("candidates", []):
+        if _fingerprint_tuple(candidate.get("fingerprint", {})) == seeded_fp:
+            return ""
+    return "Seeded fingerprint was not rediscovered in current profiler candidates."
 
 
 def _donor_similarity(
@@ -198,6 +211,7 @@ def _ai_recommendation(
     profile_field: Mapping[str, Any],
     report_field: Mapping[str, Any],
     bridge_field: Mapping[str, Any] | None,
+    seeded_fingerprint_missing_reason: str = "",
 ) -> tuple[str, str, str]:
     plausible_candidates = [candidate for candidate in report_field.get("candidates", []) if _candidate_is_plausible(candidate)]
     status = str(report_field.get("status", "MISSING"))
@@ -205,16 +219,26 @@ def _ai_recommendation(
 
     if not plausible_candidates:
         missing_reason = "No plausible data-sheet candidate was discovered for this field."
+        if seeded_fingerprint_missing_reason:
+            missing_reason = f"{seeded_fingerprint_missing_reason} {missing_reason}".strip()
         if bridge_field:
             missing_reason = f"{missing_reason} {bridge_field.get('review_reason', '')}".strip()
         return "MISSING", "", missing_reason
 
     if status == "AMBIGUOUS" or len(plausible_candidates) > 1:
+        ambiguity_reason = f"{len(plausible_candidates)} plausible candidates still need four-layer review."
+        if seeded_fingerprint_missing_reason:
+            ambiguity_reason = f"{seeded_fingerprint_missing_reason} {ambiguity_reason}".strip()
         return (
             "AMBIGUOUS",
-            f"{len(plausible_candidates)} plausible candidates still need four-layer review.",
+            ambiguity_reason,
             "",
         )
+
+    if seeded_fingerprint_missing_reason:
+        if field_name in REQUIRED_FIELDS:
+            return "MEDIUM_CONFIDENCE_REVIEW", seeded_fingerprint_missing_reason, ""
+        return "LOW_CONFIDENCE_REVIEW", seeded_fingerprint_missing_reason, ""
 
     if seeded_candidates and str(seeded_candidates[0].get("mapping_status", "")) == "APPROVED":
         return "HIGH_CONFIDENCE_MATCH", "", ""
@@ -241,6 +265,8 @@ def _group_bucket(
     unresolved_entry: Mapping[str, Any] | None,
     duplicate_count: int,
 ) -> str:
+    if discovery_entry.get("profile_id") in (None, ""):
+        return "unreadable_or_unsupported_source_format"
     if duplicate_count > 1:
         return "duplicate_or_competing_export_variants"
     if grouping_entry is None:
@@ -312,9 +338,40 @@ def build_matrix_registry(
     export_summaries: List[Dict[str, Any]] = []
 
     for discovery_entry in discovery_registry.get("entries", []):
-        profile_id = str(discovery_entry["profile_id"])
+        raw_profile_id = discovery_entry.get("profile_id")
+        profile_id = str(raw_profile_id) if raw_profile_id is not None else None
+        artifact = profiler_artifacts.get(str(discovery_entry["source_file_name"]))
+        if profile_id is None or profile_id not in profiles:
+            group_id = "unreadable_or_unsupported_source_format"
+            export_summaries.append(
+                {
+                    "profile_id": raw_profile_id,
+                    "du_model_name": discovery_entry["du_model_name"],
+                    "source_file_name": discovery_entry["source_file_name"],
+                    "group_id": group_id,
+                    "group_label": GROUP_METADATA[group_id],
+                    "group_blockers": ["profile_id_missing"],
+                    "recommendation_counts": {},
+                    "status_note": "No profile_id was assigned for this discovery entry, so row-level profile field mapping was skipped.",
+                }
+            )
+            continue
         profile = profiles[profile_id]
-        artifact = profiler_artifacts[str(discovery_entry["source_file_name"])]
+        if artifact is None:
+            group_id = "unreadable_or_unsupported_source_format"
+            export_summaries.append(
+                {
+                    "profile_id": raw_profile_id,
+                    "du_model_name": discovery_entry["du_model_name"],
+                    "source_file_name": discovery_entry["source_file_name"],
+                    "group_id": group_id,
+                    "group_label": GROUP_METADATA[group_id],
+                    "group_blockers": ["profiler_artifact_missing"],
+                    "recommendation_counts": {},
+                    "status_note": "Profiler artifacts were not available for this discovery entry, so row-level profile field mapping was skipped.",
+                }
+            )
+            continue
         header_inventory = artifact["header_inventory"]
         candidates_report = artifact["candidates_report"]
         unresolved_entry = unresolved_by_profile.get(profile_id, {})
@@ -334,6 +391,7 @@ def build_matrix_registry(
             profile_field = profile.get("field_mapping", {}).get(field_name, {})
             report_field = candidates_report.get("fields", {}).get(field_name, {"status": "MISSING", "candidates": []})
             primary_candidate = _choose_primary_candidate(profile_field, report_field)
+            seeded_fingerprint_missing_reason = _seeded_fingerprint_missing_reason(profile_field, report_field)
             header_column = _find_header_column(header_inventory, primary_candidate)
             bridge_field = bridge_entry.get("field_bridges", {}).get(field_name)
             ai_recommendation, ambiguity_reason, missing_reason = _ai_recommendation(
@@ -341,6 +399,7 @@ def build_matrix_registry(
                 profile_field,
                 report_field,
                 bridge_field,
+                seeded_fingerprint_missing_reason,
             )
             recommendation_counts[ai_recommendation] += 1
             fingerprint = dict(primary_candidate.get("fingerprint", {})) if primary_candidate else {
