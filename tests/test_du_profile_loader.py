@@ -71,22 +71,33 @@ class TestDuProfileLoader(unittest.TestCase):
             "Microwave Tx SOW",
         )
 
-    def test_draft_2023_tx_rollout_profile_loads_with_duplicate_status_candidates(self):
+    def test_pr_input_ready_2023_tx_rollout_profile_loads_with_human_approved_pr_critical_mappings(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "tx_rollout_2023_pr_v1.yaml")
-        self.assertEqual(profile["status"], "DRAFT")
-        self.assertEqual(profile["mapping_version"], "discovery-2026-07-06-2023-tx-rollout-v1")
+        self.assertEqual(profile["status"], "PR_INPUT_READY")
+        self.assertEqual(profile["mapping_version"], "approved-2026-07-09-2023-tx-rollout-v1")
         self.assertEqual(profile["identity"]["accepted_du_models"], ["2023 TX Rollout"])
         self.assertEqual(profile["identity"]["accepted_du_model_ids"], ["1027190858144623081"])
         self.assertEqual(profile["identity"]["accepted_view_ids"], ["8530399820526021092"])
-        self.assertEqual(profile["export_structure"]["approved_header_hashes"], [])
+        self.assertEqual(
+            profile["export_structure"]["approved_header_hashes"],
+            ["8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320"],
+        )
         self.assertEqual(profile["export_structure"]["observed_header_hash"], "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320")
         self.assertEqual(
             profile["field_mapping"]["existing_tss_pr_status"]["source_candidates"][0]["fingerprint"]["display_header"],
-            "PR TSS Status",
+            "Subcon PR - TSS",
         )
         self.assertEqual(
             profile["field_mapping"]["existing_ti_pr_status"]["source_candidates"][0]["fingerprint"]["display_header"],
-            "PR TI Status",
+            "Subcon PR - TI",
+        )
+        self.assertEqual(
+            profile["field_mapping"]["tx_sow_raw"]["source_candidates"][0]["fingerprint"]["display_header"],
+            "Post MOCN TX SOW (LLD)",
+        )
+        self.assertEqual(
+            profile["field_mapping"]["tx_sow_raw"]["source_candidates"][1]["fingerprint"]["display_header"],
+            "TX SOW (LLD)",
         )
 
     def test_draft_jendela_profile_loads_with_antenna_and_sow_candidates(self):

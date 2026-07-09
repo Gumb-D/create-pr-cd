@@ -1,8 +1,8 @@
 {
   "profile_id": "tx_rollout_2023_pr_v1",
   "profile_version": "0.1.0",
-  "mapping_version": "discovery-2026-07-06-2023-tx-rollout-v1",
-  "status": "DRAFT",
+  "mapping_version": "approved-2026-07-09-2023-tx-rollout-v1",
+  "status": "PR_INPUT_READY",
   "identity": {
     "project_key": "Malaysia_CelcomDigi_Project",
     "accepted_du_models": ["2023 TX Rollout"],
@@ -14,20 +14,28 @@
     "header_rows": [0, 1, 2, 3],
     "header_hash_policy": "strict",
     "observed_header_hash": "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320",
-    "approved_header_hashes": []
+    "approved_header_hashes": ["8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320"]
   },
   "field_mapping": {
-    "site_code": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|fix00012|1027190858144623081|8530399820526021092", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "customer site code"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim", "uppercase"]},
+    "site_code": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|fix00012|1027190858144623081|8530399820526021092", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "customer site code"}, "mapping_status": "APPROVED"}], "transforms": ["trim", "uppercase"]},
     "site_name": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00015", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "customer site name"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
     "du_key": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "du|du_code", "wbs_stage": "Du", "task_name": "Du", "display_header": "du code"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
-    "tx_sow_raw": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ0656921", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "Plan TX SOW (HLD)"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "tx_sow_raw": {
+      "required": true,
+      "selection_mode": "first_non_empty",
+      "source_candidates": [
+        {"fingerprint": {"field_code": "docata|ZDCSZ0690241", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "Post MOCN TX SOW (LLD)"}, "mapping_status": "APPROVED"},
+        {"fingerprint": {"field_code": "docata|ZDCSZ640870", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "TX SOW (LLD)"}, "mapping_status": "APPROVED"}
+      ],
+      "transforms": ["trim"]
+    },
     "tx_upgrade_scope_raw": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ0656912", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "TX Upgrade Scope"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
-    "region": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|region_name", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "region"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "region": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|region_name", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "region"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "state": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00008", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "Province/State"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
-    "subcontractor_ti": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ640242", "wbs_stage": "Subcon Info", "task_name": "SubCon - TI", "display_header": "SubCon - TI"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "subcontractor_ti": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ640242", "wbs_stage": "Subcon Info", "task_name": "SubCon - TI", "display_header": "SubCon - TI"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "subcontractor_planning": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01027586", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "Subcon - Planning"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
-    "existing_tss_pr_status": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00904401", "wbs_stage": "Acceptance", "task_name": "Microwave", "display_header": "PR TSS Status"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
-    "existing_ti_pr_status": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00904402", "wbs_stage": "Acceptance", "task_name": "Microwave", "display_header": "PR TI Status"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "existing_tss_pr_status": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ641766", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Subcon PR - TSS"}, "mapping_status": "APPROVED"}], "transforms": ["normalize_pr_reference_status"]},
+    "existing_ti_pr_status": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ641765", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Subcon PR - TI"}, "mapping_status": "APPROVED"}], "transforms": ["normalize_pr_reference_status"]},
     "latitude": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00013", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "Latitude (North Plus South Minus)"}, "mapping_status": "UNVERIFIED"}], "transforms": ["parse_decimal"]},
     "longitude": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00010", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "Longitude (East Plus West Minus)"}, "mapping_status": "UNVERIFIED"}], "transforms": ["parse_decimal"]},
     "antenna_size_ne": {"required": false, "source_candidates": [], "transforms": ["trim"]},
@@ -42,8 +50,9 @@
     "reject_ambiguous_source_mapping": true,
     "require_evidence_for_every_canonical_field": true,
     "profile_notes": [
-      "Source candidates were populated from local discovery-only profiler outputs and remain UNVERIFIED.",
-      "This export currently offers the strongest duplicate-prevention evidence among the untracked TX-family files, but no mapping or header hash is approved for production use.",
+      "Only the six human-approved PR-critical mappings are promoted for PR input review; all other fields remain discovery-only or optional.",
+      "TX SOW uses the approved LLD override columns in fail-closed priority order: Post MOCN TX SOW (LLD), then TX SOW (LLD).",
+      "This profile is PR_INPUT_READY for non-production validation only; it must not enable ECC output or skip header-hash validation.",
       "Antenna fields are currently absent from the discovery shortlist and must not be inferred from unrelated columns.",
       "This profile is not production-ready and must never enable ECC generation."
     ]

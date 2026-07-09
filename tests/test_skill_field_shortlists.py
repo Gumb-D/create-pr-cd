@@ -1,3 +1,4 @@
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -5,7 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from build_skill_field_shortlists import build_shortlist_registry, shortlist_skill_fields
+from build_skill_field_shortlists import shortlist_skill_fields
 
 
 class TestSkillFieldShortlists(unittest.TestCase):
@@ -130,19 +131,8 @@ class TestSkillFieldShortlists(unittest.TestCase):
         self.assertEqual(shortlists["existing_ti_pr"][0]["fingerprint"]["display_header"], "PR TI Status")
 
     def test_generated_registry_includes_zte_bau_and_usp_priority_entries(self):
-        registry = build_shortlist_registry(
-            [
-                ROOT / "output" / "du-20260706-profile" / "A-P202202168750_D002-TX_Mini_Project-TX_Mini_PR_PO_View-20260703160246",
-                ROOT / "output" / "du-20260706-profile" / "A-P202211283695_D002-MW_EOS_Swap-MW_EOS_Swap_Rollout-20260703160307",
-                ROOT / "output" / "du-20260706-profile" / "A-P202202168750_D002-2023_TX_Rollout-TX_Rollout_PR_PO_View-20260703160446",
-                ROOT / "output" / "du-20260706-profile" / "A-P202202168750_D002-Jendela_TX_Migration-Migration_Rollout_TX_-20260703160246",
-                ROOT / "output" / "du-20260706-profile" / "A-P202211283695_D002-ZTE_TX_MINI-ZTE_TX_MINI_v1-20260703160312",
-                ROOT / "output" / "du-20260706-profile" / "A-P202202168750_D002-2023_Celcomdigi_BAU-2023_Celcomdigi_BAU__TX_-20260703160239",
-                ROOT / "output" / "du-20260706-profile" / "A-P202202168750_D002-2024_Celcomdigi_BAU-2024_BAU_Rollout_TX_-20260703160253",
-                ROOT / "output" / "du-20260706-profile" / "A-P202202168750_D002-Celcomdigi_USP-Celcomdigi_USP_TX_-20260703160234",
-                ROOT / "output" / "du-20260706-profile" / "A-P202202168750_D002-CD_consolidation_2023-CD_2023_Decom_Site-20260703160415",
-                ROOT / "output" / "du-20260706-profile" / "A-P202202168750_D002-CD_consolidation_2023-CD_consolidation_2023_Rollout-20260703160351",
-            ]
+        registry = json.loads(
+            (ROOT / "config" / "registries" / "mw_du_priority_skill_field_shortlists.yaml").read_text(encoding="utf-8")
         )
         source_names = [entry["source_file_name"] for entry in registry["entries"]]
         self.assertIn("A-P202211283695_D002-ZTE TX MINI-ZTE TX MINI v1-20260703160312.xlsx", source_names)

@@ -28,9 +28,9 @@
       "source_file_name": "A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx",
       "coverage_status": "TRACKED_DRAFT_PROFILE",
       "profile_id": "tx_rollout_2023_pr_v1",
-      "profile_status": "DRAFT",
+      "profile_status": "PR_INPUT_READY",
       "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-06-2023-tx-rollout-v1",
+      "mapping_version": "approved-2026-07-09-2023-tx-rollout-v1",
       "observed_header_hash": "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320",
       "missing_skill_fields": [
         "antenna_size_ne",

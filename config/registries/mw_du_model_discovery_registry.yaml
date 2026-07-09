@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "registry_type": "discovery_only",
-  "generated_from": "output\\du-20260706-profile",
+  "generated_from": "Info\\reference\\du-20260706-profile",
   "entries": [
     {
       "project_key": "Malaysia_CelcomDigi_Project",
@@ -57,9 +57,9 @@
         "drop_down"
       ],
       "profile_id": "tx_rollout_2023_pr_v1",
-      "profile_status": "DRAFT",
+      "profile_status": "PR_INPUT_READY",
       "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-06-2023-tx-rollout-v1",
+      "mapping_version": "approved-2026-07-09-2023-tx-rollout-v1",
       "pr_input_status": "PR_INPUT_QUARANTINED",
       "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
       "skill_field_presence": {

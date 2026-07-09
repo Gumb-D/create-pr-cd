@@ -26,10 +26,21 @@ def evaluate_transition(readiness_entry: Mapping[str, Any], target_status: str) 
     non_production_lifecycle_blockers = [reason for reason in lifecycle_blockers if reason != "PROFILE_NOT_PRODUCTION"]
     missing_required_fields = list(blockers.get("missing_required_fields", []))
     unapproved_required_fields = list(blockers.get("unapproved_required_fields", []))
-    competing_candidate_fields = list(blockers.get("competing_candidate_fields", []))
-    single_candidate_unverified_fields = list(blockers.get("single_candidate_unverified_fields", []))
-    no_profile_selection_fields = list(blockers.get("no_profile_selection_fields", []))
-    shortlist_mismatch_fields = list(blockers.get("shortlist_mismatch_fields", []))
+    competing_candidate_fields = list(
+        blockers.get("required_competing_candidate_fields", blockers.get("competing_candidate_fields", []))
+    )
+    single_candidate_unverified_fields = list(
+        blockers.get(
+            "required_single_candidate_unverified_fields",
+            blockers.get("single_candidate_unverified_fields", []),
+        )
+    )
+    no_profile_selection_fields = list(
+        blockers.get("required_no_profile_selection_fields", blockers.get("no_profile_selection_fields", []))
+    )
+    shortlist_mismatch_fields = list(
+        blockers.get("required_shortlist_mismatch_fields", blockers.get("shortlist_mismatch_fields", []))
+    )
     cross_model_bridge_fields = list(blockers.get("cross_model_bridge_fields", []))
 
     denied_reasons: list[str] = []

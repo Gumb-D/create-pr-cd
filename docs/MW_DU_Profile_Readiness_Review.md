@@ -40,13 +40,13 @@ Discovery-only summary of why the current priority DU profiles remain blocked fr
 ## tx_rollout_2023_pr_v1 (2023 TX Rollout)
 
 - Readiness status: `DISCOVERY_ONLY_BLOCKED`
-- Profile status: `DRAFT`
+- Profile status: `PR_INPUT_READY`
 - Profile version: `0.1.0`
-- Mapping version: `discovery-2026-07-06-2023-tx-rollout-v1`
+- Mapping version: `approved-2026-07-09-2023-tx-rollout-v1`
 - Observed header hash: `8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320`
-- Approved header hashes: `0`
-- Overall blockers: `PROFILE_NOT_PRODUCTION, NO_APPROVED_HEADER_HASH, REQUIRED_FIELDS_NOT_APPROVED, COMPETING_SHORTLIST_CANDIDATES, UNVERIFIED_SINGLE_CANDIDATE_FIELDS`
-- Competing candidate fields: `existing_ti_pr_status, existing_tss_pr_status, subcontractor_planning, subcontractor_ti, tx_sow_raw`
+- Approved header hashes: `1`
+- Overall blockers: `PROFILE_NOT_PRODUCTION, COMPETING_SHORTLIST_CANDIDATES, UNVERIFIED_SINGLE_CANDIDATE_FIELDS`
+- Competing candidate fields: `subcontractor_planning`
 - Release prerequisites:
   - Approve the DU model identity and four-layer source mappings.
   - Approve at least one header hash for the profile version.

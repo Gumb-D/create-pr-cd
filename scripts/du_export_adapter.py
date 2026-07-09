@@ -53,6 +53,17 @@ def _apply_transforms(value: Any, transforms: list[str]) -> tuple[Any, str]:
     return result, "+".join(applied) if applied else "none"
 
 
+def _select_first_non_empty_match(matches: list[Mapping[str, Any]], raw_values_by_fingerprint: Mapping[str, Any]) -> Mapping[str, Any] | None:
+    for source in matches:
+        raw_value = raw_values_by_fingerprint.get(fingerprint_key(source["fingerprint"]))
+        if isinstance(raw_value, str):
+            if raw_value.strip():
+                return source
+        elif raw_value not in (None, ""):
+            return source
+    return None
+
+
 def resolve_profile_field_mappings(header_inventory: Mapping[str, Any], profile: Mapping[str, Any]) -> Dict[str, Any]:
     """Resolve only exact four-layer fingerprints; never by column index or aliases."""
     available = {}
@@ -73,6 +84,8 @@ def resolve_profile_field_mappings(header_inventory: Mapping[str, Any], profile:
             status = "RESOLVED"
         elif len(matches) == 0:
             status = "MISSING"
+        elif config.get("selection_mode") == "first_non_empty":
+            status = "RESOLVED"
         else:
             status = "AMBIGUOUS"
         results[canonical_field] = {"status": status, "matches": matches}
@@ -114,10 +127,18 @@ def build_canonical_site_record(
             continue
         if status != "RESOLVED":
             continue
-        source = mapping["matches"][0]
+        config = profile.get("field_mapping", {}).get(canonical_field, {})
+        matches = list(mapping.get("matches", []))
+        if not matches:
+            continue
+        if config.get("selection_mode") == "first_non_empty":
+            source = _select_first_non_empty_match(matches, raw_values_by_fingerprint)
+            if source is None:
+                continue
+        else:
+            source = matches[0]
         key = fingerprint_key(source["fingerprint"])
         raw_value = raw_values_by_fingerprint.get(key)
-        config = profile.get("field_mapping", {}).get(canonical_field, {})
         transformed_value, transformation = _apply_transforms(raw_value, list(config.get("transforms", [])))
         path = FIELD_PATHS.get(canonical_field)
         if path:
