@@ -32,7 +32,8 @@
   - inspect the discovery packet builders and select the narrowest safe implementation path
   - define the matrix schema, implement the new discovery-only builder, hook it into the refresh pipeline, and generate the first live matrix outputs
   - run the broader required validation set and make the refresh path work with the live local profiler root
-- Next action: run the remaining broader relevant validation subset, update the final report artifacts, and prepare the branch for push and draft PR creation
+  - run the remaining broader relevant discovery-packet test subset and replace the final-report placeholder with a live progress snapshot
+- Next action: perform the final completion audit, finish the report artifacts, and prepare the branch for push and draft PR creation
 
 ## Non-Negotiable Constraints
 

@@ -12,22 +12,20 @@
   "heartbeat_automation_id": "create-pr-cd-pr19-all-du-discovery-hourly-follow-up",
   "heartbeat_rrule": "FREQ=HOURLY;INTERVAL=1",
   "thread_goal_objective": "Complete Issue #19 in C:\\dev\\create-pr-cd as a discovery-only PR by building the all-MW-DU discovery and AI mapping recommendation matrix on feat/all-mw-du-discovery-matrix, using persistent state and bounded autonomous continuation steps.",
-  "bounded_step_counter": 4,
+  "bounded_step_counter": 5,
   "current_status": "implementation_in_progress",
   "current_step": {
-    "id": "step-004",
-    "name": "Run broader validation and make the refresh path work with the live local profiler root",
+    "id": "step-005",
+    "name": "Run the broader discovery-packet suite and upgrade the final report snapshot",
     "type": "validation",
     "status": "completed",
     "started_on": "2026-07-09",
     "completed_on": "2026-07-09",
     "notes": [
-      "Ran the broader required validation commands for compile, unit tests, and ignore-guard checks.",
-      "Confirmed the local raw profiler tree and sample raw workbook remain ignored by Git.",
-      "Found and fixed a refresh-path integration gap: the live checkout stores profiler artifacts under Info/reference/du-20260706-profile when output/du-20260706-profile is absent.",
-      "Added fallback coverage in tests/test_refresh_mw_du_discovery_packet.py and reran the updated test subset successfully.",
-      "Executed python scripts/refresh_mw_du_discovery_packet.py successfully after the fallback fix.",
-      "Did not carry forward unrelated regenerated-doc churn outside the intended PR #19 deliverables."
+      "Ran the broader relevant discovery-packet test subset and found nine path-assumption failures in the discovery registry tests.",
+      "Added find_profiler_root() fallback support to scripts/build_du_discovery_registry.py and aligned tests/test_du_discovery_registry.py with the live checkout layout.",
+      "Reran the broader suite successfully: Ran 68 tests OK.",
+      "Upgraded docs/pr19-all-mw-du-discovery/final-report.md from a placeholder to a live progress snapshot with branch, commit, output, validation, safety, and blocker details."
     ]
   },
   "repo_baseline": {
@@ -71,7 +69,7 @@
       "mw_eos_swap_pr_v1"
     ]
   },
-  "next_action": "Run the remaining broader relevant validation subset, update the final report artifacts, and prepare the branch for push and draft PR creation.",
+  "next_action": "Perform the final completion audit, finish the report artifacts, and prepare the branch for push and draft PR creation.",
   "remaining_acceptance_gates": [
     "inventory all available local DU reference files for this issue run",
     "group DU models by similarity using explicit evidence",

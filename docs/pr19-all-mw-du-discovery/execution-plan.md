@@ -63,7 +63,8 @@ The safest path is to add one new discovery-only builder and wire it into the ex
 5. Completed: add targeted tests for the new builder and refresh orchestration.
 6. Completed: generate the first committed sanitized doc and local-only matrix outputs from the real profiler artifacts.
 7. Completed: run the broader required validation commands and make the refresh path work with the live local profiler root.
-8. Run the remaining broader relevant test subset, capture final validation evidence, and prepare the final report / draft PR materials.
+8. Completed: run the remaining broader relevant test subset and upgrade the final-report artifact to a live progress snapshot.
+9. Perform the final completion audit, finish the report artifacts, create `COMPLETED`, push the branch, and open the draft PR.
 
 ## Decision Rules
 
@@ -75,4 +76,4 @@ The safest path is to add one new discovery-only builder and wire it into the ex
 
 ## Next Bounded Step
 
-Run the remaining broader relevant validation subset, update the final report artifacts, and prepare the branch for push and draft PR creation.
+Perform the final completion audit against every acceptance gate, then finish the branch for push and draft PR creation.

@@ -80,6 +80,21 @@
 - The refresh path now works in the current checkout with the live profiler artifacts under `Info/reference/du-20260706-profile`
 - No additional evidence-backed heuristic bug was identified during this bounded validation pass
 
+## 2026-07-09 Bounded Step 5
+
+- `python -m unittest tests.test_refresh_mw_du_discovery_packet tests.test_du_discovery_registry tests.test_du_export_coverage_review tests.test_missing_field_bridge_review tests.test_profile_readiness_review tests.test_profile_action_queue tests.test_profile_review_matrix tests.test_profile_traceability_audit tests.test_discovery_packet_consistency tests.test_profile_status_consistency tests.test_profile_transition_review tests.test_profile_deprecation_review tests.test_profile_rollback_readiness`
+  - First result: failed with `9` discovery-registry path errors because the broader suite still assumed `output/du-20260706-profile`
+  - Fix applied: added `find_profiler_root()` fallback support to `scripts/build_du_discovery_registry.py` and aligned `tests/test_du_discovery_registry.py`
+  - Final result: `Ran 68 tests` `OK`
+- `python -m py_compile scripts/build_du_discovery_registry.py`
+  - Result: success
+
+## Broader-Suite Conclusion
+
+- The broader relevant discovery-packet subset is now green in the live checkout
+- Both the refresh script and the discovery registry builder now handle the local profiler root layout consistently
+- The final-report artifact has been upgraded from a placeholder to a live progress snapshot with current counts, commits, safety notes, and open blockers
+
 ## Validation Still Required
 
 - `git diff --name-status origin/main..HEAD`

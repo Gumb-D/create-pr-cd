@@ -24,3 +24,5 @@
   - Rationale: broader validation showed the live checkout cannot execute the end-to-end refresh path without that fallback.
 - Decision: do not carry forward regenerated changes to unrelated tracked review artifacts when they are not part of the PR #19 deliverables.
   - Rationale: the refresh validation should strengthen evidence for this mission without broadening the PR scope with unrelated generated-doc churn.
+- Decision: add the local-profiler-root fallback to `scripts/build_du_discovery_registry.py` rather than patching around the path assumption only in tests.
+  - Rationale: the broader live validation showed the builder itself, not just the refresh wrapper, needs to understand the checkout's current artifact layout.
