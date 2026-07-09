@@ -62,8 +62,8 @@ The safest path is to add one new discovery-only builder and wire it into the ex
 4. Completed: implement `build_all_du_mapping_recommendation_matrix.py` and wire it into `refresh_mw_du_discovery_packet.py`.
 5. Completed: add targeted tests for the new builder and refresh orchestration.
 6. Completed: generate the first committed sanitized doc and local-only matrix outputs from the real profiler artifacts.
-7. Run broader verification commands, inspect the generated matrix quality, and tighten recommendation/grouping heuristics where the first pass is too coarse.
-8. Prepare final report, create `COMPLETED`, push branch, and open the draft PR.
+7. Completed: run the broader required validation commands and make the refresh path work with the live local profiler root.
+8. Run the remaining broader relevant test subset, capture final validation evidence, and prepare the final report / draft PR materials.
 
 ## Decision Rules
 
@@ -75,4 +75,4 @@ The safest path is to add one new discovery-only builder and wire it into the ex
 
 ## Next Bounded Step
 
-Review the generated matrix outputs, refine any weak grouping or blocker heuristics, and run the broader validation set for the updated discovery pipeline.
+Run the remaining broader relevant validation subset, update the final report artifacts, and prepare the branch for push and draft PR creation.

@@ -20,3 +20,7 @@
   - Rationale: this checkout stores the live profiler artifacts under the ignored local reference tree, and the builder must follow the current evidence path rather than a preferred historical location.
 - Decision: keep the row-level matrix JSON and Markdown under ignored `output/`, while committing only the sanitized summary doc and the schema.
   - Rationale: the full matrix is still discovery-only working material, while the committed summary remains smaller and easier to review for safety.
+- Decision: make `scripts/refresh_mw_du_discovery_packet.py` fall back to `Info/reference/du-20260706-profile` when `output/du-20260706-profile` is absent.
+  - Rationale: broader validation showed the live checkout cannot execute the end-to-end refresh path without that fallback.
+- Decision: do not carry forward regenerated changes to unrelated tracked review artifacts when they are not part of the PR #19 deliverables.
+  - Rationale: the refresh validation should strengthen evidence for this mission without broadening the PR scope with unrelated generated-doc churn.

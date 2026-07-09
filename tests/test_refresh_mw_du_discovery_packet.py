@@ -6,10 +6,23 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from refresh_mw_du_discovery_packet import refresh_discovery_packet
+from refresh_mw_du_discovery_packet import _find_profiler_root, refresh_discovery_packet
 
 
 class TestRefreshMwDuDiscoveryPacket(unittest.TestCase):
+    def test_find_profiler_root_falls_back_to_info_reference(self):
+        with (
+            patch("refresh_mw_du_discovery_packet.Path.exists", autospec=True) as exists,
+        ):
+            def fake_exists(path_self):
+                path_text = str(path_self).replace("/", "\\")
+                return path_text == "Info\\reference\\du-20260706-profile"
+
+            exists.side_effect = fake_exists
+            root = _find_profiler_root()
+
+        self.assertEqual(str(root).replace("/", "\\"), "Info\\reference\\du-20260706-profile")
+
     def test_refresh_runs_builders_and_guards_in_order(self):
         calls = []
 

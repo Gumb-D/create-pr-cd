@@ -22,8 +22,15 @@ from check_profile_status_consistency import validate_profiles_against_transitio
 from check_discovery_packet_consistency import validate_live_discovery_packets
 
 
+def _find_profiler_root() -> Path:
+    for candidate in (Path("output/du-20260706-profile"), Path("Info/reference/du-20260706-profile")):
+        if candidate.exists():
+            return candidate
+    raise FileNotFoundError("No DU profiler artifact root found under output/ or Info/reference/.")
+
+
 def refresh_discovery_packet() -> None:
-    profile_root = Path("output/du-20260706-profile")
+    profile_root = _find_profiler_root()
     profile_paths = [
         Path("config/du_profiles/tx_mini_pr_v1.yaml"),
         Path("config/du_profiles/mw_eos_swap_pr_v1.yaml"),

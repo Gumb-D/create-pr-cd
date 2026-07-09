@@ -59,6 +59,27 @@
   - `output/all_du_mapping_recommendation_matrix.md`
 - Follow-up review is still needed for recommendation and grouping quality; the first pass is functional but intentionally conservative
 
+## 2026-07-09 Bounded Step 4
+
+- `python -m py_compile scripts/discover_local_du_references.py scripts/build_all_du_mapping_recommendation_matrix.py scripts/refresh_mw_du_discovery_packet.py`
+  - Result: success
+- `python -m unittest tests.test_discover_local_du_references tests.test_all_du_mapping_recommendation_matrix tests.test_refresh_mw_du_discovery_packet`
+  - Result: `Ran 5 tests` `OK`
+- `git check-ignore -v Info/reference/du-20260706-profile/`
+  - Result: ignored by `.gitignore` rule `Info/reference/**`
+- `git check-ignore -v "Info/reference/du_exports/A-P202211283695_D002-MW EOS Swap-MW EOS Swap Rollout-20260703160307.xlsx"`
+  - Result: ignored by `.gitignore` rule `Info/reference/**`
+- `python scripts/refresh_mw_du_discovery_packet.py`
+  - Result: initially failed because the refresh path only looked under `output/du-20260706-profile`; fixed with local-root fallback and reran successfully
+- `python -m unittest tests.test_discover_local_du_references tests.test_all_du_mapping_recommendation_matrix tests.test_refresh_mw_du_discovery_packet`
+  - Result after fallback fix: `Ran 5 tests` `OK`
+
+## Validation Conclusion
+
+- The broader required validation set used so far is green for the updated discovery pipeline
+- The refresh path now works in the current checkout with the live profiler artifacts under `Info/reference/du-20260706-profile`
+- No additional evidence-backed heuristic bug was identified during this bounded validation pass
+
 ## Validation Still Required
 
 - `git diff --name-status origin/main..HEAD`

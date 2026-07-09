@@ -31,7 +31,8 @@
   - initialize persistent mission state and execution scaffold
   - inspect the discovery packet builders and select the narrowest safe implementation path
   - define the matrix schema, implement the new discovery-only builder, hook it into the refresh pipeline, and generate the first live matrix outputs
-- Next action: review the generated matrix quality, tighten any weak heuristics, and run the broader validation set
+  - run the broader required validation set and make the refresh path work with the live local profiler root
+- Next action: run the remaining broader relevant validation subset, update the final report artifacts, and prepare the branch for push and draft PR creation
 
 ## Non-Negotiable Constraints
 

@@ -12,22 +12,22 @@
   "heartbeat_automation_id": "create-pr-cd-pr19-all-du-discovery-hourly-follow-up",
   "heartbeat_rrule": "FREQ=HOURLY;INTERVAL=1",
   "thread_goal_objective": "Complete Issue #19 in C:\\dev\\create-pr-cd as a discovery-only PR by building the all-MW-DU discovery and AI mapping recommendation matrix on feat/all-mw-du-discovery-matrix, using persistent state and bounded autonomous continuation steps.",
-  "bounded_step_counter": 3,
+  "bounded_step_counter": 4,
   "current_status": "implementation_in_progress",
   "current_step": {
-    "id": "step-003",
-    "name": "Implement the first all-DU matrix builder pass and generate live outputs",
-    "type": "implementation",
+    "id": "step-004",
+    "name": "Run broader validation and make the refresh path work with the live local profiler root",
+    "type": "validation",
     "status": "completed",
     "started_on": "2026-07-09",
     "completed_on": "2026-07-09",
     "notes": [
-      "Added the committed schema at docs/pr19-all-mw-du-discovery/mapping-review-schema.json.",
-      "Created scripts/build_all_du_mapping_recommendation_matrix.py and wired it into scripts/refresh_mw_du_discovery_packet.py.",
-      "Added targeted unit coverage for the new builder and refresh orchestration updates.",
-      "Confirmed the active profiler artifacts live under Info/reference/du-20260706-profile in this checkout.",
-      "Fixed an empty-source-candidates edge case found during the first live run.",
-      "Generated the first committed sanitized summary doc plus ignored local row-level matrix outputs for 10 exports and 180 rows."
+      "Ran the broader required validation commands for compile, unit tests, and ignore-guard checks.",
+      "Confirmed the local raw profiler tree and sample raw workbook remain ignored by Git.",
+      "Found and fixed a refresh-path integration gap: the live checkout stores profiler artifacts under Info/reference/du-20260706-profile when output/du-20260706-profile is absent.",
+      "Added fallback coverage in tests/test_refresh_mw_du_discovery_packet.py and reran the updated test subset successfully.",
+      "Executed python scripts/refresh_mw_du_discovery_packet.py successfully after the fallback fix.",
+      "Did not carry forward unrelated regenerated-doc churn outside the intended PR #19 deliverables."
     ]
   },
   "repo_baseline": {
@@ -71,7 +71,7 @@
       "mw_eos_swap_pr_v1"
     ]
   },
-  "next_action": "Review the generated matrix quality, refine any weak grouping or blocker heuristics, and run the broader validation set for the updated discovery pipeline.",
+  "next_action": "Run the remaining broader relevant validation subset, update the final report artifacts, and prepare the branch for push and draft PR creation.",
   "remaining_acceptance_gates": [
     "inventory all available local DU reference files for this issue run",
     "group DU models by similarity using explicit evidence",
