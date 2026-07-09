@@ -30,3 +30,5 @@
   - Rationale: the local completion audit is now green for the implemented scope, so additional code churn would widen risk without helping the remaining gates.
 - Decision: commit the completion marker and the exact draft PR body as repository artifacts before pushing.
   - Rationale: this preserves the completion claim and PR review framing in the same auditable history as the discovery-only implementation.
+- Decision: flip the persistent mission state to completed after the draft PR is verified live on GitHub.
+  - Rationale: the wake-up no-op rule should only activate once the local and external completion gates are both proven.

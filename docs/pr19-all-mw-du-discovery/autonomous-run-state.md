@@ -35,7 +35,8 @@
   - run the remaining broader relevant discovery-packet test subset and replace the final-report placeholder with a live progress snapshot
   - run the final local completion audit, confirm the remaining gates are operational closeout items only, and synchronize the persistent report/log state
   - create the `COMPLETED` marker and the required draft PR body from current validated evidence
-- Next action: push the branch and open the required draft PR against `main`
+  - push the branch, open the required draft PR against `main`, and verify the live GitHub state
+- Next action: `NO_OP_COMPLETED`
 
 ## Non-Negotiable Constraints
 

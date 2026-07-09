@@ -97,8 +97,7 @@
 
 ## Validation Still Required
 
-- push the branch
-- open the draft PR
+- none for Issue #19 closeout gates
 
 ## 2026-07-09 Bounded Step 7
 
@@ -106,6 +105,16 @@
   - Result: completion marker now exists for the local mission state
 - Created `docs/pr19-all-mw-du-discovery/draft-pr-body.md`
   - Result: required draft PR summary, safety, grouping, blocker, and validation sections are captured from current evidence
+- `git push -u origin feat/all-mw-du-discovery-matrix`
+  - Result: success; branch now tracks `origin/feat/all-mw-du-discovery-matrix`
+- `gh pr create --draft --base main --head feat/all-mw-du-discovery-matrix --title "feat(du): add all-MW-DU discovery mapping matrix" --body-file "docs/pr19-all-mw-du-discovery/draft-pr-body.md"`
+  - Result: created draft PR `#22` `https://github.com/Gumb-D/create-pr-cd/pull/22`
+- `gh pr view 22 --json url,state,isDraft,title,body,baseRefName,headRefName`
+  - Result: verified `OPEN` draft PR against `main` with the required title/body sections present
+
+## Completion Conclusion
+
+- The branch is pushed, the draft PR is open, the completion marker exists, and the repo-local verification evidence remains green
 
 ## 2026-07-09 Bounded Step 6
 

@@ -2,6 +2,8 @@
 
 This report is the completion snapshot for Issue `#19`. The discovery-only implementation, validation evidence, and closeout artifacts are recorded here for PR review and audit.
 
+- Draft PR: `#22` [feat(du): add all-MW-DU discovery mapping matrix](https://github.com/Gumb-D/create-pr-cd/pull/22)
+
 ## Branch
 
 - Branch: `feat/all-mw-du-discovery-matrix`
@@ -119,10 +121,8 @@ This report is the completion snapshot for Issue `#19`. The discovery-only imple
 
 ## Open Blockers
 
-- Full mission completion still requires:
-  - push of `feat/all-mw-du-discovery-matrix`
-  - draft PR creation with the required title/body sections
-- The discovery matrix itself is still recommendation-only and needs human review for ambiguous and missing rows before any follow-up implementation issue/PR is chosen
+- Mission closeout gates are satisfied.
+- The discovery matrix remains recommendation-only and still needs human review for ambiguous and missing rows before any follow-up implementation issue/PR is chosen.
 
 ## Recommended Next PR / Issue
 
