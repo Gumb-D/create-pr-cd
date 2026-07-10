@@ -26,8 +26,27 @@ class TestCanonicalSiteValidator(unittest.TestCase):
         record = empty_canonical_site_record()
         record["identity"].update({"project_key": "CelcomDigi_MW", "du_model_name": "MW EOS Swap", "du_model_id": "5440935430300168497", "view_id": "7476572371505372260", "source_file_name": "source.xlsx", "source_file_hash": "source-hash", "header_hash": "header-hash", "source_row_number": 5})
         record["site"].update({"site_code": "A0001", "site_name": "Site A", "du_key": "A0001"})
-        record["pr_context"].update({"tx_sow_raw": "MW Swap", "tx_sow_normalized": "MW Swap", "region": "Northern", "subcontractor_ti": "GTSB", "existing_tss_pr_status": "", "existing_ti_pr_status": ""})
-        required = ["site_code", "tx_sow_raw", "tx_sow_normalized", "region", "subcontractor_ti", "existing_tss_pr_status", "existing_ti_pr_status"]
+        record["pr_context"].update(
+            {
+                "tx_sow_raw": "MW Swap",
+                "tx_sow_normalized": "MW Swap",
+                "region": "Northern",
+                "subcontractor_ti": "GTSB",
+                "subcontractor_tss": "GTSB",
+                "existing_tss_pr_status": "",
+                "existing_ti_pr_status": "",
+            }
+        )
+        required = [
+            "site_code",
+            "tx_sow_raw",
+            "tx_sow_normalized",
+            "region",
+            "subcontractor_ti",
+            "subcontractor_tss",
+            "existing_tss_pr_status",
+            "existing_ti_pr_status",
+        ]
         record["source_evidence"]["fields"] = {field: {"source_header_fingerprint": fingerprint(field), "source_value": record["site"].get(field) or record["pr_context"].get(field), "transformation": "trim"} for field in required}
         record["validation"].update({"profile_id": "mw_eos_swap_pr_v1", "profile_version": "1.0.0", "mapping_version": "test-mapping-v1"})
         return record
@@ -37,6 +56,42 @@ class TestCanonicalSiteValidator(unittest.TestCase):
 
     def test_complete_record_is_ready(self):
         self.assertEqual(validate_canonical_site_record(self._record(), "TI")["classification"], PR_INPUT_READY)
+
+    def test_tss_scope_accepts_subcontractor_tss_with_blank_ti(self):
+        record = self._record()
+        record["pr_context"]["subcontractor_ti"] = ""
+        record["source_evidence"]["fields"]["subcontractor_ti"]["source_value"] = ""
+        self.assertEqual(validate_canonical_site_record(record, "TSS")["classification"], PR_INPUT_READY)
+
+    def test_tss_scope_rejects_blank_subcontractor_tss_even_when_ti_present(self):
+        record = self._record()
+        record["pr_context"]["subcontractor_tss"] = ""
+        record["source_evidence"]["fields"]["subcontractor_tss"]["source_value"] = ""
+        result = validate_canonical_site_record(record, "TSS")
+        self.assertEqual(result["classification"], PR_INPUT_INCOMPLETE)
+        self.assertIn("MISSING_PR_CRITICAL_FIELD:subcontractor_tss", result["blocking_reasons"])
+
+    def test_tss_scope_requires_subcontractor_tss_source_evidence(self):
+        record = self._record()
+        record["source_evidence"]["fields"].pop("subcontractor_tss")
+        result = validate_canonical_site_record(record, "TSS")
+        self.assertEqual(result["classification"], PR_INPUT_INCOMPLETE)
+        self.assertIn("MISSING_SOURCE_EVIDENCE:subcontractor_tss", result["blocking_reasons"])
+
+    def test_ti_scope_rejects_blank_subcontractor_ti_even_when_tss_present(self):
+        record = self._record()
+        record["pr_context"]["subcontractor_ti"] = ""
+        record["source_evidence"]["fields"]["subcontractor_ti"]["source_value"] = ""
+        result = validate_canonical_site_record(record, "TI")
+        self.assertEqual(result["classification"], PR_INPUT_INCOMPLETE)
+        self.assertIn("MISSING_PR_CRITICAL_FIELD:subcontractor_ti", result["blocking_reasons"])
+
+    def test_ti_scope_requires_subcontractor_ti_source_evidence(self):
+        record = self._record()
+        record["source_evidence"]["fields"].pop("subcontractor_ti")
+        result = validate_canonical_site_record(record, "TI")
+        self.assertEqual(result["classification"], PR_INPUT_INCOMPLETE)
+        self.assertIn("MISSING_SOURCE_EVIDENCE:subcontractor_ti", result["blocking_reasons"])
 
     def test_missing_critical_field_is_incomplete(self):
         record = self._record()

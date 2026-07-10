@@ -7,7 +7,7 @@
       "right_profile_id": "zte_tx_mini_pr_v1",
       "left_profile_version": "0.1.0",
       "right_profile_version": "0.1.0",
-      "left_mapping_version": "approved-2026-07-09-mw-eos-swap-v1",
+      "left_mapping_version": "approved-2026-07-10-mw-eos-swap-v2",
       "right_mapping_version": "discovery-2026-07-06-zte-tx-mini-v1",
       "left_observed_header_hash": "46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a",
       "right_observed_header_hash": "a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810",
@@ -112,6 +112,12 @@
           "left_display_header": "Subcon - TI",
           "right_display_header": "Subcon - TI",
           "review_reason": "The two MW profiles currently select different source columns for the same canonical field."
+        },
+        "subcontractor_tss": {
+          "comparison_status": "ONE_SIDE_MISSING",
+          "left_display_header": "Subcon - TSS",
+          "right_display_header": null,
+          "review_reason": "One profile has a selected source candidate while the other still lacks one."
         },
         "tx_sow_details": {
           "comparison_status": "MATCHING_SELECTED_SOURCE",

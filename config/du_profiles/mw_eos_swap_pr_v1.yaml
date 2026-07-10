@@ -1,7 +1,7 @@
 {
   "profile_id": "mw_eos_swap_pr_v1",
   "profile_version": "0.1.0",
-  "mapping_version": "approved-2026-07-09-mw-eos-swap-v1",
+  "mapping_version": "approved-2026-07-10-mw-eos-swap-v2",
   "status": "PR_INPUT_READY",
   "identity": {
     "project_key": "CelcomDigi_MW",
@@ -24,6 +24,7 @@
     "tx_upgrade_scope_raw": {"required": false, "source_candidates": [], "transforms": ["trim"]},
     "region": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|region_name", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "region"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "state": {"required": false, "source_candidates": [], "transforms": ["trim"]},
+    "subcontractor_tss": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00970153", "wbs_stage": "Rollout", "task_name": "Microwave", "display_header": "Subcon - TSS"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "subcontractor_ti": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00970184", "wbs_stage": "Rollout", "task_name": "Microwave", "display_header": "Subcon - TI"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "subcontractor_planning": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01087327", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "Subcon - Planning"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
     "existing_tss_pr_status": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00959244", "wbs_stage": "Commercial", "task_name": "Microwave", "display_header": "Subcon PR - TSS"}, "mapping_status": "APPROVED"}], "transforms": ["normalize_pr_reference_status"]},
