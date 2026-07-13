@@ -66,11 +66,10 @@ project_slug: <controlled project slug>
 du_model_name: <iEPMS DU model name>
 du_model_id: <iEPMS DU model ID>
 identity_key: <project_key>::<du_model_id>
+profile_status: <current lifecycle status>
 name_status: STANDARD | LEGACY_ACCEPTED | CONSOLIDATION_REVIEW_REQUIRED
 accepted_view_ids: []
-exception:
-  allowed: false
-  reason: null
+reason: <required for legacy/review; null for standard>
 ```
 
 The registry also contains exact duplicate-identity review records:
@@ -176,7 +175,7 @@ The test must:
 4. group profiles by `(project_key, du_model_id)`;
 5. fail when more than one profile exists for the same identity unless an identity review exists and its `permitted_profile_ids` exactly match the current duplicate set;
 6. require `profile_id == canonical_profile_id` for `STANDARD` records;
-7. require a non-empty reason for every `LEGACY_ACCEPTED` or exception record;
+7. require a non-empty reason for every `LEGACY_ACCEPTED` or `CONSOLIDATION_REVIEW_REQUIRED` record;
 8. verify `tx_mini_pr_v1` is marked `LEGACY_ACCEPTED`;
 9. verify `tx_mini_pr_v1` and `zte_tx_mini_pr_v1` have different identity keys;
 10. verify the profile lifecycle statuses captured in the registry match the actual profiles.
