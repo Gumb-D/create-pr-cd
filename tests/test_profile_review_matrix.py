@@ -25,14 +25,13 @@ class TestProfileReviewMatrix(unittest.TestCase):
         # tx_mini_pr_v1 left this batch on 2026-07-07, and mw_eos_swap_pr_v1,
         # celcomdigi_bau_2024_pr_v1, and celcomdigi_usp_pr_v1 left it on
         # 2026-07-09 when their approved PR-critical mappings landed.
-        self.assertEqual(existing_ti["profile_count"], 5)
+        self.assertEqual(existing_ti["profile_count"], 4)
         self.assertEqual(
             existing_ti["profiles"],
             [
                 "cd_consolidation_2023_decom_pr_v1",
                 "cd_consolidation_2023_rollout_pr_v1",
                 "celcomdigi_bau_2023_pr_v1",
-                "jendela_tx_migration_pr_v1",
                 "zte_tx_mini_pr_v1",
             ],
         )
@@ -53,7 +52,7 @@ class TestProfileReviewMatrix(unittest.TestCase):
         # tx_mini_pr_v1 left this batch on 2026-07-07, and tx_rollout_2023_pr_v1,
         # mw_eos_swap_pr_v1, celcomdigi_bau_2024_pr_v1, and celcomdigi_usp_pr_v1
         # left it on 2026-07-09 when region was approved for PR input review.
-        self.assertEqual(tx_region["profile_count"], 3)
+        self.assertEqual(tx_region["profile_count"], 2)
         self.assertNotIn("tx_mini_pr_v1", tx_region["profiles"])
         self.assertNotIn("tx_rollout_2023_pr_v1", tx_region["profiles"])
         self.assertNotIn("mw_eos_swap_pr_v1", tx_region["profiles"])
