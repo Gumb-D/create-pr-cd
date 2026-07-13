@@ -631,11 +631,15 @@ def test_jendela_entry_records_human_approved_pr_critical_sources(self):
         review_entry["field_reviews"]["existing_ti_pr_status"]["recommended_source"]["fingerprint"]["display_header"],
         "Subcon PR - TI",
     )
-    self.assertEqual(
-        review_entry["field_reviews"]["subcontractor_tss"]["recommended_source"]["fingerprint"]["display_header"],
-        "SubCon - TSS",
-    )
     self.assertIn("subcontractor_planning", review_entry["summary"]["competing_candidate_fields"])
+```
+
+Plan note:
+
+```text
+subcontractor_tss is verified by the profile-loader and adapter regression suites.
+The unresolved-skill review registry does not currently own this canonical field,
+so Task 3 must not require field_reviews["subcontractor_tss"].
 ```
 
 - [ ] **Step 2: Add an empty Jendela bridge test**
