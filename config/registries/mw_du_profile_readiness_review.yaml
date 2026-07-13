@@ -149,67 +149,43 @@
     },
     {
       "profile_id": "jendela_tx_migration_pr_v1",
-      "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-07-jendela-tx-migration-v1",
-      "profile_status": "DRAFT",
+      "profile_version": "0.2.0",
+      "mapping_version": "approved-2026-07-13-jendela-tx-migration-v1",
+      "profile_status": "PR_INPUT_READY",
       "du_model_name": "Jendela TX Migration",
       "source_file_name": "A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260703160246.xlsx",
       "observed_header_hash": "904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3",
-      "approved_header_hashes": [],
+      "approved_header_hashes": [
+        "904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3"
+      ],
       "readiness_status": "DISCOVERY_ONLY_BLOCKED",
       "blocker_summary": {
         "overall_blockers": [
           "PROFILE_NOT_PRODUCTION",
-          "NO_APPROVED_HEADER_HASH",
-          "REQUIRED_FIELDS_NOT_APPROVED",
-          "MISSING_REQUIRED_FIELDS",
           "COMPETING_SHORTLIST_CANDIDATES",
-          "UNVERIFIED_SINGLE_CANDIDATE_FIELDS",
-          "CROSS_MODEL_BRIDGE_ONLY_FIELDS"
+          "UNVERIFIED_SINGLE_CANDIDATE_FIELDS"
         ],
         "lifecycle_blockers": [
-          "PROFILE_NOT_PRODUCTION",
-          "NO_APPROVED_HEADER_HASH"
+          "PROFILE_NOT_PRODUCTION"
         ],
-        "missing_required_fields": [
-          "existing_ti_pr_status",
-          "existing_tss_pr_status"
-        ],
-        "unapproved_required_fields": [
-          "region",
-          "site_code",
-          "subcontractor_ti",
-          "tx_sow_raw"
-        ],
+        "missing_required_fields": [],
+        "unapproved_required_fields": [],
         "competing_candidate_fields": [
           "site_name",
-          "subcontractor_planning",
-          "subcontractor_ti",
-          "tx_sow_raw"
+          "subcontractor_planning"
         ],
-        "required_competing_candidate_fields": [
-          "subcontractor_ti",
-          "tx_sow_raw"
-        ],
+        "required_competing_candidate_fields": [],
         "single_candidate_unverified_fields": [
           "antenna_size_fe",
           "antenna_size_ne",
-          "du_key",
-          "region",
-          "site_code"
+          "du_key"
         ],
-        "required_single_candidate_unverified_fields": [
-          "region",
-          "site_code"
-        ],
+        "required_single_candidate_unverified_fields": [],
         "no_profile_selection_fields": [],
         "required_no_profile_selection_fields": [],
         "shortlist_mismatch_fields": [],
         "required_shortlist_mismatch_fields": [],
-        "cross_model_bridge_fields": [
-          "existing_ti_pr_status",
-          "existing_tss_pr_status"
-        ]
+        "cross_model_bridge_fields": []
       },
       "release_prerequisites": [
         "Approve the DU model identity and four-layer source mappings.",

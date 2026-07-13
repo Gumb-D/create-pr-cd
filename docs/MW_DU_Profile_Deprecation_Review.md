@@ -31,8 +31,8 @@ Discovery-only deprecation review for the tracked DU profiles.
 
 ## jendela_tx_migration_pr_v1
 
-- Current status: `DRAFT`
-- Mapping version: `discovery-2026-07-07-jendela-tx-migration-v1`
+- Current status: `PR_INPUT_READY`
+- Mapping version: `approved-2026-07-13-jendela-tx-migration-v1`
 - Observed header hash: `904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3`
 - Deprecation status: `NO_DEPRECATION_PLAN`
 - Note: No deprecation plan is recorded for this profile.

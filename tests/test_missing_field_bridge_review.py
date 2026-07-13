@@ -56,6 +56,27 @@ class TestMissingFieldBridgeReview(unittest.TestCase):
         self.assertEqual(bridge_entry["mapping_version"], "approved-2026-07-10-mw-eos-swap-v2")
         self.assertEqual(bridge_entry["field_bridges"], {})
 
+    def test_jendela_bridge_is_empty_after_approved_pr_status_mappings(self):
+        unresolved = json.loads(
+            (ROOT / "config" / "registries" / "mw_du_unresolved_skill_field_review.yaml").read_text(encoding="utf-8")
+        )
+        grouping = json.loads(
+            (ROOT / "config" / "registries" / "mw_du_structure_grouping_review.yaml").read_text(encoding="utf-8")
+        )
+        discovery = json.loads(
+            (ROOT / "config" / "registries" / "mw_du_model_discovery_registry.yaml").read_text(encoding="utf-8")
+        )
+
+        unresolved_entry = next(
+            entry for entry in unresolved["entries"] if entry["profile_id"] == "jendela_tx_migration_pr_v1"
+        )
+        bridge_entry = build_bridge_entry(unresolved_entry, grouping, discovery)
+
+        self.assertEqual(bridge_entry["profile_id"], "jendela_tx_migration_pr_v1")
+        self.assertEqual(bridge_entry["profile_version"], "0.2.0")
+        self.assertEqual(bridge_entry["mapping_version"], "approved-2026-07-13-jendela-tx-migration-v1")
+        self.assertEqual(bridge_entry["field_bridges"], {})
+
     def test_zte_bridge_uses_tx_rollout_as_current_best_donor(self):
         unresolved = json.loads(
             (ROOT / "config" / "registries" / "mw_du_unresolved_skill_field_review.yaml").read_text(encoding="utf-8")

@@ -55,15 +55,13 @@ Discovery-only summary of why the current priority DU profiles remain blocked fr
 ## jendela_tx_migration_pr_v1 (Jendela TX Migration)
 
 - Readiness status: `DISCOVERY_ONLY_BLOCKED`
-- Profile status: `DRAFT`
-- Profile version: `0.1.0`
-- Mapping version: `discovery-2026-07-07-jendela-tx-migration-v1`
+- Profile status: `PR_INPUT_READY`
+- Profile version: `0.2.0`
+- Mapping version: `approved-2026-07-13-jendela-tx-migration-v1`
 - Observed header hash: `904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3`
-- Approved header hashes: `0`
-- Overall blockers: `PROFILE_NOT_PRODUCTION, NO_APPROVED_HEADER_HASH, REQUIRED_FIELDS_NOT_APPROVED, MISSING_REQUIRED_FIELDS, COMPETING_SHORTLIST_CANDIDATES, UNVERIFIED_SINGLE_CANDIDATE_FIELDS, CROSS_MODEL_BRIDGE_ONLY_FIELDS`
-- Missing required fields: `existing_ti_pr_status, existing_tss_pr_status`
-- Competing candidate fields: `site_name, subcontractor_planning, subcontractor_ti, tx_sow_raw`
-- Cross-model bridge-only fields: `existing_ti_pr_status, existing_tss_pr_status`
+- Approved header hashes: `1`
+- Overall blockers: `PROFILE_NOT_PRODUCTION, COMPETING_SHORTLIST_CANDIDATES, UNVERIFIED_SINGLE_CANDIDATE_FIELDS`
+- Competing candidate fields: `site_name, subcontractor_planning`
 - Release prerequisites:
   - Approve the DU model identity and four-layer source mappings.
   - Approve at least one header hash for the profile version.

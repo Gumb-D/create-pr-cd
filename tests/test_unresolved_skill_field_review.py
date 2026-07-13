@@ -189,7 +189,7 @@ class TestUnresolvedSkillFieldReview(unittest.TestCase):
             "RESOLVED_BY_APPROVED_MAPPING",
         )
 
-    def test_jendela_entry_captures_missing_pr_status_fields_and_competing_subcon_fields(self):
+    def test_jendela_entry_records_human_approved_pr_critical_sources(self):
         shortlist_registry = json.loads(
             (ROOT / "config" / "registries" / "mw_du_priority_skill_field_shortlists.yaml").read_text(encoding="utf-8")
         )
@@ -201,14 +201,18 @@ class TestUnresolvedSkillFieldReview(unittest.TestCase):
         review_entry = build_review_entry(profile, shortlist_entry)
 
         self.assertEqual(review_entry["profile_id"], "jendela_tx_migration_pr_v1")
-        self.assertEqual(review_entry["summary"]["missing_required_fields"], ["existing_ti_pr_status", "existing_tss_pr_status"])
-        self.assertIn("subcontractor_ti", review_entry["summary"]["competing_candidate_fields"])
-        self.assertIn("subcontractor_planning", review_entry["summary"]["competing_candidate_fields"])
-        self.assertIn("tx_sow_raw", review_entry["summary"]["competing_candidate_fields"])
+        self.assertEqual(review_entry["summary"]["missing_required_fields"], [])
+        self.assertNotIn("tx_sow_raw", review_entry["summary"]["competing_candidate_fields"])
+        self.assertNotIn("subcontractor_ti", review_entry["summary"]["competing_candidate_fields"])
         self.assertEqual(
-            review_entry["field_reviews"]["antenna_size_ne"]["recommended_source"]["fingerprint"]["display_header"],
-            "Antenna Size NE",
+            review_entry["field_reviews"]["existing_tss_pr_status"]["recommended_source"]["fingerprint"]["display_header"],
+            "Subcon PR - TSS",
         )
+        self.assertEqual(
+            review_entry["field_reviews"]["existing_ti_pr_status"]["recommended_source"]["fingerprint"]["display_header"],
+            "Subcon PR - TI",
+        )
+        self.assertIn("subcontractor_planning", review_entry["summary"]["competing_candidate_fields"])
 
     def test_2023_celcomdigi_bau_entry_captures_missing_pr_status_fields_and_direct_antenna_fields(self):
         shortlist_registry = json.loads(

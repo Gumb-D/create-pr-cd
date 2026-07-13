@@ -51,35 +51,21 @@ Discovery-only prioritized manual action queue for the current DRAFT profiles.
 ## jendela_tx_migration_pr_v1 (Jendela TX Migration)
 
 - Readiness status: `DISCOVERY_ONLY_BLOCKED`
-- Profile status: `DRAFT`
-- Mapping version: `discovery-2026-07-07-jendela-tx-migration-v1`
+- Profile status: `PR_INPUT_READY`
+- Mapping version: `approved-2026-07-13-jendela-tx-migration-v1`
 - Observed header hash: `904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3`
 - Action queue:
-  - `jendela_tx_migration_pr_v1:01` `RESOLVE_MISSING_REQUIRED_FIELD` `existing_ti_pr_status`: Resolve required field `existing_ti_pr_status` before any lifecycle promotion.
-    hint: Review donor export 2023 TX Rollout with similarity 0.000 before deciding derived, manual, or blocking treatment.
-  - `jendela_tx_migration_pr_v1:02` `RESOLVE_MISSING_REQUIRED_FIELD` `existing_tss_pr_status`: Resolve required field `existing_tss_pr_status` before any lifecycle promotion.
-    hint: Review donor export 2023 TX Rollout with similarity 0.000 before deciding derived, manual, or blocking treatment.
-  - `jendela_tx_migration_pr_v1:03` `CONFIRM_COMPETING_CANDIDATE` `site_name`: Choose one exact four-layer source for `site_name` from the competing shortlist candidates.
+  - `jendela_tx_migration_pr_v1:01` `CONFIRM_COMPETING_CANDIDATE` `site_name`: Choose one exact four-layer source for `site_name` from the competing shortlist candidates.
     hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `jendela_tx_migration_pr_v1:04` `CONFIRM_COMPETING_CANDIDATE` `subcontractor_planning`: Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.
+  - `jendela_tx_migration_pr_v1:02` `CONFIRM_COMPETING_CANDIDATE` `subcontractor_planning`: Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.
     hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `jendela_tx_migration_pr_v1:05` `CONFIRM_COMPETING_CANDIDATE` `subcontractor_ti`: Choose one exact four-layer source for `subcontractor_ti` from the competing shortlist candidates.
-    hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `jendela_tx_migration_pr_v1:06` `CONFIRM_COMPETING_CANDIDATE` `tx_sow_raw`: Choose one exact four-layer source for `tx_sow_raw` from the competing shortlist candidates.
-    hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `jendela_tx_migration_pr_v1:07` `VERIFY_SINGLE_CANDIDATE` `antenna_size_fe`: Verify the current single shortlist-aligned source for `antenna_size_fe`.
+  - `jendela_tx_migration_pr_v1:03` `VERIFY_SINGLE_CANDIDATE` `antenna_size_fe`: Verify the current single shortlist-aligned source for `antenna_size_fe`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `jendela_tx_migration_pr_v1:08` `VERIFY_SINGLE_CANDIDATE` `antenna_size_ne`: Verify the current single shortlist-aligned source for `antenna_size_ne`.
+  - `jendela_tx_migration_pr_v1:04` `VERIFY_SINGLE_CANDIDATE` `antenna_size_ne`: Verify the current single shortlist-aligned source for `antenna_size_ne`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `jendela_tx_migration_pr_v1:09` `VERIFY_SINGLE_CANDIDATE` `du_key`: Verify the current single shortlist-aligned source for `du_key`.
+  - `jendela_tx_migration_pr_v1:05` `VERIFY_SINGLE_CANDIDATE` `du_key`: Verify the current single shortlist-aligned source for `du_key`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `jendela_tx_migration_pr_v1:10` `VERIFY_SINGLE_CANDIDATE` `region`: Verify the current single shortlist-aligned source for `region`.
-    hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `jendela_tx_migration_pr_v1:11` `VERIFY_SINGLE_CANDIDATE` `site_code`: Verify the current single shortlist-aligned source for `site_code`.
-    hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `jendela_tx_migration_pr_v1:12` `APPROVE_HEADER_HASH`: Approve at least one header hash for this profile version after the field review is complete.
-    hint: Current observed header hash: 904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3
-  - `jendela_tx_migration_pr_v1:13` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
+  - `jendela_tx_migration_pr_v1:06` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
     hint: Use the transition review as the final stop/go check before any status change.
 
 ## zte_tx_mini_pr_v1 (ZTE TX MINI)
