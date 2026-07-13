@@ -12,15 +12,26 @@ from du_profile_loader import load_du_profile
 
 class TestProfileRollbackReadiness(unittest.TestCase):
     def test_current_draft_profile_stays_blocked_without_approved_baseline(self):
-        # MW EOS Swap now has an approved baseline too, so use a still-draft
-        # profile to keep covering the missing-baseline blocker.
-        profile = load_du_profile(ROOT / "config" / "du_profiles" / "jendela_tx_migration_pr_v1.yaml")
+        profile = load_du_profile(ROOT / "config" / "du_profiles" / "celcomdigi_bau_2023_pr_v1.yaml")
 
         entry = evaluate_rollback_readiness(profile, None)
 
         self.assertEqual(entry["rollback_readiness_status"], "ROLLBACK_BLOCKED")
         self.assertIn("NO_APPROVED_HEADER_HASH_BASELINE", entry["blockers"])
         self.assertIn("PROFILE_NOT_RELEASED", entry["blockers"])
+
+    def test_jendela_records_rollback_baseline_after_pr_input_ready(self):
+        profile = load_du_profile(ROOT / "config" / "du_profiles" / "jendela_tx_migration_pr_v1.yaml")
+
+        entry = evaluate_rollback_readiness(profile, None)
+
+        self.assertEqual(entry["rollback_readiness_status"], "ROLLBACK_BASELINE_RECORDED")
+        self.assertEqual(entry["rollback_target_profile_id"], "jendela_tx_migration_pr_v1")
+        self.assertEqual(entry["rollback_target_profile_version"], "0.2.0")
+        self.assertEqual(
+            entry["rollback_target_header_hashes"],
+            ["904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3"],
+        )
 
     def test_tx_mini_records_rollback_baseline_after_pr_input_ready(self):
         # PR_INPUT_READY (2026-07-08) plus the approved header hash gives

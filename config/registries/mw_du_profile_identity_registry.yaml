@@ -108,7 +108,7 @@
       "du_model_name": "Jendela TX Migration",
       "du_model_id": "4972593269368006257",
       "identity_key": "Malaysia_CelcomDigi_Project::4972593269368006257",
-      "profile_status": "DRAFT",
+      "profile_status": "PR_INPUT_READY",
       "name_status": "LEGACY_ACCEPTED",
       "accepted_view_ids": [
         "4026888666764910245"
