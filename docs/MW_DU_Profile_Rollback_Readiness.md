@@ -37,13 +37,14 @@ Discovery-only rollback-readiness review for tracked DU profiles.
 
 ## jendela_tx_migration_pr_v1
 
-- Rollback readiness status: `ROLLBACK_BLOCKED`
-- Current status: `DRAFT`
-- Profile version: `0.1.0`
-- Mapping version: `discovery-2026-07-07-jendela-tx-migration-v1`
+- Rollback readiness status: `ROLLBACK_BASELINE_RECORDED`
+- Current status: `PR_INPUT_READY`
+- Profile version: `0.2.0`
+- Mapping version: `approved-2026-07-13-jendela-tx-migration-v1`
 - Observed header hash: `904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3`
-- Blockers: `NO_APPROVED_HEADER_HASH_BASELINE, PROFILE_NOT_RELEASED`
-- Note: Rollback remains blocked until an approved profile/header-hash baseline exists.
+- Rollback target: `jendela_tx_migration_pr_v1` `0.2.0`
+- Rollback target header hashes: `904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3`
+- Note: Rollback baseline is documented from the current approved profile identity and header-hash set.
 
 ## zte_tx_mini_pr_v1
 

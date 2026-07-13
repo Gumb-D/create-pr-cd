@@ -109,9 +109,9 @@
       "source_file_name": "A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260703160246.xlsx",
       "coverage_status": "TRACKED_DRAFT_PROFILE",
       "profile_id": "jendela_tx_migration_pr_v1",
-      "profile_status": "DRAFT",
-      "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-07-jendela-tx-migration-v1",
+      "profile_status": "PR_INPUT_READY",
+      "profile_version": "0.2.0",
+      "mapping_version": "approved-2026-07-13-jendela-tx-migration-v1",
       "observed_header_hash": "904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3",
       "missing_skill_fields": [
         "existing_tss_pr",

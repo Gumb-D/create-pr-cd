@@ -9,8 +9,8 @@ Discovery-only summary for the all-MW-DU mapping recommendation matrix generated
 
 ### Structurally different but PR-critical fields appear present
 
-- DU models: Celcomdigi USP
-- Reference files: A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx
+- DU models: Celcomdigi USP, Jendela TX Migration
+- Reference files: A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx, A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260703160246.xlsx
 - PR-critical blockers: site_name, subcontractor_planning
 - Recommended next sequence: Start with the highest-confidence rows in this group, then review ambiguous PR-critical fields before any profile implementation.
 
@@ -23,8 +23,8 @@ Discovery-only summary for the all-MW-DU mapping recommendation matrix generated
 
 ### Missing PR-critical fields / quarantine candidate
 
-- DU models: 2023 Celcomdigi BAU, Jendela TX Migration, ZTE TX MINI
-- Reference files: A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx, A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260703160246.xlsx, A-P202211283695_D002-ZTE TX MINI-ZTE TX MINI v1-20260703160312.xlsx
+- DU models: 2023 Celcomdigi BAU, ZTE TX MINI
+- Reference files: A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx, A-P202211283695_D002-ZTE TX MINI-ZTE TX MINI v1-20260703160312.xlsx
 - PR-critical blockers: existing_ti_pr_status, existing_tss_pr_status, site_code, site_name, subcontractor_planning, subcontractor_ti, tx_sow_raw
 - Recommended next sequence: Start with the highest-confidence rows in this group, then review ambiguous PR-critical fields before any profile implementation.
 
@@ -52,7 +52,7 @@ Discovery-only summary for the all-MW-DU mapping recommendation matrix generated
 | CD consolidation 2023 | Duplicate or competing export variants | 0 | 0 | 5 | 4 | 9 |
 | CD consolidation 2023 | Duplicate or competing export variants | 0 | 0 | 3 | 8 | 7 |
 | Celcomdigi USP | Structurally different but PR-critical fields appear present | 0 | 0 | 7 | 0 | 11 |
-| Jendela TX Migration | Missing PR-critical fields / quarantine candidate | 0 | 0 | 7 | 2 | 9 |
+| Jendela TX Migration | Structurally different but PR-critical fields appear present | 0 | 0 | 7 | 2 | 9 |
 | TX Mini Project | Same or highly similar to TX Mini | 8 | 0 | 2 | 0 | 8 |
 | MW EOS Swap | Similar to MW EOS Swap | 1 | 0 | 7 | 1 | 9 |
 | ZTE TX MINI | Missing PR-critical fields / quarantine candidate | 0 | 1 | 7 | 1 | 9 |

@@ -25,21 +25,9 @@ Discovery-only bridge guidance for required fields that are still missing in pri
 
 ## jendela_tx_migration_pr_v1 (Jendela TX Migration)
 
-- Profile version: `0.1.0`
-- Mapping version: `discovery-2026-07-07-jendela-tx-migration-v1`
+- Profile version: `0.2.0`
+- Mapping version: `approved-2026-07-13-jendela-tx-migration-v1`
 - Observed header hash: `904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3`
-
-### `existing_ti_pr_status`
-
-- Bridge status: `CROSS_MODEL_REVIEW_REQUIRED`
-- Reason: Another profiled export carries the missing field, but cross-model reuse is discovery-only and still requires manual four-layer review.
-- Best source export: `2023 TX Rollout` from `A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx` similarity=`0.000` profile=`tx_rollout_2023_pr_v1`
-
-### `existing_tss_pr_status`
-
-- Bridge status: `CROSS_MODEL_REVIEW_REQUIRED`
-- Reason: Another profiled export carries the missing field, but cross-model reuse is discovery-only and still requires manual four-layer review.
-- Best source export: `2023 TX Rollout` from `A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx` similarity=`0.000` profile=`tx_rollout_2023_pr_v1`
 
 
 ## zte_tx_mini_pr_v1 (ZTE TX MINI)

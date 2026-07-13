@@ -18,6 +18,7 @@ class TestDuProfileLoader(unittest.TestCase):
             "mw_eos_swap_pr_v1.yaml": ("docata|ZDCSZ00970153", "Subcon - TSS"),
             "celcomdigi_bau_2024_pr_v1.yaml": ("docata|ZDCSZ640307", "SubCon - TSS"),
             "celcomdigi_usp_pr_v1.yaml": ("docata|ZDCSZ640307", "SubCon - TSS"),
+            "jendela_tx_migration_pr_v1.yaml": ("docata|ZDCSZ640307", "SubCon - TSS"),
         }
         for profile_name, (field_code, display_header) in expected.items():
             with self.subTest(profile_name=profile_name):
@@ -138,23 +139,45 @@ class TestDuProfileLoader(unittest.TestCase):
             "TX SOW (LLD)",
         )
 
-    def test_draft_jendela_profile_loads_with_antenna_and_sow_candidates(self):
+    def test_pr_input_ready_jendela_profile_loads_with_human_approved_pr_critical_mappings(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "jendela_tx_migration_pr_v1.yaml")
-        self.assertEqual(profile["status"], "DRAFT")
-        self.assertEqual(profile["mapping_version"], "discovery-2026-07-07-jendela-tx-migration-v1")
+        self.assertEqual(profile["status"], "PR_INPUT_READY")
+        self.assertEqual(profile["profile_version"], "0.2.0")
+        self.assertEqual(profile["mapping_version"], "approved-2026-07-13-jendela-tx-migration-v1")
         self.assertEqual(profile["identity"]["accepted_du_models"], ["Jendela TX Migration"])
         self.assertEqual(profile["identity"]["accepted_du_model_ids"], ["4972593269368006257"])
         self.assertEqual(profile["identity"]["accepted_view_ids"], ["4026888666764910245"])
-        self.assertEqual(profile["export_structure"]["approved_header_hashes"], [])
-        self.assertEqual(profile["export_structure"]["observed_header_hash"], "904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3")
         self.assertEqual(
-            profile["field_mapping"]["tx_sow_raw"]["source_candidates"][0]["fingerprint"]["display_header"],
-            "Tx SOW",
+            profile["export_structure"]["approved_header_hashes"],
+            ["904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3"],
+        )
+        approved = {
+            field_name
+            for field_name, config in profile["field_mapping"].items()
+            if any(candidate.get("mapping_status") == "APPROVED" for candidate in config.get("source_candidates", []))
+        }
+        self.assertEqual(
+            approved,
+            {
+                "site_code",
+                "tx_sow_raw",
+                "region",
+                "subcontractor_tss",
+                "subcontractor_ti",
+                "existing_tss_pr_status",
+                "existing_ti_pr_status",
+            },
+        )
+        self.assertFalse(profile["field_mapping"]["subcontractor_tss"]["required"])
+        self.assertEqual(
+            profile["field_mapping"]["existing_tss_pr_status"]["transforms"],
+            ["normalize_pr_reference_status"],
         )
         self.assertEqual(
-            profile["field_mapping"]["antenna_size_ne"]["source_candidates"][0]["fingerprint"]["display_header"],
-            "Antenna Size NE",
+            profile["field_mapping"]["existing_ti_pr_status"]["transforms"],
+            ["normalize_pr_reference_status"],
         )
+        self.assertNotEqual(profile["status"], "PRODUCTION")
 
     def test_draft_2023_celcomdigi_bau_profile_loads_with_direct_tx_and_antenna_candidates(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "celcomdigi_bau_2023_pr_v1.yaml")

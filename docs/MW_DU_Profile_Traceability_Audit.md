@@ -59,8 +59,8 @@ Discovery-only audit of profile-version and header-hash traceability across gene
 ## jendela_tx_migration_pr_v1
 
 - Traceability status: `TRACEABLE`
-- Profile version: `0.1.0`
-- Mapping version: `discovery-2026-07-07-jendela-tx-migration-v1`
+- Profile version: `0.2.0`
+- Mapping version: `approved-2026-07-13-jendela-tx-migration-v1`
 - Observed header hash: `904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3`
 - Artifacts:
   - `discovery` `TRACEABLE` version=True mapping=True header_hash=True
