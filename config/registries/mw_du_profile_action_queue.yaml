@@ -26,7 +26,7 @@
     {
       "profile_id": "mw_eos_swap_pr_v1",
       "profile_version": "0.1.0",
-      "mapping_version": "approved-2026-07-09-mw-eos-swap-v1",
+      "mapping_version": "approved-2026-07-10-mw-eos-swap-v2",
       "profile_status": "PR_INPUT_READY",
       "du_model_name": "MW EOS Swap",
       "readiness_status": "DISCOVERY_ONLY_BLOCKED",
@@ -82,7 +82,7 @@
     {
       "profile_id": "tx_rollout_2023_pr_v1",
       "profile_version": "0.1.0",
-      "mapping_version": "approved-2026-07-09-2023-tx-rollout-v1",
+      "mapping_version": "approved-2026-07-10-2023-tx-rollout-v2",
       "profile_status": "PR_INPUT_READY",
       "du_model_name": "2023 TX Rollout",
       "readiness_status": "DISCOVERY_ONLY_BLOCKED",
@@ -436,7 +436,7 @@
     {
       "profile_id": "celcomdigi_bau_2024_pr_v1",
       "profile_version": "0.1.0",
-      "mapping_version": "approved-2026-07-09-2024-celcomdigi-bau-v1",
+      "mapping_version": "approved-2026-07-10-2024-celcomdigi-bau-v2",
       "profile_status": "PR_INPUT_READY",
       "du_model_name": "2024 Celcomdigi BAU",
       "readiness_status": "DISCOVERY_ONLY_BLOCKED",
@@ -492,7 +492,7 @@
     {
       "profile_id": "celcomdigi_usp_pr_v1",
       "profile_version": "0.1.0",
-      "mapping_version": "approved-2026-07-09-celcomdigi-usp-v1",
+      "mapping_version": "approved-2026-07-10-celcomdigi-usp-v2",
       "profile_status": "PR_INPUT_READY",
       "du_model_name": "Celcomdigi USP",
       "readiness_status": "DISCOVERY_ONLY_BLOCKED",

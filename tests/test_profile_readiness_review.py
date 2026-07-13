@@ -230,7 +230,7 @@ class TestProfileReadinessReview(unittest.TestCase):
             (ROOT / "config" / "registries" / "mw_du_profile_readiness_review.yaml").read_text(encoding="utf-8")
         )
         markdown = readiness_markdown(registry)
-        self.assertIn("approved-2026-07-09-mw-eos-swap-v1", markdown)
+        self.assertIn("approved-2026-07-10-mw-eos-swap-v2", markdown)
         self.assertIn("DISCOVERY_ONLY_BLOCKED", markdown)
         self.assertIn("CROSS_MODEL_BRIDGE_ONLY_FIELDS", markdown)
 

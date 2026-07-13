@@ -1,7 +1,7 @@
 {
   "profile_id": "celcomdigi_usp_pr_v1",
   "profile_version": "0.1.0",
-  "mapping_version": "approved-2026-07-09-celcomdigi-usp-v1",
+  "mapping_version": "approved-2026-07-10-celcomdigi-usp-v2",
   "status": "PR_INPUT_READY",
   "identity": {
     "project_key": "Malaysia_CelcomDigi_Project",
@@ -24,6 +24,7 @@
     "tx_upgrade_scope_raw": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ0656912", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "TX Upgrade Scope"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
     "region": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|region_name", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "region"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "state": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00008", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "Province/State"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "subcontractor_tss": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ640307", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "SubCon - TSS"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "subcontractor_ti": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ640242", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "SubCon - TI"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "subcontractor_planning": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01036640", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Subcon Planning"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
     "existing_tss_pr_status": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ641766", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Subcon PR - TSS"}, "mapping_status": "APPROVED"}], "transforms": ["normalize_pr_reference_status"]},

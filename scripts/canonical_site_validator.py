@@ -18,7 +18,7 @@ SCOPE_REQUIRED_FIELDS = {
         "tx_sow_raw",
         "tx_sow_normalized",
         "region",
-        "subcontractor_ti",
+        "subcontractor_tss",
         "existing_tss_pr_status",
     ),
     "TI": (

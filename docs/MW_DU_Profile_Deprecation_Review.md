@@ -14,7 +14,7 @@ Discovery-only deprecation review for the tracked DU profiles.
 ## mw_eos_swap_pr_v1
 
 - Current status: `PR_INPUT_READY`
-- Mapping version: `approved-2026-07-09-mw-eos-swap-v1`
+- Mapping version: `approved-2026-07-10-mw-eos-swap-v2`
 - Observed header hash: `46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a`
 - Deprecation status: `NO_DEPRECATION_PLAN`
 - Note: No deprecation plan is recorded for this profile.
@@ -23,7 +23,7 @@ Discovery-only deprecation review for the tracked DU profiles.
 ## tx_rollout_2023_pr_v1
 
 - Current status: `PR_INPUT_READY`
-- Mapping version: `approved-2026-07-09-2023-tx-rollout-v1`
+- Mapping version: `approved-2026-07-10-2023-tx-rollout-v2`
 - Observed header hash: `8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320`
 - Deprecation status: `NO_DEPRECATION_PLAN`
 - Note: No deprecation plan is recorded for this profile.
@@ -59,7 +59,7 @@ Discovery-only deprecation review for the tracked DU profiles.
 ## celcomdigi_bau_2024_pr_v1
 
 - Current status: `PR_INPUT_READY`
-- Mapping version: `approved-2026-07-09-2024-celcomdigi-bau-v1`
+- Mapping version: `approved-2026-07-10-2024-celcomdigi-bau-v2`
 - Observed header hash: `b3677457da49e5de484976c3fdb7ad6f5dc19055f5339ec616407f5cbde89a86`
 - Deprecation status: `NO_DEPRECATION_PLAN`
 - Note: No deprecation plan is recorded for this profile.
@@ -68,7 +68,7 @@ Discovery-only deprecation review for the tracked DU profiles.
 ## celcomdigi_usp_pr_v1
 
 - Current status: `PR_INPUT_READY`
-- Mapping version: `approved-2026-07-09-celcomdigi-usp-v1`
+- Mapping version: `approved-2026-07-10-celcomdigi-usp-v2`
 - Observed header hash: `79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf`
 - Deprecation status: `NO_DEPRECATION_PLAN`
 - Note: No deprecation plan is recorded for this profile.

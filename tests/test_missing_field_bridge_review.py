@@ -53,7 +53,7 @@ class TestMissingFieldBridgeReview(unittest.TestCase):
 
         self.assertEqual(bridge_entry["profile_id"], "mw_eos_swap_pr_v1")
         self.assertEqual(bridge_entry["profile_version"], "0.1.0")
-        self.assertEqual(bridge_entry["mapping_version"], "approved-2026-07-09-mw-eos-swap-v1")
+        self.assertEqual(bridge_entry["mapping_version"], "approved-2026-07-10-mw-eos-swap-v2")
         self.assertEqual(bridge_entry["field_bridges"], {})
 
     def test_zte_bridge_uses_tx_rollout_as_current_best_donor(self):

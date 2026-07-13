@@ -122,6 +122,13 @@ Discovery-only comparison between the MW EOS Swap and ZTE TX MINI DRAFT profiles
 - Right selected header: `Subcon - TI`
 - Reason: The two MW profiles currently select different source columns for the same canonical field.
 
+### `subcontractor_tss`
+
+- Comparison status: `ONE_SIDE_MISSING`
+- Left selected header: `Subcon - TSS`
+- Right selected header: `None`
+- Reason: One profile has a selected source candidate while the other still lacks one.
+
 ### `tx_sow_details`
 
 - Comparison status: `MATCHING_SELECTED_SOURCE`

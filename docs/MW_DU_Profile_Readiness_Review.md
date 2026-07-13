@@ -23,7 +23,7 @@ Discovery-only summary of why the current priority DU profiles remain blocked fr
 - Readiness status: `DISCOVERY_ONLY_BLOCKED`
 - Profile status: `PR_INPUT_READY`
 - Profile version: `0.1.0`
-- Mapping version: `approved-2026-07-09-mw-eos-swap-v1`
+- Mapping version: `approved-2026-07-10-mw-eos-swap-v2`
 - Observed header hash: `46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a`
 - Approved header hashes: `1`
 - Overall blockers: `PROFILE_NOT_PRODUCTION, COMPETING_SHORTLIST_CANDIDATES, UNVERIFIED_SINGLE_CANDIDATE_FIELDS`
@@ -40,7 +40,7 @@ Discovery-only summary of why the current priority DU profiles remain blocked fr
 - Readiness status: `DISCOVERY_ONLY_BLOCKED`
 - Profile status: `PR_INPUT_READY`
 - Profile version: `0.1.0`
-- Mapping version: `approved-2026-07-09-2023-tx-rollout-v1`
+- Mapping version: `approved-2026-07-10-2023-tx-rollout-v2`
 - Observed header hash: `8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320`
 - Approved header hashes: `1`
 - Overall blockers: `PROFILE_NOT_PRODUCTION, COMPETING_SHORTLIST_CANDIDATES, UNVERIFIED_SINGLE_CANDIDATE_FIELDS`
@@ -114,7 +114,7 @@ Discovery-only summary of why the current priority DU profiles remain blocked fr
 - Readiness status: `DISCOVERY_ONLY_BLOCKED`
 - Profile status: `PR_INPUT_READY`
 - Profile version: `0.1.0`
-- Mapping version: `approved-2026-07-09-2024-celcomdigi-bau-v1`
+- Mapping version: `approved-2026-07-10-2024-celcomdigi-bau-v2`
 - Observed header hash: `b3677457da49e5de484976c3fdb7ad6f5dc19055f5339ec616407f5cbde89a86`
 - Approved header hashes: `1`
 - Overall blockers: `PROFILE_NOT_PRODUCTION, COMPETING_SHORTLIST_CANDIDATES, UNVERIFIED_SINGLE_CANDIDATE_FIELDS`
@@ -131,7 +131,7 @@ Discovery-only summary of why the current priority DU profiles remain blocked fr
 - Readiness status: `DISCOVERY_ONLY_BLOCKED`
 - Profile status: `PR_INPUT_READY`
 - Profile version: `0.1.0`
-- Mapping version: `approved-2026-07-09-celcomdigi-usp-v1`
+- Mapping version: `approved-2026-07-10-celcomdigi-usp-v2`
 - Observed header hash: `79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf`
 - Approved header hashes: `1`
 - Overall blockers: `PROFILE_NOT_PRODUCTION, COMPETING_SHORTLIST_CANDIDATES, UNVERIFIED_SINGLE_CANDIDATE_FIELDS`

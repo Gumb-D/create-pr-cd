@@ -11,6 +11,24 @@ from du_profile_loader import ProfileValidationError, load_du_profile
 
 
 class TestDuProfileLoader(unittest.TestCase):
+    def test_all_pr_input_ready_profiles_have_approved_subcontractor_tss_and_remain_non_production(self):
+        expected = {
+            "tx_mini_pr_v1.yaml": ("docata|ZDCSZ0657770", "SubCon - TSS Team"),
+            "tx_rollout_2023_pr_v1.yaml": ("docata|ZDCSZ640307", "SubCon - TSS"),
+            "mw_eos_swap_pr_v1.yaml": ("docata|ZDCSZ00970153", "Subcon - TSS"),
+            "celcomdigi_bau_2024_pr_v1.yaml": ("docata|ZDCSZ640307", "SubCon - TSS"),
+            "celcomdigi_usp_pr_v1.yaml": ("docata|ZDCSZ640307", "SubCon - TSS"),
+        }
+        for profile_name, (field_code, display_header) in expected.items():
+            with self.subTest(profile_name=profile_name):
+                profile = load_du_profile(ROOT / "config" / "du_profiles" / profile_name)
+                self.assertEqual(profile["status"], "PR_INPUT_READY")
+                self.assertNotEqual(profile["status"], "PRODUCTION")
+                candidate = profile["field_mapping"]["subcontractor_tss"]["source_candidates"][0]
+                self.assertEqual(candidate["mapping_status"], "APPROVED")
+                self.assertEqual(candidate["fingerprint"]["field_code"], field_code)
+                self.assertEqual(candidate["fingerprint"]["display_header"], display_header)
+
     def test_tx_mini_profile_loads_without_claiming_production_readiness(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml")
         # Declared PR_INPUT_READY by JJ on 2026-07-08 after the completed field
@@ -38,7 +56,7 @@ class TestDuProfileLoader(unittest.TestCase):
     def test_pr_input_ready_mw_eos_profile_loads_with_human_approved_pr_critical_mappings(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "mw_eos_swap_pr_v1.yaml")
         self.assertEqual(profile["status"], "PR_INPUT_READY")
-        self.assertEqual(profile["mapping_version"], "approved-2026-07-09-mw-eos-swap-v1")
+        self.assertEqual(profile["mapping_version"], "approved-2026-07-10-mw-eos-swap-v2")
         self.assertEqual(profile["identity"]["accepted_du_models"], ["MW EOS Swap"])
         self.assertEqual(profile["identity"]["accepted_du_model_ids"], ["5440935430300168497"])
         self.assertEqual(profile["identity"]["accepted_view_ids"], ["7476572371505372260"])
@@ -51,6 +69,10 @@ class TestDuProfileLoader(unittest.TestCase):
         self.assertEqual(
             profile["field_mapping"]["site_code"]["source_candidates"][0]["fingerprint"]["display_header"],
             "customer site code",
+        )
+        self.assertEqual(
+            profile["field_mapping"]["subcontractor_tss"]["source_candidates"][0]["fingerprint"]["display_header"],
+            "Subcon - TSS",
         )
         self.assertEqual(
             profile["field_mapping"]["subcontractor_ti"]["source_candidates"][0]["fingerprint"]["display_header"],
@@ -86,7 +108,7 @@ class TestDuProfileLoader(unittest.TestCase):
     def test_pr_input_ready_2023_tx_rollout_profile_loads_with_human_approved_pr_critical_mappings(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "tx_rollout_2023_pr_v1.yaml")
         self.assertEqual(profile["status"], "PR_INPUT_READY")
-        self.assertEqual(profile["mapping_version"], "approved-2026-07-09-2023-tx-rollout-v1")
+        self.assertEqual(profile["mapping_version"], "approved-2026-07-10-2023-tx-rollout-v2")
         self.assertEqual(profile["identity"]["accepted_du_models"], ["2023 TX Rollout"])
         self.assertEqual(profile["identity"]["accepted_du_model_ids"], ["1027190858144623081"])
         self.assertEqual(profile["identity"]["accepted_view_ids"], ["8530399820526021092"])
@@ -95,6 +117,10 @@ class TestDuProfileLoader(unittest.TestCase):
             ["8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320"],
         )
         self.assertEqual(profile["export_structure"]["observed_header_hash"], "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320")
+        self.assertEqual(
+            profile["field_mapping"]["subcontractor_tss"]["source_candidates"][0]["fingerprint"]["display_header"],
+            "SubCon - TSS",
+        )
         self.assertEqual(
             profile["field_mapping"]["existing_tss_pr_status"]["source_candidates"][0]["fingerprint"]["display_header"],
             "Subcon PR - TSS",
@@ -151,7 +177,7 @@ class TestDuProfileLoader(unittest.TestCase):
     def test_pr_input_ready_2024_celcomdigi_bau_profile_loads_with_human_approved_pr_critical_mappings(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "celcomdigi_bau_2024_pr_v1.yaml")
         self.assertEqual(profile["status"], "PR_INPUT_READY")
-        self.assertEqual(profile["mapping_version"], "approved-2026-07-09-2024-celcomdigi-bau-v1")
+        self.assertEqual(profile["mapping_version"], "approved-2026-07-10-2024-celcomdigi-bau-v2")
         self.assertEqual(profile["identity"]["accepted_du_models"], ["2024 Celcomdigi BAU"])
         self.assertEqual(profile["identity"]["accepted_du_model_ids"], ["7278317398457076992"])
         self.assertEqual(profile["identity"]["accepted_view_ids"], ["1090541706000906451"])
@@ -161,6 +187,10 @@ class TestDuProfileLoader(unittest.TestCase):
         )
         self.assertEqual(profile["export_structure"]["observed_header_hash"], "b3677457da49e5de484976c3fdb7ad6f5dc19055f5339ec616407f5cbde89a86")
         self.assertEqual(profile["field_mapping"]["site_code"]["source_candidates"][0]["mapping_status"], "APPROVED")
+        self.assertEqual(
+            profile["field_mapping"]["subcontractor_tss"]["source_candidates"][0]["fingerprint"]["display_header"],
+            "SubCon - TSS",
+        )
         self.assertEqual(
             profile["field_mapping"]["tx_sow_raw"]["source_candidates"][0]["fingerprint"]["display_header"],
             "Tx SOW",
@@ -177,7 +207,7 @@ class TestDuProfileLoader(unittest.TestCase):
     def test_pr_input_ready_celcomdigi_usp_profile_loads_with_human_approved_pr_critical_mappings(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "celcomdigi_usp_pr_v1.yaml")
         self.assertEqual(profile["status"], "PR_INPUT_READY")
-        self.assertEqual(profile["mapping_version"], "approved-2026-07-09-celcomdigi-usp-v1")
+        self.assertEqual(profile["mapping_version"], "approved-2026-07-10-celcomdigi-usp-v2")
         self.assertEqual(profile["identity"]["accepted_du_models"], ["Celcomdigi USP"])
         self.assertEqual(profile["identity"]["accepted_du_model_ids"], ["3765504705612341090"])
         self.assertEqual(profile["identity"]["accepted_view_ids"], ["703232142435130905"])
@@ -187,6 +217,10 @@ class TestDuProfileLoader(unittest.TestCase):
         )
         self.assertEqual(profile["export_structure"]["observed_header_hash"], "79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf")
         self.assertEqual(profile["field_mapping"]["site_code"]["source_candidates"][0]["mapping_status"], "APPROVED")
+        self.assertEqual(
+            profile["field_mapping"]["subcontractor_tss"]["source_candidates"][0]["fingerprint"]["display_header"],
+            "SubCon - TSS",
+        )
         self.assertEqual(
             profile["field_mapping"]["site_code"]["source_candidates"][0]["fingerprint"]["display_header"],
             "customer site code",
