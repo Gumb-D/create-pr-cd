@@ -1,0 +1,175 @@
+{
+  "schema_version": "1.0",
+  "identity_rule": "iEPMS Project + DU Model",
+  "identity_key_fields": [
+    "project_key",
+    "du_model_id"
+  ],
+  "project_slugs": {
+    "Malaysia_CelcomDigi_Project": "celcomdigi",
+    "CelcomDigi_MW": "mw"
+  },
+  "profiles": [
+    {
+      "profile_id": "tx_mini_pr_v1",
+      "canonical_profile_id": "celcomdigi_tx_mini_project_pr_v1",
+      "project_key": "Malaysia_CelcomDigi_Project",
+      "project_slug": "celcomdigi",
+      "du_model_name": "TX Mini Project",
+      "du_model_id": "4188808420049567786",
+      "identity_key": "Malaysia_CelcomDigi_Project::4188808420049567786",
+      "profile_status": "PR_INPUT_READY",
+      "name_status": "LEGACY_ACCEPTED",
+      "accepted_view_ids": [
+        "2477626672974883536"
+      ],
+      "reason": "This approved profile predates the Project + DU Model naming standard; retaining the existing ID avoids migration risk."
+    },
+    {
+      "profile_id": "tx_rollout_2023_pr_v1",
+      "canonical_profile_id": "celcomdigi_2023_tx_rollout_pr_v1",
+      "project_key": "Malaysia_CelcomDigi_Project",
+      "project_slug": "celcomdigi",
+      "du_model_name": "2023 TX Rollout",
+      "du_model_id": "1027190858144623081",
+      "identity_key": "Malaysia_CelcomDigi_Project::1027190858144623081",
+      "profile_status": "PR_INPUT_READY",
+      "name_status": "LEGACY_ACCEPTED",
+      "accepted_view_ids": [
+        "8530399820526021092"
+      ],
+      "reason": "This approved profile was onboarded before the naming standard and remains stable to avoid a migration-only rename."
+    },
+    {
+      "profile_id": "mw_eos_swap_pr_v1",
+      "canonical_profile_id": "mw_eos_swap_pr_v1",
+      "project_key": "CelcomDigi_MW",
+      "project_slug": "mw",
+      "du_model_name": "MW EOS Swap",
+      "du_model_id": "5440935430300168497",
+      "identity_key": "CelcomDigi_MW::5440935430300168497",
+      "profile_status": "PR_INPUT_READY",
+      "name_status": "STANDARD",
+      "accepted_view_ids": [
+        "7476572371505372260"
+      ],
+      "reason": null
+    },
+    {
+      "profile_id": "celcomdigi_bau_2023_pr_v1",
+      "canonical_profile_id": "celcomdigi_bau_2023_pr_v1",
+      "project_key": "Malaysia_CelcomDigi_Project",
+      "project_slug": "celcomdigi",
+      "du_model_name": "2023 Celcomdigi BAU",
+      "du_model_id": "8296022438223590261",
+      "identity_key": "Malaysia_CelcomDigi_Project::8296022438223590261",
+      "profile_status": "DRAFT",
+      "name_status": "STANDARD",
+      "accepted_view_ids": [
+        "6611960521271999255"
+      ],
+      "reason": null
+    },
+    {
+      "profile_id": "celcomdigi_bau_2024_pr_v1",
+      "canonical_profile_id": "celcomdigi_bau_2024_pr_v1",
+      "project_key": "Malaysia_CelcomDigi_Project",
+      "project_slug": "celcomdigi",
+      "du_model_name": "2024 Celcomdigi BAU",
+      "du_model_id": "7278317398457076992",
+      "identity_key": "Malaysia_CelcomDigi_Project::7278317398457076992",
+      "profile_status": "PR_INPUT_READY",
+      "name_status": "STANDARD",
+      "accepted_view_ids": [
+        "1090541706000906451"
+      ],
+      "reason": null
+    },
+    {
+      "profile_id": "celcomdigi_usp_pr_v1",
+      "canonical_profile_id": "celcomdigi_usp_pr_v1",
+      "project_key": "Malaysia_CelcomDigi_Project",
+      "project_slug": "celcomdigi",
+      "du_model_name": "Celcomdigi USP",
+      "du_model_id": "3765504705612341090",
+      "identity_key": "Malaysia_CelcomDigi_Project::3765504705612341090",
+      "profile_status": "PR_INPUT_READY",
+      "name_status": "STANDARD",
+      "accepted_view_ids": [
+        "703232142435130905"
+      ],
+      "reason": null
+    },
+    {
+      "profile_id": "jendela_tx_migration_pr_v1",
+      "canonical_profile_id": "celcomdigi_jendela_tx_migration_pr_v1",
+      "project_key": "Malaysia_CelcomDigi_Project",
+      "project_slug": "celcomdigi",
+      "du_model_name": "Jendela TX Migration",
+      "du_model_id": "4972593269368006257",
+      "identity_key": "Malaysia_CelcomDigi_Project::4972593269368006257",
+      "profile_status": "DRAFT",
+      "name_status": "LEGACY_ACCEPTED",
+      "accepted_view_ids": [
+        "4026888666764910245"
+      ],
+      "reason": "The existing DRAFT profile predates the standard; its ID is retained while onboarding continues under the same Project + DU Model identity."
+    },
+    {
+      "profile_id": "zte_tx_mini_pr_v1",
+      "canonical_profile_id": "mw_zte_tx_mini_pr_v1",
+      "project_key": "CelcomDigi_MW",
+      "project_slug": "mw",
+      "du_model_name": "ZTE TX MINI",
+      "du_model_id": "8638668101234290847",
+      "identity_key": "CelcomDigi_MW::8638668101234290847",
+      "profile_status": "DRAFT",
+      "name_status": "LEGACY_ACCEPTED",
+      "accepted_view_ids": [
+        "2279585426760368522"
+      ],
+      "reason": "The current ID is retained, but this profile remains separate from tx_mini_pr_v1 because both the iEPMS Project and DU Model are different."
+    },
+    {
+      "profile_id": "cd_consolidation_2023_decom_pr_v1",
+      "canonical_profile_id": "celcomdigi_cd_consolidation_2023_pr_v1",
+      "project_key": "Malaysia_CelcomDigi_Project",
+      "project_slug": "celcomdigi",
+      "du_model_name": "CD consolidation 2023",
+      "du_model_id": "8359047522524182050",
+      "identity_key": "Malaysia_CelcomDigi_Project::8359047522524182050",
+      "profile_status": "DRAFT",
+      "name_status": "CONSOLIDATION_REVIEW_REQUIRED",
+      "accepted_view_ids": [
+        "702960351133798763"
+      ],
+      "reason": "This View-based DRAFT profile is retained temporarily while business and technical evidence determine whether both Views can share one profile family."
+    },
+    {
+      "profile_id": "cd_consolidation_2023_rollout_pr_v1",
+      "canonical_profile_id": "celcomdigi_cd_consolidation_2023_pr_v1",
+      "project_key": "Malaysia_CelcomDigi_Project",
+      "project_slug": "celcomdigi",
+      "du_model_name": "CD consolidation 2023",
+      "du_model_id": "8359047522524182050",
+      "identity_key": "Malaysia_CelcomDigi_Project::8359047522524182050",
+      "profile_status": "DRAFT",
+      "name_status": "CONSOLIDATION_REVIEW_REQUIRED",
+      "accepted_view_ids": [
+        "8359047522524230651"
+      ],
+      "reason": "This View-based DRAFT profile is retained temporarily while business and technical evidence determine whether both Views can share one profile family."
+    }
+  ],
+  "identity_reviews": [
+    {
+      "identity_key": "Malaysia_CelcomDigi_Project::8359047522524182050",
+      "status": "CONSOLIDATION_REVIEW_REQUIRED",
+      "permitted_profile_ids": [
+        "cd_consolidation_2023_decom_pr_v1",
+        "cd_consolidation_2023_rollout_pr_v1"
+      ],
+      "reason": "Both DRAFT profiles represent different export Views for the same Project + DU Model and require business and technical consolidation review before onboarding."
+    }
+  ]
+}
