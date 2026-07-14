@@ -11,11 +11,10 @@ Discovery-only coverage review across the 10 profiled DU exports.
 
 ## 2023 Celcomdigi BAU
 
-- Source file: `A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx`
+- Source file: `A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx`
 - Coverage status: `TRACKED_DRAFT_PROFILE`
-- Profile: `celcomdigi_bau_2023_pr_v1` `0.1.0` (mapping `discovery-2026-07-07-2023-celcomdigi-bau-v1`)
-- Observed header hash: `77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313`
-- Missing skill fields: `existing_tss_pr, existing_ti_pr`
+- Profile: `celcomdigi_bau_2023_pr_v1` `0.1.1` (mapping `discovery-2026-07-14-2023-celcomdigi-bau-tx-prpo-v2`)
+- Observed header hash: `b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454`
 - Next action: Continue tracked profile review through the existing DRAFT discovery packet.
 
 ## 2023 TX Rollout
@@ -33,7 +32,6 @@ Discovery-only coverage review across the 10 profiled DU exports.
 - Coverage status: `TRACKED_DRAFT_PROFILE`
 - Profile: `celcomdigi_bau_2024_pr_v1` `0.1.0` (mapping `approved-2026-07-10-2024-celcomdigi-bau-v2`)
 - Observed header hash: `b3677457da49e5de484976c3fdb7ad6f5dc19055f5339ec616407f5cbde89a86`
-- Missing skill fields: `existing_tss_pr, existing_ti_pr`
 - Next action: Continue tracked profile review through the existing DRAFT discovery packet.
 
 ## CD consolidation 2023
@@ -60,7 +58,6 @@ Discovery-only coverage review across the 10 profiled DU exports.
 - Coverage status: `TRACKED_DRAFT_PROFILE`
 - Profile: `celcomdigi_usp_pr_v1` `0.1.0` (mapping `approved-2026-07-10-celcomdigi-usp-v2`)
 - Observed header hash: `79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf`
-- Missing skill fields: `existing_tss_pr, existing_ti_pr`
 - Next action: Continue tracked profile review through the existing DRAFT discovery packet.
 
 ## Jendela TX Migration
@@ -69,7 +66,6 @@ Discovery-only coverage review across the 10 profiled DU exports.
 - Coverage status: `TRACKED_DRAFT_PROFILE`
 - Profile: `jendela_tx_migration_pr_v1` `0.2.0` (mapping `approved-2026-07-13-jendela-tx-migration-v1`)
 - Observed header hash: `904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3`
-- Missing skill fields: `existing_tss_pr, existing_ti_pr`
 - Next action: Continue tracked profile review through the existing DRAFT discovery packet.
 
 ## TX Mini Project
@@ -78,7 +74,6 @@ Discovery-only coverage review across the 10 profiled DU exports.
 - Coverage status: `TRACKED_DRAFT_PROFILE`
 - Profile: `tx_mini_pr_v1` `0.2.0` (mapping `approved-2026-07-07-tx-mini-v1`)
 - Observed header hash: `167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221`
-- Missing skill fields: `existing_tss_pr, existing_ti_pr`
 - Next action: Continue tracked profile review through the existing DRAFT discovery packet.
 
 ## MW EOS Swap
@@ -87,7 +82,6 @@ Discovery-only coverage review across the 10 profiled DU exports.
 - Coverage status: `TRACKED_DRAFT_PROFILE`
 - Profile: `mw_eos_swap_pr_v1` `0.1.0` (mapping `approved-2026-07-10-mw-eos-swap-v2`)
 - Observed header hash: `46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a`
-- Missing skill fields: `existing_tss_pr, existing_ti_pr`
 - Next action: Continue tracked profile review through the existing DRAFT discovery packet.
 
 ## ZTE TX MINI
@@ -96,5 +90,4 @@ Discovery-only coverage review across the 10 profiled DU exports.
 - Coverage status: `TRACKED_DRAFT_PROFILE`
 - Profile: `zte_tx_mini_pr_v1` `0.1.0` (mapping `discovery-2026-07-06-zte-tx-mini-v1`)
 - Observed header hash: `a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810`
-- Missing skill fields: `existing_tss_pr, existing_ti_pr`
 - Next action: Continue tracked profile review through the existing DRAFT discovery packet.

@@ -61,30 +61,7 @@
       "observed_header_hash": "a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810",
       "du_model_name": "ZTE TX MINI",
       "source_file_name": "A-P202211283695_D002-ZTE TX MINI-ZTE TX MINI v1-20260703160312.xlsx",
-      "field_bridges": {
-        "existing_ti_pr_status": {
-          "bridge_status": "CROSS_MODEL_REVIEW_REQUIRED",
-          "review_reason": "Another profiled export carries the missing field, but cross-model reuse is discovery-only and still requires manual four-layer review.",
-          "best_source_export": {
-            "du_model_name": "2023 TX Rollout",
-            "source_file_name": "A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx",
-            "observed_header_hash": "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320",
-            "source_similarity_to_target": 0.08815838625326858,
-            "profile_id": "tx_rollout_2023_pr_v1"
-          }
-        },
-        "existing_tss_pr_status": {
-          "bridge_status": "CROSS_MODEL_REVIEW_REQUIRED",
-          "review_reason": "Another profiled export carries the missing field, but cross-model reuse is discovery-only and still requires manual four-layer review.",
-          "best_source_export": {
-            "du_model_name": "2023 TX Rollout",
-            "source_file_name": "A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx",
-            "observed_header_hash": "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320",
-            "source_similarity_to_target": 0.08815838625326858,
-            "profile_id": "tx_rollout_2023_pr_v1"
-          }
-        }
-      },
+      "field_bridges": {},
       "notes": [
         "This bridge review is discovery-only and does not approve borrowing mappings or business rules across DU models.",
         "A bridge candidate is a review lead, not a reusable production mapping."
@@ -92,35 +69,12 @@
     },
     {
       "profile_id": "celcomdigi_bau_2023_pr_v1",
-      "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-07-2023-celcomdigi-bau-v1",
-      "observed_header_hash": "77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313",
+      "profile_version": "0.1.1",
+      "mapping_version": "discovery-2026-07-14-2023-celcomdigi-bau-tx-prpo-v2",
+      "observed_header_hash": "b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454",
       "du_model_name": "2023 Celcomdigi BAU",
-      "source_file_name": "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx",
-      "field_bridges": {
-        "existing_ti_pr_status": {
-          "bridge_status": "CROSS_MODEL_REVIEW_REQUIRED",
-          "review_reason": "Another profiled export carries the missing field, but cross-model reuse is discovery-only and still requires manual four-layer review.",
-          "best_source_export": {
-            "du_model_name": "2023 TX Rollout",
-            "source_file_name": "A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx",
-            "observed_header_hash": "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320",
-            "source_similarity_to_target": 0.0,
-            "profile_id": "tx_rollout_2023_pr_v1"
-          }
-        },
-        "existing_tss_pr_status": {
-          "bridge_status": "CROSS_MODEL_REVIEW_REQUIRED",
-          "review_reason": "Another profiled export carries the missing field, but cross-model reuse is discovery-only and still requires manual four-layer review.",
-          "best_source_export": {
-            "du_model_name": "2023 TX Rollout",
-            "source_file_name": "A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx",
-            "observed_header_hash": "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320",
-            "source_similarity_to_target": 0.0,
-            "profile_id": "tx_rollout_2023_pr_v1"
-          }
-        }
-      },
+      "source_file_name": "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx",
+      "field_bridges": {},
       "notes": [
         "This bridge review is discovery-only and does not approve borrowing mappings or business rules across DU models.",
         "A bridge candidate is a review lead, not a reusable production mapping."
@@ -164,22 +118,22 @@
           "bridge_status": "CROSS_MODEL_REVIEW_REQUIRED",
           "review_reason": "Another profiled export carries the missing field, but cross-model reuse is discovery-only and still requires manual four-layer review.",
           "best_source_export": {
-            "du_model_name": "2023 TX Rollout",
-            "source_file_name": "A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx",
-            "observed_header_hash": "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320",
-            "source_similarity_to_target": 0.0,
-            "profile_id": "tx_rollout_2023_pr_v1"
+            "du_model_name": "TX Mini Project",
+            "source_file_name": "A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx",
+            "observed_header_hash": "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
+            "source_similarity_to_target": 0.8496355964710395,
+            "profile_id": "tx_mini_pr_v1"
           }
         },
         "existing_tss_pr_status": {
           "bridge_status": "CROSS_MODEL_REVIEW_REQUIRED",
           "review_reason": "Another profiled export carries the missing field, but cross-model reuse is discovery-only and still requires manual four-layer review.",
           "best_source_export": {
-            "du_model_name": "2023 TX Rollout",
-            "source_file_name": "A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx",
-            "observed_header_hash": "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320",
-            "source_similarity_to_target": 0.0,
-            "profile_id": "tx_rollout_2023_pr_v1"
+            "du_model_name": "TX Mini Project",
+            "source_file_name": "A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx",
+            "observed_header_hash": "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
+            "source_similarity_to_target": 0.8496355964710395,
+            "profile_id": "tx_mini_pr_v1"
           }
         }
       },
@@ -200,22 +154,22 @@
           "bridge_status": "CROSS_MODEL_REVIEW_REQUIRED",
           "review_reason": "Another profiled export carries the missing field, but cross-model reuse is discovery-only and still requires manual four-layer review.",
           "best_source_export": {
-            "du_model_name": "2023 TX Rollout",
-            "source_file_name": "A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx",
-            "observed_header_hash": "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320",
-            "source_similarity_to_target": 0.0,
-            "profile_id": "tx_rollout_2023_pr_v1"
+            "du_model_name": "Celcomdigi USP",
+            "source_file_name": "A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx",
+            "observed_header_hash": "79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf",
+            "source_similarity_to_target": 0.8496411031356252,
+            "profile_id": "celcomdigi_usp_pr_v1"
           }
         },
         "existing_tss_pr_status": {
           "bridge_status": "CROSS_MODEL_REVIEW_REQUIRED",
           "review_reason": "Another profiled export carries the missing field, but cross-model reuse is discovery-only and still requires manual four-layer review.",
           "best_source_export": {
-            "du_model_name": "2023 TX Rollout",
-            "source_file_name": "A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx",
-            "observed_header_hash": "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320",
-            "source_similarity_to_target": 0.0,
-            "profile_id": "tx_rollout_2023_pr_v1"
+            "du_model_name": "Celcomdigi USP",
+            "source_file_name": "A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx",
+            "observed_header_hash": "79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf",
+            "source_similarity_to_target": 0.8496411031356252,
+            "profile_id": "celcomdigi_usp_pr_v1"
           }
         }
       },

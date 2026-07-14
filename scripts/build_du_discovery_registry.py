@@ -107,13 +107,33 @@ def _skill_field_presence(header_inventory: Mapping[str, Any]) -> Dict[str, bool
         "existing_tss_pr": ("pr tss status",),
         "existing_ti_pr": ("pr ti status",),
     }
+    direct_pr_display_headers = {
+        "existing_tss_pr": {
+            "pr tss status",
+            "subcon pr - tss",
+        },
+        "existing_ti_pr": {
+            "pr ti status",
+            "subcon pr - ti",
+        },
+    }
     texts: List[str] = []
+    display_headers: List[str] = []
     for sheet in header_inventory.get("sheets", []):
         for column in sheet.get("columns", []):
             fp = column.get("fingerprint", {})
-            texts.append(" | ".join(str(fp.get(key, "")) for key in ("field_code", "wbs_stage", "task_name", "display_header")).lower())
+            texts.append(
+                " | ".join(
+                    str(fp.get(key, ""))
+                    for key in ("field_code", "wbs_stage", "task_name", "display_header")
+                ).lower()
+            )
+            display_headers.append(str(fp.get("display_header", "")).strip().lower())
     result: Dict[str, bool] = {}
     for field, options in targets.items():
+        if field in direct_pr_display_headers:
+            result[field] = any(display in direct_pr_display_headers[field] for display in display_headers)
+            continue
         result[field] = any(any(option in text for option in options) for text in texts)
     return result
 

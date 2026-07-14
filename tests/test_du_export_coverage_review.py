@@ -137,6 +137,20 @@ class TestDuExportCoverageReview(unittest.TestCase):
             self.assertEqual(written["entries"][0]["coverage_status"], DONOR_REVIEW_CANDIDATE)
             self.assertIn("DONOR_REVIEW_CANDIDATE", markdown_path.read_text(encoding="utf-8"))
 
+    def test_generated_coverage_keeps_2023_celcomdigi_bau_tracked_without_pr_gaps(self):
+        registry = json.loads(
+            (ROOT / "config" / "registries" / "mw_du_export_coverage_review.yaml").read_text(encoding="utf-8")
+        )
+        entry = next(
+            item
+            for item in registry["entries"]
+            if item["source_file_name"]
+            == "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx"
+        )
+        self.assertEqual(entry["coverage_status"], TRACKED_DRAFT_PROFILE)
+        self.assertNotIn("existing_tss_pr", entry["missing_skill_fields"])
+        self.assertNotIn("existing_ti_pr", entry["missing_skill_fields"])
+
 
 if __name__ == "__main__":
     unittest.main()

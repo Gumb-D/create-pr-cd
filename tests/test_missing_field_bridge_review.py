@@ -77,7 +77,7 @@ class TestMissingFieldBridgeReview(unittest.TestCase):
         self.assertEqual(bridge_entry["mapping_version"], "approved-2026-07-13-jendela-tx-migration-v1")
         self.assertEqual(bridge_entry["field_bridges"], {})
 
-    def test_zte_bridge_uses_tx_rollout_as_current_best_donor(self):
+    def test_zte_bridge_is_empty_after_local_pr_shortlist_candidates_are_detected(self):
         unresolved = json.loads(
             (ROOT / "config" / "registries" / "mw_du_unresolved_skill_field_review.yaml").read_text(encoding="utf-8")
         )
@@ -93,14 +93,7 @@ class TestMissingFieldBridgeReview(unittest.TestCase):
 
         self.assertEqual(bridge_entry["profile_id"], "zte_tx_mini_pr_v1")
         self.assertEqual(bridge_entry["profile_version"], "0.1.0")
-        self.assertEqual(
-            bridge_entry["field_bridges"]["existing_tss_pr_status"]["best_source_export"]["du_model_name"],
-            "2023 TX Rollout",
-        )
-        self.assertEqual(
-            bridge_entry["field_bridges"]["existing_ti_pr_status"]["bridge_status"],
-            "CROSS_MODEL_REVIEW_REQUIRED",
-        )
+        self.assertEqual(bridge_entry["field_bridges"], {})
 
     def test_bridge_registry_carries_all_ten_tracked_draft_profiles(self):
         unresolved = json.loads(

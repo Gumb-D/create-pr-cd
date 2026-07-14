@@ -265,6 +265,14 @@ class TestDuProfileIdentityGovernance(unittest.TestCase):
         self.assertEqual(actual, expected)
         self.assertNotIn("PRODUCTION", actual.values())
 
+    def test_2023_celcomdigi_bau_identity_uses_corrected_tx_prpo_view(self):
+        record = next(
+            item for item in self.registry["profiles"] if item["profile_id"] == "celcomdigi_bau_2023_pr_v1"
+        )
+        self.assertEqual(record["profile_status"], "DRAFT")
+        self.assertEqual(record["accepted_view_ids"], ["3882899459299681347"])
+        self.assertNotIn("6611960521271999255", record["accepted_view_ids"])
+
 
 if __name__ == "__main__":
     unittest.main()

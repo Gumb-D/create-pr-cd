@@ -50,8 +50,8 @@ Discovery-only deprecation review for the tracked DU profiles.
 ## celcomdigi_bau_2023_pr_v1
 
 - Current status: `DRAFT`
-- Mapping version: `discovery-2026-07-07-2023-celcomdigi-bau-v1`
-- Observed header hash: `77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313`
+- Mapping version: `discovery-2026-07-14-2023-celcomdigi-bau-tx-prpo-v2`
+- Observed header hash: `b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454`
 - Deprecation status: `NO_DEPRECATION_PLAN`
 - Note: No deprecation plan is recorded for this profile.
 - Note: A controlled deprecation requires a DEPRECATED lifecycle state plus successor and rollback evidence.

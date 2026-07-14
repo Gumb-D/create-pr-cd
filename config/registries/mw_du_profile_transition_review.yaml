@@ -158,7 +158,7 @@
           "target_status": "PROFILED",
           "eligible": false,
           "denied_reasons": [
-            "MISSING_REQUIRED_FIELDS"
+            "NO_PROFILE_SELECTION_FIELDS"
           ]
         },
         {
@@ -166,9 +166,9 @@
           "eligible": false,
           "denied_reasons": [
             "NO_APPROVED_HEADER_HASH",
-            "MISSING_REQUIRED_FIELDS",
             "REQUIRED_FIELDS_NOT_APPROVED",
-            "COMPETING_SHORTLIST_CANDIDATES"
+            "COMPETING_SHORTLIST_CANDIDATES",
+            "NO_PROFILE_SELECTION_FIELDS"
           ]
         },
         {
@@ -176,11 +176,10 @@
           "eligible": false,
           "denied_reasons": [
             "NO_APPROVED_HEADER_HASH",
-            "MISSING_REQUIRED_FIELDS",
             "REQUIRED_FIELDS_NOT_APPROVED",
             "COMPETING_SHORTLIST_CANDIDATES",
             "UNVERIFIED_SINGLE_CANDIDATE_FIELDS",
-            "CROSS_MODEL_BRIDGE_ONLY_FIELDS"
+            "NO_PROFILE_SELECTION_FIELDS"
           ]
         },
         {
@@ -189,11 +188,10 @@
           "denied_reasons": [
             "PROFILE_NOT_PRODUCTION",
             "NO_APPROVED_HEADER_HASH",
-            "MISSING_REQUIRED_FIELDS",
             "REQUIRED_FIELDS_NOT_APPROVED",
             "COMPETING_SHORTLIST_CANDIDATES",
             "UNVERIFIED_SINGLE_CANDIDATE_FIELDS",
-            "CROSS_MODEL_BRIDGE_ONLY_FIELDS"
+            "NO_PROFILE_SELECTION_FIELDS"
           ]
         }
       ],
@@ -204,25 +202,22 @@
     },
     {
       "profile_id": "celcomdigi_bau_2023_pr_v1",
-      "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-07-2023-celcomdigi-bau-v1",
+      "profile_version": "0.1.1",
+      "mapping_version": "discovery-2026-07-14-2023-celcomdigi-bau-tx-prpo-v2",
       "current_status": "DRAFT",
       "du_model_name": "2023 Celcomdigi BAU",
-      "observed_header_hash": "77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313",
+      "observed_header_hash": "b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454",
       "transition_targets": [
         {
           "target_status": "PROFILED",
-          "eligible": false,
-          "denied_reasons": [
-            "MISSING_REQUIRED_FIELDS"
-          ]
+          "eligible": true,
+          "denied_reasons": []
         },
         {
           "target_status": "BUSINESS_VALIDATED",
           "eligible": false,
           "denied_reasons": [
             "NO_APPROVED_HEADER_HASH",
-            "MISSING_REQUIRED_FIELDS",
             "REQUIRED_FIELDS_NOT_APPROVED",
             "COMPETING_SHORTLIST_CANDIDATES"
           ]
@@ -232,11 +227,9 @@
           "eligible": false,
           "denied_reasons": [
             "NO_APPROVED_HEADER_HASH",
-            "MISSING_REQUIRED_FIELDS",
             "REQUIRED_FIELDS_NOT_APPROVED",
             "COMPETING_SHORTLIST_CANDIDATES",
-            "UNVERIFIED_SINGLE_CANDIDATE_FIELDS",
-            "CROSS_MODEL_BRIDGE_ONLY_FIELDS"
+            "UNVERIFIED_SINGLE_CANDIDATE_FIELDS"
           ]
         },
         {
@@ -245,11 +238,9 @@
           "denied_reasons": [
             "PROFILE_NOT_PRODUCTION",
             "NO_APPROVED_HEADER_HASH",
-            "MISSING_REQUIRED_FIELDS",
             "REQUIRED_FIELDS_NOT_APPROVED",
             "COMPETING_SHORTLIST_CANDIDATES",
-            "UNVERIFIED_SINGLE_CANDIDATE_FIELDS",
-            "CROSS_MODEL_BRIDGE_ONLY_FIELDS"
+            "UNVERIFIED_SINGLE_CANDIDATE_FIELDS"
           ]
         }
       ],

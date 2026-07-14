@@ -3,39 +3,39 @@
   "registry_type": "discovery_structure_grouping",
   "entries": [
     {
-      "source_file_name": "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx",
-      "observed_header_hash": "77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313",
-      "fingerprint_count": 2407,
+      "source_file_name": "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx",
+      "observed_header_hash": "b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454",
+      "fingerprint_count": 2424,
       "grouping_signal": "POSSIBLE_REUSE_REVIEW",
       "grouping_reason": "Closest neighbor shares a strong majority of exact four-layer fingerprints.",
       "closest_neighbors": [
         {
-          "source_file_name": "A-P202202168750_D002-2024 Celcomdigi BAU-2024 BAU Rollout (TX)-20260703160253.xlsx",
-          "du_model_name": "2024 Celcomdigi BAU",
-          "observed_header_hash": "b3677457da49e5de484976c3fdb7ad6f5dc19055f5339ec616407f5cbde89a86",
-          "fingerprint_similarity": 0.8718544328300426,
-          "shared_fingerprint_count": 2252,
-          "union_fingerprint_count": 2583,
-          "view_label": "2024 BAU Rollout (TX)",
-          "profile_id": "celcomdigi_bau_2024_pr_v1"
-        },
-        {
           "source_file_name": "A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx",
           "du_model_name": "Celcomdigi USP",
           "observed_header_hash": "79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf",
-          "fingerprint_similarity": 0.8714395688991532,
-          "shared_fingerprint_count": 2264,
-          "union_fingerprint_count": 2598,
+          "fingerprint_similarity": 0.8349003384731102,
+          "shared_fingerprint_count": 2220,
+          "union_fingerprint_count": 2659,
           "view_label": "Celcomdigi USP (TX)",
           "profile_id": "celcomdigi_usp_pr_v1"
+        },
+        {
+          "source_file_name": "A-P202202168750_D002-2024 Celcomdigi BAU-2024 BAU Rollout (TX)-20260703160253.xlsx",
+          "du_model_name": "2024 Celcomdigi BAU",
+          "observed_header_hash": "b3677457da49e5de484976c3fdb7ad6f5dc19055f5339ec616407f5cbde89a86",
+          "fingerprint_similarity": 0.8344045368620038,
+          "shared_fingerprint_count": 2207,
+          "union_fingerprint_count": 2645,
+          "view_label": "2024 BAU Rollout (TX)",
+          "profile_id": "celcomdigi_bau_2024_pr_v1"
         },
         {
           "source_file_name": "A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260703160246.xlsx",
           "du_model_name": "Jendela TX Migration",
           "observed_header_hash": "904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3",
-          "fingerprint_similarity": 0.8684413580246914,
-          "shared_fingerprint_count": 2251,
-          "union_fingerprint_count": 2592,
+          "fingerprint_similarity": 0.8298192771084337,
+          "shared_fingerprint_count": 2204,
+          "union_fingerprint_count": 2656,
           "view_label": "Migration Rollout (TX)",
           "profile_id": "jendela_tx_migration_pr_v1"
         }
@@ -43,8 +43,8 @@
       "project_key": "Malaysia_CelcomDigi_Project",
       "du_model_name": "2023 Celcomdigi BAU",
       "du_model_id": "8296022438223590261",
-      "view_label": "2023 Celcomdigi BAU_(TX)",
-      "view_id": "6611960521271999255",
+      "view_label": "2023 Celcomdigi BAU_(TX_PRPO)",
+      "view_id": "3882899459299681347",
       "profile_id": "celcomdigi_bau_2023_pr_v1"
     },
     {
@@ -65,16 +65,6 @@
           "profile_id": "tx_mini_pr_v1"
         },
         {
-          "source_file_name": "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx",
-          "du_model_name": "2023 Celcomdigi BAU",
-          "observed_header_hash": "77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313",
-          "fingerprint_similarity": 0.8473400154202004,
-          "shared_fingerprint_count": 2198,
-          "union_fingerprint_count": 2594,
-          "view_label": "2023 Celcomdigi BAU_(TX)",
-          "profile_id": "celcomdigi_bau_2023_pr_v1"
-        },
-        {
           "source_file_name": "A-P202202168750_D002-2024 Celcomdigi BAU-2024 BAU Rollout (TX)-20260703160253.xlsx",
           "du_model_name": "2024 Celcomdigi BAU",
           "observed_header_hash": "b3677457da49e5de484976c3fdb7ad6f5dc19055f5339ec616407f5cbde89a86",
@@ -83,6 +73,16 @@
           "union_fingerprint_count": 2621,
           "view_label": "2024 BAU Rollout (TX)",
           "profile_id": "celcomdigi_bau_2024_pr_v1"
+        },
+        {
+          "source_file_name": "A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx",
+          "du_model_name": "Celcomdigi USP",
+          "observed_header_hash": "79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf",
+          "fingerprint_similarity": 0.8305597579425114,
+          "shared_fingerprint_count": 2196,
+          "union_fingerprint_count": 2644,
+          "view_label": "Celcomdigi USP (TX)",
+          "profile_id": "celcomdigi_usp_pr_v1"
         }
       ],
       "project_key": "Malaysia_CelcomDigi_Project",
@@ -110,16 +110,6 @@
           "profile_id": "celcomdigi_usp_pr_v1"
         },
         {
-          "source_file_name": "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx",
-          "du_model_name": "2023 Celcomdigi BAU",
-          "observed_header_hash": "77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313",
-          "fingerprint_similarity": 0.8718544328300426,
-          "shared_fingerprint_count": 2252,
-          "union_fingerprint_count": 2583,
-          "view_label": "2023 Celcomdigi BAU_(TX)",
-          "profile_id": "celcomdigi_bau_2023_pr_v1"
-        },
-        {
           "source_file_name": "A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx",
           "du_model_name": "TX Mini Project",
           "observed_header_hash": "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
@@ -128,6 +118,16 @@
           "union_fingerprint_count": 2588,
           "view_label": "TX Mini PR_PO View",
           "profile_id": "tx_mini_pr_v1"
+        },
+        {
+          "source_file_name": "A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260703160246.xlsx",
+          "du_model_name": "Jendela TX Migration",
+          "observed_header_hash": "904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3",
+          "fingerprint_similarity": 0.8522467631378522,
+          "shared_fingerprint_count": 2238,
+          "union_fingerprint_count": 2626,
+          "view_label": "Migration Rollout (TX)",
+          "profile_id": "jendela_tx_migration_pr_v1"
         }
       ],
       "project_key": "Malaysia_CelcomDigi_Project",
@@ -155,16 +155,6 @@
           "profile_id": "cd_consolidation_2023_rollout_pr_v1"
         },
         {
-          "source_file_name": "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx",
-          "du_model_name": "2023 Celcomdigi BAU",
-          "observed_header_hash": "77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313",
-          "fingerprint_similarity": 0.8536398467432951,
-          "shared_fingerprint_count": 2228,
-          "union_fingerprint_count": 2610,
-          "view_label": "2023 Celcomdigi BAU_(TX)",
-          "profile_id": "celcomdigi_bau_2023_pr_v1"
-        },
-        {
           "source_file_name": "A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx",
           "du_model_name": "TX Mini Project",
           "observed_header_hash": "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
@@ -173,6 +163,16 @@
           "union_fingerprint_count": 2607,
           "view_label": "TX Mini PR_PO View",
           "profile_id": "tx_mini_pr_v1"
+        },
+        {
+          "source_file_name": "A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260703160246.xlsx",
+          "du_model_name": "Jendela TX Migration",
+          "observed_header_hash": "904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3",
+          "fingerprint_similarity": 0.843560606060606,
+          "shared_fingerprint_count": 2227,
+          "union_fingerprint_count": 2640,
+          "view_label": "Migration Rollout (TX)",
+          "profile_id": "jendela_tx_migration_pr_v1"
         }
       ],
       "project_key": "Malaysia_CelcomDigi_Project",
@@ -200,16 +200,6 @@
           "profile_id": "cd_consolidation_2023_decom_pr_v1"
         },
         {
-          "source_file_name": "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx",
-          "du_model_name": "2023 Celcomdigi BAU",
-          "observed_header_hash": "77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313",
-          "fingerprint_similarity": 0.8510882016036655,
-          "shared_fingerprint_count": 2229,
-          "union_fingerprint_count": 2619,
-          "view_label": "2023 Celcomdigi BAU_(TX)",
-          "profile_id": "celcomdigi_bau_2023_pr_v1"
-        },
-        {
           "source_file_name": "A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx",
           "du_model_name": "Celcomdigi USP",
           "observed_header_hash": "79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf",
@@ -218,6 +208,16 @@
           "union_fingerprint_count": 2647,
           "view_label": "Celcomdigi USP (TX)",
           "profile_id": "celcomdigi_usp_pr_v1"
+        },
+        {
+          "source_file_name": "A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx",
+          "du_model_name": "TX Mini Project",
+          "observed_header_hash": "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
+          "fingerprint_similarity": 0.8478011472275334,
+          "shared_fingerprint_count": 2217,
+          "union_fingerprint_count": 2615,
+          "view_label": "TX Mini PR_PO View",
+          "profile_id": "tx_mini_pr_v1"
         }
       ],
       "project_key": "Malaysia_CelcomDigi_Project",
@@ -245,16 +245,6 @@
           "profile_id": "celcomdigi_bau_2024_pr_v1"
         },
         {
-          "source_file_name": "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx",
-          "du_model_name": "2023 Celcomdigi BAU",
-          "observed_header_hash": "77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313",
-          "fingerprint_similarity": 0.8714395688991532,
-          "shared_fingerprint_count": 2264,
-          "union_fingerprint_count": 2598,
-          "view_label": "2023 Celcomdigi BAU_(TX)",
-          "profile_id": "celcomdigi_bau_2023_pr_v1"
-        },
-        {
           "source_file_name": "A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260703160246.xlsx",
           "du_model_name": "Jendela TX Migration",
           "observed_header_hash": "904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3",
@@ -263,6 +253,16 @@
           "union_fingerprint_count": 2628,
           "view_label": "Migration Rollout (TX)",
           "profile_id": "jendela_tx_migration_pr_v1"
+        },
+        {
+          "source_file_name": "A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx",
+          "du_model_name": "TX Mini Project",
+          "observed_header_hash": "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
+          "fingerprint_similarity": 0.8524464831804281,
+          "shared_fingerprint_count": 2230,
+          "union_fingerprint_count": 2616,
+          "view_label": "TX Mini PR_PO View",
+          "profile_id": "tx_mini_pr_v1"
         }
       ],
       "project_key": "Malaysia_CelcomDigi_Project",
@@ -279,16 +279,6 @@
       "grouping_signal": "POSSIBLE_REUSE_REVIEW",
       "grouping_reason": "Closest neighbor shares a strong majority of exact four-layer fingerprints.",
       "closest_neighbors": [
-        {
-          "source_file_name": "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx",
-          "du_model_name": "2023 Celcomdigi BAU",
-          "observed_header_hash": "77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313",
-          "fingerprint_similarity": 0.8684413580246914,
-          "shared_fingerprint_count": 2251,
-          "union_fingerprint_count": 2592,
-          "view_label": "2023 Celcomdigi BAU_(TX)",
-          "profile_id": "celcomdigi_bau_2023_pr_v1"
-        },
         {
           "source_file_name": "A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx",
           "du_model_name": "Celcomdigi USP",
@@ -308,6 +298,16 @@
           "union_fingerprint_count": 2626,
           "view_label": "2024 BAU Rollout (TX)",
           "profile_id": "celcomdigi_bau_2024_pr_v1"
+        },
+        {
+          "source_file_name": "A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx",
+          "du_model_name": "TX Mini Project",
+          "observed_header_hash": "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
+          "fingerprint_similarity": 0.8473019517795637,
+          "shared_fingerprint_count": 2214,
+          "union_fingerprint_count": 2613,
+          "view_label": "TX Mini PR_PO View",
+          "profile_id": "tx_mini_pr_v1"
         }
       ],
       "project_key": "Malaysia_CelcomDigi_Project",
@@ -324,16 +324,6 @@
       "grouping_signal": "POSSIBLE_REUSE_REVIEW",
       "grouping_reason": "Closest neighbor shares a strong majority of exact four-layer fingerprints.",
       "closest_neighbors": [
-        {
-          "source_file_name": "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx",
-          "du_model_name": "2023 Celcomdigi BAU",
-          "observed_header_hash": "77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313",
-          "fingerprint_similarity": 0.8669260700389105,
-          "shared_fingerprint_count": 2228,
-          "union_fingerprint_count": 2570,
-          "view_label": "2023 Celcomdigi BAU_(TX)",
-          "profile_id": "celcomdigi_bau_2023_pr_v1"
-        },
         {
           "source_file_name": "A-P202202168750_D002-2024 Celcomdigi BAU-2024 BAU Rollout (TX)-20260703160253.xlsx",
           "du_model_name": "2024 Celcomdigi BAU",
@@ -353,6 +343,16 @@
           "union_fingerprint_count": 2571,
           "view_label": "TX Rollout PR_PO View",
           "profile_id": "tx_rollout_2023_pr_v1"
+        },
+        {
+          "source_file_name": "A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx",
+          "du_model_name": "Celcomdigi USP",
+          "observed_header_hash": "79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf",
+          "fingerprint_similarity": 0.8524464831804281,
+          "shared_fingerprint_count": 2230,
+          "union_fingerprint_count": 2616,
+          "view_label": "Celcomdigi USP (TX)",
+          "profile_id": "celcomdigi_usp_pr_v1"
         }
       ],
       "project_key": "Malaysia_CelcomDigi_Project",

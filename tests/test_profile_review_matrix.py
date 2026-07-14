@@ -22,17 +22,19 @@ class TestProfileReviewMatrix(unittest.TestCase):
             for item in registry["batch_review_queue"]
             if item["action_type"] == "RESOLVE_MISSING_REQUIRED_FIELD" and item["field_name"] == "existing_ti_pr_status"
         )
-        # tx_mini_pr_v1 left this batch on 2026-07-07, and mw_eos_swap_pr_v1,
+        # tx_mini_pr_v1 left this batch on 2026-07-07, mw_eos_swap_pr_v1,
         # celcomdigi_bau_2024_pr_v1, and celcomdigi_usp_pr_v1 left it on
-        # 2026-07-09 when their approved PR-critical mappings landed.
-        self.assertEqual(existing_ti["profile_count"], 4)
+        # 2026-07-09 when their approved PR-critical mappings landed, and
+        # celcomdigi_bau_2023_pr_v1 left it on 2026-07-14 when TX_PRPO
+        # confirmed both existing PR status fields; zte_tx_mini_pr_v1 also
+        # left it once local shortlist evidence was recognized and the work
+        # moved from missing-field remediation to profile-selection review.
+        self.assertEqual(existing_ti["profile_count"], 2)
         self.assertEqual(
             existing_ti["profiles"],
             [
                 "cd_consolidation_2023_decom_pr_v1",
                 "cd_consolidation_2023_rollout_pr_v1",
-                "celcomdigi_bau_2023_pr_v1",
-                "zte_tx_mini_pr_v1",
             ],
         )
         self.assertEqual(existing_ti["batch_priority"], 1)
