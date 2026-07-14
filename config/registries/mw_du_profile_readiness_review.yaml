@@ -277,12 +277,12 @@
     },
     {
       "profile_id": "celcomdigi_bau_2023_pr_v1",
-      "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-07-2023-celcomdigi-bau-v1",
+      "profile_version": "0.1.1",
+      "mapping_version": "discovery-2026-07-14-2023-celcomdigi-bau-tx-prpo-v2",
       "profile_status": "DRAFT",
       "du_model_name": "2023 Celcomdigi BAU",
-      "source_file_name": "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx",
-      "observed_header_hash": "77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313",
+      "source_file_name": "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx",
+      "observed_header_hash": "b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454",
       "approved_header_hashes": [],
       "readiness_status": "DISCOVERY_ONLY_BLOCKED",
       "blocker_summary": {
@@ -290,20 +290,17 @@
           "PROFILE_NOT_PRODUCTION",
           "NO_APPROVED_HEADER_HASH",
           "REQUIRED_FIELDS_NOT_APPROVED",
-          "MISSING_REQUIRED_FIELDS",
           "COMPETING_SHORTLIST_CANDIDATES",
-          "UNVERIFIED_SINGLE_CANDIDATE_FIELDS",
-          "CROSS_MODEL_BRIDGE_ONLY_FIELDS"
+          "UNVERIFIED_SINGLE_CANDIDATE_FIELDS"
         ],
         "lifecycle_blockers": [
           "PROFILE_NOT_PRODUCTION",
           "NO_APPROVED_HEADER_HASH"
         ],
-        "missing_required_fields": [
-          "existing_ti_pr_status",
-          "existing_tss_pr_status"
-        ],
+        "missing_required_fields": [],
         "unapproved_required_fields": [
+          "existing_ti_pr_status",
+          "existing_tss_pr_status",
           "region",
           "site_code",
           "subcontractor_ti",
@@ -311,33 +308,34 @@
         ],
         "competing_candidate_fields": [
           "subcontractor_planning",
+          "subcontractor_ti",
           "tx_sow_raw"
         ],
         "required_competing_candidate_fields": [
+          "subcontractor_ti",
           "tx_sow_raw"
         ],
         "single_candidate_unverified_fields": [
           "antenna_size_fe",
           "antenna_size_ne",
           "du_key",
+          "existing_ti_pr_status",
+          "existing_tss_pr_status",
           "region",
           "site_code",
-          "site_name",
-          "subcontractor_ti"
+          "site_name"
         ],
         "required_single_candidate_unverified_fields": [
+          "existing_ti_pr_status",
+          "existing_tss_pr_status",
           "region",
-          "site_code",
-          "subcontractor_ti"
+          "site_code"
         ],
         "no_profile_selection_fields": [],
         "required_no_profile_selection_fields": [],
         "shortlist_mismatch_fields": [],
         "required_shortlist_mismatch_fields": [],
-        "cross_model_bridge_fields": [
-          "existing_ti_pr_status",
-          "existing_tss_pr_status"
-        ]
+        "cross_model_bridge_fields": []
       },
       "release_prerequisites": [
         "Approve the DU model identity and four-layer source mappings.",

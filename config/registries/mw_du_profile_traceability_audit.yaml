@@ -399,9 +399,9 @@
     },
     {
       "profile_id": "celcomdigi_bau_2023_pr_v1",
-      "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-07-2023-celcomdigi-bau-v1",
-      "observed_header_hash": "77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313",
+      "profile_version": "0.1.1",
+      "mapping_version": "discovery-2026-07-14-2023-celcomdigi-bau-tx-prpo-v2",
+      "observed_header_hash": "b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454",
       "traceability_status": "TRACEABLE",
       "artifacts": [
         {

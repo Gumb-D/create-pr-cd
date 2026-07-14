@@ -1,33 +1,34 @@
 {
   "profile_id": "celcomdigi_bau_2023_pr_v1",
-  "profile_version": "0.1.0",
-  "mapping_version": "discovery-2026-07-07-2023-celcomdigi-bau-v1",
+  "profile_version": "0.1.1",
+  "mapping_version": "discovery-2026-07-14-2023-celcomdigi-bau-tx-prpo-v2",
   "status": "DRAFT",
   "identity": {
     "project_key": "Malaysia_CelcomDigi_Project",
     "accepted_du_models": ["2023 Celcomdigi BAU"],
     "accepted_du_model_ids": ["8296022438223590261"],
-    "accepted_view_ids": ["6611960521271999255"]
+    "accepted_view_ids": ["3882899459299681347"]
   },
   "export_structure": {
     "sheet_selector": null,
     "header_rows": [0, 1, 2, 3],
     "header_hash_policy": "strict",
-    "observed_header_hash": "77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313",
+    "observed_header_hash": "b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454",
     "approved_header_hashes": []
   },
   "field_mapping": {
-    "site_code": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|fix00012|8296022438223590261|6611960521271999255", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "customer site code"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim", "uppercase"]},
+    "site_code": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|fix00012|8296022438223590261|3882899459299681347", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "customer site code"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim", "uppercase"]},
     "site_name": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00015", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "customer site name"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
     "du_key": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "du|du_code", "wbs_stage": "Du", "task_name": "Du", "display_header": "du code"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
     "tx_sow_raw": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00815532", "wbs_stage": "Installation", "task_name": "Microwave", "display_header": "Tx SOW"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
     "tx_upgrade_scope_raw": {"required": false, "source_candidates": [], "transforms": ["trim"]},
     "region": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|region_name", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "region"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
     "state": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00008", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "Province/State"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "subcontractor_tss": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ640307", "wbs_stage": "Subcon Info", "task_name": "SubCon - TSS", "display_header": "SubCon - TSS"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
     "subcontractor_ti": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ640242", "wbs_stage": "Subcon Info", "task_name": "SubCon - TI", "display_header": "SubCon - TI"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
     "subcontractor_planning": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01036640", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Subcon Planning"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
-    "existing_tss_pr_status": {"required": true, "source_candidates": [], "transforms": ["trim"]},
-    "existing_ti_pr_status": {"required": true, "source_candidates": [], "transforms": ["trim"]},
+    "existing_tss_pr_status": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ641766", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Subcon PR - TSS"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "existing_ti_pr_status": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ641765", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Subcon PR - TI"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
     "latitude": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00013", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "Latitude (North Plus South Minus)"}, "mapping_status": "UNVERIFIED"}], "transforms": ["parse_decimal"]},
     "longitude": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00010", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "Longitude (East Plus West Minus)"}, "mapping_status": "UNVERIFIED"}], "transforms": ["parse_decimal"]},
     "antenna_size_ne": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00969578", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "MW Config Antenna Size NE"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
@@ -42,10 +43,9 @@
     "reject_ambiguous_source_mapping": true,
     "require_evidence_for_every_canonical_field": true,
     "profile_notes": [
-      "Source candidates were populated from local discovery-only profiler outputs and remain UNVERIFIED.",
-      "This profile captures 2023 Celcomdigi BAU as a tracked discovery-only export with direct TX SOW and antenna evidence but no approved duplicate-prevention fields.",
-      "Existing PR status fields remain unresolved and must stay blocked until approved evidence exists or the profile remains non-runnable.",
-      "This profile is not production-ready and must never enable ECC generation."
+      "The previous TX View discovery evidence was superseded because the correct PR/PO source is the TX_PRPO View exported on 2026-07-14.",
+      "All new TX_PRPO candidates remain UNVERIFIED.",
+      "The profile remains DRAFT and cannot generate ECC output."
     ]
   }
 }

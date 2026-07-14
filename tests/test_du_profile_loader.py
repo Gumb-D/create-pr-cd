@@ -182,15 +182,50 @@ class TestDuProfileLoader(unittest.TestCase):
     def test_draft_2023_celcomdigi_bau_profile_loads_with_direct_tx_and_antenna_candidates(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "celcomdigi_bau_2023_pr_v1.yaml")
         self.assertEqual(profile["status"], "DRAFT")
-        self.assertEqual(profile["mapping_version"], "discovery-2026-07-07-2023-celcomdigi-bau-v1")
+        self.assertEqual(profile["profile_version"], "0.1.1")
+        self.assertEqual(profile["mapping_version"], "discovery-2026-07-14-2023-celcomdigi-bau-tx-prpo-v2")
         self.assertEqual(profile["identity"]["accepted_du_models"], ["2023 Celcomdigi BAU"])
         self.assertEqual(profile["identity"]["accepted_du_model_ids"], ["8296022438223590261"])
-        self.assertEqual(profile["identity"]["accepted_view_ids"], ["6611960521271999255"])
+        self.assertEqual(profile["identity"]["accepted_view_ids"], ["3882899459299681347"])
+        self.assertNotIn("6611960521271999255", profile["identity"]["accepted_view_ids"])
         self.assertEqual(profile["export_structure"]["approved_header_hashes"], [])
-        self.assertEqual(profile["export_structure"]["observed_header_hash"], "77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313")
+        self.assertEqual(profile["export_structure"]["observed_header_hash"], "b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454")
+        self.assertEqual(
+            profile["field_mapping"]["site_code"]["source_candidates"][0]["fingerprint"]["field_code"],
+            "site|fix00012|8296022438223590261|3882899459299681347",
+        )
         self.assertEqual(
             profile["field_mapping"]["tx_sow_raw"]["source_candidates"][0]["fingerprint"]["display_header"],
             "Tx SOW",
+        )
+        self.assertEqual(
+            profile["field_mapping"]["subcontractor_tss"]["source_candidates"][0]["fingerprint"]["display_header"],
+            "SubCon - TSS",
+        )
+        self.assertEqual(
+            profile["field_mapping"]["existing_tss_pr_status"]["source_candidates"][0]["fingerprint"]["display_header"],
+            "Subcon PR - TSS",
+        )
+        self.assertEqual(
+            profile["field_mapping"]["existing_ti_pr_status"]["source_candidates"][0]["fingerprint"]["display_header"],
+            "Subcon PR - TI",
+        )
+        self.assertEqual(profile["field_mapping"]["existing_tss_pr_status"]["transforms"], ["trim"])
+        self.assertEqual(profile["field_mapping"]["existing_ti_pr_status"]["transforms"], ["trim"])
+        self.assertTrue(
+            all(
+                candidate["mapping_status"] == "UNVERIFIED"
+                for field in (
+                    "site_code",
+                    "tx_sow_raw",
+                    "region",
+                    "subcontractor_tss",
+                    "subcontractor_ti",
+                    "existing_tss_pr_status",
+                    "existing_ti_pr_status",
+                )
+                for candidate in profile["field_mapping"][field]["source_candidates"]
+            )
         )
         self.assertEqual(
             profile["field_mapping"]["antenna_size_ne"]["source_candidates"][0]["fingerprint"]["display_header"],

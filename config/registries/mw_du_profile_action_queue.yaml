@@ -283,95 +283,95 @@
     },
     {
       "profile_id": "celcomdigi_bau_2023_pr_v1",
-      "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-07-2023-celcomdigi-bau-v1",
+      "profile_version": "0.1.1",
+      "mapping_version": "discovery-2026-07-14-2023-celcomdigi-bau-tx-prpo-v2",
       "profile_status": "DRAFT",
       "du_model_name": "2023 Celcomdigi BAU",
       "readiness_status": "DISCOVERY_ONLY_BLOCKED",
-      "observed_header_hash": "77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313",
+      "observed_header_hash": "b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454",
       "action_queue": [
         {
           "priority_id": "celcomdigi_bau_2023_pr_v1:01",
-          "action_type": "RESOLVE_MISSING_REQUIRED_FIELD",
-          "summary": "Resolve required field `existing_ti_pr_status` before any lifecycle promotion.",
-          "field_name": "existing_ti_pr_status",
-          "evidence_hint": "Review donor export 2023 TX Rollout with similarity 0.000 before deciding derived, manual, or blocking treatment."
-        },
-        {
-          "priority_id": "celcomdigi_bau_2023_pr_v1:02",
-          "action_type": "RESOLVE_MISSING_REQUIRED_FIELD",
-          "summary": "Resolve required field `existing_tss_pr_status` before any lifecycle promotion.",
-          "field_name": "existing_tss_pr_status",
-          "evidence_hint": "Review donor export 2023 TX Rollout with similarity 0.000 before deciding derived, manual, or blocking treatment."
-        },
-        {
-          "priority_id": "celcomdigi_bau_2023_pr_v1:03",
           "action_type": "CONFIRM_COMPETING_CANDIDATE",
           "summary": "Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.",
           "field_name": "subcontractor_planning",
           "evidence_hint": "Use the unresolved review packet to compare the currently selected source against alternates."
         },
         {
-          "priority_id": "celcomdigi_bau_2023_pr_v1:04",
+          "priority_id": "celcomdigi_bau_2023_pr_v1:02",
+          "action_type": "CONFIRM_COMPETING_CANDIDATE",
+          "summary": "Choose one exact four-layer source for `subcontractor_ti` from the competing shortlist candidates.",
+          "field_name": "subcontractor_ti",
+          "evidence_hint": "Use the unresolved review packet to compare the currently selected source against alternates."
+        },
+        {
+          "priority_id": "celcomdigi_bau_2023_pr_v1:03",
           "action_type": "CONFIRM_COMPETING_CANDIDATE",
           "summary": "Choose one exact four-layer source for `tx_sow_raw` from the competing shortlist candidates.",
           "field_name": "tx_sow_raw",
           "evidence_hint": "Use the unresolved review packet to compare the currently selected source against alternates."
         },
         {
-          "priority_id": "celcomdigi_bau_2023_pr_v1:05",
+          "priority_id": "celcomdigi_bau_2023_pr_v1:04",
           "action_type": "VERIFY_SINGLE_CANDIDATE",
           "summary": "Verify the current single shortlist-aligned source for `antenna_size_fe`.",
           "field_name": "antenna_size_fe",
           "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
         },
         {
-          "priority_id": "celcomdigi_bau_2023_pr_v1:06",
+          "priority_id": "celcomdigi_bau_2023_pr_v1:05",
           "action_type": "VERIFY_SINGLE_CANDIDATE",
           "summary": "Verify the current single shortlist-aligned source for `antenna_size_ne`.",
           "field_name": "antenna_size_ne",
           "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
         },
         {
-          "priority_id": "celcomdigi_bau_2023_pr_v1:07",
+          "priority_id": "celcomdigi_bau_2023_pr_v1:06",
           "action_type": "VERIFY_SINGLE_CANDIDATE",
           "summary": "Verify the current single shortlist-aligned source for `du_key`.",
           "field_name": "du_key",
           "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
         },
         {
+          "priority_id": "celcomdigi_bau_2023_pr_v1:07",
+          "action_type": "VERIFY_SINGLE_CANDIDATE",
+          "summary": "Verify the current single shortlist-aligned source for `existing_ti_pr_status`.",
+          "field_name": "existing_ti_pr_status",
+          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+        },
+        {
           "priority_id": "celcomdigi_bau_2023_pr_v1:08",
+          "action_type": "VERIFY_SINGLE_CANDIDATE",
+          "summary": "Verify the current single shortlist-aligned source for `existing_tss_pr_status`.",
+          "field_name": "existing_tss_pr_status",
+          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+        },
+        {
+          "priority_id": "celcomdigi_bau_2023_pr_v1:09",
           "action_type": "VERIFY_SINGLE_CANDIDATE",
           "summary": "Verify the current single shortlist-aligned source for `region`.",
           "field_name": "region",
           "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
         },
         {
-          "priority_id": "celcomdigi_bau_2023_pr_v1:09",
+          "priority_id": "celcomdigi_bau_2023_pr_v1:10",
           "action_type": "VERIFY_SINGLE_CANDIDATE",
           "summary": "Verify the current single shortlist-aligned source for `site_code`.",
           "field_name": "site_code",
           "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
         },
         {
-          "priority_id": "celcomdigi_bau_2023_pr_v1:10",
+          "priority_id": "celcomdigi_bau_2023_pr_v1:11",
           "action_type": "VERIFY_SINGLE_CANDIDATE",
           "summary": "Verify the current single shortlist-aligned source for `site_name`.",
           "field_name": "site_name",
           "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
         },
         {
-          "priority_id": "celcomdigi_bau_2023_pr_v1:11",
-          "action_type": "VERIFY_SINGLE_CANDIDATE",
-          "summary": "Verify the current single shortlist-aligned source for `subcontractor_ti`.",
-          "field_name": "subcontractor_ti",
-          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
-        },
-        {
           "priority_id": "celcomdigi_bau_2023_pr_v1:12",
           "action_type": "APPROVE_HEADER_HASH",
           "summary": "Approve at least one header hash for this profile version after the field review is complete.",
-          "evidence_hint": "Current observed header hash: 77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313"
+          "evidence_hint": "Current observed header hash: b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454"
         },
         {
           "priority_id": "celcomdigi_bau_2023_pr_v1:13",

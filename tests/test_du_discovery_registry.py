@@ -92,10 +92,16 @@ class TestDuDiscoveryRegistry(unittest.TestCase):
         profile_dir = self.profiler_root / "A-P202202168750_D002-2023_Celcomdigi_BAU-2023_Celcomdigi_BAU__TX_-20260703160239"
         entry = build_discovery_entry(profile_dir)
         self.assertEqual(entry["du_model_name"], "2023 Celcomdigi BAU")
+        self.assertEqual(entry["view_label"], "2023 Celcomdigi BAU_(TX_PRPO)")
+        self.assertEqual(entry["view_id"], "3882899459299681347")
+        self.assertEqual(
+            entry["source_file_name"],
+            "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx",
+        )
         self.assertEqual(entry["profile_id"], "celcomdigi_bau_2023_pr_v1")
         self.assertEqual(entry["profile_status"], "DRAFT")
-        self.assertEqual(entry["profile_version"], "0.1.0")
-        self.assertEqual(entry["mapping_version"], "discovery-2026-07-07-2023-celcomdigi-bau-v1")
+        self.assertEqual(entry["profile_version"], "0.1.1")
+        self.assertEqual(entry["mapping_version"], "discovery-2026-07-14-2023-celcomdigi-bau-tx-prpo-v2")
 
     def test_build_discovery_entry_for_2024_celcomdigi_bau_uses_existing_profile_file(self):
         profile_dir = self.profiler_root / "A-P202202168750_D002-2024_Celcomdigi_BAU-2024_BAU_Rollout_TX_-20260703160253"

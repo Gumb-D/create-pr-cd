@@ -4,15 +4,15 @@ Discovery-only structural overlap review based on exact four-layer fingerprint s
 
 ## 2023 Celcomdigi BAU
 
-- Source file: `A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx`
-- Header hash: `77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313`
-- Fingerprint count: `2407`
+- Source file: `A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx`
+- Header hash: `b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454`
+- Fingerprint count: `2424`
 - Grouping signal: `POSSIBLE_REUSE_REVIEW`
 - Reason: Closest neighbor shares a strong majority of exact four-layer fingerprints.
 - Closest neighbors:
-  - `A-P202202168750_D002-2024 Celcomdigi BAU-2024 BAU Rollout (TX)-20260703160253.xlsx` (2024 Celcomdigi BAU) similarity=`0.872` shared=`2252` union=`2583` profile=`celcomdigi_bau_2024_pr_v1`
-  - `A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx` (Celcomdigi USP) similarity=`0.871` shared=`2264` union=`2598` profile=`celcomdigi_usp_pr_v1`
-  - `A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260703160246.xlsx` (Jendela TX Migration) similarity=`0.868` shared=`2251` union=`2592` profile=`jendela_tx_migration_pr_v1`
+  - `A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx` (Celcomdigi USP) similarity=`0.835` shared=`2220` union=`2659` profile=`celcomdigi_usp_pr_v1`
+  - `A-P202202168750_D002-2024 Celcomdigi BAU-2024 BAU Rollout (TX)-20260703160253.xlsx` (2024 Celcomdigi BAU) similarity=`0.834` shared=`2207` union=`2645` profile=`celcomdigi_bau_2024_pr_v1`
+  - `A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260703160246.xlsx` (Jendela TX Migration) similarity=`0.830` shared=`2204` union=`2656` profile=`jendela_tx_migration_pr_v1`
 
 ## 2023 TX Rollout
 
@@ -23,8 +23,8 @@ Discovery-only structural overlap review based on exact four-layer fingerprint s
 - Reason: Closest neighbor shares a strong majority of exact four-layer fingerprints.
 - Closest neighbors:
   - `A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx` (TX Mini Project) similarity=`0.858` shared=`2205` union=`2571` profile=`tx_mini_pr_v1`
-  - `A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx` (2023 Celcomdigi BAU) similarity=`0.847` shared=`2198` union=`2594` profile=`celcomdigi_bau_2023_pr_v1`
   - `A-P202202168750_D002-2024 Celcomdigi BAU-2024 BAU Rollout (TX)-20260703160253.xlsx` (2024 Celcomdigi BAU) similarity=`0.836` shared=`2192` union=`2621` profile=`celcomdigi_bau_2024_pr_v1`
+  - `A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx` (Celcomdigi USP) similarity=`0.831` shared=`2196` union=`2644` profile=`celcomdigi_usp_pr_v1`
 
 ## 2024 Celcomdigi BAU
 
@@ -35,8 +35,8 @@ Discovery-only structural overlap review based on exact four-layer fingerprint s
 - Reason: Closest neighbor shares a strong majority of exact four-layer fingerprints.
 - Closest neighbors:
   - `A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx` (Celcomdigi USP) similarity=`0.872` shared=`2275` union=`2608` profile=`celcomdigi_usp_pr_v1`
-  - `A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx` (2023 Celcomdigi BAU) similarity=`0.872` shared=`2252` union=`2583` profile=`celcomdigi_bau_2023_pr_v1`
   - `A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx` (TX Mini Project) similarity=`0.862` shared=`2231` union=`2588` profile=`tx_mini_pr_v1`
+  - `A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260703160246.xlsx` (Jendela TX Migration) similarity=`0.852` shared=`2238` union=`2626` profile=`jendela_tx_migration_pr_v1`
 
 ## CD consolidation 2023
 
@@ -47,8 +47,8 @@ Discovery-only structural overlap review based on exact four-layer fingerprint s
 - Reason: Closest neighbor shares a strong majority of exact four-layer fingerprints.
 - Closest neighbors:
   - `A-P202202168750_D002-CD consolidation 2023-CD consolidation 2023 Rollout-20260703160351.xlsx` (CD consolidation 2023) similarity=`0.870` shared=`2267` union=`2605` profile=`cd_consolidation_2023_rollout_pr_v1`
-  - `A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx` (2023 Celcomdigi BAU) similarity=`0.854` shared=`2228` union=`2610` profile=`celcomdigi_bau_2023_pr_v1`
   - `A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx` (TX Mini Project) similarity=`0.850` shared=`2215` union=`2607` profile=`tx_mini_pr_v1`
+  - `A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260703160246.xlsx` (Jendela TX Migration) similarity=`0.844` shared=`2227` union=`2640` profile=`jendela_tx_migration_pr_v1`
 
 ## CD consolidation 2023
 
@@ -59,8 +59,8 @@ Discovery-only structural overlap review based on exact four-layer fingerprint s
 - Reason: Closest neighbor shares a strong majority of exact four-layer fingerprints.
 - Closest neighbors:
   - `A-P202202168750_D002-CD consolidation 2023-CD 2023 Decom Site-20260703160415.xlsx` (CD consolidation 2023) similarity=`0.870` shared=`2267` union=`2605` profile=`cd_consolidation_2023_decom_pr_v1`
-  - `A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx` (2023 Celcomdigi BAU) similarity=`0.851` shared=`2229` union=`2619` profile=`celcomdigi_bau_2023_pr_v1`
   - `A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx` (Celcomdigi USP) similarity=`0.850` shared=`2249` union=`2647` profile=`celcomdigi_usp_pr_v1`
+  - `A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx` (TX Mini Project) similarity=`0.848` shared=`2217` union=`2615` profile=`tx_mini_pr_v1`
 
 ## Celcomdigi USP
 
@@ -71,8 +71,8 @@ Discovery-only structural overlap review based on exact four-layer fingerprint s
 - Reason: Closest neighbor shares a strong majority of exact four-layer fingerprints.
 - Closest neighbors:
   - `A-P202202168750_D002-2024 Celcomdigi BAU-2024 BAU Rollout (TX)-20260703160253.xlsx` (2024 Celcomdigi BAU) similarity=`0.872` shared=`2275` union=`2608` profile=`celcomdigi_bau_2024_pr_v1`
-  - `A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx` (2023 Celcomdigi BAU) similarity=`0.871` shared=`2264` union=`2598` profile=`celcomdigi_bau_2023_pr_v1`
   - `A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260703160246.xlsx` (Jendela TX Migration) similarity=`0.861` shared=`2263` union=`2628` profile=`jendela_tx_migration_pr_v1`
+  - `A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx` (TX Mini Project) similarity=`0.852` shared=`2230` union=`2616` profile=`tx_mini_pr_v1`
 
 ## Jendela TX Migration
 
@@ -82,9 +82,9 @@ Discovery-only structural overlap review based on exact four-layer fingerprint s
 - Grouping signal: `POSSIBLE_REUSE_REVIEW`
 - Reason: Closest neighbor shares a strong majority of exact four-layer fingerprints.
 - Closest neighbors:
-  - `A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx` (2023 Celcomdigi BAU) similarity=`0.868` shared=`2251` union=`2592` profile=`celcomdigi_bau_2023_pr_v1`
   - `A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx` (Celcomdigi USP) similarity=`0.861` shared=`2263` union=`2628` profile=`celcomdigi_usp_pr_v1`
   - `A-P202202168750_D002-2024 Celcomdigi BAU-2024 BAU Rollout (TX)-20260703160253.xlsx` (2024 Celcomdigi BAU) similarity=`0.852` shared=`2238` union=`2626` profile=`celcomdigi_bau_2024_pr_v1`
+  - `A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx` (TX Mini Project) similarity=`0.847` shared=`2214` union=`2613` profile=`tx_mini_pr_v1`
 
 ## TX Mini Project
 
@@ -94,9 +94,9 @@ Discovery-only structural overlap review based on exact four-layer fingerprint s
 - Grouping signal: `POSSIBLE_REUSE_REVIEW`
 - Reason: Closest neighbor shares a strong majority of exact four-layer fingerprints.
 - Closest neighbors:
-  - `A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx` (2023 Celcomdigi BAU) similarity=`0.867` shared=`2228` union=`2570` profile=`celcomdigi_bau_2023_pr_v1`
   - `A-P202202168750_D002-2024 Celcomdigi BAU-2024 BAU Rollout (TX)-20260703160253.xlsx` (2024 Celcomdigi BAU) similarity=`0.862` shared=`2231` union=`2588` profile=`celcomdigi_bau_2024_pr_v1`
   - `A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx` (2023 TX Rollout) similarity=`0.858` shared=`2205` union=`2571` profile=`tx_rollout_2023_pr_v1`
+  - `A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx` (Celcomdigi USP) similarity=`0.852` shared=`2230` union=`2616` profile=`celcomdigi_usp_pr_v1`
 
 ## MW EOS Swap
 

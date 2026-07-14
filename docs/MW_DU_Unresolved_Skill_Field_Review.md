@@ -509,11 +509,11 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 
 ## celcomdigi_bau_2023_pr_v1 (2023 Celcomdigi BAU)
 
-- Source file: `A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx`
-- Observed header hash: `77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313`
-- Missing required fields: existing_ti_pr_status, existing_tss_pr_status
-- Competing candidate fields: subcontractor_planning, tx_sow_raw
-- Single-candidate but unverified fields: antenna_size_fe, antenna_size_ne, du_key, region, site_code, site_name, subcontractor_ti
+- Source file: `A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx`
+- Observed header hash: `b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454`
+- Missing required fields: None
+- Competing candidate fields: subcontractor_planning, subcontractor_ti, tx_sow_raw
+- Single-candidate but unverified fields: antenna_size_fe, antenna_size_ne, du_key, existing_ti_pr_status, existing_tss_pr_status, region, site_code, site_name
 - Resolved by approved mapping (alternates rejected): None
 
 ### `site_code`
@@ -521,7 +521,7 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 - Skill field: `site_id`
 - Review status: `REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE`
 - Reason: Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile.
-- Selected source: `site|fix00012|8296022438223590261|6611960521271999255 | Site Basic Info | Site Basic Info | customer site code`
+- Selected source: `site|fix00012|8296022438223590261|3882899459299681347 | Site Basic Info | Site Basic Info | customer site code`
 
 ### `site_name`
 
@@ -557,9 +557,12 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 ### `subcontractor_ti`
 
 - Skill field: `subcon_ti_team`
-- Review status: `REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE`
-- Reason: Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile.
+- Review status: `REVIEW_REQUIRED_COMPETING_CANDIDATES`
+- Reason: Profile-selected source has alternate shortlist candidates that still require four-layer confirmation.
 - Selected source: `docata|ZDCSZ640242 | Subcon Info | SubCon - TI | SubCon - TI`
+- Alternate shortlist candidates:
+  - score 55: `docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI`
+    reason: PR-oriented TI field; likely duplicate-prevention or downstream support.
 
 ### `subcontractor_planning`
 
@@ -588,16 +591,16 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 ### `existing_tss_pr_status`
 
 - Skill field: `existing_tss_pr`
-- Review status: `REVIEW_REQUIRED_MISSING_CANDIDATE`
-- Reason: Required profile field has no selected source candidate and no shortlist candidate.
-- Selected source: `None`
+- Review status: `REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE`
+- Reason: Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile.
+- Selected source: `docata|ZDCSZ641766 | Installation | Wireless RAN | Subcon PR - TSS`
 
 ### `existing_ti_pr_status`
 
 - Skill field: `existing_ti_pr`
-- Review status: `REVIEW_REQUIRED_MISSING_CANDIDATE`
-- Reason: Required profile field has no selected source candidate and no shortlist candidate.
-- Selected source: `None`
+- Review status: `REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE`
+- Reason: Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile.
+- Selected source: `docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI`
 
 
 ## celcomdigi_bau_2024_pr_v1 (2024 Celcomdigi BAU)

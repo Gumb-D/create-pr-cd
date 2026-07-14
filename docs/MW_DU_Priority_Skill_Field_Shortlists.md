@@ -238,10 +238,10 @@ Discovery-only shortlist of exact four-layer fingerprints for skill-scoped field
 - `existing_tss_pr`: no shortlist candidate
 - `existing_ti_pr`: no shortlist candidate
 
-## A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx
+## A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx
 
 - `site_id`:
-  - score 100: site|fix00012|8296022438223590261|6611960521271999255 | Site Basic Info | Site Basic Info | customer site code
+  - score 100: site|fix00012|8296022438223590261|3882899459299681347 | Site Basic Info | Site Basic Info | customer site code
     reason: Exact skill field match for Site ID.
 - `site_name`:
   - score 100: site|fix00015 | Site Basic Info | Site Basic Info | customer site name
@@ -266,9 +266,13 @@ Discovery-only shortlist of exact four-layer fingerprints for skill-scoped field
 - `subcon_tss_team`:
   - score 85: docata|ZDCSZ640307 | Subcon Info | SubCon - TSS | SubCon - TSS
     reason: Direct TSS subcontractor field.
+  - score 55: docata|ZDCSZ641766 | Installation | Wireless RAN | Subcon PR - TSS
+    reason: PR-oriented TSS field; likely duplicate-prevention or downstream support.
 - `subcon_ti_team`:
   - score 85: docata|ZDCSZ640242 | Subcon Info | SubCon - TI | SubCon - TI
     reason: Direct TI subcontractor field.
+  - score 55: docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI
+    reason: PR-oriented TI field; likely duplicate-prevention or downstream support.
 - `subcon_planning`:
   - score 85: docata|ZDCSZ01036640 | Installation | Wireless RAN | Subcon Planning
     reason: Direct Planning subcontractor variant.

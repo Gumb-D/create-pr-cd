@@ -138,7 +138,7 @@ class TestSkillFieldShortlists(unittest.TestCase):
         self.assertIn("A-P202211283695_D002-ZTE TX MINI-ZTE TX MINI v1-20260703160312.xlsx", source_names)
         self.assertIn("A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx", source_names)
         self.assertIn("A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260703160246.xlsx", source_names)
-        self.assertIn("A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx", source_names)
+        self.assertIn("A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx", source_names)
         self.assertIn("A-P202202168750_D002-2024 Celcomdigi BAU-2024 BAU Rollout (TX)-20260703160253.xlsx", source_names)
         self.assertIn("A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx", source_names)
         self.assertIn("A-P202202168750_D002-CD consolidation 2023-CD 2023 Decom Site-20260703160415.xlsx", source_names)

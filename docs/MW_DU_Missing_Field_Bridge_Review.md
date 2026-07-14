@@ -51,21 +51,9 @@ Discovery-only bridge guidance for required fields that are still missing in pri
 
 ## celcomdigi_bau_2023_pr_v1 (2023 Celcomdigi BAU)
 
-- Profile version: `0.1.0`
-- Mapping version: `discovery-2026-07-07-2023-celcomdigi-bau-v1`
-- Observed header hash: `77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313`
-
-### `existing_ti_pr_status`
-
-- Bridge status: `CROSS_MODEL_REVIEW_REQUIRED`
-- Reason: Another profiled export carries the missing field, but cross-model reuse is discovery-only and still requires manual four-layer review.
-- Best source export: `2023 TX Rollout` from `A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx` similarity=`0.000` profile=`tx_rollout_2023_pr_v1`
-
-### `existing_tss_pr_status`
-
-- Bridge status: `CROSS_MODEL_REVIEW_REQUIRED`
-- Reason: Another profiled export carries the missing field, but cross-model reuse is discovery-only and still requires manual four-layer review.
-- Best source export: `2023 TX Rollout` from `A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx` similarity=`0.000` profile=`tx_rollout_2023_pr_v1`
+- Profile version: `0.1.1`
+- Mapping version: `discovery-2026-07-14-2023-celcomdigi-bau-tx-prpo-v2`
+- Observed header hash: `b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454`
 
 
 ## celcomdigi_bau_2024_pr_v1 (2024 Celcomdigi BAU)

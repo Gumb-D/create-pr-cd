@@ -1240,15 +1240,15 @@
       }
     },
     {
-      "source_file_name": "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX)-20260703160239.xlsx",
-      "observed_header_hash": "77fa728c7a4105d9062378a999228cf24575e56e82ee97bce3ab9be630d7b313",
+      "source_file_name": "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx",
+      "observed_header_hash": "b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454",
       "skill_field_shortlists": {
         "site_id": [
           {
             "score": 100,
             "reason": "Exact skill field match for Site ID.",
             "fingerprint": {
-              "field_code": "site|fix00012|8296022438223590261|6611960521271999255",
+              "field_code": "site|fix00012|8296022438223590261|3882899459299681347",
               "wbs_stage": "Site Basic Info",
               "task_name": "Site Basic Info",
               "display_header": "customer site code"
@@ -1383,6 +1383,20 @@
               "excel_column": "AK",
               "one_based_index": 37
             }
+          },
+          {
+            "score": 55,
+            "reason": "PR-oriented TSS field; likely duplicate-prevention or downstream support.",
+            "fingerprint": {
+              "field_code": "docata|ZDCSZ641766",
+              "wbs_stage": "Installation",
+              "task_name": "Wireless RAN",
+              "display_header": "Subcon PR - TSS"
+            },
+            "source_position": {
+              "excel_column": "FX",
+              "one_based_index": 180
+            }
           }
         ],
         "subcon_ti_team": [
@@ -1398,6 +1412,20 @@
             "source_position": {
               "excel_column": "AL",
               "one_based_index": 38
+            }
+          },
+          {
+            "score": 55,
+            "reason": "PR-oriented TI field; likely duplicate-prevention or downstream support.",
+            "fingerprint": {
+              "field_code": "docata|ZDCSZ641765",
+              "wbs_stage": "Installation",
+              "task_name": "Wireless RAN",
+              "display_header": "Subcon PR - TI"
+            },
+            "source_position": {
+              "excel_column": "FY",
+              "one_based_index": 181
             }
           }
         ],
