@@ -101,35 +101,21 @@ Discovery-only prioritized manual action queue for the current DRAFT profiles.
 ## celcomdigi_bau_2023_pr_v1 (2023 Celcomdigi BAU)
 
 - Readiness status: `DISCOVERY_ONLY_BLOCKED`
-- Profile status: `DRAFT`
-- Mapping version: `discovery-2026-07-14-2023-celcomdigi-bau-tx-prpo-v2`
+- Profile status: `PR_INPUT_READY`
+- Mapping version: `approved-2026-07-14-2023-celcomdigi-bau-tx-prpo-v1`
 - Observed header hash: `b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454`
 - Action queue:
   - `celcomdigi_bau_2023_pr_v1:01` `CONFIRM_COMPETING_CANDIDATE` `subcontractor_planning`: Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.
     hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `celcomdigi_bau_2023_pr_v1:02` `CONFIRM_COMPETING_CANDIDATE` `tx_sow_raw`: Choose one exact four-layer source for `tx_sow_raw` from the competing shortlist candidates.
-    hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `celcomdigi_bau_2023_pr_v1:03` `VERIFY_SINGLE_CANDIDATE` `antenna_size_fe`: Verify the current single shortlist-aligned source for `antenna_size_fe`.
+  - `celcomdigi_bau_2023_pr_v1:02` `VERIFY_SINGLE_CANDIDATE` `antenna_size_fe`: Verify the current single shortlist-aligned source for `antenna_size_fe`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `celcomdigi_bau_2023_pr_v1:04` `VERIFY_SINGLE_CANDIDATE` `antenna_size_ne`: Verify the current single shortlist-aligned source for `antenna_size_ne`.
+  - `celcomdigi_bau_2023_pr_v1:03` `VERIFY_SINGLE_CANDIDATE` `antenna_size_ne`: Verify the current single shortlist-aligned source for `antenna_size_ne`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `celcomdigi_bau_2023_pr_v1:05` `VERIFY_SINGLE_CANDIDATE` `du_key`: Verify the current single shortlist-aligned source for `du_key`.
+  - `celcomdigi_bau_2023_pr_v1:04` `VERIFY_SINGLE_CANDIDATE` `du_key`: Verify the current single shortlist-aligned source for `du_key`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `celcomdigi_bau_2023_pr_v1:06` `VERIFY_SINGLE_CANDIDATE` `existing_ti_pr_status`: Verify the current single shortlist-aligned source for `existing_ti_pr_status`.
+  - `celcomdigi_bau_2023_pr_v1:05` `VERIFY_SINGLE_CANDIDATE` `site_name`: Verify the current single shortlist-aligned source for `site_name`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `celcomdigi_bau_2023_pr_v1:07` `VERIFY_SINGLE_CANDIDATE` `existing_tss_pr_status`: Verify the current single shortlist-aligned source for `existing_tss_pr_status`.
-    hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `celcomdigi_bau_2023_pr_v1:08` `VERIFY_SINGLE_CANDIDATE` `region`: Verify the current single shortlist-aligned source for `region`.
-    hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `celcomdigi_bau_2023_pr_v1:09` `VERIFY_SINGLE_CANDIDATE` `site_code`: Verify the current single shortlist-aligned source for `site_code`.
-    hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `celcomdigi_bau_2023_pr_v1:10` `VERIFY_SINGLE_CANDIDATE` `site_name`: Verify the current single shortlist-aligned source for `site_name`.
-    hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `celcomdigi_bau_2023_pr_v1:11` `VERIFY_SINGLE_CANDIDATE` `subcontractor_ti`: Verify the current single shortlist-aligned source for `subcontractor_ti`.
-    hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `celcomdigi_bau_2023_pr_v1:12` `APPROVE_HEADER_HASH`: Approve at least one header hash for this profile version after the field review is complete.
-    hint: Current observed header hash: b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454
-  - `celcomdigi_bau_2023_pr_v1:13` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
+  - `celcomdigi_bau_2023_pr_v1:06` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
     hint: Use the transition review as the final stop/go check before any status change.
 
 ## celcomdigi_bau_2024_pr_v1 (2024 Celcomdigi BAU)

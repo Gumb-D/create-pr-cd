@@ -11,14 +11,19 @@ from du_profile_loader import load_du_profile
 
 
 class TestProfileRollbackReadiness(unittest.TestCase):
-    def test_current_draft_profile_stays_blocked_without_approved_baseline(self):
+    def test_2023_celcomdigi_bau_records_rollback_baseline_after_pr_input_ready(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "celcomdigi_bau_2023_pr_v1.yaml")
 
         entry = evaluate_rollback_readiness(profile, None)
 
-        self.assertEqual(entry["rollback_readiness_status"], "ROLLBACK_BLOCKED")
-        self.assertIn("NO_APPROVED_HEADER_HASH_BASELINE", entry["blockers"])
-        self.assertIn("PROFILE_NOT_RELEASED", entry["blockers"])
+        self.assertEqual(entry["rollback_readiness_status"], "ROLLBACK_BASELINE_RECORDED")
+        self.assertEqual(entry["rollback_target_profile_id"], "celcomdigi_bau_2023_pr_v1")
+        self.assertEqual(entry["rollback_target_profile_version"], "0.2.0")
+        self.assertEqual(
+            entry["rollback_target_header_hashes"],
+            ["b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454"],
+        )
+        self.assertEqual(entry["blockers"], [])
 
     def test_jendela_records_rollback_baseline_after_pr_input_ready(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "jendela_tx_migration_pr_v1.yaml")

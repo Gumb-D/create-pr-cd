@@ -102,9 +102,9 @@ class TestDuDiscoveryRegistry(unittest.TestCase):
             "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx",
         )
         self.assertEqual(entry["profile_id"], "celcomdigi_bau_2023_pr_v1")
-        self.assertEqual(entry["profile_status"], "DRAFT")
-        self.assertEqual(entry["profile_version"], "0.1.1")
-        self.assertEqual(entry["mapping_version"], "discovery-2026-07-14-2023-celcomdigi-bau-tx-prpo-v2")
+        self.assertEqual(entry["profile_status"], "PR_INPUT_READY")
+        self.assertEqual(entry["profile_version"], "0.2.0")
+        self.assertEqual(entry["mapping_version"], "approved-2026-07-14-2023-celcomdigi-bau-tx-prpo-v1")
         self.assertTrue(entry["skill_field_presence"]["existing_tss_pr"])
         self.assertTrue(entry["skill_field_presence"]["existing_ti_pr"])
 

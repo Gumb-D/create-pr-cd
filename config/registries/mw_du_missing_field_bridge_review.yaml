@@ -69,8 +69,8 @@
     },
     {
       "profile_id": "celcomdigi_bau_2023_pr_v1",
-      "profile_version": "0.1.1",
-      "mapping_version": "discovery-2026-07-14-2023-celcomdigi-bau-tx-prpo-v2",
+      "profile_version": "0.2.0",
+      "mapping_version": "approved-2026-07-14-2023-celcomdigi-bau-tx-prpo-v1",
       "observed_header_hash": "b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454",
       "du_model_name": "2023 Celcomdigi BAU",
       "source_file_name": "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx",

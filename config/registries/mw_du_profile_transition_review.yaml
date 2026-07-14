@@ -202,9 +202,9 @@
     },
     {
       "profile_id": "celcomdigi_bau_2023_pr_v1",
-      "profile_version": "0.1.1",
-      "mapping_version": "discovery-2026-07-14-2023-celcomdigi-bau-tx-prpo-v2",
-      "current_status": "DRAFT",
+      "profile_version": "0.2.0",
+      "mapping_version": "approved-2026-07-14-2023-celcomdigi-bau-tx-prpo-v1",
+      "current_status": "PR_INPUT_READY",
       "du_model_name": "2023 Celcomdigi BAU",
       "observed_header_hash": "b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454",
       "transition_targets": [
@@ -215,32 +215,19 @@
         },
         {
           "target_status": "BUSINESS_VALIDATED",
-          "eligible": false,
-          "denied_reasons": [
-            "NO_APPROVED_HEADER_HASH",
-            "REQUIRED_FIELDS_NOT_APPROVED",
-            "COMPETING_SHORTLIST_CANDIDATES"
-          ]
+          "eligible": true,
+          "denied_reasons": []
         },
         {
           "target_status": "PR_INPUT_READY",
-          "eligible": false,
-          "denied_reasons": [
-            "NO_APPROVED_HEADER_HASH",
-            "REQUIRED_FIELDS_NOT_APPROVED",
-            "COMPETING_SHORTLIST_CANDIDATES",
-            "UNVERIFIED_SINGLE_CANDIDATE_FIELDS"
-          ]
+          "eligible": true,
+          "denied_reasons": []
         },
         {
           "target_status": "PRODUCTION",
           "eligible": false,
           "denied_reasons": [
-            "PROFILE_NOT_PRODUCTION",
-            "NO_APPROVED_HEADER_HASH",
-            "REQUIRED_FIELDS_NOT_APPROVED",
-            "COMPETING_SHORTLIST_CANDIDATES",
-            "UNVERIFIED_SINGLE_CANDIDATE_FIELDS"
+            "PROFILE_NOT_PRODUCTION"
           ]
         }
       ],

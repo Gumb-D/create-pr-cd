@@ -231,14 +231,33 @@ class TestUnresolvedSkillFieldReview(unittest.TestCase):
 
         self.assertEqual(review_entry["profile_id"], "celcomdigi_bau_2023_pr_v1")
         self.assertEqual(review_entry["source_file_name"], "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx")
+        self.assertEqual(review_entry["profile_status"], "PR_INPUT_READY")
         self.assertEqual(review_entry["summary"]["missing_required_fields"], [])
-        self.assertIn("subcontractor_planning", review_entry["summary"]["competing_candidate_fields"])
-        self.assertIn("tx_sow_raw", review_entry["summary"]["competing_candidate_fields"])
-        self.assertNotIn("subcontractor_ti", review_entry["summary"]["competing_candidate_fields"])
-        self.assertIn("site_code", review_entry["summary"]["single_candidate_unverified_fields"])
-        self.assertIn("existing_tss_pr_status", review_entry["summary"]["single_candidate_unverified_fields"])
-        self.assertIn("existing_ti_pr_status", review_entry["summary"]["single_candidate_unverified_fields"])
-        self.assertIn("subcontractor_ti", review_entry["summary"]["single_candidate_unverified_fields"])
+        self.assertEqual(review_entry["summary"]["competing_candidate_fields"], ["subcontractor_planning"])
+        self.assertEqual(
+            review_entry["summary"]["single_candidate_unverified_fields"],
+            ["antenna_size_fe", "antenna_size_ne", "du_key", "site_name"],
+        )
+        self.assertEqual(
+            review_entry["field_reviews"]["tx_sow_raw"]["review_status"],
+            "RESOLVED_BY_APPROVED_MAPPING",
+        )
+        self.assertEqual(
+            review_entry["summary"]["resolved_by_approval_fields"],
+            ["tx_sow_raw"],
+        )
+        for field_name in (
+            "site_code",
+            "region",
+            "subcontractor_ti",
+            "existing_tss_pr_status",
+            "existing_ti_pr_status",
+        ):
+            with self.subTest(field_name=field_name):
+                self.assertEqual(
+                    review_entry["field_reviews"][field_name]["review_status"],
+                    "READY_IF_APPROVAL_EVIDENCE_EXISTS",
+                )
         self.assertEqual(
             review_entry["field_reviews"]["existing_tss_pr_status"]["recommended_source"]["fingerprint"]["display_header"],
             "Subcon PR - TSS",
@@ -247,11 +266,11 @@ class TestUnresolvedSkillFieldReview(unittest.TestCase):
             review_entry["field_reviews"]["existing_ti_pr_status"]["recommended_source"]["fingerprint"]["display_header"],
             "Subcon PR - TI",
         )
-        self.assertNotIn("subcontractor_tss", review_entry["field_reviews"])
         self.assertEqual(
             review_entry["field_reviews"]["antenna_size_ne"]["recommended_source"]["fingerprint"]["display_header"],
             "MW Config Antenna Size NE",
         )
+        self.assertNotIn("subcontractor_tss", review_entry["field_reviews"])
 
     def test_2024_celcomdigi_bau_entry_records_human_approved_pr_critical_sources(self):
         shortlist_registry = json.loads(
