@@ -1,4 +1,6 @@
 import sys
+import json
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -135,6 +137,62 @@ class TestDuDiscoveryRegistry(unittest.TestCase):
         self.assertTrue(presence["existing_tss_pr"])
         self.assertTrue(presence["existing_ti_pr"])
 
+    def test_skill_field_presence_keeps_existing_non_pr_discovery_variants(self):
+        inventory = {
+            "sheets": [
+                {
+                    "columns": [
+                        {
+                            "fingerprint": {
+                                "field_code": "tx-sow",
+                                "wbs_stage": "TX Solution",
+                                "task_name": "Post MOCN",
+                                "display_header": "Post MOCN TX SOW (LLD)",
+                            }
+                        },
+                        {
+                            "fingerprint": {
+                                "field_code": "ant-ne",
+                                "wbs_stage": "Config",
+                                "task_name": "Microwave",
+                                "display_header": "MW Config Antenna Size NE",
+                            }
+                        },
+                        {
+                            "fingerprint": {
+                                "field_code": "ant-fe",
+                                "wbs_stage": "Config",
+                                "task_name": "Microwave",
+                                "display_header": "MW Config Antenna Size FE",
+                            }
+                        },
+                        {
+                            "fingerprint": {
+                                "field_code": "tss-team",
+                                "wbs_stage": "Subcon Info",
+                                "task_name": "SubCon - TSS",
+                                "display_header": "SubCon - TSS Team",
+                            }
+                        },
+                        {
+                            "fingerprint": {
+                                "field_code": "ti-team",
+                                "wbs_stage": "Subcon Info",
+                                "task_name": "SubCon - TI",
+                                "display_header": "SubCon - TI Team",
+                            }
+                        },
+                    ]
+                }
+            ]
+        }
+        presence = _skill_field_presence(inventory)
+        self.assertTrue(presence["tx_sow"])
+        self.assertTrue(presence["antenna_size_ne"])
+        self.assertTrue(presence["antenna_size_fe"])
+        self.assertTrue(presence["subcon_tss_team"])
+        self.assertTrue(presence["subcon_ti_team"])
+
     def test_skill_field_presence_does_not_broad_match_rectification_or_planning(self):
         inventory = {
             "sheets": [
@@ -171,6 +229,80 @@ class TestDuDiscoveryRegistry(unittest.TestCase):
         presence = _skill_field_presence(inventory)
         self.assertFalse(presence["existing_tss_pr"])
         self.assertFalse(presence["existing_ti_pr"])
+
+    def test_non_pr_presence_matches_origin_main_baseline_for_live_exports(self):
+        baseline_text = subprocess.run(
+            [
+                "git",
+                "show",
+                "origin/main:config/registries/mw_du_model_discovery_registry.yaml",
+            ],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+        baseline_registry = json.loads(baseline_text)
+        baseline_by_source = {
+            entry["source_file_name"]: entry["skill_field_presence"]
+            for entry in baseline_registry["entries"]
+        }
+        excluded_fields = {"existing_tss_pr", "existing_ti_pr"}
+        live_sources = [
+            "A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx",
+            "A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx",
+            "A-P202202168750_D002-2024 Celcomdigi BAU-2024 BAU Rollout (TX)-20260703160253.xlsx",
+        ]
+
+        for source_file_name in live_sources:
+            profile_dir = next(
+                path
+                for path in self.profiler_root.iterdir()
+                if path.is_dir()
+                and (path / "header_inventory.json").exists()
+                and json.loads((path / "header_inventory.json").read_text(encoding="utf-8"))["source"]["file_name"]
+                == source_file_name
+            )
+            entry = build_discovery_entry(profile_dir)
+            baseline_presence = baseline_by_source[source_file_name]
+            for field_name, baseline_value in baseline_presence.items():
+                if field_name in excluded_fields:
+                    continue
+                self.assertEqual(
+                    entry["skill_field_presence"][field_name],
+                    baseline_value,
+                    f"{source_file_name} changed {field_name} from {baseline_value} to {entry['skill_field_presence'][field_name]}",
+                )
+
+        tx_rollout_entry = next(
+            build_discovery_entry(path)
+            for path in self.profiler_root.iterdir()
+            if path.is_dir()
+            and (path / "header_inventory.json").exists()
+            and json.loads((path / "header_inventory.json").read_text(encoding="utf-8"))["source"]["file_name"]
+            == "A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx"
+        )
+        tx_mini_entry = next(
+            build_discovery_entry(path)
+            for path in self.profiler_root.iterdir()
+            if path.is_dir()
+            and (path / "header_inventory.json").exists()
+            and json.loads((path / "header_inventory.json").read_text(encoding="utf-8"))["source"]["file_name"]
+            == "A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx"
+        )
+        bau_2024_entry = next(
+            build_discovery_entry(path)
+            for path in self.profiler_root.iterdir()
+            if path.is_dir()
+            and (path / "header_inventory.json").exists()
+            and json.loads((path / "header_inventory.json").read_text(encoding="utf-8"))["source"]["file_name"]
+            == "A-P202202168750_D002-2024 Celcomdigi BAU-2024 BAU Rollout (TX)-20260703160253.xlsx"
+        )
+        self.assertTrue(tx_rollout_entry["skill_field_presence"]["tx_sow"])
+        self.assertTrue(tx_mini_entry["skill_field_presence"]["subcon_tss_team"])
+        self.assertTrue(tx_mini_entry["skill_field_presence"]["subcon_ti_team"])
+        self.assertTrue(bau_2024_entry["skill_field_presence"]["antenna_size_ne"])
+        self.assertTrue(bau_2024_entry["skill_field_presence"]["antenna_size_fe"])
 
     def test_build_discovery_entry_for_2024_celcomdigi_bau_uses_existing_profile_file(self):
         profile_dir = self.profiler_root / "A-P202202168750_D002-2024_Celcomdigi_BAU-2024_BAU_Rollout_TX_-20260703160253"

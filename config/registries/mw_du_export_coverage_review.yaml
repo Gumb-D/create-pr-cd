@@ -17,10 +17,7 @@
       "profile_version": "0.1.1",
       "mapping_version": "discovery-2026-07-14-2023-celcomdigi-bau-tx-prpo-v2",
       "observed_header_hash": "b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454",
-      "missing_skill_fields": [
-        "antenna_size_ne",
-        "antenna_size_fe"
-      ],
+      "missing_skill_fields": [],
       "next_action": "Continue tracked profile review through the existing DRAFT discovery packet."
     },
     {
@@ -33,7 +30,6 @@
       "mapping_version": "approved-2026-07-10-2023-tx-rollout-v2",
       "observed_header_hash": "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320",
       "missing_skill_fields": [
-        "tx_sow",
         "antenna_size_ne",
         "antenna_size_fe"
       ],
@@ -48,10 +44,7 @@
       "profile_version": "0.1.0",
       "mapping_version": "approved-2026-07-10-2024-celcomdigi-bau-v2",
       "observed_header_hash": "b3677457da49e5de484976c3fdb7ad6f5dc19055f5339ec616407f5cbde89a86",
-      "missing_skill_fields": [
-        "antenna_size_ne",
-        "antenna_size_fe"
-      ],
+      "missing_skill_fields": [],
       "next_action": "Continue tracked profile review through the existing DRAFT discovery packet."
     },
     {
@@ -123,12 +116,7 @@
       "profile_version": "0.2.0",
       "mapping_version": "approved-2026-07-07-tx-mini-v1",
       "observed_header_hash": "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
-      "missing_skill_fields": [
-        "antenna_size_ne",
-        "antenna_size_fe",
-        "subcon_tss_team",
-        "subcon_ti_team"
-      ],
+      "missing_skill_fields": [],
       "next_action": "Continue tracked profile review through the existing DRAFT discovery packet."
     },
     {
@@ -140,11 +128,7 @@
       "profile_version": "0.1.0",
       "mapping_version": "approved-2026-07-10-mw-eos-swap-v2",
       "observed_header_hash": "46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a",
-      "missing_skill_fields": [
-        "tx_sow",
-        "antenna_size_ne",
-        "antenna_size_fe"
-      ],
+      "missing_skill_fields": [],
       "next_action": "Continue tracked profile review through the existing DRAFT discovery packet."
     },
     {
@@ -156,11 +140,7 @@
       "profile_version": "0.1.0",
       "mapping_version": "discovery-2026-07-06-zte-tx-mini-v1",
       "observed_header_hash": "a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810",
-      "missing_skill_fields": [
-        "tx_sow",
-        "antenna_size_ne",
-        "antenna_size_fe"
-      ],
+      "missing_skill_fields": [],
       "next_action": "Continue tracked profile review through the existing DRAFT discovery packet."
     }
   ],

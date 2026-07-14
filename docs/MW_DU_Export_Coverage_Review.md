@@ -15,7 +15,6 @@ Discovery-only coverage review across the 10 profiled DU exports.
 - Coverage status: `TRACKED_DRAFT_PROFILE`
 - Profile: `celcomdigi_bau_2023_pr_v1` `0.1.1` (mapping `discovery-2026-07-14-2023-celcomdigi-bau-tx-prpo-v2`)
 - Observed header hash: `b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454`
-- Missing skill fields: `antenna_size_ne, antenna_size_fe`
 - Next action: Continue tracked profile review through the existing DRAFT discovery packet.
 
 ## 2023 TX Rollout
@@ -24,7 +23,7 @@ Discovery-only coverage review across the 10 profiled DU exports.
 - Coverage status: `TRACKED_DRAFT_PROFILE`
 - Profile: `tx_rollout_2023_pr_v1` `0.1.0` (mapping `approved-2026-07-10-2023-tx-rollout-v2`)
 - Observed header hash: `8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320`
-- Missing skill fields: `tx_sow, antenna_size_ne, antenna_size_fe`
+- Missing skill fields: `antenna_size_ne, antenna_size_fe`
 - Next action: Continue tracked profile review through the existing DRAFT discovery packet.
 
 ## 2024 Celcomdigi BAU
@@ -33,7 +32,6 @@ Discovery-only coverage review across the 10 profiled DU exports.
 - Coverage status: `TRACKED_DRAFT_PROFILE`
 - Profile: `celcomdigi_bau_2024_pr_v1` `0.1.0` (mapping `approved-2026-07-10-2024-celcomdigi-bau-v2`)
 - Observed header hash: `b3677457da49e5de484976c3fdb7ad6f5dc19055f5339ec616407f5cbde89a86`
-- Missing skill fields: `antenna_size_ne, antenna_size_fe`
 - Next action: Continue tracked profile review through the existing DRAFT discovery packet.
 
 ## CD consolidation 2023
@@ -76,7 +74,6 @@ Discovery-only coverage review across the 10 profiled DU exports.
 - Coverage status: `TRACKED_DRAFT_PROFILE`
 - Profile: `tx_mini_pr_v1` `0.2.0` (mapping `approved-2026-07-07-tx-mini-v1`)
 - Observed header hash: `167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221`
-- Missing skill fields: `antenna_size_ne, antenna_size_fe, subcon_tss_team, subcon_ti_team`
 - Next action: Continue tracked profile review through the existing DRAFT discovery packet.
 
 ## MW EOS Swap
@@ -85,7 +82,6 @@ Discovery-only coverage review across the 10 profiled DU exports.
 - Coverage status: `TRACKED_DRAFT_PROFILE`
 - Profile: `mw_eos_swap_pr_v1` `0.1.0` (mapping `approved-2026-07-10-mw-eos-swap-v2`)
 - Observed header hash: `46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a`
-- Missing skill fields: `tx_sow, antenna_size_ne, antenna_size_fe`
 - Next action: Continue tracked profile review through the existing DRAFT discovery packet.
 
 ## ZTE TX MINI
@@ -94,5 +90,4 @@ Discovery-only coverage review across the 10 profiled DU exports.
 - Coverage status: `TRACKED_DRAFT_PROFILE`
 - Profile: `zte_tx_mini_pr_v1` `0.1.0` (mapping `discovery-2026-07-06-zte-tx-mini-v1`)
 - Observed header hash: `a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810`
-- Missing skill fields: `tx_sow, antenna_size_ne, antenna_size_fe`
 - Next action: Continue tracked profile review through the existing DRAFT discovery packet.
