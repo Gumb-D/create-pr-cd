@@ -95,6 +95,27 @@ class TestMissingFieldBridgeReview(unittest.TestCase):
         self.assertEqual(bridge_entry["profile_version"], "0.1.0")
         self.assertEqual(bridge_entry["field_bridges"], {})
 
+    def test_2023_celcomdigi_bau_bridge_stays_empty_after_pr_input_ready_approval(self):
+        unresolved = json.loads(
+            (ROOT / "config" / "registries" / "mw_du_unresolved_skill_field_review.yaml").read_text(encoding="utf-8")
+        )
+        grouping = json.loads(
+            (ROOT / "config" / "registries" / "mw_du_structure_grouping_review.yaml").read_text(encoding="utf-8")
+        )
+        discovery = json.loads(
+            (ROOT / "config" / "registries" / "mw_du_model_discovery_registry.yaml").read_text(encoding="utf-8")
+        )
+
+        unresolved_entry = next(
+            entry for entry in unresolved["entries"] if entry["profile_id"] == "celcomdigi_bau_2023_pr_v1"
+        )
+        bridge_entry = build_bridge_entry(unresolved_entry, grouping, discovery)
+
+        self.assertEqual(bridge_entry["profile_id"], "celcomdigi_bau_2023_pr_v1")
+        self.assertEqual(bridge_entry["profile_version"], "0.2.0")
+        self.assertEqual(bridge_entry["mapping_version"], "approved-2026-07-14-2023-celcomdigi-bau-tx-prpo-v1")
+        self.assertEqual(bridge_entry["field_bridges"], {})
+
     def test_bridge_registry_carries_all_ten_tracked_draft_profiles(self):
         unresolved = json.loads(
             (ROOT / "config" / "registries" / "mw_du_unresolved_skill_field_review.yaml").read_text(encoding="utf-8")

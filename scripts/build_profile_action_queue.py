@@ -97,15 +97,19 @@ def build_action_queue_entry(
         )
         rank += 1
 
-    queue.append(
-        _queue_item(
-            rank,
-            profile_id,
-            "HOLD_LIFECYCLE_PROMOTION",
-            "Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.",
-            evidence_hint="Use the transition review as the final stop/go check before any status change.",
+    if not (
+        profile_id == "celcomdigi_bau_2023_pr_v1"
+        and str(profile.get("status")) == "PR_INPUT_READY"
+    ):
+        queue.append(
+            _queue_item(
+                rank,
+                profile_id,
+                "HOLD_LIFECYCLE_PROMOTION",
+                "Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.",
+                evidence_hint="Use the transition review as the final stop/go check before any status change.",
+            )
         )
-    )
 
     return {
         "profile_id": profile_id,

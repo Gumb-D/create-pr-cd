@@ -98,7 +98,7 @@ class TestProfileReadinessReview(unittest.TestCase):
         self.assertEqual(entry["blocker_summary"]["required_single_candidate_unverified_fields"], [])
         self.assertEqual(entry["blocker_summary"]["cross_model_bridge_fields"], [])
 
-    def test_2023_celcomdigi_bau_entry_stays_discovery_only_blocked_with_unapproved_tx_prpo_candidates(self):
+    def test_2023_celcomdigi_bau_entry_stays_discovery_only_blocked_only_for_non_production_and_optional_review_work(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "celcomdigi_bau_2023_pr_v1.yaml")
         unresolved = json.loads(
             (ROOT / "config" / "registries" / "mw_du_unresolved_skill_field_review.yaml").read_text(encoding="utf-8")
@@ -112,19 +112,25 @@ class TestProfileReadinessReview(unittest.TestCase):
         entry = build_readiness_entry(profile, unresolved_entry, bridge_entry)
 
         self.assertEqual(entry["readiness_status"], "DISCOVERY_ONLY_BLOCKED")
-        self.assertEqual(entry["profile_status"], "DRAFT")
-        self.assertIn("NO_APPROVED_HEADER_HASH", entry["blocker_summary"]["overall_blockers"])
-        self.assertIn("REQUIRED_FIELDS_NOT_APPROVED", entry["blocker_summary"]["overall_blockers"])
-        self.assertIn("COMPETING_SHORTLIST_CANDIDATES", entry["blocker_summary"]["overall_blockers"])
-        self.assertEqual(entry["blocker_summary"]["missing_required_fields"], [])
-        self.assertEqual(entry["blocker_summary"]["cross_model_bridge_fields"], [])
+        self.assertEqual(entry["profile_status"], "PR_INPUT_READY")
+        self.assertEqual(entry["approved_header_hashes"], ["b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454"])
         self.assertEqual(
-            entry["blocker_summary"]["required_competing_candidate_fields"],
-            ["tx_sow_raw"],
+            entry["blocker_summary"]["overall_blockers"],
+            [
+                "PROFILE_NOT_PRODUCTION",
+                "COMPETING_SHORTLIST_CANDIDATES",
+                "UNVERIFIED_SINGLE_CANDIDATE_FIELDS",
+            ],
         )
+        self.assertEqual(entry["blocker_summary"]["missing_required_fields"], [])
+        self.assertEqual(entry["blocker_summary"]["unapproved_required_fields"], [])
+        self.assertEqual(entry["blocker_summary"]["cross_model_bridge_fields"], [])
+        self.assertEqual(entry["blocker_summary"]["required_competing_candidate_fields"], [])
+        self.assertEqual(entry["blocker_summary"]["required_single_candidate_unverified_fields"], [])
+        self.assertEqual(entry["blocker_summary"]["competing_candidate_fields"], ["subcontractor_planning"])
         self.assertEqual(
-            entry["blocker_summary"]["required_single_candidate_unverified_fields"],
-            ["existing_ti_pr_status", "existing_tss_pr_status", "region", "site_code", "subcontractor_ti"],
+            entry["blocker_summary"]["single_candidate_unverified_fields"],
+            ["antenna_size_fe", "antenna_size_ne", "du_key", "site_name"],
         )
 
     def test_2024_celcomdigi_bau_entry_stays_discovery_only_blocked_only_for_non_production_and_optional_review_work(self):

@@ -11,7 +11,7 @@ Discovery-only summary for the all-MW-DU mapping recommendation matrix generated
 
 - DU models: 2023 Celcomdigi BAU
 - Reference files: A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx
-- PR-critical blockers: subcontractor_planning, tx_sow_raw
+- PR-critical blockers: subcontractor_planning
 - Recommended next sequence: Start with the highest-confidence rows in this group, then review ambiguous PR-critical fields before any profile implementation.
 
 ### Duplicate or competing export variants

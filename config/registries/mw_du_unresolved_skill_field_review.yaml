@@ -1380,38 +1380,40 @@
     },
     {
       "profile_id": "celcomdigi_bau_2023_pr_v1",
-      "profile_version": "0.1.1",
-      "mapping_version": "discovery-2026-07-14-2023-celcomdigi-bau-tx-prpo-v2",
-      "profile_status": "DRAFT",
+      "profile_version": "0.2.0",
+      "mapping_version": "approved-2026-07-14-2023-celcomdigi-bau-tx-prpo-v1",
+      "profile_status": "PR_INPUT_READY",
       "du_model_name": "2023 Celcomdigi BAU",
       "source_file_name": "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx",
       "observed_header_hash": "b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454",
       "summary": {
         "missing_required_fields": [],
         "competing_candidate_fields": [
-          "subcontractor_planning",
-          "tx_sow_raw"
+          "subcontractor_planning"
         ],
         "single_candidate_unverified_fields": [
           "antenna_size_fe",
           "antenna_size_ne",
           "du_key",
+          "site_name"
+        ],
+        "no_profile_selection_fields": [],
+        "shortlist_mismatch_fields": [],
+        "resolved_by_approval_fields": [
           "existing_ti_pr_status",
           "existing_tss_pr_status",
           "region",
           "site_code",
-          "site_name",
-          "subcontractor_ti"
-        ],
-        "no_profile_selection_fields": [],
-        "shortlist_mismatch_fields": [],
-        "resolved_by_approval_fields": []
+          "subcontractor_ti",
+          "subcontractor_tss",
+          "tx_sow_raw"
+        ]
       },
       "field_reviews": {
         "site_code": {
           "skill_field": "site_id",
           "required": true,
-          "selected_status": "UNVERIFIED",
+          "selected_status": "APPROVED",
           "recommended_source": {
             "fingerprint": {
               "field_code": "site|fix00012|8296022438223590261|3882899459299681347",
@@ -1419,11 +1421,11 @@
               "task_name": "Site Basic Info",
               "display_header": "customer site code"
             },
-            "mapping_status": "UNVERIFIED"
+            "mapping_status": "APPROVED"
           },
           "alternate_candidates": [],
-          "review_status": "REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE",
-          "review_reason": "Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile."
+          "review_status": "READY_IF_APPROVAL_EVIDENCE_EXISTS",
+          "review_reason": "Profile-selected source matches the shortlist and is already approved."
         },
         "site_name": {
           "skill_field": "site_name",
@@ -1462,7 +1464,7 @@
         "region": {
           "skill_field": "region",
           "required": true,
-          "selected_status": "UNVERIFIED",
+          "selected_status": "APPROVED",
           "recommended_source": {
             "fingerprint": {
               "field_code": "site|region_name",
@@ -1470,16 +1472,16 @@
               "task_name": "Site Basic Info",
               "display_header": "region"
             },
-            "mapping_status": "UNVERIFIED"
+            "mapping_status": "APPROVED"
           },
           "alternate_candidates": [],
-          "review_status": "REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE",
-          "review_reason": "Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile."
+          "review_status": "READY_IF_APPROVAL_EVIDENCE_EXISTS",
+          "review_reason": "Profile-selected source matches the shortlist and is already approved."
         },
         "tx_sow_raw": {
           "skill_field": "tx_sow",
           "required": true,
-          "selected_status": "UNVERIFIED",
+          "selected_status": "APPROVED",
           "recommended_source": {
             "fingerprint": {
               "field_code": "docata|ZDCSZ00815532",
@@ -1487,7 +1489,7 @@
               "task_name": "Microwave",
               "display_header": "Tx SOW"
             },
-            "mapping_status": "UNVERIFIED"
+            "mapping_status": "APPROVED"
           },
           "alternate_candidates": [
             {
@@ -1505,13 +1507,13 @@
               }
             }
           ],
-          "review_status": "REVIEW_REQUIRED_COMPETING_CANDIDATES",
-          "review_reason": "Profile-selected source has alternate shortlist candidates that still require four-layer confirmation."
+          "review_status": "RESOLVED_BY_APPROVED_MAPPING",
+          "review_reason": "Profile-selected source is human-approved; the remaining shortlist alternates were rejected by that recorded decision."
         },
         "subcontractor_ti": {
           "skill_field": "subcon_ti_team",
           "required": true,
-          "selected_status": "UNVERIFIED",
+          "selected_status": "APPROVED",
           "recommended_source": {
             "fingerprint": {
               "field_code": "docata|ZDCSZ640242",
@@ -1519,11 +1521,11 @@
               "task_name": "SubCon - TI",
               "display_header": "SubCon - TI"
             },
-            "mapping_status": "UNVERIFIED"
+            "mapping_status": "APPROVED"
           },
           "alternate_candidates": [],
-          "review_status": "REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE",
-          "review_reason": "Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile."
+          "review_status": "READY_IF_APPROVAL_EVIDENCE_EXISTS",
+          "review_reason": "Profile-selected source matches the shortlist and is already approved."
         },
         "subcontractor_planning": {
           "skill_field": "subcon_planning",
@@ -1594,7 +1596,7 @@
         "existing_tss_pr_status": {
           "skill_field": "existing_tss_pr",
           "required": true,
-          "selected_status": "UNVERIFIED",
+          "selected_status": "APPROVED",
           "recommended_source": {
             "fingerprint": {
               "field_code": "docata|ZDCSZ641766",
@@ -1602,16 +1604,16 @@
               "task_name": "Wireless RAN",
               "display_header": "Subcon PR - TSS"
             },
-            "mapping_status": "UNVERIFIED"
+            "mapping_status": "APPROVED"
           },
           "alternate_candidates": [],
-          "review_status": "REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE",
-          "review_reason": "Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile."
+          "review_status": "READY_IF_APPROVAL_EVIDENCE_EXISTS",
+          "review_reason": "Profile-selected source matches the shortlist and is already approved."
         },
         "existing_ti_pr_status": {
           "skill_field": "existing_ti_pr",
           "required": true,
-          "selected_status": "UNVERIFIED",
+          "selected_status": "APPROVED",
           "recommended_source": {
             "fingerprint": {
               "field_code": "docata|ZDCSZ641765",
@@ -1619,11 +1621,11 @@
               "task_name": "Wireless RAN",
               "display_header": "Subcon PR - TI"
             },
-            "mapping_status": "UNVERIFIED"
+            "mapping_status": "APPROVED"
           },
           "alternate_candidates": [],
-          "review_status": "REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE",
-          "review_reason": "Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile."
+          "review_status": "READY_IF_APPROVAL_EVIDENCE_EXISTS",
+          "review_reason": "Profile-selected source matches the shortlist and is already approved."
         }
       },
       "notes": [

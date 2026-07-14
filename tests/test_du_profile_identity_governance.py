@@ -253,7 +253,7 @@ class TestDuProfileIdentityGovernance(unittest.TestCase):
             "tx_mini_pr_v1": "PR_INPUT_READY",
             "tx_rollout_2023_pr_v1": "PR_INPUT_READY",
             "mw_eos_swap_pr_v1": "PR_INPUT_READY",
-            "celcomdigi_bau_2023_pr_v1": "DRAFT",
+            "celcomdigi_bau_2023_pr_v1": "PR_INPUT_READY",
             "celcomdigi_bau_2024_pr_v1": "PR_INPUT_READY",
             "celcomdigi_usp_pr_v1": "PR_INPUT_READY",
             "jendela_tx_migration_pr_v1": "PR_INPUT_READY",
@@ -269,7 +269,7 @@ class TestDuProfileIdentityGovernance(unittest.TestCase):
         record = next(
             item for item in self.registry["profiles"] if item["profile_id"] == "celcomdigi_bau_2023_pr_v1"
         )
-        self.assertEqual(record["profile_status"], "DRAFT")
+        self.assertEqual(record["profile_status"], "PR_INPUT_READY")
         self.assertEqual(record["accepted_view_ids"], ["3882899459299681347"])
         self.assertNotIn("6611960521271999255", record["accepted_view_ids"])
 

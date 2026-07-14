@@ -89,13 +89,13 @@ Discovery-only summary of why the current priority DU profiles remain blocked fr
 ## celcomdigi_bau_2023_pr_v1 (2023 Celcomdigi BAU)
 
 - Readiness status: `DISCOVERY_ONLY_BLOCKED`
-- Profile status: `DRAFT`
-- Profile version: `0.1.1`
-- Mapping version: `discovery-2026-07-14-2023-celcomdigi-bau-tx-prpo-v2`
+- Profile status: `PR_INPUT_READY`
+- Profile version: `0.2.0`
+- Mapping version: `approved-2026-07-14-2023-celcomdigi-bau-tx-prpo-v1`
 - Observed header hash: `b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454`
-- Approved header hashes: `0`
-- Overall blockers: `PROFILE_NOT_PRODUCTION, NO_APPROVED_HEADER_HASH, REQUIRED_FIELDS_NOT_APPROVED, COMPETING_SHORTLIST_CANDIDATES, UNVERIFIED_SINGLE_CANDIDATE_FIELDS`
-- Competing candidate fields: `subcontractor_planning, tx_sow_raw`
+- Approved header hashes: `1`
+- Overall blockers: `PROFILE_NOT_PRODUCTION, COMPETING_SHORTLIST_CANDIDATES, UNVERIFIED_SINGLE_CANDIDATE_FIELDS`
+- Competing candidate fields: `subcontractor_planning`
 - Release prerequisites:
   - Approve the DU model identity and four-layer source mappings.
   - Approve at least one header hash for the profile version.

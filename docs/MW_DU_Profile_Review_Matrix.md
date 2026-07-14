@@ -3,7 +3,7 @@
 Discovery-only cross-profile review matrix for the current DRAFT profiles.
 
 - Profile count: `10`
-- Batched review items: `18`
+- Batched review items: `15`
 
 ## Batch Review Queue
 
@@ -25,13 +25,13 @@ Discovery-only cross-profile review matrix for the current DRAFT profiles.
   profiles (5): cd_consolidation_2023_decom_pr_v1, celcomdigi_usp_pr_v1, jendela_tx_migration_pr_v1, mw_eos_swap_pr_v1, zte_tx_mini_pr_v1
   priority ids: cd_consolidation_2023_decom_pr_v1:05, celcomdigi_usp_pr_v1:01, jendela_tx_migration_pr_v1:01, mw_eos_swap_pr_v1:01, zte_tx_mini_pr_v1:02
   hint: Use the unresolved review packet to compare the currently selected source against alternates.
-- Batch priority `05` `CONFIRM_COMPETING_CANDIDATE` `tx_sow_raw`: Choose one exact four-layer source for `tx_sow_raw` from the competing shortlist candidates.
-  profiles (4): cd_consolidation_2023_decom_pr_v1, cd_consolidation_2023_rollout_pr_v1, celcomdigi_bau_2023_pr_v1, zte_tx_mini_pr_v1
-  priority ids: cd_consolidation_2023_decom_pr_v1:06, cd_consolidation_2023_rollout_pr_v1:05, celcomdigi_bau_2023_pr_v1:02, zte_tx_mini_pr_v1:04
-  hint: Use the unresolved review packet to compare the currently selected source against alternates.
-- Batch priority `06` `CONFIRM_COMPETING_CANDIDATE` `site_code`: Choose one exact four-layer source for `site_code` from the competing shortlist candidates.
+- Batch priority `05` `CONFIRM_COMPETING_CANDIDATE` `site_code`: Choose one exact four-layer source for `site_code` from the competing shortlist candidates.
   profiles (3): cd_consolidation_2023_decom_pr_v1, cd_consolidation_2023_rollout_pr_v1, zte_tx_mini_pr_v1
   priority ids: cd_consolidation_2023_decom_pr_v1:04, cd_consolidation_2023_rollout_pr_v1:04, zte_tx_mini_pr_v1:01
+  hint: Use the unresolved review packet to compare the currently selected source against alternates.
+- Batch priority `06` `CONFIRM_COMPETING_CANDIDATE` `tx_sow_raw`: Choose one exact four-layer source for `tx_sow_raw` from the competing shortlist candidates.
+  profiles (3): cd_consolidation_2023_decom_pr_v1, cd_consolidation_2023_rollout_pr_v1, zte_tx_mini_pr_v1
+  priority ids: cd_consolidation_2023_decom_pr_v1:06, cd_consolidation_2023_rollout_pr_v1:05, zte_tx_mini_pr_v1:04
   hint: Use the unresolved review packet to compare the currently selected source against alternates.
 - Batch priority `07` `CONFIRM_COMPETING_CANDIDATE` `region`: Choose one exact four-layer source for `region` from the competing shortlist candidates.
   profiles (2): cd_consolidation_2023_decom_pr_v1, cd_consolidation_2023_rollout_pr_v1
@@ -39,50 +39,37 @@ Discovery-only cross-profile review matrix for the current DRAFT profiles.
   hint: Use the unresolved review packet to compare the currently selected source against alternates.
 - Batch priority `08` `VERIFY_SINGLE_CANDIDATE` `du_key`: Verify the current single shortlist-aligned source for `du_key`.
   profiles (9): cd_consolidation_2023_decom_pr_v1, cd_consolidation_2023_rollout_pr_v1, celcomdigi_bau_2023_pr_v1, celcomdigi_bau_2024_pr_v1, celcomdigi_usp_pr_v1, jendela_tx_migration_pr_v1, mw_eos_swap_pr_v1, tx_rollout_2023_pr_v1, zte_tx_mini_pr_v1
-  priority ids: cd_consolidation_2023_decom_pr_v1:07, cd_consolidation_2023_rollout_pr_v1:06, celcomdigi_bau_2023_pr_v1:05, celcomdigi_bau_2024_pr_v1:04, celcomdigi_usp_pr_v1:05, jendela_tx_migration_pr_v1:05, mw_eos_swap_pr_v1:05, tx_rollout_2023_pr_v1:02, zte_tx_mini_pr_v1:07
+  priority ids: cd_consolidation_2023_decom_pr_v1:07, cd_consolidation_2023_rollout_pr_v1:06, celcomdigi_bau_2023_pr_v1:04, celcomdigi_bau_2024_pr_v1:04, celcomdigi_usp_pr_v1:05, jendela_tx_migration_pr_v1:05, mw_eos_swap_pr_v1:05, tx_rollout_2023_pr_v1:02, zte_tx_mini_pr_v1:07
   hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
 - Batch priority `09` `VERIFY_SINGLE_CANDIDATE` `antenna_size_fe`: Verify the current single shortlist-aligned source for `antenna_size_fe`.
   profiles (6): celcomdigi_bau_2023_pr_v1, celcomdigi_bau_2024_pr_v1, celcomdigi_usp_pr_v1, jendela_tx_migration_pr_v1, mw_eos_swap_pr_v1, zte_tx_mini_pr_v1
-  priority ids: celcomdigi_bau_2023_pr_v1:03, celcomdigi_bau_2024_pr_v1:02, celcomdigi_usp_pr_v1:03, jendela_tx_migration_pr_v1:03, mw_eos_swap_pr_v1:03, zte_tx_mini_pr_v1:05
+  priority ids: celcomdigi_bau_2023_pr_v1:02, celcomdigi_bau_2024_pr_v1:02, celcomdigi_usp_pr_v1:03, jendela_tx_migration_pr_v1:03, mw_eos_swap_pr_v1:03, zte_tx_mini_pr_v1:05
   hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
 - Batch priority `10` `VERIFY_SINGLE_CANDIDATE` `antenna_size_ne`: Verify the current single shortlist-aligned source for `antenna_size_ne`.
   profiles (6): celcomdigi_bau_2023_pr_v1, celcomdigi_bau_2024_pr_v1, celcomdigi_usp_pr_v1, jendela_tx_migration_pr_v1, mw_eos_swap_pr_v1, zte_tx_mini_pr_v1
-  priority ids: celcomdigi_bau_2023_pr_v1:04, celcomdigi_bau_2024_pr_v1:03, celcomdigi_usp_pr_v1:04, jendela_tx_migration_pr_v1:04, mw_eos_swap_pr_v1:04, zte_tx_mini_pr_v1:06
+  priority ids: celcomdigi_bau_2023_pr_v1:03, celcomdigi_bau_2024_pr_v1:03, celcomdigi_usp_pr_v1:04, jendela_tx_migration_pr_v1:04, mw_eos_swap_pr_v1:04, zte_tx_mini_pr_v1:06
   hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
 - Batch priority `11` `VERIFY_SINGLE_CANDIDATE` `site_name`: Verify the current single shortlist-aligned source for `site_name`.
   profiles (4): cd_consolidation_2023_rollout_pr_v1, celcomdigi_bau_2023_pr_v1, celcomdigi_bau_2024_pr_v1, tx_rollout_2023_pr_v1
-  priority ids: cd_consolidation_2023_rollout_pr_v1:07, celcomdigi_bau_2023_pr_v1:10, celcomdigi_bau_2024_pr_v1:05, tx_rollout_2023_pr_v1:03
+  priority ids: cd_consolidation_2023_rollout_pr_v1:07, celcomdigi_bau_2023_pr_v1:05, celcomdigi_bau_2024_pr_v1:05, tx_rollout_2023_pr_v1:03
   hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
 - Batch priority `12` `VERIFY_SINGLE_CANDIDATE` `subcontractor_ti`: Verify the current single shortlist-aligned source for `subcontractor_ti`.
-  profiles (4): cd_consolidation_2023_decom_pr_v1, cd_consolidation_2023_rollout_pr_v1, celcomdigi_bau_2023_pr_v1, zte_tx_mini_pr_v1
-  priority ids: cd_consolidation_2023_decom_pr_v1:08, cd_consolidation_2023_rollout_pr_v1:08, celcomdigi_bau_2023_pr_v1:11, zte_tx_mini_pr_v1:09
+  profiles (3): cd_consolidation_2023_decom_pr_v1, cd_consolidation_2023_rollout_pr_v1, zte_tx_mini_pr_v1
+  priority ids: cd_consolidation_2023_decom_pr_v1:08, cd_consolidation_2023_rollout_pr_v1:08, zte_tx_mini_pr_v1:09
   hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
 - Batch priority `13` `VERIFY_SINGLE_CANDIDATE` `region`: Verify the current single shortlist-aligned source for `region`.
-  profiles (2): celcomdigi_bau_2023_pr_v1, zte_tx_mini_pr_v1
-  priority ids: celcomdigi_bau_2023_pr_v1:08, zte_tx_mini_pr_v1:08
+  profiles (1): zte_tx_mini_pr_v1
+  priority ids: zte_tx_mini_pr_v1:08
   hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-- Batch priority `14` `VERIFY_SINGLE_CANDIDATE` `existing_ti_pr_status`: Verify the current single shortlist-aligned source for `existing_ti_pr_status`.
-  profiles (1): celcomdigi_bau_2023_pr_v1
-  priority ids: celcomdigi_bau_2023_pr_v1:06
-  hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-- Batch priority `15` `VERIFY_SINGLE_CANDIDATE` `existing_tss_pr_status`: Verify the current single shortlist-aligned source for `existing_tss_pr_status`.
-  profiles (1): celcomdigi_bau_2023_pr_v1
-  priority ids: celcomdigi_bau_2023_pr_v1:07
-  hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-- Batch priority `16` `VERIFY_SINGLE_CANDIDATE` `site_code`: Verify the current single shortlist-aligned source for `site_code`.
-  profiles (1): celcomdigi_bau_2023_pr_v1
-  priority ids: celcomdigi_bau_2023_pr_v1:09
-  hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-- Batch priority `17` `APPROVE_HEADER_HASH`: Approve at least one header hash for this profile version after the field review is complete.
-  profiles (4): cd_consolidation_2023_decom_pr_v1, cd_consolidation_2023_rollout_pr_v1, celcomdigi_bau_2023_pr_v1, zte_tx_mini_pr_v1
-  priority ids: cd_consolidation_2023_decom_pr_v1:09, cd_consolidation_2023_rollout_pr_v1:09, celcomdigi_bau_2023_pr_v1:12, zte_tx_mini_pr_v1:10
+- Batch priority `14` `APPROVE_HEADER_HASH`: Approve at least one header hash for this profile version after the field review is complete.
+  profiles (3): cd_consolidation_2023_decom_pr_v1, cd_consolidation_2023_rollout_pr_v1, zte_tx_mini_pr_v1
+  priority ids: cd_consolidation_2023_decom_pr_v1:09, cd_consolidation_2023_rollout_pr_v1:09, zte_tx_mini_pr_v1:10
   hint: Current observed header hash: a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810
-  hint: Current observed header hash: b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454
   hint: Current observed header hash: b86cbc349db66154324092c843593137e83908c3b4b55c09305d6cf6046c7a16
   hint: Current observed header hash: d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1
-- Batch priority `18` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
-  profiles (10): cd_consolidation_2023_decom_pr_v1, cd_consolidation_2023_rollout_pr_v1, celcomdigi_bau_2023_pr_v1, celcomdigi_bau_2024_pr_v1, celcomdigi_usp_pr_v1, jendela_tx_migration_pr_v1, mw_eos_swap_pr_v1, tx_mini_pr_v1, tx_rollout_2023_pr_v1, zte_tx_mini_pr_v1
-  priority ids: cd_consolidation_2023_decom_pr_v1:10, cd_consolidation_2023_rollout_pr_v1:10, celcomdigi_bau_2023_pr_v1:13, celcomdigi_bau_2024_pr_v1:06, celcomdigi_usp_pr_v1:06, jendela_tx_migration_pr_v1:06, mw_eos_swap_pr_v1:06, tx_mini_pr_v1:01, tx_rollout_2023_pr_v1:04, zte_tx_mini_pr_v1:11
+- Batch priority `15` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
+  profiles (9): cd_consolidation_2023_decom_pr_v1, cd_consolidation_2023_rollout_pr_v1, celcomdigi_bau_2024_pr_v1, celcomdigi_usp_pr_v1, jendela_tx_migration_pr_v1, mw_eos_swap_pr_v1, tx_mini_pr_v1, tx_rollout_2023_pr_v1, zte_tx_mini_pr_v1
+  priority ids: cd_consolidation_2023_decom_pr_v1:10, cd_consolidation_2023_rollout_pr_v1:10, celcomdigi_bau_2024_pr_v1:06, celcomdigi_usp_pr_v1:06, jendela_tx_migration_pr_v1:06, mw_eos_swap_pr_v1:06, tx_mini_pr_v1:01, tx_rollout_2023_pr_v1:04, zte_tx_mini_pr_v1:11
   hint: Use the transition review as the final stop/go check before any status change.
 
 ## Profile Summary
@@ -118,15 +105,13 @@ Discovery-only cross-profile review matrix for the current DRAFT profiles.
 ### celcomdigi_bau_2023_pr_v1 (2023 Celcomdigi BAU)
 
 - Readiness status: `DISCOVERY_ONLY_BLOCKED`
-- Profile version: `0.1.1`
-- Mapping version: `discovery-2026-07-14-2023-celcomdigi-bau-tx-prpo-v2`
+- Profile version: `0.2.0`
+- Mapping version: `approved-2026-07-14-2023-celcomdigi-bau-tx-prpo-v1`
 - Observed header hash: `b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454`
-- Action count: `13`
+- Action count: `5`
 - Action type counts:
-  - `CONFIRM_COMPETING_CANDIDATE`: `2`
-  - `VERIFY_SINGLE_CANDIDATE`: `9`
-  - `APPROVE_HEADER_HASH`: `1`
-  - `HOLD_LIFECYCLE_PROMOTION`: `1`
+  - `CONFIRM_COMPETING_CANDIDATE`: `1`
+  - `VERIFY_SINGLE_CANDIDATE`: `4`
 
 ### celcomdigi_bau_2024_pr_v1 (2024 Celcomdigi BAU)
 

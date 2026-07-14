@@ -3,6 +3,8 @@ import unittest
 from pathlib import Path
 import json
 
+from openpyxl import load_workbook
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
@@ -17,7 +19,7 @@ from du_export_adapter import (
 )
 from du_profile_loader import load_du_profile
 from pr_input_guard import evaluate_record
-from profile_du_export import fingerprint_key
+from profile_du_export import build_header_inventory, calculate_header_hash, fingerprint_key, sha256_file
 
 
 def fp(code):
@@ -894,6 +896,287 @@ class TestCelcomdigiBau2024ApprovedProfileAdapter(unittest.TestCase):
         gate = evaluate_record(record, production, scope="TSS")
         self.assertFalse(gate["allow_output"])
         self.assertIn("HEADER_HASH_REVALIDATION_REQUIRED", gate["blocking_reasons"])
+
+
+class TestCelcomdigiBau2023ApprovedProfileAdapter(unittest.TestCase):
+    PROFILE_PATH = ROOT / "config" / "du_profiles" / "celcomdigi_bau_2023_pr_v1.yaml"
+    WORKBOOK_PATH = (
+        ROOT
+        / "Info"
+        / "reference"
+        / "du_exports"
+        / "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx"
+    )
+
+    @classmethod
+    def setUpClass(cls):
+        cls.profile = load_du_profile(cls.PROFILE_PATH)
+        cls.source_file_hash = sha256_file(cls.WORKBOOK_PATH)
+
+    def _inventory_from_profile(self, *, include_alternates=False, duplicate_fields=None, missing_fields=None):
+        duplicate_fields = set(duplicate_fields or [])
+        missing_fields = set(missing_fields or [])
+        columns = []
+        for field_name, config in self.profile["field_mapping"].items():
+            if field_name in missing_fields:
+                continue
+            for candidate in config.get("source_candidates", []):
+                column = {
+                    "fingerprint": candidate["fingerprint"],
+                    "fingerprint_key": fingerprint_key(candidate["fingerprint"]),
+                }
+                columns.append(column)
+                if field_name in duplicate_fields:
+                    columns.append(dict(column))
+        if include_alternates:
+            for fingerprint in (
+                {
+                    "field_code": "docata|ZDCSZ642123",
+                    "wbs_stage": "TX Solution",
+                    "task_name": "TX SOW Details",
+                    "display_header": "TX SOW Details",
+                },
+                {
+                    "field_code": "docata|ZDCSZ01036639",
+                    "wbs_stage": "Installation",
+                    "task_name": "Wireless RAN",
+                    "display_header": "Subcon PR - Planning",
+                },
+            ):
+                columns.append({"fingerprint": fingerprint, "fingerprint_key": fingerprint_key(fingerprint)})
+        return {"sheets": [{"sheet_name": "2023 BAU", "columns": columns}]}
+
+    def _resolved(self, *, include_alternates=False, duplicate_fields=None, missing_fields=None):
+        return resolve_profile_field_mappings(
+            self._inventory_from_profile(
+                include_alternates=include_alternates,
+                duplicate_fields=duplicate_fields,
+                missing_fields=missing_fields,
+            ),
+            self.profile,
+        )
+
+    def _raw_values(self, overrides=None):
+        values = {
+            "site_code": " A0001 ",
+            "site_name": "Synthetic Site",
+            "du_key": "DU0001",
+            "tx_sow_raw": " MW Swap ",
+            "tx_upgrade_scope_raw": "Upgrade",
+            "region": "Northern",
+            "state": "Penang",
+            "subcontractor_tss": "GTSB TSS",
+            "subcontractor_ti": "GTSB TI",
+            "subcontractor_planning": "Planner",
+            "existing_tss_pr_status": "SQ202506180613-GTSB",
+            "existing_ti_pr_status": "No PR required-Work at TSS only",
+            "latitude": "5.1234",
+            "longitude": "100.1234",
+            "antenna_size_ne": "0.6m",
+            "antenna_size_fe": "0.6m",
+            "boq_configuration": "1+0",
+            "tx_sow_details": "detail",
+            "ne_sow_details": "ne detail",
+            "fe_sow_details": "fe detail",
+        }
+        values.update(overrides or {})
+        raw = {}
+        for field_name, config in self.profile["field_mapping"].items():
+            if field_name not in values:
+                continue
+            for candidate in config.get("source_candidates", []):
+                raw[fingerprint_key(candidate["fingerprint"])] = values[field_name]
+        return raw
+
+    def _context(self, *, header_hash=None, view_id=None):
+        identity = self.profile["identity"]
+        return {
+            "project_key": identity["project_key"],
+            "du_model_name": identity["accepted_du_models"][0],
+            "du_model_id": identity["accepted_du_model_ids"][0],
+            "view_id": view_id or identity["accepted_view_ids"][0],
+            "source_file_name": "synthetic-2023-bau.xlsx",
+            "source_file_hash": "synthetic-source-hash",
+            "header_hash": header_hash or self.profile["export_structure"]["approved_header_hashes"][0],
+            "source_row_number": 5,
+        }
+
+    def _build_record(self, overrides=None, *, profile=None, resolved=None, header_hash=None, view_id=None, scope="TSS"):
+        profile = profile or self.profile
+        return build_canonical_site_record(
+            self._raw_values(overrides),
+            profile,
+            self._context(header_hash=header_hash, view_id=view_id),
+            scope=scope,
+            resolved_mappings=resolved or resolve_profile_field_mappings(self._inventory_from_profile(), profile),
+        )
+
+    def _production_copy(self):
+        clone = json.loads(json.dumps(self.profile))
+        clone["status"] = "PRODUCTION"
+        for config in clone["field_mapping"].values():
+            config["source_candidates"] = [
+                candidate
+                for candidate in config.get("source_candidates", [])
+                if candidate.get("mapping_status") == "APPROVED"
+            ]
+        return clone
+
+    def test_resolver_uses_only_seven_approved_runtime_fingerprints(self):
+        resolved = self._resolved(include_alternates=True)
+        approved_fields = (
+            "site_code",
+            "tx_sow_raw",
+            "region",
+            "subcontractor_tss",
+            "subcontractor_ti",
+            "existing_tss_pr_status",
+            "existing_ti_pr_status",
+        )
+        for field_name in approved_fields:
+            self.assertEqual(resolved[field_name]["status"], "RESOLVED")
+        self.assertEqual(
+            [match["fingerprint"]["display_header"] for match in resolved["tx_sow_raw"]["matches"]],
+            ["Tx SOW"],
+        )
+        self.assertEqual(
+            resolved["subcontractor_tss"]["matches"][0]["fingerprint"]["display_header"],
+            "SubCon - TSS",
+        )
+        self.assertEqual(
+            resolved["subcontractor_ti"]["matches"][0]["fingerprint"]["display_header"],
+            "SubCon - TI",
+        )
+        self.assertEqual(
+            resolved["existing_tss_pr_status"]["matches"][0]["fingerprint"]["display_header"],
+            "Subcon PR - TSS",
+        )
+        self.assertEqual(
+            resolved["existing_ti_pr_status"]["matches"][0]["fingerprint"]["display_header"],
+            "Subcon PR - TI",
+        )
+
+    def test_subcon_pr_planning_is_not_selected_for_existing_pr_fields(self):
+        resolved = self._resolved(include_alternates=True)
+        self.assertEqual(
+            [match["fingerprint"]["display_header"] for match in resolved["existing_tss_pr_status"]["matches"]],
+            ["Subcon PR - TSS"],
+        )
+        self.assertEqual(
+            [match["fingerprint"]["display_header"] for match in resolved["existing_ti_pr_status"]["matches"]],
+            ["Subcon PR - TI"],
+        )
+
+    def test_pr_reference_fields_normalize_consistently(self):
+        record = self._build_record(
+            {
+                "existing_tss_pr_status": "SQ202506180613-GTSB",
+                "existing_ti_pr_status": "No PR required-Work at TSS only",
+            }
+        )
+        self.assertEqual(record["pr_context"]["existing_tss_pr_status"], PR_STATUS_EXISTS)
+        self.assertEqual(record["pr_context"]["existing_ti_pr_status"], PR_STATUS_NOT_REQUIRED)
+        self.assertEqual(
+            record["source_evidence"]["fields"]["existing_tss_pr_status"]["transformation"],
+            "normalize_pr_reference_status",
+        )
+        self.assertEqual(
+            record["source_evidence"]["fields"]["existing_ti_pr_status"]["transformation"],
+            "normalize_pr_reference_status",
+        )
+
+    def test_profile_passes_pr_input_gate_but_current_status_blocks_ecc_output(self):
+        record = self._build_record(scope="TI")
+        self.assertEqual(record["validation"]["pr_input_classification"], "PR_INPUT_READY")
+        gate = evaluate_record(record, self.profile, scope="TI")
+        self.assertFalse(gate["allow_output"])
+        self.assertIn("DU_PROFILE_NOT_PRODUCTION", gate["blocking_reasons"])
+
+    def test_approved_header_hash_passes_without_header_revalidation(self):
+        production = self._production_copy()
+        record = self._build_record(profile=production, scope="TI")
+        gate = evaluate_record(record, production, scope="TI")
+        self.assertNotIn("HEADER_HASH_REVALIDATION_REQUIRED", gate["blocking_reasons"])
+
+    def test_changed_header_hash_still_fails_closed(self):
+        production = self._production_copy()
+        record = self._build_record(profile=production, header_hash="changed-header-hash", scope="TI")
+        gate = evaluate_record(record, production, scope="TI")
+        self.assertFalse(gate["allow_output"])
+        self.assertIn("HEADER_HASH_REVALIDATION_REQUIRED", gate["blocking_reasons"])
+
+    def test_unknown_view_id_fails_closed(self):
+        production = self._production_copy()
+        record = self._build_record(profile=production, view_id="unknown-view-id", scope="TI")
+        gate = evaluate_record(record, production, scope="TI")
+        self.assertFalse(gate["allow_output"])
+        self.assertIn("UNKNOWN_DU_MODEL_OR_VIEW", gate["blocking_reasons"])
+
+    def test_missing_approved_pr_critical_column_fails_closed(self):
+        resolved = self._resolved(missing_fields={"existing_ti_pr_status"})
+        self.assertEqual(resolved["existing_ti_pr_status"]["status"], "MISSING")
+        production = self._production_copy()
+        record = self._build_record(profile=production, resolved=resolved, scope="TI")
+        self.assertIn("MISSING_SOURCE_EVIDENCE:existing_ti_pr_status", record["validation"]["blocking_reasons"])
+
+    def test_ambiguous_required_fingerprint_fails_closed(self):
+        resolved = self._resolved(duplicate_fields={"site_code"})
+        self.assertEqual(resolved["site_code"]["status"], "AMBIGUOUS")
+        production = self._production_copy()
+        record = self._build_record(profile=production, resolved=resolved, scope="TI")
+        self.assertIn("AMBIGUOUS_HEADER_MAPPING:site_code", record["validation"]["blocking_reasons"])
+
+    def test_positive_integration_with_corrected_workbook_produces_2975_canonical_records(self):
+        inventory = build_header_inventory(self.WORKBOOK_PATH)
+        self.assertEqual(
+            calculate_header_hash(inventory),
+            "b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454",
+        )
+        resolved = resolve_profile_field_mappings(inventory, self.profile)
+        workbook = load_workbook(self.WORKBOOK_PATH, read_only=True, data_only=True)
+        try:
+            worksheet = workbook["data"]
+            columns = {
+                column["fingerprint_key"]: column["source_position"]["one_based_index"]
+                for sheet in inventory["sheets"]
+                if sheet["sheet_name"] == "data"
+                for column in sheet["columns"]
+            }
+            record_count = 0
+            populated_site_codes = 0
+            for row_number, row in enumerate(worksheet.iter_rows(min_row=5, values_only=True), start=5):
+                raw = {}
+                for mapping in resolved.values():
+                    if mapping["status"] != "RESOLVED":
+                        continue
+                    for match in mapping["matches"]:
+                        if match["sheet_name"] != "data":
+                            continue
+                        key = fingerprint_key(match["fingerprint"])
+                        raw[key] = row[columns[key] - 1]
+                record = build_canonical_site_record(
+                    raw,
+                    self.profile,
+                    {
+                        "project_key": self.profile["identity"]["project_key"],
+                        "du_model_name": self.profile["identity"]["accepted_du_models"][0],
+                        "du_model_id": self.profile["identity"]["accepted_du_model_ids"][0],
+                        "view_id": self.profile["identity"]["accepted_view_ids"][0],
+                        "source_file_name": self.WORKBOOK_PATH.name,
+                        "source_file_hash": self.source_file_hash,
+                        "header_hash": calculate_header_hash(inventory),
+                        "source_row_number": row_number,
+                    },
+                    scope="TI",
+                    resolved_mappings=resolved,
+                )
+                record_count += 1
+                if record["site"]["site_code"]:
+                    populated_site_codes += 1
+            self.assertEqual(record_count, 2975)
+            self.assertEqual(populated_site_codes, 2975)
+        finally:
+            workbook.close()
 
 
 class TestCelcomdigiUspApprovedProfileAdapter(unittest.TestCase):

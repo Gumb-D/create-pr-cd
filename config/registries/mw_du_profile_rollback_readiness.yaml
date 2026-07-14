@@ -90,20 +90,19 @@
     },
     {
       "profile_id": "celcomdigi_bau_2023_pr_v1",
-      "profile_version": "0.1.1",
-      "mapping_version": "discovery-2026-07-14-2023-celcomdigi-bau-tx-prpo-v2",
-      "current_status": "DRAFT",
+      "profile_version": "0.2.0",
+      "mapping_version": "approved-2026-07-14-2023-celcomdigi-bau-tx-prpo-v1",
+      "current_status": "PR_INPUT_READY",
       "observed_header_hash": "b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454",
-      "rollback_readiness_status": "ROLLBACK_BLOCKED",
-      "rollback_target_profile_id": null,
-      "rollback_target_profile_version": null,
-      "rollback_target_header_hashes": [],
-      "blockers": [
-        "NO_APPROVED_HEADER_HASH_BASELINE",
-        "PROFILE_NOT_RELEASED"
+      "rollback_readiness_status": "ROLLBACK_BASELINE_RECORDED",
+      "rollback_target_profile_id": "celcomdigi_bau_2023_pr_v1",
+      "rollback_target_profile_version": "0.2.0",
+      "rollback_target_header_hashes": [
+        "b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454"
       ],
+      "blockers": [],
       "notes": [
-        "Rollback remains blocked until an approved profile/header-hash baseline exists."
+        "Rollback baseline is documented from the current approved profile identity and header-hash set."
       ]
     },
     {
