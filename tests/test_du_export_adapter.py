@@ -8,6 +8,14 @@ from openpyxl import load_workbook
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
+LOCAL_2023_BAU_TX_PRPO_WORKBOOK = (
+    ROOT
+    / "Info"
+    / "reference"
+    / "du_exports"
+    / "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx"
+)
+
 from canonical_site_validator import QUARANTINE_NO_ECC, empty_canonical_site_record
 from du_export_adapter import (
     PR_STATUS_EXISTS,
@@ -900,18 +908,11 @@ class TestCelcomdigiBau2024ApprovedProfileAdapter(unittest.TestCase):
 
 class TestCelcomdigiBau2023ApprovedProfileAdapter(unittest.TestCase):
     PROFILE_PATH = ROOT / "config" / "du_profiles" / "celcomdigi_bau_2023_pr_v1.yaml"
-    WORKBOOK_PATH = (
-        ROOT
-        / "Info"
-        / "reference"
-        / "du_exports"
-        / "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx"
-    )
+    WORKBOOK_PATH = LOCAL_2023_BAU_TX_PRPO_WORKBOOK
 
     @classmethod
     def setUpClass(cls):
         cls.profile = load_du_profile(cls.PROFILE_PATH)
-        cls.source_file_hash = sha256_file(cls.WORKBOOK_PATH)
 
     def _inventory_from_profile(self, *, include_alternates=False, duplicate_fields=None, missing_fields=None):
         duplicate_fields = set(duplicate_fields or [])
@@ -1126,8 +1127,13 @@ class TestCelcomdigiBau2023ApprovedProfileAdapter(unittest.TestCase):
         record = self._build_record(profile=production, resolved=resolved, scope="TI")
         self.assertIn("AMBIGUOUS_HEADER_MAPPING:site_code", record["validation"]["blocking_reasons"])
 
+    @unittest.skipUnless(
+        LOCAL_2023_BAU_TX_PRPO_WORKBOOK.exists(),
+        "local-only corrected 2023 BAU TX_PRPO export is unavailable",
+    )
     def test_positive_integration_with_corrected_workbook_produces_2975_canonical_records(self):
         inventory = build_header_inventory(self.WORKBOOK_PATH)
+        source_file_hash = sha256_file(self.WORKBOOK_PATH)
         self.assertEqual(
             calculate_header_hash(inventory),
             "b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454",
@@ -1163,7 +1169,7 @@ class TestCelcomdigiBau2023ApprovedProfileAdapter(unittest.TestCase):
                         "du_model_id": self.profile["identity"]["accepted_du_model_ids"][0],
                         "view_id": self.profile["identity"]["accepted_view_ids"][0],
                         "source_file_name": self.WORKBOOK_PATH.name,
-                        "source_file_hash": self.source_file_hash,
+                        "source_file_hash": source_file_hash,
                         "header_hash": calculate_header_hash(inventory),
                         "source_row_number": row_number,
                     },

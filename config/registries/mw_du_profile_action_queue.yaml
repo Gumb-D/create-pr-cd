@@ -310,6 +310,12 @@
           "summary": "Verify the current single shortlist-aligned source for `site_name`.",
           "field_name": "site_name",
           "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+        },
+        {
+          "priority_id": "celcomdigi_bau_2023_pr_v1:06",
+          "action_type": "HOLD_LIFECYCLE_PROMOTION",
+          "summary": "Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.",
+          "evidence_hint": "Use the transition review as the final stop/go check before any status change."
         }
       ],
       "notes": [

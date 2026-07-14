@@ -42,10 +42,11 @@
       "mapping_version": "approved-2026-07-14-2023-celcomdigi-bau-tx-prpo-v1",
       "observed_header_hash": "b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454",
       "readiness_status": "DISCOVERY_ONLY_BLOCKED",
-      "action_count": 5,
+      "action_count": 6,
       "action_type_counts": {
         "CONFIRM_COMPETING_CANDIDATE": 1,
-        "VERIFY_SINGLE_CANDIDATE": 4
+        "VERIFY_SINGLE_CANDIDATE": 4,
+        "HOLD_LIFECYCLE_PROMOTION": 1
       }
     },
     {
@@ -466,6 +467,7 @@
       "profiles": [
         "cd_consolidation_2023_decom_pr_v1",
         "cd_consolidation_2023_rollout_pr_v1",
+        "celcomdigi_bau_2023_pr_v1",
         "celcomdigi_bau_2024_pr_v1",
         "celcomdigi_usp_pr_v1",
         "jendela_tx_migration_pr_v1",
@@ -477,6 +479,7 @@
       "profile_priority_ids": [
         "cd_consolidation_2023_decom_pr_v1:10",
         "cd_consolidation_2023_rollout_pr_v1:10",
+        "celcomdigi_bau_2023_pr_v1:06",
         "celcomdigi_bau_2024_pr_v1:06",
         "celcomdigi_usp_pr_v1:06",
         "jendela_tx_migration_pr_v1:06",
@@ -488,7 +491,7 @@
       "evidence_hints": [
         "Use the transition review as the final stop/go check before any status change."
       ],
-      "profile_count": 9,
+      "profile_count": 10,
       "batch_priority": 15
     }
   ],

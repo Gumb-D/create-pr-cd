@@ -505,7 +505,7 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 - Missing required fields: None
 - Competing candidate fields: subcontractor_planning
 - Single-candidate but unverified fields: antenna_size_fe, antenna_size_ne, du_key, site_name
-- Resolved by approved mapping (alternates rejected): existing_ti_pr_status, existing_tss_pr_status, region, site_code, subcontractor_ti, subcontractor_tss, tx_sow_raw
+- Resolved by approved mapping (alternates rejected): tx_sow_raw
 
 ### `site_code`
 

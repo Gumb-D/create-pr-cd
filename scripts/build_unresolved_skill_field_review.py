@@ -135,17 +135,6 @@ def build_review_entry(profile: Mapping[str, Any], shortlist_entry: Mapping[str,
             "review_reason": review_reason,
         }
 
-    if (
-        str(profile.get("profile_id")) == "celcomdigi_bau_2023_pr_v1"
-        and str(profile.get("status")) == "PR_INPUT_READY"
-    ):
-        approved_fields = [
-            field_name
-            for field_name, config in profile.get("field_mapping", {}).items()
-            if any(candidate.get("mapping_status") == "APPROVED" for candidate in config.get("source_candidates", []))
-        ]
-        resolved_by_approval_fields = sorted(set(resolved_by_approval_fields).union(approved_fields))
-
     return {
         "profile_id": profile["profile_id"],
         "profile_version": profile["profile_version"],

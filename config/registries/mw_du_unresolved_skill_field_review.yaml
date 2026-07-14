@@ -1400,12 +1400,6 @@
         "no_profile_selection_fields": [],
         "shortlist_mismatch_fields": [],
         "resolved_by_approval_fields": [
-          "existing_ti_pr_status",
-          "existing_tss_pr_status",
-          "region",
-          "site_code",
-          "subcontractor_ti",
-          "subcontractor_tss",
           "tx_sow_raw"
         ]
       },

@@ -115,6 +115,8 @@ Discovery-only prioritized manual action queue for the current DRAFT profiles.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
   - `celcomdigi_bau_2023_pr_v1:05` `VERIFY_SINGLE_CANDIDATE` `site_name`: Verify the current single shortlist-aligned source for `site_name`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
+  - `celcomdigi_bau_2023_pr_v1:06` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
+    hint: Use the transition review as the final stop/go check before any status change.
 
 ## celcomdigi_bau_2024_pr_v1 (2024 Celcomdigi BAU)
 

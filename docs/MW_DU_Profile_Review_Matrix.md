@@ -68,8 +68,8 @@ Discovery-only cross-profile review matrix for the current DRAFT profiles.
   hint: Current observed header hash: b86cbc349db66154324092c843593137e83908c3b4b55c09305d6cf6046c7a16
   hint: Current observed header hash: d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1
 - Batch priority `15` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
-  profiles (9): cd_consolidation_2023_decom_pr_v1, cd_consolidation_2023_rollout_pr_v1, celcomdigi_bau_2024_pr_v1, celcomdigi_usp_pr_v1, jendela_tx_migration_pr_v1, mw_eos_swap_pr_v1, tx_mini_pr_v1, tx_rollout_2023_pr_v1, zte_tx_mini_pr_v1
-  priority ids: cd_consolidation_2023_decom_pr_v1:10, cd_consolidation_2023_rollout_pr_v1:10, celcomdigi_bau_2024_pr_v1:06, celcomdigi_usp_pr_v1:06, jendela_tx_migration_pr_v1:06, mw_eos_swap_pr_v1:06, tx_mini_pr_v1:01, tx_rollout_2023_pr_v1:04, zte_tx_mini_pr_v1:11
+  profiles (10): cd_consolidation_2023_decom_pr_v1, cd_consolidation_2023_rollout_pr_v1, celcomdigi_bau_2023_pr_v1, celcomdigi_bau_2024_pr_v1, celcomdigi_usp_pr_v1, jendela_tx_migration_pr_v1, mw_eos_swap_pr_v1, tx_mini_pr_v1, tx_rollout_2023_pr_v1, zte_tx_mini_pr_v1
+  priority ids: cd_consolidation_2023_decom_pr_v1:10, cd_consolidation_2023_rollout_pr_v1:10, celcomdigi_bau_2023_pr_v1:06, celcomdigi_bau_2024_pr_v1:06, celcomdigi_usp_pr_v1:06, jendela_tx_migration_pr_v1:06, mw_eos_swap_pr_v1:06, tx_mini_pr_v1:01, tx_rollout_2023_pr_v1:04, zte_tx_mini_pr_v1:11
   hint: Use the transition review as the final stop/go check before any status change.
 
 ## Profile Summary
@@ -108,10 +108,11 @@ Discovery-only cross-profile review matrix for the current DRAFT profiles.
 - Profile version: `0.2.0`
 - Mapping version: `approved-2026-07-14-2023-celcomdigi-bau-tx-prpo-v1`
 - Observed header hash: `b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454`
-- Action count: `5`
+- Action count: `6`
 - Action type counts:
   - `CONFIRM_COMPETING_CANDIDATE`: `1`
   - `VERIFY_SINGLE_CANDIDATE`: `4`
+  - `HOLD_LIFECYCLE_PROMOTION`: `1`
 
 ### celcomdigi_bau_2024_pr_v1 (2024 Celcomdigi BAU)
 
