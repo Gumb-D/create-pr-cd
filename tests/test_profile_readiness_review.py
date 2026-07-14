@@ -120,11 +120,11 @@ class TestProfileReadinessReview(unittest.TestCase):
         self.assertEqual(entry["blocker_summary"]["cross_model_bridge_fields"], [])
         self.assertEqual(
             entry["blocker_summary"]["required_competing_candidate_fields"],
-            ["subcontractor_ti", "tx_sow_raw"],
+            ["tx_sow_raw"],
         )
         self.assertEqual(
             entry["blocker_summary"]["required_single_candidate_unverified_fields"],
-            ["existing_ti_pr_status", "existing_tss_pr_status", "region", "site_code"],
+            ["existing_ti_pr_status", "existing_tss_pr_status", "region", "site_code", "subcontractor_ti"],
         )
 
     def test_2024_celcomdigi_bau_entry_stays_discovery_only_blocked_only_for_non_production_and_optional_review_work(self):

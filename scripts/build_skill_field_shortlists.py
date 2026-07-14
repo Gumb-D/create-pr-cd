@@ -77,15 +77,11 @@ def _reason_and_score(field: str, column: Mapping[str, Any]) -> tuple[int, str] 
             return 100, "Exact TSS team field."
         if display == "subcon - tss":
             return 85, "Direct TSS subcontractor field."
-        if display == "subcon pr - tss":
-            return 55, "PR-oriented TSS field; likely duplicate-prevention or downstream support."
     elif field == "subcon_ti_team":
         if display == "subcon - ti team":
             return 100, "Exact TI team field."
         if display == "subcon - ti":
             return 85, "Direct TI subcontractor field."
-        if display == "subcon pr - ti":
-            return 55, "PR-oriented TI field; likely duplicate-prevention or downstream support."
     elif field == "subcon_planning":
         if display == "subcon - planning":
             return 100, "Exact Planning subcontractor field."
@@ -101,6 +97,8 @@ def _reason_and_score(field: str, column: Mapping[str, Any]) -> tuple[int, str] 
     elif field == "existing_tss_pr":
         if display == "pr tss status":
             return 100, "Exact TSS PR status field."
+        if display == "subcon pr - tss":
+            return 100, "Direct TSS PR reference/status field."
         if display == "pr tss rectification status":
             return 65, "TSS rectification status field."
         if "tss pr" in text or "pr tss" in text:
@@ -108,6 +106,8 @@ def _reason_and_score(field: str, column: Mapping[str, Any]) -> tuple[int, str] 
     elif field == "existing_ti_pr":
         if display == "pr ti status":
             return 100, "Exact TI PR status field."
+        if display == "subcon pr - ti":
+            return 100, "Direct TI PR reference/status field."
         if display == "pr ti rectification status":
             return 65, "TI rectification status field."
         if "ti pr" in text or "pr ti" in text:

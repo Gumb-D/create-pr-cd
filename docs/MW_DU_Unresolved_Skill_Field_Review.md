@@ -9,7 +9,7 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 - Missing required fields: None
 - Competing candidate fields: None
 - Single-candidate but unverified fields: None
-- Resolved by approved mapping (alternates rejected): subcontractor_planning, subcontractor_ti, tx_sow_raw
+- Resolved by approved mapping (alternates rejected): subcontractor_planning, tx_sow_raw
 
 ### `site_code`
 
@@ -52,12 +52,9 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 ### `subcontractor_ti`
 
 - Skill field: `subcon_ti_team`
-- Review status: `RESOLVED_BY_APPROVED_MAPPING`
-- Reason: Profile-selected source is human-approved; the remaining shortlist alternates were rejected by that recorded decision.
+- Review status: `READY_IF_APPROVAL_EVIDENCE_EXISTS`
+- Reason: Profile-selected source matches the shortlist and is already approved.
 - Selected source: `docata|ZDCSZ0657771 | Installation | Wireless RAN | SubCon - TI Team`
-- Alternate shortlist candidates:
-  - score 55: `docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI`
-    reason: PR-oriented TI field; likely duplicate-prevention or downstream support.
 
 ### `subcontractor_planning`
 
@@ -105,7 +102,7 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 - Missing required fields: None
 - Competing candidate fields: site_name, subcontractor_planning
 - Single-candidate but unverified fields: antenna_size_fe, antenna_size_ne, du_key
-- Resolved by approved mapping (alternates rejected): site_code, subcontractor_ti, tx_sow_raw
+- Resolved by approved mapping (alternates rejected): site_code, tx_sow_raw
 
 ### `site_code`
 
@@ -154,12 +151,9 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 ### `subcontractor_ti`
 
 - Skill field: `subcon_ti_team`
-- Review status: `RESOLVED_BY_APPROVED_MAPPING`
-- Reason: Profile-selected source is human-approved; the remaining shortlist alternates were rejected by that recorded decision.
+- Review status: `READY_IF_APPROVAL_EVIDENCE_EXISTS`
+- Reason: Profile-selected source matches the shortlist and is already approved.
 - Selected source: `docata|ZDCSZ00970184 | Rollout | Microwave | Subcon - TI`
-- Alternate shortlist candidates:
-  - score 55: `docata|ZDCSZ00959243 | Commercial | Microwave | Subcon PR - TI`
-    reason: PR-oriented TI field; likely duplicate-prevention or downstream support.
 
 ### `subcontractor_planning`
 
@@ -207,7 +201,7 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 - Missing required fields: None
 - Competing candidate fields: subcontractor_planning
 - Single-candidate but unverified fields: du_key, site_name
-- Resolved by approved mapping (alternates rejected): existing_ti_pr_status, existing_tss_pr_status, subcontractor_ti, tx_sow_raw
+- Resolved by approved mapping (alternates rejected): existing_ti_pr_status, existing_tss_pr_status, tx_sow_raw
 
 ### `site_code`
 
@@ -250,12 +244,9 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 ### `subcontractor_ti`
 
 - Skill field: `subcon_ti_team`
-- Review status: `RESOLVED_BY_APPROVED_MAPPING`
-- Reason: Profile-selected source is human-approved; the remaining shortlist alternates were rejected by that recorded decision.
+- Review status: `READY_IF_APPROVAL_EVIDENCE_EXISTS`
+- Reason: Profile-selected source matches the shortlist and is already approved.
 - Selected source: `docata|ZDCSZ640242 | Subcon Info | SubCon - TI | SubCon - TI`
-- Alternate shortlist candidates:
-  - score 55: `docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI`
-    reason: PR-oriented TI field; likely duplicate-prevention or downstream support.
 
 ### `subcontractor_planning`
 
@@ -285,7 +276,7 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 
 - Skill field: `existing_tss_pr`
 - Review status: `RESOLVED_BY_APPROVED_MAPPING`
-- Reason: Profile-selected source is human-approved and still appears in the current export under a different shortlist bucket; the designated shortlist alternates were not selected.
+- Reason: Profile-selected source is human-approved; the remaining shortlist alternates were rejected by that recorded decision.
 - Selected source: `docata|ZDCSZ641766 | Installation | Wireless RAN | Subcon PR - TSS`
 - Alternate shortlist candidates:
   - score 100: `docata|ZDCSZ00904401 | Acceptance | Microwave | PR TSS Status`
@@ -297,7 +288,7 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 
 - Skill field: `existing_ti_pr`
 - Review status: `RESOLVED_BY_APPROVED_MAPPING`
-- Reason: Profile-selected source is human-approved and still appears in the current export under a different shortlist bucket; the designated shortlist alternates were not selected.
+- Reason: Profile-selected source is human-approved; the remaining shortlist alternates were rejected by that recorded decision.
 - Selected source: `docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI`
 - Alternate shortlist candidates:
   - score 100: `docata|ZDCSZ00904402 | Acceptance | Microwave | PR TI Status`
@@ -313,7 +304,7 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 - Missing required fields: None
 - Competing candidate fields: site_name, subcontractor_planning
 - Single-candidate but unverified fields: antenna_size_fe, antenna_size_ne, du_key
-- Resolved by approved mapping (alternates rejected): subcontractor_ti, tx_sow_raw
+- Resolved by approved mapping (alternates rejected): tx_sow_raw
 
 ### `site_code`
 
@@ -359,12 +350,9 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 ### `subcontractor_ti`
 
 - Skill field: `subcon_ti_team`
-- Review status: `RESOLVED_BY_APPROVED_MAPPING`
-- Reason: Profile-selected source is human-approved; the remaining shortlist alternates were rejected by that recorded decision.
+- Review status: `READY_IF_APPROVAL_EVIDENCE_EXISTS`
+- Reason: Profile-selected source matches the shortlist and is already approved.
 - Selected source: `docata|ZDCSZ640242 | RPM | Wireless RAN | SubCon - TI`
-- Alternate shortlist candidates:
-  - score 55: `docata|ZDCSZ641765 | PR team | Wireless RAN | Subcon PR - TI`
-    reason: PR-oriented TI field; likely duplicate-prevention or downstream support.
 
 ### `subcontractor_planning`
 
@@ -409,9 +397,9 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 
 - Source file: `A-P202211283695_D002-ZTE TX MINI-ZTE TX MINI v1-20260703160312.xlsx`
 - Observed header hash: `a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810`
-- Missing required fields: existing_ti_pr_status, existing_tss_pr_status
-- Competing candidate fields: site_code, site_name, subcontractor_planning, subcontractor_ti, tx_sow_raw
-- Single-candidate but unverified fields: antenna_size_fe, antenna_size_ne, du_key, region
+- Missing required fields: None
+- Competing candidate fields: site_code, site_name, subcontractor_planning, tx_sow_raw
+- Single-candidate but unverified fields: antenna_size_fe, antenna_size_ne, du_key, region, subcontractor_ti
 - Resolved by approved mapping (alternates rejected): None
 
 ### `site_code`
@@ -461,12 +449,9 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 ### `subcontractor_ti`
 
 - Skill field: `subcon_ti_team`
-- Review status: `REVIEW_REQUIRED_COMPETING_CANDIDATES`
-- Reason: Profile-selected source has alternate shortlist candidates that still require four-layer confirmation.
+- Review status: `REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE`
+- Reason: Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile.
 - Selected source: `docata|ZDCSZ00970184 | Network Planning | Microwave | Subcon - TI`
-- Alternate shortlist candidates:
-  - score 55: `docata|ZDCSZ00959243 | Acceptance | Microwave | Subcon PR - TI`
-    reason: PR-oriented TI field; likely duplicate-prevention or downstream support.
 
 ### `subcontractor_planning`
 
@@ -495,16 +480,22 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 ### `existing_tss_pr_status`
 
 - Skill field: `existing_tss_pr`
-- Review status: `REVIEW_REQUIRED_MISSING_CANDIDATE`
-- Reason: Required profile field has no selected source candidate and no shortlist candidate.
+- Review status: `REVIEW_REQUIRED_NO_PROFILE_SELECTION`
+- Reason: Shortlist candidates exist, but the DRAFT profile has not selected a source candidate yet.
 - Selected source: `None`
+- Alternate shortlist candidates:
+  - score 100: `docata|ZDCSZ00959244 | Acceptance | Microwave | Subcon PR - TSS`
+    reason: Direct TSS PR reference/status field.
 
 ### `existing_ti_pr_status`
 
 - Skill field: `existing_ti_pr`
-- Review status: `REVIEW_REQUIRED_MISSING_CANDIDATE`
-- Reason: Required profile field has no selected source candidate and no shortlist candidate.
+- Review status: `REVIEW_REQUIRED_NO_PROFILE_SELECTION`
+- Reason: Shortlist candidates exist, but the DRAFT profile has not selected a source candidate yet.
 - Selected source: `None`
+- Alternate shortlist candidates:
+  - score 100: `docata|ZDCSZ00959243 | Acceptance | Microwave | Subcon PR - TI`
+    reason: Direct TI PR reference/status field.
 
 
 ## celcomdigi_bau_2023_pr_v1 (2023 Celcomdigi BAU)
@@ -512,8 +503,8 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 - Source file: `A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx`
 - Observed header hash: `b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454`
 - Missing required fields: None
-- Competing candidate fields: subcontractor_planning, subcontractor_ti, tx_sow_raw
-- Single-candidate but unverified fields: antenna_size_fe, antenna_size_ne, du_key, existing_ti_pr_status, existing_tss_pr_status, region, site_code, site_name
+- Competing candidate fields: subcontractor_planning, tx_sow_raw
+- Single-candidate but unverified fields: antenna_size_fe, antenna_size_ne, du_key, existing_ti_pr_status, existing_tss_pr_status, region, site_code, site_name, subcontractor_ti
 - Resolved by approved mapping (alternates rejected): None
 
 ### `site_code`
@@ -557,12 +548,9 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 ### `subcontractor_ti`
 
 - Skill field: `subcon_ti_team`
-- Review status: `REVIEW_REQUIRED_COMPETING_CANDIDATES`
-- Reason: Profile-selected source has alternate shortlist candidates that still require four-layer confirmation.
+- Review status: `REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE`
+- Reason: Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile.
 - Selected source: `docata|ZDCSZ640242 | Subcon Info | SubCon - TI | SubCon - TI`
-- Alternate shortlist candidates:
-  - score 55: `docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI`
-    reason: PR-oriented TI field; likely duplicate-prevention or downstream support.
 
 ### `subcontractor_planning`
 
@@ -610,7 +598,7 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 - Missing required fields: None
 - Competing candidate fields: subcontractor_planning
 - Single-candidate but unverified fields: antenna_size_fe, antenna_size_ne, du_key, site_name
-- Resolved by approved mapping (alternates rejected): subcontractor_ti, tx_sow_raw
+- Resolved by approved mapping (alternates rejected): tx_sow_raw
 
 ### `site_code`
 
@@ -653,12 +641,9 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 ### `subcontractor_ti`
 
 - Skill field: `subcon_ti_team`
-- Review status: `RESOLVED_BY_APPROVED_MAPPING`
-- Reason: Profile-selected source is human-approved; the remaining shortlist alternates were rejected by that recorded decision.
+- Review status: `READY_IF_APPROVAL_EVIDENCE_EXISTS`
+- Reason: Profile-selected source matches the shortlist and is already approved.
 - Selected source: `docata|ZDCSZ640242 | Installation | Wireless RAN | SubCon - TI`
-- Alternate shortlist candidates:
-  - score 55: `docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI`
-    reason: PR-oriented TI field; likely duplicate-prevention or downstream support.
 
 ### `subcontractor_planning`
 
@@ -706,7 +691,7 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 - Missing required fields: None
 - Competing candidate fields: site_name, subcontractor_planning
 - Single-candidate but unverified fields: antenna_size_fe, antenna_size_ne, du_key
-- Resolved by approved mapping (alternates rejected): site_code, subcontractor_ti, tx_sow_raw
+- Resolved by approved mapping (alternates rejected): site_code, tx_sow_raw
 
 ### `site_code`
 
@@ -759,12 +744,9 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 ### `subcontractor_ti`
 
 - Skill field: `subcon_ti_team`
-- Review status: `RESOLVED_BY_APPROVED_MAPPING`
-- Reason: Profile-selected source is human-approved; the remaining shortlist alternates were rejected by that recorded decision.
+- Review status: `READY_IF_APPROVAL_EVIDENCE_EXISTS`
+- Reason: Profile-selected source matches the shortlist and is already approved.
 - Selected source: `docata|ZDCSZ640242 | Installation | Wireless RAN | SubCon - TI`
-- Alternate shortlist candidates:
-  - score 55: `docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI`
-    reason: PR-oriented TI field; likely duplicate-prevention or downstream support.
 
 ### `subcontractor_planning`
 

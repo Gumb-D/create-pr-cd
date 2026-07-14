@@ -96,7 +96,7 @@ class TestUnresolvedSkillFieldReview(unittest.TestCase):
         self.assertEqual(review_entry["summary"]["competing_candidate_fields"], [])
         self.assertEqual(
             review_entry["summary"]["resolved_by_approval_fields"],
-            ["subcontractor_planning", "subcontractor_ti", "tx_sow_raw"],
+            ["subcontractor_planning", "tx_sow_raw"],
         )
         self.assertEqual(
             review_entry["field_reviews"]["tx_sow_raw"]["review_status"], "RESOLVED_BY_APPROVED_MAPPING"
@@ -153,9 +153,13 @@ class TestUnresolvedSkillFieldReview(unittest.TestCase):
         review_entry = build_review_entry(profile, shortlist_entry)
 
         self.assertEqual(review_entry["profile_id"], "zte_tx_mini_pr_v1")
-        self.assertEqual(review_entry["summary"]["missing_required_fields"], ["existing_ti_pr_status", "existing_tss_pr_status"])
+        self.assertEqual(review_entry["summary"]["missing_required_fields"], [])
+        self.assertEqual(
+            review_entry["summary"]["no_profile_selection_fields"],
+            ["existing_ti_pr_status", "existing_tss_pr_status"],
+        )
         self.assertIn("tx_sow_raw", review_entry["summary"]["competing_candidate_fields"])
-        self.assertIn("subcontractor_ti", review_entry["summary"]["competing_candidate_fields"])
+        self.assertNotIn("subcontractor_ti", review_entry["summary"]["competing_candidate_fields"])
 
     def test_2023_tx_rollout_entry_records_human_approved_pr_critical_sources(self):
         shortlist_registry = json.loads(
@@ -230,10 +234,11 @@ class TestUnresolvedSkillFieldReview(unittest.TestCase):
         self.assertEqual(review_entry["summary"]["missing_required_fields"], [])
         self.assertIn("subcontractor_planning", review_entry["summary"]["competing_candidate_fields"])
         self.assertIn("tx_sow_raw", review_entry["summary"]["competing_candidate_fields"])
-        self.assertIn("subcontractor_ti", review_entry["summary"]["competing_candidate_fields"])
+        self.assertNotIn("subcontractor_ti", review_entry["summary"]["competing_candidate_fields"])
         self.assertIn("site_code", review_entry["summary"]["single_candidate_unverified_fields"])
         self.assertIn("existing_tss_pr_status", review_entry["summary"]["single_candidate_unverified_fields"])
         self.assertIn("existing_ti_pr_status", review_entry["summary"]["single_candidate_unverified_fields"])
+        self.assertIn("subcontractor_ti", review_entry["summary"]["single_candidate_unverified_fields"])
         self.assertEqual(
             review_entry["field_reviews"]["existing_tss_pr_status"]["recommended_source"]["fingerprint"]["display_header"],
             "Subcon PR - TSS",

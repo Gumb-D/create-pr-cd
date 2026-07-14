@@ -30,21 +30,21 @@ Discovery-only shortlist of exact four-layer fingerprints for skill-scoped field
 - `subcon_tss_team`:
   - score 100: docata|ZDCSZ0657770 | Installation | Wireless RAN | SubCon - TSS Team
     reason: Exact TSS team field.
-  - score 55: docata|ZDCSZ641766 | Installation | Wireless RAN | Subcon PR - TSS
-    reason: PR-oriented TSS field; likely duplicate-prevention or downstream support.
 - `subcon_ti_team`:
   - score 100: docata|ZDCSZ0657771 | Installation | Wireless RAN | SubCon - TI Team
     reason: Exact TI team field.
-  - score 55: docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI
-    reason: PR-oriented TI field; likely duplicate-prevention or downstream support.
 - `subcon_planning`:
   - score 100: docata|ZDCSZ01027586 | Network Planning | Microwave | Subcon - Planning
     reason: Exact Planning subcontractor field.
   - score 55: docata|ZDCSZ01027605 | Network Planning | Microwave | Subcon PR - Planning
     reason: PR-oriented Planning field.
 - `tx_integrated_actual_end_date`: no shortlist candidate
-- `existing_tss_pr`: no shortlist candidate
-- `existing_ti_pr`: no shortlist candidate
+- `existing_tss_pr`:
+  - score 100: docata|ZDCSZ641766 | Installation | Wireless RAN | Subcon PR - TSS
+    reason: Direct TSS PR reference/status field.
+- `existing_ti_pr`:
+  - score 100: docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI
+    reason: Direct TI PR reference/status field.
 
 ## A-P202211283695_D002-MW EOS Swap-MW EOS Swap Rollout-20260703160307.xlsx
 
@@ -78,21 +78,21 @@ Discovery-only shortlist of exact four-layer fingerprints for skill-scoped field
 - `subcon_tss_team`:
   - score 85: docata|ZDCSZ00970153 | Rollout | Microwave | Subcon - TSS
     reason: Direct TSS subcontractor field.
-  - score 55: docata|ZDCSZ00959244 | Commercial | Microwave | Subcon PR - TSS
-    reason: PR-oriented TSS field; likely duplicate-prevention or downstream support.
 - `subcon_ti_team`:
   - score 85: docata|ZDCSZ00970184 | Rollout | Microwave | Subcon - TI
     reason: Direct TI subcontractor field.
-  - score 55: docata|ZDCSZ00959243 | Commercial | Microwave | Subcon PR - TI
-    reason: PR-oriented TI field; likely duplicate-prevention or downstream support.
 - `subcon_planning`:
   - score 100: docata|ZDCSZ01087327 | Network Planning | Microwave | Subcon - Planning
     reason: Exact Planning subcontractor field.
   - score 55: docata|ZDCSZ01087326 | Network Planning | Microwave | Subcon - PR Planning
     reason: PR-oriented Planning field.
 - `tx_integrated_actual_end_date`: no shortlist candidate
-- `existing_tss_pr`: no shortlist candidate
-- `existing_ti_pr`: no shortlist candidate
+- `existing_tss_pr`:
+  - score 100: docata|ZDCSZ00959244 | Commercial | Microwave | Subcon PR - TSS
+    reason: Direct TSS PR reference/status field.
+- `existing_ti_pr`:
+  - score 100: docata|ZDCSZ00959243 | Commercial | Microwave | Subcon PR - TI
+    reason: Direct TI PR reference/status field.
 
 ## A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx
 
@@ -120,13 +120,9 @@ Discovery-only shortlist of exact four-layer fingerprints for skill-scoped field
 - `subcon_tss_team`:
   - score 85: docata|ZDCSZ640307 | Subcon Info | SubCon - TSS | SubCon - TSS
     reason: Direct TSS subcontractor field.
-  - score 55: docata|ZDCSZ641766 | Installation | Wireless RAN | Subcon PR - TSS
-    reason: PR-oriented TSS field; likely duplicate-prevention or downstream support.
 - `subcon_ti_team`:
   - score 85: docata|ZDCSZ640242 | Subcon Info | SubCon - TI | SubCon - TI
     reason: Direct TI subcontractor field.
-  - score 55: docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI
-    reason: PR-oriented TI field; likely duplicate-prevention or downstream support.
 - `subcon_planning`:
   - score 100: docata|ZDCSZ01027586 | Network Planning | Microwave | Subcon - Planning
     reason: Exact Planning subcontractor field.
@@ -136,11 +132,15 @@ Discovery-only shortlist of exact four-layer fingerprints for skill-scoped field
 - `existing_tss_pr`:
   - score 100: docata|ZDCSZ00904401 | Acceptance | Microwave | PR TSS Status
     reason: Exact TSS PR status field.
+  - score 100: docata|ZDCSZ641766 | Installation | Wireless RAN | Subcon PR - TSS
+    reason: Direct TSS PR reference/status field.
   - score 65: docata|ZDCSZ00904399 | Acceptance | Microwave | PR TSS rectification status
     reason: TSS rectification status field.
 - `existing_ti_pr`:
   - score 100: docata|ZDCSZ00904402 | Acceptance | Microwave | PR TI Status
     reason: Exact TI PR status field.
+  - score 100: docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI
+    reason: Direct TI PR reference/status field.
   - score 65: docata|ZDCSZ00904400 | Acceptance | Microwave | PR TI rectification status
     reason: TI rectification status field.
 
@@ -174,21 +174,21 @@ Discovery-only shortlist of exact four-layer fingerprints for skill-scoped field
 - `subcon_tss_team`:
   - score 85: docata|ZDCSZ640307 | RPM | SubCon - TSS | SubCon - TSS
     reason: Direct TSS subcontractor field.
-  - score 55: docata|ZDCSZ641766 | PR Team | Wireless RAN | Subcon PR - TSS
-    reason: PR-oriented TSS field; likely duplicate-prevention or downstream support.
 - `subcon_ti_team`:
   - score 85: docata|ZDCSZ640242 | RPM | Wireless RAN | SubCon - TI
     reason: Direct TI subcontractor field.
-  - score 55: docata|ZDCSZ641765 | PR team | Wireless RAN | Subcon PR - TI
-    reason: PR-oriented TI field; likely duplicate-prevention or downstream support.
 - `subcon_planning`:
   - score 85: docata|ZDCSZ01036640 | Installation | Wireless RAN | Subcon Planning
     reason: Direct Planning subcontractor variant.
   - score 55: docata|ZDCSZ01036639 | Installation | Wireless RAN | Subcon PR - Planning
     reason: PR-oriented Planning field.
 - `tx_integrated_actual_end_date`: no shortlist candidate
-- `existing_tss_pr`: no shortlist candidate
-- `existing_ti_pr`: no shortlist candidate
+- `existing_tss_pr`:
+  - score 100: docata|ZDCSZ641766 | PR Team | Wireless RAN | Subcon PR - TSS
+    reason: Direct TSS PR reference/status field.
+- `existing_ti_pr`:
+  - score 100: docata|ZDCSZ641765 | PR team | Wireless RAN | Subcon PR - TI
+    reason: Direct TI PR reference/status field.
 
 ## A-P202211283695_D002-ZTE TX MINI-ZTE TX MINI v1-20260703160312.xlsx
 
@@ -222,21 +222,21 @@ Discovery-only shortlist of exact four-layer fingerprints for skill-scoped field
 - `subcon_tss_team`:
   - score 85: docata|ZDCSZ00970153 | Network Planning | Microwave | Subcon - TSS
     reason: Direct TSS subcontractor field.
-  - score 55: docata|ZDCSZ00959244 | Acceptance | Microwave | Subcon PR - TSS
-    reason: PR-oriented TSS field; likely duplicate-prevention or downstream support.
 - `subcon_ti_team`:
   - score 85: docata|ZDCSZ00970184 | Network Planning | Microwave | Subcon - TI
     reason: Direct TI subcontractor field.
-  - score 55: docata|ZDCSZ00959243 | Acceptance | Microwave | Subcon PR - TI
-    reason: PR-oriented TI field; likely duplicate-prevention or downstream support.
 - `subcon_planning`:
   - score 100: docata|ZDCSZ01087327 | Network Planning | Microwave | Subcon - Planning
     reason: Exact Planning subcontractor field.
   - score 55: docata|ZDCSZ01087326 | Network Planning | Microwave | Subcon - PR Planning
     reason: PR-oriented Planning field.
 - `tx_integrated_actual_end_date`: no shortlist candidate
-- `existing_tss_pr`: no shortlist candidate
-- `existing_ti_pr`: no shortlist candidate
+- `existing_tss_pr`:
+  - score 100: docata|ZDCSZ00959244 | Acceptance | Microwave | Subcon PR - TSS
+    reason: Direct TSS PR reference/status field.
+- `existing_ti_pr`:
+  - score 100: docata|ZDCSZ00959243 | Acceptance | Microwave | Subcon PR - TI
+    reason: Direct TI PR reference/status field.
 
 ## A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx
 
@@ -266,21 +266,21 @@ Discovery-only shortlist of exact four-layer fingerprints for skill-scoped field
 - `subcon_tss_team`:
   - score 85: docata|ZDCSZ640307 | Subcon Info | SubCon - TSS | SubCon - TSS
     reason: Direct TSS subcontractor field.
-  - score 55: docata|ZDCSZ641766 | Installation | Wireless RAN | Subcon PR - TSS
-    reason: PR-oriented TSS field; likely duplicate-prevention or downstream support.
 - `subcon_ti_team`:
   - score 85: docata|ZDCSZ640242 | Subcon Info | SubCon - TI | SubCon - TI
     reason: Direct TI subcontractor field.
-  - score 55: docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI
-    reason: PR-oriented TI field; likely duplicate-prevention or downstream support.
 - `subcon_planning`:
   - score 85: docata|ZDCSZ01036640 | Installation | Wireless RAN | Subcon Planning
     reason: Direct Planning subcontractor variant.
   - score 55: docata|ZDCSZ01036639 | Installation | Wireless RAN | Subcon PR - Planning
     reason: PR-oriented Planning field.
 - `tx_integrated_actual_end_date`: no shortlist candidate
-- `existing_tss_pr`: no shortlist candidate
-- `existing_ti_pr`: no shortlist candidate
+- `existing_tss_pr`:
+  - score 100: docata|ZDCSZ641766 | Installation | Wireless RAN | Subcon PR - TSS
+    reason: Direct TSS PR reference/status field.
+- `existing_ti_pr`:
+  - score 100: docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI
+    reason: Direct TI PR reference/status field.
 
 ## A-P202202168750_D002-2024 Celcomdigi BAU-2024 BAU Rollout (TX)-20260703160253.xlsx
 
@@ -310,21 +310,21 @@ Discovery-only shortlist of exact four-layer fingerprints for skill-scoped field
 - `subcon_tss_team`:
   - score 85: docata|ZDCSZ640307 | Installation | Wireless RAN | SubCon - TSS
     reason: Direct TSS subcontractor field.
-  - score 55: docata|ZDCSZ641766 | Installation | Wireless RAN | Subcon PR - TSS
-    reason: PR-oriented TSS field; likely duplicate-prevention or downstream support.
 - `subcon_ti_team`:
   - score 85: docata|ZDCSZ640242 | Installation | Wireless RAN | SubCon - TI
     reason: Direct TI subcontractor field.
-  - score 55: docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI
-    reason: PR-oriented TI field; likely duplicate-prevention or downstream support.
 - `subcon_planning`:
   - score 85: docata|ZDCSZ01036640 | Installation | Wireless RAN | Subcon Planning
     reason: Direct Planning subcontractor variant.
   - score 55: docata|ZDCSZ01036639 | Installation | Wireless RAN | Subcon PR - Planning
     reason: PR-oriented Planning field.
 - `tx_integrated_actual_end_date`: no shortlist candidate
-- `existing_tss_pr`: no shortlist candidate
-- `existing_ti_pr`: no shortlist candidate
+- `existing_tss_pr`:
+  - score 100: docata|ZDCSZ641766 | Installation | Wireless RAN | Subcon PR - TSS
+    reason: Direct TSS PR reference/status field.
+- `existing_ti_pr`:
+  - score 100: docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI
+    reason: Direct TI PR reference/status field.
 
 ## A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx
 
@@ -362,21 +362,21 @@ Discovery-only shortlist of exact four-layer fingerprints for skill-scoped field
 - `subcon_tss_team`:
   - score 85: docata|ZDCSZ640307 | Installation | Wireless RAN | SubCon - TSS
     reason: Direct TSS subcontractor field.
-  - score 55: docata|ZDCSZ641766 | Installation | Wireless RAN | Subcon PR - TSS
-    reason: PR-oriented TSS field; likely duplicate-prevention or downstream support.
 - `subcon_ti_team`:
   - score 85: docata|ZDCSZ640242 | Installation | Wireless RAN | SubCon - TI
     reason: Direct TI subcontractor field.
-  - score 55: docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI
-    reason: PR-oriented TI field; likely duplicate-prevention or downstream support.
 - `subcon_planning`:
   - score 85: docata|ZDCSZ01036640 | Installation | Wireless RAN | Subcon Planning
     reason: Direct Planning subcontractor variant.
   - score 55: docata|ZDCSZ01036639 | Installation | Wireless RAN | Subcon PR - Planning
     reason: PR-oriented Planning field.
 - `tx_integrated_actual_end_date`: no shortlist candidate
-- `existing_tss_pr`: no shortlist candidate
-- `existing_ti_pr`: no shortlist candidate
+- `existing_tss_pr`:
+  - score 100: docata|ZDCSZ641766 | Installation | Wireless RAN | Subcon PR - TSS
+    reason: Direct TSS PR reference/status field.
+- `existing_ti_pr`:
+  - score 100: docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI
+    reason: Direct TI PR reference/status field.
 
 ## A-P202202168750_D002-CD consolidation 2023-CD 2023 Decom Site-20260703160415.xlsx
 

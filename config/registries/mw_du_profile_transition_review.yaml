@@ -158,7 +158,7 @@
           "target_status": "PROFILED",
           "eligible": false,
           "denied_reasons": [
-            "MISSING_REQUIRED_FIELDS"
+            "NO_PROFILE_SELECTION_FIELDS"
           ]
         },
         {
@@ -166,9 +166,9 @@
           "eligible": false,
           "denied_reasons": [
             "NO_APPROVED_HEADER_HASH",
-            "MISSING_REQUIRED_FIELDS",
             "REQUIRED_FIELDS_NOT_APPROVED",
-            "COMPETING_SHORTLIST_CANDIDATES"
+            "COMPETING_SHORTLIST_CANDIDATES",
+            "NO_PROFILE_SELECTION_FIELDS"
           ]
         },
         {
@@ -176,11 +176,10 @@
           "eligible": false,
           "denied_reasons": [
             "NO_APPROVED_HEADER_HASH",
-            "MISSING_REQUIRED_FIELDS",
             "REQUIRED_FIELDS_NOT_APPROVED",
             "COMPETING_SHORTLIST_CANDIDATES",
             "UNVERIFIED_SINGLE_CANDIDATE_FIELDS",
-            "CROSS_MODEL_BRIDGE_ONLY_FIELDS"
+            "NO_PROFILE_SELECTION_FIELDS"
           ]
         },
         {
@@ -189,11 +188,10 @@
           "denied_reasons": [
             "PROFILE_NOT_PRODUCTION",
             "NO_APPROVED_HEADER_HASH",
-            "MISSING_REQUIRED_FIELDS",
             "REQUIRED_FIELDS_NOT_APPROVED",
             "COMPETING_SHORTLIST_CANDIDATES",
             "UNVERIFIED_SINGLE_CANDIDATE_FIELDS",
-            "CROSS_MODEL_BRIDGE_ONLY_FIELDS"
+            "NO_PROFILE_SELECTION_FIELDS"
           ]
         }
       ],

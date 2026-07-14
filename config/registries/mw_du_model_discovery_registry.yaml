@@ -29,13 +29,13 @@
         "du_code": true,
         "region": true,
         "tx_sow": true,
-        "antenna_size_ne": true,
-        "antenna_size_fe": true,
+        "antenna_size_ne": false,
+        "antenna_size_fe": false,
         "subcon_tss_team": true,
         "subcon_ti_team": true,
         "subcon_planning": true,
-        "existing_tss_pr": false,
-        "existing_ti_pr": false
+        "existing_tss_pr": true,
+        "existing_ti_pr": true
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
@@ -67,7 +67,7 @@
         "site_name": true,
         "du_code": true,
         "region": true,
-        "tx_sow": true,
+        "tx_sow": false,
         "antenna_size_ne": false,
         "antenna_size_fe": false,
         "subcon_tss_team": true,
@@ -107,13 +107,13 @@
         "du_code": true,
         "region": true,
         "tx_sow": true,
-        "antenna_size_ne": true,
-        "antenna_size_fe": true,
+        "antenna_size_ne": false,
+        "antenna_size_fe": false,
         "subcon_tss_team": true,
         "subcon_ti_team": true,
         "subcon_planning": true,
-        "existing_tss_pr": false,
-        "existing_ti_pr": false
+        "existing_tss_pr": true,
+        "existing_ti_pr": true
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
@@ -229,8 +229,8 @@
         "subcon_tss_team": true,
         "subcon_ti_team": true,
         "subcon_planning": true,
-        "existing_tss_pr": false,
-        "existing_ti_pr": false
+        "existing_tss_pr": true,
+        "existing_ti_pr": true
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
@@ -268,8 +268,8 @@
         "subcon_tss_team": true,
         "subcon_ti_team": true,
         "subcon_planning": true,
-        "existing_tss_pr": false,
-        "existing_ti_pr": false
+        "existing_tss_pr": true,
+        "existing_ti_pr": true
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
@@ -302,13 +302,13 @@
         "du_code": true,
         "region": true,
         "tx_sow": true,
-        "antenna_size_ne": true,
-        "antenna_size_fe": true,
-        "subcon_tss_team": true,
-        "subcon_ti_team": true,
+        "antenna_size_ne": false,
+        "antenna_size_fe": false,
+        "subcon_tss_team": false,
+        "subcon_ti_team": false,
         "subcon_planning": true,
-        "existing_tss_pr": false,
-        "existing_ti_pr": false
+        "existing_tss_pr": true,
+        "existing_ti_pr": true
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
@@ -340,14 +340,14 @@
         "site_name": true,
         "du_code": true,
         "region": true,
-        "tx_sow": true,
-        "antenna_size_ne": true,
-        "antenna_size_fe": true,
+        "tx_sow": false,
+        "antenna_size_ne": false,
+        "antenna_size_fe": false,
         "subcon_tss_team": true,
         "subcon_ti_team": true,
         "subcon_planning": true,
-        "existing_tss_pr": false,
-        "existing_ti_pr": false
+        "existing_tss_pr": true,
+        "existing_ti_pr": true
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
@@ -379,14 +379,14 @@
         "site_name": true,
         "du_code": true,
         "region": true,
-        "tx_sow": true,
-        "antenna_size_ne": true,
-        "antenna_size_fe": true,
+        "tx_sow": false,
+        "antenna_size_ne": false,
+        "antenna_size_fe": false,
         "subcon_tss_team": true,
         "subcon_ti_team": true,
         "subcon_planning": true,
-        "existing_tss_pr": false,
-        "existing_ti_pr": false
+        "existing_tss_pr": true,
+        "existing_ti_pr": true
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",

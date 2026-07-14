@@ -146,20 +146,6 @@
               "excel_column": "AC",
               "one_based_index": 29
             }
-          },
-          {
-            "score": 55,
-            "reason": "PR-oriented TSS field; likely duplicate-prevention or downstream support.",
-            "fingerprint": {
-              "field_code": "docata|ZDCSZ641766",
-              "wbs_stage": "Installation",
-              "task_name": "Wireless RAN",
-              "display_header": "Subcon PR - TSS"
-            },
-            "source_position": {
-              "excel_column": "AD",
-              "one_based_index": 30
-            }
           }
         ],
         "subcon_ti_team": [
@@ -175,20 +161,6 @@
             "source_position": {
               "excel_column": "AE",
               "one_based_index": 31
-            }
-          },
-          {
-            "score": 55,
-            "reason": "PR-oriented TI field; likely duplicate-prevention or downstream support.",
-            "fingerprint": {
-              "field_code": "docata|ZDCSZ641765",
-              "wbs_stage": "Installation",
-              "task_name": "Wireless RAN",
-              "display_header": "Subcon PR - TI"
-            },
-            "source_position": {
-              "excel_column": "AF",
-              "one_based_index": 32
             }
           }
         ],
@@ -223,8 +195,38 @@
           }
         ],
         "tx_integrated_actual_end_date": [],
-        "existing_tss_pr": [],
-        "existing_ti_pr": []
+        "existing_tss_pr": [
+          {
+            "score": 100,
+            "reason": "Direct TSS PR reference/status field.",
+            "fingerprint": {
+              "field_code": "docata|ZDCSZ641766",
+              "wbs_stage": "Installation",
+              "task_name": "Wireless RAN",
+              "display_header": "Subcon PR - TSS"
+            },
+            "source_position": {
+              "excel_column": "AD",
+              "one_based_index": 30
+            }
+          }
+        ],
+        "existing_ti_pr": [
+          {
+            "score": 100,
+            "reason": "Direct TI PR reference/status field.",
+            "fingerprint": {
+              "field_code": "docata|ZDCSZ641765",
+              "wbs_stage": "Installation",
+              "task_name": "Wireless RAN",
+              "display_header": "Subcon PR - TI"
+            },
+            "source_position": {
+              "excel_column": "AF",
+              "one_based_index": 32
+            }
+          }
+        ]
       }
     },
     {
@@ -399,20 +401,6 @@
               "excel_column": "CZ",
               "one_based_index": 104
             }
-          },
-          {
-            "score": 55,
-            "reason": "PR-oriented TSS field; likely duplicate-prevention or downstream support.",
-            "fingerprint": {
-              "field_code": "docata|ZDCSZ00959244",
-              "wbs_stage": "Commercial",
-              "task_name": "Microwave",
-              "display_header": "Subcon PR - TSS"
-            },
-            "source_position": {
-              "excel_column": "DB",
-              "one_based_index": 106
-            }
           }
         ],
         "subcon_ti_team": [
@@ -428,20 +416,6 @@
             "source_position": {
               "excel_column": "DA",
               "one_based_index": 105
-            }
-          },
-          {
-            "score": 55,
-            "reason": "PR-oriented TI field; likely duplicate-prevention or downstream support.",
-            "fingerprint": {
-              "field_code": "docata|ZDCSZ00959243",
-              "wbs_stage": "Commercial",
-              "task_name": "Microwave",
-              "display_header": "Subcon PR - TI"
-            },
-            "source_position": {
-              "excel_column": "DC",
-              "one_based_index": 107
             }
           }
         ],
@@ -476,8 +450,38 @@
           }
         ],
         "tx_integrated_actual_end_date": [],
-        "existing_tss_pr": [],
-        "existing_ti_pr": []
+        "existing_tss_pr": [
+          {
+            "score": 100,
+            "reason": "Direct TSS PR reference/status field.",
+            "fingerprint": {
+              "field_code": "docata|ZDCSZ00959244",
+              "wbs_stage": "Commercial",
+              "task_name": "Microwave",
+              "display_header": "Subcon PR - TSS"
+            },
+            "source_position": {
+              "excel_column": "DB",
+              "one_based_index": 106
+            }
+          }
+        ],
+        "existing_ti_pr": [
+          {
+            "score": 100,
+            "reason": "Direct TI PR reference/status field.",
+            "fingerprint": {
+              "field_code": "docata|ZDCSZ00959243",
+              "wbs_stage": "Commercial",
+              "task_name": "Microwave",
+              "display_header": "Subcon PR - TI"
+            },
+            "source_position": {
+              "excel_column": "DC",
+              "one_based_index": 107
+            }
+          }
+        ]
       }
     },
     {
@@ -608,20 +612,6 @@
               "excel_column": "X",
               "one_based_index": 24
             }
-          },
-          {
-            "score": 55,
-            "reason": "PR-oriented TSS field; likely duplicate-prevention or downstream support.",
-            "fingerprint": {
-              "field_code": "docata|ZDCSZ641766",
-              "wbs_stage": "Installation",
-              "task_name": "Wireless RAN",
-              "display_header": "Subcon PR - TSS"
-            },
-            "source_position": {
-              "excel_column": "Y",
-              "one_based_index": 25
-            }
           }
         ],
         "subcon_ti_team": [
@@ -637,20 +627,6 @@
             "source_position": {
               "excel_column": "AB",
               "one_based_index": 28
-            }
-          },
-          {
-            "score": 55,
-            "reason": "PR-oriented TI field; likely duplicate-prevention or downstream support.",
-            "fingerprint": {
-              "field_code": "docata|ZDCSZ641765",
-              "wbs_stage": "Installation",
-              "task_name": "Wireless RAN",
-              "display_header": "Subcon PR - TI"
-            },
-            "source_position": {
-              "excel_column": "AD",
-              "one_based_index": 30
             }
           }
         ],
@@ -701,6 +677,20 @@
             }
           },
           {
+            "score": 100,
+            "reason": "Direct TSS PR reference/status field.",
+            "fingerprint": {
+              "field_code": "docata|ZDCSZ641766",
+              "wbs_stage": "Installation",
+              "task_name": "Wireless RAN",
+              "display_header": "Subcon PR - TSS"
+            },
+            "source_position": {
+              "excel_column": "Y",
+              "one_based_index": 25
+            }
+          },
+          {
             "score": 65,
             "reason": "TSS rectification status field.",
             "fingerprint": {
@@ -728,6 +718,20 @@
             "source_position": {
               "excel_column": "AE",
               "one_based_index": 31
+            }
+          },
+          {
+            "score": 100,
+            "reason": "Direct TI PR reference/status field.",
+            "fingerprint": {
+              "field_code": "docata|ZDCSZ641765",
+              "wbs_stage": "Installation",
+              "task_name": "Wireless RAN",
+              "display_header": "Subcon PR - TI"
+            },
+            "source_position": {
+              "excel_column": "AD",
+              "one_based_index": 30
             }
           },
           {
@@ -905,20 +909,6 @@
               "excel_column": "AL",
               "one_based_index": 38
             }
-          },
-          {
-            "score": 55,
-            "reason": "PR-oriented TSS field; likely duplicate-prevention or downstream support.",
-            "fingerprint": {
-              "field_code": "docata|ZDCSZ641766",
-              "wbs_stage": "PR Team",
-              "task_name": "Wireless RAN",
-              "display_header": "Subcon PR - TSS"
-            },
-            "source_position": {
-              "excel_column": "AM",
-              "one_based_index": 39
-            }
           }
         ],
         "subcon_ti_team": [
@@ -934,20 +924,6 @@
             "source_position": {
               "excel_column": "AN",
               "one_based_index": 40
-            }
-          },
-          {
-            "score": 55,
-            "reason": "PR-oriented TI field; likely duplicate-prevention or downstream support.",
-            "fingerprint": {
-              "field_code": "docata|ZDCSZ641765",
-              "wbs_stage": "PR team",
-              "task_name": "Wireless RAN",
-              "display_header": "Subcon PR - TI"
-            },
-            "source_position": {
-              "excel_column": "AO",
-              "one_based_index": 41
             }
           }
         ],
@@ -982,8 +958,38 @@
           }
         ],
         "tx_integrated_actual_end_date": [],
-        "existing_tss_pr": [],
-        "existing_ti_pr": []
+        "existing_tss_pr": [
+          {
+            "score": 100,
+            "reason": "Direct TSS PR reference/status field.",
+            "fingerprint": {
+              "field_code": "docata|ZDCSZ641766",
+              "wbs_stage": "PR Team",
+              "task_name": "Wireless RAN",
+              "display_header": "Subcon PR - TSS"
+            },
+            "source_position": {
+              "excel_column": "AM",
+              "one_based_index": 39
+            }
+          }
+        ],
+        "existing_ti_pr": [
+          {
+            "score": 100,
+            "reason": "Direct TI PR reference/status field.",
+            "fingerprint": {
+              "field_code": "docata|ZDCSZ641765",
+              "wbs_stage": "PR team",
+              "task_name": "Wireless RAN",
+              "display_header": "Subcon PR - TI"
+            },
+            "source_position": {
+              "excel_column": "AO",
+              "one_based_index": 41
+            }
+          }
+        ]
       }
     },
     {
@@ -1158,20 +1164,6 @@
               "excel_column": "CY",
               "one_based_index": 103
             }
-          },
-          {
-            "score": 55,
-            "reason": "PR-oriented TSS field; likely duplicate-prevention or downstream support.",
-            "fingerprint": {
-              "field_code": "docata|ZDCSZ00959244",
-              "wbs_stage": "Acceptance",
-              "task_name": "Microwave",
-              "display_header": "Subcon PR - TSS"
-            },
-            "source_position": {
-              "excel_column": "DA",
-              "one_based_index": 105
-            }
           }
         ],
         "subcon_ti_team": [
@@ -1187,20 +1179,6 @@
             "source_position": {
               "excel_column": "CZ",
               "one_based_index": 104
-            }
-          },
-          {
-            "score": 55,
-            "reason": "PR-oriented TI field; likely duplicate-prevention or downstream support.",
-            "fingerprint": {
-              "field_code": "docata|ZDCSZ00959243",
-              "wbs_stage": "Acceptance",
-              "task_name": "Microwave",
-              "display_header": "Subcon PR - TI"
-            },
-            "source_position": {
-              "excel_column": "DB",
-              "one_based_index": 106
             }
           }
         ],
@@ -1235,8 +1213,38 @@
           }
         ],
         "tx_integrated_actual_end_date": [],
-        "existing_tss_pr": [],
-        "existing_ti_pr": []
+        "existing_tss_pr": [
+          {
+            "score": 100,
+            "reason": "Direct TSS PR reference/status field.",
+            "fingerprint": {
+              "field_code": "docata|ZDCSZ00959244",
+              "wbs_stage": "Acceptance",
+              "task_name": "Microwave",
+              "display_header": "Subcon PR - TSS"
+            },
+            "source_position": {
+              "excel_column": "DA",
+              "one_based_index": 105
+            }
+          }
+        ],
+        "existing_ti_pr": [
+          {
+            "score": 100,
+            "reason": "Direct TI PR reference/status field.",
+            "fingerprint": {
+              "field_code": "docata|ZDCSZ00959243",
+              "wbs_stage": "Acceptance",
+              "task_name": "Microwave",
+              "display_header": "Subcon PR - TI"
+            },
+            "source_position": {
+              "excel_column": "DB",
+              "one_based_index": 106
+            }
+          }
+        ]
       }
     },
     {
@@ -1383,20 +1391,6 @@
               "excel_column": "AK",
               "one_based_index": 37
             }
-          },
-          {
-            "score": 55,
-            "reason": "PR-oriented TSS field; likely duplicate-prevention or downstream support.",
-            "fingerprint": {
-              "field_code": "docata|ZDCSZ641766",
-              "wbs_stage": "Installation",
-              "task_name": "Wireless RAN",
-              "display_header": "Subcon PR - TSS"
-            },
-            "source_position": {
-              "excel_column": "FX",
-              "one_based_index": 180
-            }
           }
         ],
         "subcon_ti_team": [
@@ -1412,20 +1406,6 @@
             "source_position": {
               "excel_column": "AL",
               "one_based_index": 38
-            }
-          },
-          {
-            "score": 55,
-            "reason": "PR-oriented TI field; likely duplicate-prevention or downstream support.",
-            "fingerprint": {
-              "field_code": "docata|ZDCSZ641765",
-              "wbs_stage": "Installation",
-              "task_name": "Wireless RAN",
-              "display_header": "Subcon PR - TI"
-            },
-            "source_position": {
-              "excel_column": "FY",
-              "one_based_index": 181
             }
           }
         ],
@@ -1460,8 +1440,38 @@
           }
         ],
         "tx_integrated_actual_end_date": [],
-        "existing_tss_pr": [],
-        "existing_ti_pr": []
+        "existing_tss_pr": [
+          {
+            "score": 100,
+            "reason": "Direct TSS PR reference/status field.",
+            "fingerprint": {
+              "field_code": "docata|ZDCSZ641766",
+              "wbs_stage": "Installation",
+              "task_name": "Wireless RAN",
+              "display_header": "Subcon PR - TSS"
+            },
+            "source_position": {
+              "excel_column": "FX",
+              "one_based_index": 180
+            }
+          }
+        ],
+        "existing_ti_pr": [
+          {
+            "score": 100,
+            "reason": "Direct TI PR reference/status field.",
+            "fingerprint": {
+              "field_code": "docata|ZDCSZ641765",
+              "wbs_stage": "Installation",
+              "task_name": "Wireless RAN",
+              "display_header": "Subcon PR - TI"
+            },
+            "source_position": {
+              "excel_column": "FY",
+              "one_based_index": 181
+            }
+          }
+        ]
       }
     },
     {
@@ -1608,20 +1618,6 @@
               "excel_column": "AK",
               "one_based_index": 37
             }
-          },
-          {
-            "score": 55,
-            "reason": "PR-oriented TSS field; likely duplicate-prevention or downstream support.",
-            "fingerprint": {
-              "field_code": "docata|ZDCSZ641766",
-              "wbs_stage": "Installation",
-              "task_name": "Wireless RAN",
-              "display_header": "Subcon PR - TSS"
-            },
-            "source_position": {
-              "excel_column": "AL",
-              "one_based_index": 38
-            }
           }
         ],
         "subcon_ti_team": [
@@ -1637,20 +1633,6 @@
             "source_position": {
               "excel_column": "AM",
               "one_based_index": 39
-            }
-          },
-          {
-            "score": 55,
-            "reason": "PR-oriented TI field; likely duplicate-prevention or downstream support.",
-            "fingerprint": {
-              "field_code": "docata|ZDCSZ641765",
-              "wbs_stage": "Installation",
-              "task_name": "Wireless RAN",
-              "display_header": "Subcon PR - TI"
-            },
-            "source_position": {
-              "excel_column": "AN",
-              "one_based_index": 40
             }
           }
         ],
@@ -1685,8 +1667,38 @@
           }
         ],
         "tx_integrated_actual_end_date": [],
-        "existing_tss_pr": [],
-        "existing_ti_pr": []
+        "existing_tss_pr": [
+          {
+            "score": 100,
+            "reason": "Direct TSS PR reference/status field.",
+            "fingerprint": {
+              "field_code": "docata|ZDCSZ641766",
+              "wbs_stage": "Installation",
+              "task_name": "Wireless RAN",
+              "display_header": "Subcon PR - TSS"
+            },
+            "source_position": {
+              "excel_column": "AL",
+              "one_based_index": 38
+            }
+          }
+        ],
+        "existing_ti_pr": [
+          {
+            "score": 100,
+            "reason": "Direct TI PR reference/status field.",
+            "fingerprint": {
+              "field_code": "docata|ZDCSZ641765",
+              "wbs_stage": "Installation",
+              "task_name": "Wireless RAN",
+              "display_header": "Subcon PR - TI"
+            },
+            "source_position": {
+              "excel_column": "AN",
+              "one_based_index": 40
+            }
+          }
+        ]
       }
     },
     {
@@ -1889,20 +1901,6 @@
               "excel_column": "AL",
               "one_based_index": 38
             }
-          },
-          {
-            "score": 55,
-            "reason": "PR-oriented TSS field; likely duplicate-prevention or downstream support.",
-            "fingerprint": {
-              "field_code": "docata|ZDCSZ641766",
-              "wbs_stage": "Installation",
-              "task_name": "Wireless RAN",
-              "display_header": "Subcon PR - TSS"
-            },
-            "source_position": {
-              "excel_column": "AN",
-              "one_based_index": 40
-            }
           }
         ],
         "subcon_ti_team": [
@@ -1918,20 +1916,6 @@
             "source_position": {
               "excel_column": "AK",
               "one_based_index": 37
-            }
-          },
-          {
-            "score": 55,
-            "reason": "PR-oriented TI field; likely duplicate-prevention or downstream support.",
-            "fingerprint": {
-              "field_code": "docata|ZDCSZ641765",
-              "wbs_stage": "Installation",
-              "task_name": "Wireless RAN",
-              "display_header": "Subcon PR - TI"
-            },
-            "source_position": {
-              "excel_column": "AM",
-              "one_based_index": 39
             }
           }
         ],
@@ -1966,8 +1950,38 @@
           }
         ],
         "tx_integrated_actual_end_date": [],
-        "existing_tss_pr": [],
-        "existing_ti_pr": []
+        "existing_tss_pr": [
+          {
+            "score": 100,
+            "reason": "Direct TSS PR reference/status field.",
+            "fingerprint": {
+              "field_code": "docata|ZDCSZ641766",
+              "wbs_stage": "Installation",
+              "task_name": "Wireless RAN",
+              "display_header": "Subcon PR - TSS"
+            },
+            "source_position": {
+              "excel_column": "AN",
+              "one_based_index": 40
+            }
+          }
+        ],
+        "existing_ti_pr": [
+          {
+            "score": 100,
+            "reason": "Direct TI PR reference/status field.",
+            "fingerprint": {
+              "field_code": "docata|ZDCSZ641765",
+              "wbs_stage": "Installation",
+              "task_name": "Wireless RAN",
+              "display_header": "Subcon PR - TI"
+            },
+            "source_position": {
+              "excel_column": "AM",
+              "one_based_index": 39
+            }
+          }
+        ]
       }
     },
     {

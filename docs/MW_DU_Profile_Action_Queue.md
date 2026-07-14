@@ -75,31 +75,27 @@ Discovery-only prioritized manual action queue for the current DRAFT profiles.
 - Mapping version: `discovery-2026-07-06-zte-tx-mini-v1`
 - Observed header hash: `a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810`
 - Action queue:
-  - `zte_tx_mini_pr_v1:01` `RESOLVE_MISSING_REQUIRED_FIELD` `existing_ti_pr_status`: Resolve required field `existing_ti_pr_status` before any lifecycle promotion.
-    hint: Review donor export 2023 TX Rollout with similarity 0.088 before deciding derived, manual, or blocking treatment.
-  - `zte_tx_mini_pr_v1:02` `RESOLVE_MISSING_REQUIRED_FIELD` `existing_tss_pr_status`: Resolve required field `existing_tss_pr_status` before any lifecycle promotion.
-    hint: Review donor export 2023 TX Rollout with similarity 0.088 before deciding derived, manual, or blocking treatment.
-  - `zte_tx_mini_pr_v1:03` `CONFIRM_COMPETING_CANDIDATE` `site_code`: Choose one exact four-layer source for `site_code` from the competing shortlist candidates.
+  - `zte_tx_mini_pr_v1:01` `CONFIRM_COMPETING_CANDIDATE` `site_code`: Choose one exact four-layer source for `site_code` from the competing shortlist candidates.
     hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `zte_tx_mini_pr_v1:04` `CONFIRM_COMPETING_CANDIDATE` `site_name`: Choose one exact four-layer source for `site_name` from the competing shortlist candidates.
+  - `zte_tx_mini_pr_v1:02` `CONFIRM_COMPETING_CANDIDATE` `site_name`: Choose one exact four-layer source for `site_name` from the competing shortlist candidates.
     hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `zte_tx_mini_pr_v1:05` `CONFIRM_COMPETING_CANDIDATE` `subcontractor_planning`: Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.
+  - `zte_tx_mini_pr_v1:03` `CONFIRM_COMPETING_CANDIDATE` `subcontractor_planning`: Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.
     hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `zte_tx_mini_pr_v1:06` `CONFIRM_COMPETING_CANDIDATE` `subcontractor_ti`: Choose one exact four-layer source for `subcontractor_ti` from the competing shortlist candidates.
+  - `zte_tx_mini_pr_v1:04` `CONFIRM_COMPETING_CANDIDATE` `tx_sow_raw`: Choose one exact four-layer source for `tx_sow_raw` from the competing shortlist candidates.
     hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `zte_tx_mini_pr_v1:07` `CONFIRM_COMPETING_CANDIDATE` `tx_sow_raw`: Choose one exact four-layer source for `tx_sow_raw` from the competing shortlist candidates.
-    hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `zte_tx_mini_pr_v1:08` `VERIFY_SINGLE_CANDIDATE` `antenna_size_fe`: Verify the current single shortlist-aligned source for `antenna_size_fe`.
+  - `zte_tx_mini_pr_v1:05` `VERIFY_SINGLE_CANDIDATE` `antenna_size_fe`: Verify the current single shortlist-aligned source for `antenna_size_fe`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `zte_tx_mini_pr_v1:09` `VERIFY_SINGLE_CANDIDATE` `antenna_size_ne`: Verify the current single shortlist-aligned source for `antenna_size_ne`.
+  - `zte_tx_mini_pr_v1:06` `VERIFY_SINGLE_CANDIDATE` `antenna_size_ne`: Verify the current single shortlist-aligned source for `antenna_size_ne`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `zte_tx_mini_pr_v1:10` `VERIFY_SINGLE_CANDIDATE` `du_key`: Verify the current single shortlist-aligned source for `du_key`.
+  - `zte_tx_mini_pr_v1:07` `VERIFY_SINGLE_CANDIDATE` `du_key`: Verify the current single shortlist-aligned source for `du_key`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `zte_tx_mini_pr_v1:11` `VERIFY_SINGLE_CANDIDATE` `region`: Verify the current single shortlist-aligned source for `region`.
+  - `zte_tx_mini_pr_v1:08` `VERIFY_SINGLE_CANDIDATE` `region`: Verify the current single shortlist-aligned source for `region`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `zte_tx_mini_pr_v1:12` `APPROVE_HEADER_HASH`: Approve at least one header hash for this profile version after the field review is complete.
+  - `zte_tx_mini_pr_v1:09` `VERIFY_SINGLE_CANDIDATE` `subcontractor_ti`: Verify the current single shortlist-aligned source for `subcontractor_ti`.
+    hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
+  - `zte_tx_mini_pr_v1:10` `APPROVE_HEADER_HASH`: Approve at least one header hash for this profile version after the field review is complete.
     hint: Current observed header hash: a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810
-  - `zte_tx_mini_pr_v1:13` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
+  - `zte_tx_mini_pr_v1:11` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
     hint: Use the transition review as the final stop/go check before any status change.
 
 ## celcomdigi_bau_2023_pr_v1 (2023 Celcomdigi BAU)
@@ -111,25 +107,25 @@ Discovery-only prioritized manual action queue for the current DRAFT profiles.
 - Action queue:
   - `celcomdigi_bau_2023_pr_v1:01` `CONFIRM_COMPETING_CANDIDATE` `subcontractor_planning`: Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.
     hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `celcomdigi_bau_2023_pr_v1:02` `CONFIRM_COMPETING_CANDIDATE` `subcontractor_ti`: Choose one exact four-layer source for `subcontractor_ti` from the competing shortlist candidates.
+  - `celcomdigi_bau_2023_pr_v1:02` `CONFIRM_COMPETING_CANDIDATE` `tx_sow_raw`: Choose one exact four-layer source for `tx_sow_raw` from the competing shortlist candidates.
     hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `celcomdigi_bau_2023_pr_v1:03` `CONFIRM_COMPETING_CANDIDATE` `tx_sow_raw`: Choose one exact four-layer source for `tx_sow_raw` from the competing shortlist candidates.
-    hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `celcomdigi_bau_2023_pr_v1:04` `VERIFY_SINGLE_CANDIDATE` `antenna_size_fe`: Verify the current single shortlist-aligned source for `antenna_size_fe`.
+  - `celcomdigi_bau_2023_pr_v1:03` `VERIFY_SINGLE_CANDIDATE` `antenna_size_fe`: Verify the current single shortlist-aligned source for `antenna_size_fe`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `celcomdigi_bau_2023_pr_v1:05` `VERIFY_SINGLE_CANDIDATE` `antenna_size_ne`: Verify the current single shortlist-aligned source for `antenna_size_ne`.
+  - `celcomdigi_bau_2023_pr_v1:04` `VERIFY_SINGLE_CANDIDATE` `antenna_size_ne`: Verify the current single shortlist-aligned source for `antenna_size_ne`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `celcomdigi_bau_2023_pr_v1:06` `VERIFY_SINGLE_CANDIDATE` `du_key`: Verify the current single shortlist-aligned source for `du_key`.
+  - `celcomdigi_bau_2023_pr_v1:05` `VERIFY_SINGLE_CANDIDATE` `du_key`: Verify the current single shortlist-aligned source for `du_key`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `celcomdigi_bau_2023_pr_v1:07` `VERIFY_SINGLE_CANDIDATE` `existing_ti_pr_status`: Verify the current single shortlist-aligned source for `existing_ti_pr_status`.
+  - `celcomdigi_bau_2023_pr_v1:06` `VERIFY_SINGLE_CANDIDATE` `existing_ti_pr_status`: Verify the current single shortlist-aligned source for `existing_ti_pr_status`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `celcomdigi_bau_2023_pr_v1:08` `VERIFY_SINGLE_CANDIDATE` `existing_tss_pr_status`: Verify the current single shortlist-aligned source for `existing_tss_pr_status`.
+  - `celcomdigi_bau_2023_pr_v1:07` `VERIFY_SINGLE_CANDIDATE` `existing_tss_pr_status`: Verify the current single shortlist-aligned source for `existing_tss_pr_status`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `celcomdigi_bau_2023_pr_v1:09` `VERIFY_SINGLE_CANDIDATE` `region`: Verify the current single shortlist-aligned source for `region`.
+  - `celcomdigi_bau_2023_pr_v1:08` `VERIFY_SINGLE_CANDIDATE` `region`: Verify the current single shortlist-aligned source for `region`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `celcomdigi_bau_2023_pr_v1:10` `VERIFY_SINGLE_CANDIDATE` `site_code`: Verify the current single shortlist-aligned source for `site_code`.
+  - `celcomdigi_bau_2023_pr_v1:09` `VERIFY_SINGLE_CANDIDATE` `site_code`: Verify the current single shortlist-aligned source for `site_code`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `celcomdigi_bau_2023_pr_v1:11` `VERIFY_SINGLE_CANDIDATE` `site_name`: Verify the current single shortlist-aligned source for `site_name`.
+  - `celcomdigi_bau_2023_pr_v1:10` `VERIFY_SINGLE_CANDIDATE` `site_name`: Verify the current single shortlist-aligned source for `site_name`.
+    hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
+  - `celcomdigi_bau_2023_pr_v1:11` `VERIFY_SINGLE_CANDIDATE` `subcontractor_ti`: Verify the current single shortlist-aligned source for `subcontractor_ti`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
   - `celcomdigi_bau_2023_pr_v1:12` `APPROVE_HEADER_HASH`: Approve at least one header hash for this profile version after the field review is complete.
     hint: Current observed header hash: b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454
@@ -184,9 +180,9 @@ Discovery-only prioritized manual action queue for the current DRAFT profiles.
 - Observed header hash: `b86cbc349db66154324092c843593137e83908c3b4b55c09305d6cf6046c7a16`
 - Action queue:
   - `cd_consolidation_2023_decom_pr_v1:01` `RESOLVE_MISSING_REQUIRED_FIELD` `existing_ti_pr_status`: Resolve required field `existing_ti_pr_status` before any lifecycle promotion.
-    hint: Review donor export 2023 TX Rollout with similarity 0.000 before deciding derived, manual, or blocking treatment.
+    hint: Review donor export TX Mini Project with similarity 0.850 before deciding derived, manual, or blocking treatment.
   - `cd_consolidation_2023_decom_pr_v1:02` `RESOLVE_MISSING_REQUIRED_FIELD` `existing_tss_pr_status`: Resolve required field `existing_tss_pr_status` before any lifecycle promotion.
-    hint: Review donor export 2023 TX Rollout with similarity 0.000 before deciding derived, manual, or blocking treatment.
+    hint: Review donor export TX Mini Project with similarity 0.850 before deciding derived, manual, or blocking treatment.
   - `cd_consolidation_2023_decom_pr_v1:03` `CONFIRM_COMPETING_CANDIDATE` `region`: Choose one exact four-layer source for `region` from the competing shortlist candidates.
     hint: Use the unresolved review packet to compare the currently selected source against alternates.
   - `cd_consolidation_2023_decom_pr_v1:04` `CONFIRM_COMPETING_CANDIDATE` `site_code`: Choose one exact four-layer source for `site_code` from the competing shortlist candidates.
@@ -212,9 +208,9 @@ Discovery-only prioritized manual action queue for the current DRAFT profiles.
 - Observed header hash: `d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1`
 - Action queue:
   - `cd_consolidation_2023_rollout_pr_v1:01` `RESOLVE_MISSING_REQUIRED_FIELD` `existing_ti_pr_status`: Resolve required field `existing_ti_pr_status` before any lifecycle promotion.
-    hint: Review donor export 2023 TX Rollout with similarity 0.000 before deciding derived, manual, or blocking treatment.
+    hint: Review donor export Celcomdigi USP with similarity 0.850 before deciding derived, manual, or blocking treatment.
   - `cd_consolidation_2023_rollout_pr_v1:02` `RESOLVE_MISSING_REQUIRED_FIELD` `existing_tss_pr_status`: Resolve required field `existing_tss_pr_status` before any lifecycle promotion.
-    hint: Review donor export 2023 TX Rollout with similarity 0.000 before deciding derived, manual, or blocking treatment.
+    hint: Review donor export Celcomdigi USP with similarity 0.850 before deciding derived, manual, or blocking treatment.
   - `cd_consolidation_2023_rollout_pr_v1:03` `CONFIRM_COMPETING_CANDIDATE` `region`: Choose one exact four-layer source for `region` from the competing shortlist candidates.
     hint: Use the unresolved review packet to compare the currently selected source against alternates.
   - `cd_consolidation_2023_rollout_pr_v1:04` `CONFIRM_COMPETING_CANDIDATE` `site_code`: Choose one exact four-layer source for `site_code` from the competing shortlist candidates.

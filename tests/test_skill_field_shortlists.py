@@ -130,6 +130,108 @@ class TestSkillFieldShortlists(unittest.TestCase):
         shortlists = shortlist_skill_fields(inventory)
         self.assertEqual(shortlists["existing_ti_pr"][0]["fingerprint"]["display_header"], "PR TI Status")
 
+    def test_existing_pr_shortlists_prefer_direct_subcon_pr_headers(self):
+        inventory = {
+            "sheets": [
+                {
+                    "columns": [
+                        {
+                            "fingerprint": {
+                                "field_code": "tss-rect",
+                                "wbs_stage": "Acceptance",
+                                "task_name": "Microwave",
+                                "display_header": "PR TSS rectification status",
+                            },
+                            "source_position": {"one_based_index": 3},
+                        },
+                        {
+                            "fingerprint": {
+                                "field_code": "ti-rect",
+                                "wbs_stage": "Acceptance",
+                                "task_name": "Microwave",
+                                "display_header": "PR TI rectification status",
+                            },
+                            "source_position": {"one_based_index": 4},
+                        },
+                        {
+                            "fingerprint": {
+                                "field_code": "tss-pr",
+                                "wbs_stage": "Installation",
+                                "task_name": "Wireless RAN",
+                                "display_header": "Subcon PR - TSS",
+                            },
+                            "source_position": {"one_based_index": 1},
+                        },
+                        {
+                            "fingerprint": {
+                                "field_code": "ti-pr",
+                                "wbs_stage": "Installation",
+                                "task_name": "Wireless RAN",
+                                "display_header": "Subcon PR - TI",
+                            },
+                            "source_position": {"one_based_index": 2},
+                        },
+                    ]
+                }
+            ]
+        }
+        shortlists = shortlist_skill_fields(inventory)
+        self.assertEqual(shortlists["existing_tss_pr"][0]["fingerprint"]["display_header"], "Subcon PR - TSS")
+        self.assertEqual(shortlists["existing_ti_pr"][0]["fingerprint"]["display_header"], "Subcon PR - TI")
+        self.assertLess(shortlists["existing_tss_pr"][1]["score"], shortlists["existing_tss_pr"][0]["score"])
+        self.assertLess(shortlists["existing_ti_pr"][1]["score"], shortlists["existing_ti_pr"][0]["score"])
+
+    def test_team_shortlists_exclude_pr_headers_but_keep_direct_subcon_fields(self):
+        inventory = {
+            "sheets": [
+                {
+                    "columns": [
+                        {
+                            "fingerprint": {
+                                "field_code": "tss-team",
+                                "wbs_stage": "Subcon Info",
+                                "task_name": "SubCon - TSS",
+                                "display_header": "SubCon - TSS",
+                            },
+                            "source_position": {"one_based_index": 1},
+                        },
+                        {
+                            "fingerprint": {
+                                "field_code": "ti-team",
+                                "wbs_stage": "Subcon Info",
+                                "task_name": "SubCon - TI",
+                                "display_header": "SubCon - TI",
+                            },
+                            "source_position": {"one_based_index": 2},
+                        },
+                        {
+                            "fingerprint": {
+                                "field_code": "tss-pr",
+                                "wbs_stage": "Installation",
+                                "task_name": "Wireless RAN",
+                                "display_header": "Subcon PR - TSS",
+                            },
+                            "source_position": {"one_based_index": 3},
+                        },
+                        {
+                            "fingerprint": {
+                                "field_code": "ti-pr",
+                                "wbs_stage": "Installation",
+                                "task_name": "Wireless RAN",
+                                "display_header": "Subcon PR - TI",
+                            },
+                            "source_position": {"one_based_index": 4},
+                        },
+                    ]
+                }
+            ]
+        }
+        shortlists = shortlist_skill_fields(inventory)
+        self.assertEqual(shortlists["subcon_tss_team"][0]["fingerprint"]["display_header"], "SubCon - TSS")
+        self.assertEqual(shortlists["subcon_ti_team"][0]["fingerprint"]["display_header"], "SubCon - TI")
+        self.assertNotIn("Subcon PR - TSS", [item["fingerprint"]["display_header"] for item in shortlists["subcon_tss_team"]])
+        self.assertNotIn("Subcon PR - TI", [item["fingerprint"]["display_header"] for item in shortlists["subcon_ti_team"]])
+
     def test_generated_registry_includes_zte_bau_and_usp_priority_entries(self):
         registry = json.loads(
             (ROOT / "config" / "registries" / "mw_du_priority_skill_field_shortlists.yaml").read_text(encoding="utf-8")

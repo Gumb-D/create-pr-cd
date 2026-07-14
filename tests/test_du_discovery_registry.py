@@ -6,6 +6,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from build_du_discovery_registry import (
+    _skill_field_presence,
     build_discovery_entry,
     discovery_inventory_markdown,
     extract_du_identity,
@@ -102,6 +103,74 @@ class TestDuDiscoveryRegistry(unittest.TestCase):
         self.assertEqual(entry["profile_status"], "DRAFT")
         self.assertEqual(entry["profile_version"], "0.1.1")
         self.assertEqual(entry["mapping_version"], "discovery-2026-07-14-2023-celcomdigi-bau-tx-prpo-v2")
+        self.assertTrue(entry["skill_field_presence"]["existing_tss_pr"])
+        self.assertTrue(entry["skill_field_presence"]["existing_ti_pr"])
+
+    def test_skill_field_presence_recognizes_direct_subcon_pr_headers(self):
+        inventory = {
+            "sheets": [
+                {
+                    "columns": [
+                        {
+                            "fingerprint": {
+                                "field_code": "docata|ZDCSZ641766",
+                                "wbs_stage": "Installation",
+                                "task_name": "Wireless RAN",
+                                "display_header": "Subcon PR - TSS",
+                            }
+                        },
+                        {
+                            "fingerprint": {
+                                "field_code": "docata|ZDCSZ641765",
+                                "wbs_stage": "Installation",
+                                "task_name": "Wireless RAN",
+                                "display_header": "Subcon PR - TI",
+                            }
+                        },
+                    ]
+                }
+            ]
+        }
+        presence = _skill_field_presence(inventory)
+        self.assertTrue(presence["existing_tss_pr"])
+        self.assertTrue(presence["existing_ti_pr"])
+
+    def test_skill_field_presence_does_not_broad_match_rectification_or_planning(self):
+        inventory = {
+            "sheets": [
+                {
+                    "columns": [
+                        {
+                            "fingerprint": {
+                                "field_code": "rect-tss",
+                                "wbs_stage": "Acceptance",
+                                "task_name": "Microwave",
+                                "display_header": "PR TSS rectification status",
+                            }
+                        },
+                        {
+                            "fingerprint": {
+                                "field_code": "rect-ti",
+                                "wbs_stage": "Acceptance",
+                                "task_name": "Microwave",
+                                "display_header": "PR TI rectification status",
+                            }
+                        },
+                        {
+                            "fingerprint": {
+                                "field_code": "planning",
+                                "wbs_stage": "Installation",
+                                "task_name": "Wireless RAN",
+                                "display_header": "Subcon PR - Planning",
+                            }
+                        },
+                    ]
+                }
+            ]
+        }
+        presence = _skill_field_presence(inventory)
+        self.assertFalse(presence["existing_tss_pr"])
+        self.assertFalse(presence["existing_ti_pr"])
 
     def test_build_discovery_entry_for_2024_celcomdigi_bau_uses_existing_profile_file(self):
         profile_dir = self.profiler_root / "A-P202202168750_D002-2024_Celcomdigi_BAU-2024_BAU_Rollout_TX_-20260703160253"

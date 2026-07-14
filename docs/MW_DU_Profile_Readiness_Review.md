@@ -77,10 +77,8 @@ Discovery-only summary of why the current priority DU profiles remain blocked fr
 - Mapping version: `discovery-2026-07-06-zte-tx-mini-v1`
 - Observed header hash: `a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810`
 - Approved header hashes: `0`
-- Overall blockers: `PROFILE_NOT_PRODUCTION, NO_APPROVED_HEADER_HASH, REQUIRED_FIELDS_NOT_APPROVED, MISSING_REQUIRED_FIELDS, COMPETING_SHORTLIST_CANDIDATES, UNVERIFIED_SINGLE_CANDIDATE_FIELDS, CROSS_MODEL_BRIDGE_ONLY_FIELDS`
-- Missing required fields: `existing_ti_pr_status, existing_tss_pr_status`
-- Competing candidate fields: `site_code, site_name, subcontractor_planning, subcontractor_ti, tx_sow_raw`
-- Cross-model bridge-only fields: `existing_ti_pr_status, existing_tss_pr_status`
+- Overall blockers: `PROFILE_NOT_PRODUCTION, NO_APPROVED_HEADER_HASH, REQUIRED_FIELDS_NOT_APPROVED, COMPETING_SHORTLIST_CANDIDATES, UNVERIFIED_SINGLE_CANDIDATE_FIELDS, NO_PROFILE_SELECTION_FIELDS`
+- Competing candidate fields: `site_code, site_name, subcontractor_planning, tx_sow_raw`
 - Release prerequisites:
   - Approve the DU model identity and four-layer source mappings.
   - Approve at least one header hash for the profile version.
@@ -97,7 +95,7 @@ Discovery-only summary of why the current priority DU profiles remain blocked fr
 - Observed header hash: `b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454`
 - Approved header hashes: `0`
 - Overall blockers: `PROFILE_NOT_PRODUCTION, NO_APPROVED_HEADER_HASH, REQUIRED_FIELDS_NOT_APPROVED, COMPETING_SHORTLIST_CANDIDATES, UNVERIFIED_SINGLE_CANDIDATE_FIELDS`
-- Competing candidate fields: `subcontractor_planning, subcontractor_ti, tx_sow_raw`
+- Competing candidate fields: `subcontractor_planning, tx_sow_raw`
 - Release prerequisites:
   - Approve the DU model identity and four-layer source mappings.
   - Approve at least one header hash for the profile version.
