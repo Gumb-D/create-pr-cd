@@ -1,8 +1,8 @@
 {
   "profile_id": "zte_tx_mini_pr_v1",
-  "profile_version": "0.1.0",
-  "mapping_version": "discovery-2026-07-06-zte-tx-mini-v1",
-  "status": "DRAFT",
+  "profile_version": "0.2.0",
+  "mapping_version": "approved-2026-07-15-zte-tx-mini-v1",
+  "status": "PR_INPUT_READY",
   "identity": {
     "project_key": "CelcomDigi_MW",
     "accepted_du_models": ["ZTE TX MINI"],
@@ -14,20 +14,23 @@
     "header_rows": [0, 1, 2, 3],
     "header_hash_policy": "strict",
     "observed_header_hash": "a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810",
-    "approved_header_hashes": []
+    "approved_header_hashes": [
+      "a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810"
+    ]
   },
   "field_mapping": {
-    "site_code": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|fix00012|8638668101234290847|2279585426760368522", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "customer site code"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim", "uppercase"]},
+    "site_code": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|fix00012|8638668101234290847|2279585426760368522", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "customer site code"}, "mapping_status": "APPROVED"}], "transforms": ["trim", "uppercase"]},
     "site_name": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00015", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "customer site name"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
     "du_key": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "du|du_code", "wbs_stage": "Du", "task_name": "Du", "display_header": "du code"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
-    "tx_sow_raw": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01079155", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "Microwave Tx SOW"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "tx_sow_raw": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01079155", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "Microwave Tx SOW"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "tx_upgrade_scope_raw": {"required": false, "source_candidates": [], "transforms": ["trim"]},
-    "region": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|region_name", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "region"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "region": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|region_name", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "region"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "state": {"required": false, "source_candidates": [], "transforms": ["trim"]},
-    "subcontractor_ti": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00970184", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "Subcon - TI"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "subcontractor_tss": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00970153", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "Subcon - TSS"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
+    "subcontractor_ti": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00970184", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "Subcon - TI"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "subcontractor_planning": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01087327", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "Subcon - Planning"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
-    "existing_tss_pr_status": {"required": true, "source_candidates": [], "transforms": ["trim"]},
-    "existing_ti_pr_status": {"required": true, "source_candidates": [], "transforms": ["trim"]},
+    "existing_tss_pr_status": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00959244", "wbs_stage": "Acceptance", "task_name": "Microwave", "display_header": "Subcon PR - TSS"}, "mapping_status": "APPROVED"}], "transforms": ["normalize_pr_reference_status"]},
+    "existing_ti_pr_status": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00959243", "wbs_stage": "Acceptance", "task_name": "Microwave", "display_header": "Subcon PR - TI"}, "mapping_status": "APPROVED"}], "transforms": ["normalize_pr_reference_status"]},
     "latitude": {"required": false, "source_candidates": [], "transforms": ["parse_decimal"]},
     "longitude": {"required": false, "source_candidates": [], "transforms": ["parse_decimal"]},
     "antenna_size_ne": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01093667", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "MW Antenna Size NE"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
@@ -42,10 +45,14 @@
     "reject_ambiguous_source_mapping": true,
     "require_evidence_for_every_canonical_field": true,
     "profile_notes": [
-      "Source candidates were populated from local discovery-only profiler outputs and remain UNVERIFIED.",
-      "No approval evidence has yet established these ZTE TX MINI source fingerprints or header hash for production use.",
-      "Tx SOW normalization is a controlled derived field and is not a separate source-column mapping.",
-      "This profile is not production-ready and must never enable ECC generation."
+      "The exact ZTE TX MINI mappings and Header Hash were approved by JJ on 2026-07-15.",
+      "customer site code is the primary site_code source; FE Site ID was reviewed and rejected.",
+      "Microwave Tx SOW is the primary tx_sow_raw source; TX SOW Details remains optional evidence only.",
+      "Subcon - TSS and Subcon - TI are the approved team ownership sources for PR-input validation.",
+      "Subcon PR - TSS and Subcon PR - TI are the approved duplicate-prevention sources and both normalize via normalize_pr_reference_status.",
+      "Milestone/date fields are not approved PR-status sources.",
+      "This profile is PR_INPUT_READY for non-production validation only.",
+      "ECC and production output remain blocked."
     ]
   }
 }

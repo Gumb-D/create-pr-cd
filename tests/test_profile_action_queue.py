@@ -56,6 +56,16 @@ class TestProfileActionQueue(unittest.TestCase):
         self.assertNotIn("RESOLVE_MISSING_REQUIRED_FIELD", action_types)
         self.assertEqual(entry["action_queue"][-1]["action_type"], "HOLD_LIFECYCLE_PROMOTION")
 
+    def test_zte_queue_has_no_header_or_missing_required_actions_after_pr_input_ready_approval(self):
+        registry = json.loads(
+            (ROOT / "config" / "registries" / "mw_du_profile_action_queue.yaml").read_text(encoding="utf-8")
+        )
+        entry = next(item for item in registry["entries"] if item["profile_id"] == "zte_tx_mini_pr_v1")
+        action_types = [item["action_type"] for item in entry["action_queue"]]
+        self.assertNotIn("APPROVE_HEADER_HASH", action_types)
+        self.assertNotIn("RESOLVE_MISSING_REQUIRED_FIELD", action_types)
+        self.assertEqual(entry["action_queue"][-1]["action_type"], "HOLD_LIFECYCLE_PROMOTION")
+
     def test_2023_celcomdigi_bau_queue_has_no_missing_required_or_header_approval_actions(self):
         registry = json.loads(
             (ROOT / "config" / "registries" / "mw_du_profile_action_queue.yaml").read_text(encoding="utf-8")

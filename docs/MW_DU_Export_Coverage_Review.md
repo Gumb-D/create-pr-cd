@@ -88,6 +88,6 @@ Discovery-only coverage review across the 10 profiled DU exports.
 
 - Source file: `A-P202211283695_D002-ZTE TX MINI-ZTE TX MINI v1-20260703160312.xlsx`
 - Coverage status: `TRACKED_DRAFT_PROFILE`
-- Profile: `zte_tx_mini_pr_v1` `0.1.0` (mapping `discovery-2026-07-06-zte-tx-mini-v1`)
+- Profile: `zte_tx_mini_pr_v1` `0.2.0` (mapping `approved-2026-07-15-zte-tx-mini-v1`)
 - Observed header hash: `a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810`
 - Next action: Continue tracked profile review through the existing DRAFT discovery packet.

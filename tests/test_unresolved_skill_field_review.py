@@ -141,7 +141,7 @@ class TestUnresolvedSkillFieldReview(unittest.TestCase):
             "RESOLVED_BY_APPROVED_MAPPING",
         )
 
-    def test_zte_entry_flags_same_missing_required_fields(self):
+    def test_zte_entry_records_human_approved_pr_critical_sources(self):
         shortlist_registry = json.loads(
             (ROOT / "config" / "registries" / "mw_du_priority_skill_field_shortlists.yaml").read_text(encoding="utf-8")
         )
@@ -153,13 +153,32 @@ class TestUnresolvedSkillFieldReview(unittest.TestCase):
         review_entry = build_review_entry(profile, shortlist_entry)
 
         self.assertEqual(review_entry["profile_id"], "zte_tx_mini_pr_v1")
+        self.assertEqual(review_entry["profile_status"], "PR_INPUT_READY")
         self.assertEqual(review_entry["summary"]["missing_required_fields"], [])
-        self.assertEqual(
-            review_entry["summary"]["no_profile_selection_fields"],
-            ["existing_ti_pr_status", "existing_tss_pr_status"],
-        )
-        self.assertIn("tx_sow_raw", review_entry["summary"]["competing_candidate_fields"])
+        self.assertEqual(review_entry["summary"]["no_profile_selection_fields"], [])
+        self.assertEqual(review_entry["summary"]["resolved_by_approval_fields"], ["site_code", "tx_sow_raw"])
+        self.assertNotIn("tx_sow_raw", review_entry["summary"]["competing_candidate_fields"])
         self.assertNotIn("subcontractor_ti", review_entry["summary"]["competing_candidate_fields"])
+        for field_name in (
+            "region",
+            "subcontractor_ti",
+            "existing_tss_pr_status",
+            "existing_ti_pr_status",
+        ):
+            with self.subTest(field_name=field_name):
+                self.assertEqual(
+                    review_entry["field_reviews"][field_name]["review_status"],
+                    "READY_IF_APPROVAL_EVIDENCE_EXISTS",
+                )
+        self.assertEqual(
+            review_entry["field_reviews"]["existing_tss_pr_status"]["recommended_source"]["fingerprint"]["display_header"],
+            "Subcon PR - TSS",
+        )
+        self.assertEqual(
+            review_entry["field_reviews"]["existing_ti_pr_status"]["recommended_source"]["fingerprint"]["display_header"],
+            "Subcon PR - TI",
+        )
+        self.assertNotIn("subcontractor_tss", review_entry["field_reviews"])
 
     def test_2023_tx_rollout_entry_records_human_approved_pr_critical_sources(self):
         shortlist_registry = json.loads(
