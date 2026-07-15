@@ -92,7 +92,8 @@ class TestMissingFieldBridgeReview(unittest.TestCase):
         bridge_entry = build_bridge_entry(zte_entry, grouping, discovery)
 
         self.assertEqual(bridge_entry["profile_id"], "zte_tx_mini_pr_v1")
-        self.assertEqual(bridge_entry["profile_version"], "0.1.0")
+        self.assertEqual(bridge_entry["profile_version"], "0.2.0")
+        self.assertEqual(bridge_entry["mapping_version"], "approved-2026-07-15-zte-tx-mini-v1")
         self.assertEqual(bridge_entry["field_bridges"], {})
 
     def test_2023_celcomdigi_bau_bridge_stays_empty_after_pr_input_ready_approval(self):

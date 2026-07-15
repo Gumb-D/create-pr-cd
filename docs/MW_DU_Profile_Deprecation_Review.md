@@ -40,8 +40,8 @@ Discovery-only deprecation review for the tracked DU profiles.
 
 ## zte_tx_mini_pr_v1
 
-- Current status: `DRAFT`
-- Mapping version: `discovery-2026-07-06-zte-tx-mini-v1`
+- Current status: `PR_INPUT_READY`
+- Mapping version: `approved-2026-07-15-zte-tx-mini-v1`
 - Observed header hash: `a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810`
 - Deprecation status: `NO_DEPRECATION_PLAN`
 - Note: No deprecation plan is recorded for this profile.

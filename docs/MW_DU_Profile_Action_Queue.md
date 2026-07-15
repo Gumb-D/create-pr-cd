@@ -71,31 +71,21 @@ Discovery-only prioritized manual action queue for the current DRAFT profiles.
 ## zte_tx_mini_pr_v1 (ZTE TX MINI)
 
 - Readiness status: `DISCOVERY_ONLY_BLOCKED`
-- Profile status: `DRAFT`
-- Mapping version: `discovery-2026-07-06-zte-tx-mini-v1`
+- Profile status: `PR_INPUT_READY`
+- Mapping version: `approved-2026-07-15-zte-tx-mini-v1`
 - Observed header hash: `a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810`
 - Action queue:
-  - `zte_tx_mini_pr_v1:01` `CONFIRM_COMPETING_CANDIDATE` `site_code`: Choose one exact four-layer source for `site_code` from the competing shortlist candidates.
+  - `zte_tx_mini_pr_v1:01` `CONFIRM_COMPETING_CANDIDATE` `site_name`: Choose one exact four-layer source for `site_name` from the competing shortlist candidates.
     hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `zte_tx_mini_pr_v1:02` `CONFIRM_COMPETING_CANDIDATE` `site_name`: Choose one exact four-layer source for `site_name` from the competing shortlist candidates.
+  - `zte_tx_mini_pr_v1:02` `CONFIRM_COMPETING_CANDIDATE` `subcontractor_planning`: Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.
     hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `zte_tx_mini_pr_v1:03` `CONFIRM_COMPETING_CANDIDATE` `subcontractor_planning`: Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.
-    hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `zte_tx_mini_pr_v1:04` `CONFIRM_COMPETING_CANDIDATE` `tx_sow_raw`: Choose one exact four-layer source for `tx_sow_raw` from the competing shortlist candidates.
-    hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `zte_tx_mini_pr_v1:05` `VERIFY_SINGLE_CANDIDATE` `antenna_size_fe`: Verify the current single shortlist-aligned source for `antenna_size_fe`.
+  - `zte_tx_mini_pr_v1:03` `VERIFY_SINGLE_CANDIDATE` `antenna_size_fe`: Verify the current single shortlist-aligned source for `antenna_size_fe`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `zte_tx_mini_pr_v1:06` `VERIFY_SINGLE_CANDIDATE` `antenna_size_ne`: Verify the current single shortlist-aligned source for `antenna_size_ne`.
+  - `zte_tx_mini_pr_v1:04` `VERIFY_SINGLE_CANDIDATE` `antenna_size_ne`: Verify the current single shortlist-aligned source for `antenna_size_ne`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `zte_tx_mini_pr_v1:07` `VERIFY_SINGLE_CANDIDATE` `du_key`: Verify the current single shortlist-aligned source for `du_key`.
+  - `zte_tx_mini_pr_v1:05` `VERIFY_SINGLE_CANDIDATE` `du_key`: Verify the current single shortlist-aligned source for `du_key`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `zte_tx_mini_pr_v1:08` `VERIFY_SINGLE_CANDIDATE` `region`: Verify the current single shortlist-aligned source for `region`.
-    hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `zte_tx_mini_pr_v1:09` `VERIFY_SINGLE_CANDIDATE` `subcontractor_ti`: Verify the current single shortlist-aligned source for `subcontractor_ti`.
-    hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `zte_tx_mini_pr_v1:10` `APPROVE_HEADER_HASH`: Approve at least one header hash for this profile version after the field review is complete.
-    hint: Current observed header hash: a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810
-  - `zte_tx_mini_pr_v1:11` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
+  - `zte_tx_mini_pr_v1:06` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
     hint: Use the transition review as the final stop/go check before any status change.
 
 ## celcomdigi_bau_2023_pr_v1 (2023 Celcomdigi BAU)

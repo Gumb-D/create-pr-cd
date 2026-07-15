@@ -123,7 +123,7 @@
       "du_model_name": "ZTE TX MINI",
       "du_model_id": "8638668101234290847",
       "identity_key": "CelcomDigi_MW::8638668101234290847",
-      "profile_status": "DRAFT",
+      "profile_status": "PR_INPUT_READY",
       "name_status": "LEGACY_ACCEPTED",
       "accepted_view_ids": [
         "2279585426760368522"

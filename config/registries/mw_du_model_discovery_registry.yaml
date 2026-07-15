@@ -369,9 +369,9 @@
         "drop_down"
       ],
       "profile_id": "zte_tx_mini_pr_v1",
-      "profile_status": "DRAFT",
-      "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-06-zte-tx-mini-v1",
+      "profile_status": "PR_INPUT_READY",
+      "profile_version": "0.2.0",
+      "mapping_version": "approved-2026-07-15-zte-tx-mini-v1",
       "pr_input_status": "PR_INPUT_QUARANTINED",
       "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
       "skill_field_presence": {

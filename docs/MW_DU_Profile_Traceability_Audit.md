@@ -77,8 +77,8 @@ Discovery-only audit of profile-version and header-hash traceability across gene
 ## zte_tx_mini_pr_v1
 
 - Traceability status: `TRACEABLE`
-- Profile version: `0.1.0`
-- Mapping version: `discovery-2026-07-06-zte-tx-mini-v1`
+- Profile version: `0.2.0`
+- Mapping version: `approved-2026-07-15-zte-tx-mini-v1`
 - Observed header hash: `a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810`
 - Artifacts:
   - `discovery` `TRACEABLE` version=True mapping=True header_hash=True

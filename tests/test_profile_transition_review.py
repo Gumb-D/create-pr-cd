@@ -79,6 +79,21 @@ class TestProfileTransitionReview(unittest.TestCase):
         self.assertFalse(production["eligible"])
         self.assertEqual(production["denied_reasons"], ["PROFILE_NOT_PRODUCTION"])
 
+    def test_zte_pr_input_ready_transition_is_eligible_but_production_is_denied(self):
+        registry = json.loads(
+            (ROOT / "config" / "registries" / "mw_du_profile_transition_review.yaml").read_text(encoding="utf-8")
+        )
+        entry = next(item for item in registry["entries"] if item["profile_id"] == "zte_tx_mini_pr_v1")
+        pr_input_ready = next(
+            item for item in entry["transition_targets"] if item["target_status"] == "PR_INPUT_READY"
+        )
+        production = next(
+            item for item in entry["transition_targets"] if item["target_status"] == "PRODUCTION"
+        )
+        self.assertTrue(pr_input_ready["eligible"])
+        self.assertFalse(production["eligible"])
+        self.assertEqual(production["denied_reasons"], ["PROFILE_NOT_PRODUCTION"])
+
     def test_2023_celcomdigi_bau_pr_input_ready_transition_is_eligible_but_production_is_denied(self):
         registry = json.loads(
             (ROOT / "config" / "registries" / "mw_du_profile_transition_review.yaml").read_text(encoding="utf-8")

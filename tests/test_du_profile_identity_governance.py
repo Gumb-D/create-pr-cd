@@ -257,7 +257,7 @@ class TestDuProfileIdentityGovernance(unittest.TestCase):
             "celcomdigi_bau_2024_pr_v1": "PR_INPUT_READY",
             "celcomdigi_usp_pr_v1": "PR_INPUT_READY",
             "jendela_tx_migration_pr_v1": "PR_INPUT_READY",
-            "zte_tx_mini_pr_v1": "DRAFT",
+            "zte_tx_mini_pr_v1": "PR_INPUT_READY",
             "cd_consolidation_2023_decom_pr_v1": "DRAFT",
             "cd_consolidation_2023_rollout_pr_v1": "DRAFT",
         }

@@ -38,6 +38,19 @@ class TestProfileRollbackReadiness(unittest.TestCase):
             ["904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3"],
         )
 
+    def test_zte_records_rollback_baseline_after_pr_input_ready(self):
+        profile = load_du_profile(ROOT / "config" / "du_profiles" / "zte_tx_mini_pr_v1.yaml")
+
+        entry = evaluate_rollback_readiness(profile, None)
+
+        self.assertEqual(entry["rollback_readiness_status"], "ROLLBACK_BASELINE_RECORDED")
+        self.assertEqual(entry["rollback_target_profile_id"], "zte_tx_mini_pr_v1")
+        self.assertEqual(entry["rollback_target_profile_version"], "0.2.0")
+        self.assertEqual(
+            entry["rollback_target_header_hashes"],
+            ["a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810"],
+        )
+
     def test_tx_mini_records_rollback_baseline_after_pr_input_ready(self):
         # PR_INPUT_READY (2026-07-08) plus the approved header hash gives
         # TX Mini a recorded rollback baseline.

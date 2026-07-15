@@ -15,6 +15,13 @@ LOCAL_2023_BAU_TX_PRPO_WORKBOOK = (
     / "du_exports"
     / "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx"
 )
+LOCAL_ZTE_TX_MINI_WORKBOOK = (
+    ROOT
+    / "Info"
+    / "reference"
+    / "du_exports"
+    / "A-P202211283695_D002-ZTE TX MINI-ZTE TX MINI v1-20260703160312.xlsx"
+)
 
 from canonical_site_validator import QUARANTINE_NO_ECC, empty_canonical_site_record
 from du_export_adapter import (
@@ -904,6 +911,374 @@ class TestCelcomdigiBau2024ApprovedProfileAdapter(unittest.TestCase):
         gate = evaluate_record(record, production, scope="TSS")
         self.assertFalse(gate["allow_output"])
         self.assertIn("HEADER_HASH_REVALIDATION_REQUIRED", gate["blocking_reasons"])
+
+
+class TestZteTxMiniApprovedProfileAdapter(unittest.TestCase):
+    PROFILE_PATH = ROOT / "config" / "du_profiles" / "zte_tx_mini_pr_v1.yaml"
+    WORKBOOK_PATH = LOCAL_ZTE_TX_MINI_WORKBOOK
+
+    @classmethod
+    def setUpClass(cls):
+        cls.profile = load_du_profile(cls.PROFILE_PATH)
+
+    def _inventory_from_profile(self, *, include_alternates=False, duplicate_fields=None, missing_fields=None):
+        duplicate_fields = set(duplicate_fields or [])
+        missing_fields = set(missing_fields or [])
+        columns = []
+        for field_name, config in self.profile["field_mapping"].items():
+            if field_name in missing_fields:
+                continue
+            for candidate in config.get("source_candidates", []):
+                column = {
+                    "fingerprint": candidate["fingerprint"],
+                    "fingerprint_key": fingerprint_key(candidate["fingerprint"]),
+                }
+                columns.append(column)
+                if field_name in duplicate_fields:
+                    columns.append(dict(column))
+        if include_alternates:
+            for fingerprint in (
+                {
+                    "field_code": "site|fix00002|8638668101234290847|2279585426760368522",
+                    "wbs_stage": "Site Basic Info",
+                    "task_name": "Site Basic Info",
+                    "display_header": "FE Site ID",
+                },
+                {
+                    "field_code": "docata|ZDCSZ01079156",
+                    "wbs_stage": "Network Planning",
+                    "task_name": "Microwave",
+                    "display_header": "TX SOW Details",
+                },
+                {
+                    "field_code": "docata|ZDCSZ00959241",
+                    "wbs_stage": "Acceptance",
+                    "task_name": "Microwave",
+                    "display_header": "TSS Milestone Date",
+                },
+                {
+                    "field_code": "docata|ZDCSZ00959242",
+                    "wbs_stage": "Acceptance",
+                    "task_name": "Microwave",
+                    "display_header": "TI Milestone Date",
+                },
+            ):
+                columns.append({"fingerprint": fingerprint, "fingerprint_key": fingerprint_key(fingerprint)})
+        return {"sheets": [{"sheet_name": "ZTE TX MINI", "columns": columns}]}
+
+    def _resolved(self, *, include_alternates=False, duplicate_fields=None, missing_fields=None):
+        return resolve_profile_field_mappings(
+            self._inventory_from_profile(
+                include_alternates=include_alternates,
+                duplicate_fields=duplicate_fields,
+                missing_fields=missing_fields,
+            ),
+            self.profile,
+        )
+
+    def _raw_values(self, overrides=None):
+        values = {
+            "site_code": " a0001 ",
+            "site_name": "Synthetic Site",
+            "du_key": "DU0001",
+            "tx_sow_raw": " MW Swap ",
+            "region": "Northern",
+            "state": "Penang",
+            "subcontractor_tss": "GTSB TSS",
+            "subcontractor_ti": "GTSB TI",
+            "subcontractor_planning": "Planner",
+            "existing_tss_pr_status": "SQ202506180613-GTSB",
+            "existing_ti_pr_status": "No PR required-Work at TSS only",
+            "antenna_size_ne": "0.6m",
+            "antenna_size_fe": "0.6m",
+            "boq_configuration": "1+0",
+            "tx_sow_details": "detail",
+        }
+        values.update(overrides or {})
+        raw = {}
+        for field_name, config in self.profile["field_mapping"].items():
+            if field_name not in values:
+                continue
+            for candidate in config.get("source_candidates", []):
+                raw[fingerprint_key(candidate["fingerprint"])] = values[field_name]
+        return raw
+
+    def _context(self, *, header_hash=None, view_id=None, du_model_id=None):
+        identity = self.profile["identity"]
+        return {
+            "project_key": identity["project_key"],
+            "du_model_name": identity["accepted_du_models"][0],
+            "du_model_id": du_model_id or identity["accepted_du_model_ids"][0],
+            "view_id": view_id or identity["accepted_view_ids"][0],
+            "source_file_name": "synthetic-zte-tx-mini.xlsx",
+            "source_file_hash": "synthetic-source-hash",
+            "header_hash": header_hash or self.profile["export_structure"]["approved_header_hashes"][0],
+            "source_row_number": 5,
+        }
+
+    def _build_record(
+        self,
+        overrides=None,
+        *,
+        profile=None,
+        resolved=None,
+        header_hash=None,
+        view_id=None,
+        du_model_id=None,
+        scope="TSS",
+    ):
+        profile = profile or self.profile
+        return build_canonical_site_record(
+            self._raw_values(overrides),
+            profile,
+            self._context(header_hash=header_hash, view_id=view_id, du_model_id=du_model_id),
+            scope=scope,
+            resolved_mappings=resolved or resolve_profile_field_mappings(self._inventory_from_profile(), profile),
+        )
+
+    def _production_copy(self):
+        clone = json.loads(json.dumps(self.profile))
+        clone["status"] = "PRODUCTION"
+        for config in clone["field_mapping"].values():
+            config["source_candidates"] = [
+                candidate
+                for candidate in config.get("source_candidates", [])
+                if candidate.get("mapping_status") == "APPROVED"
+            ]
+        return clone
+
+    def test_resolver_uses_only_seven_approved_runtime_fingerprints(self):
+        resolved = self._resolved(include_alternates=True)
+        approved_fields = (
+            "site_code",
+            "tx_sow_raw",
+            "region",
+            "subcontractor_tss",
+            "subcontractor_ti",
+            "existing_tss_pr_status",
+            "existing_ti_pr_status",
+        )
+        for field_name in approved_fields:
+            self.assertEqual(resolved[field_name]["status"], "RESOLVED")
+        self.assertEqual(
+            [match["fingerprint"]["display_header"] for match in resolved["tx_sow_raw"]["matches"]],
+            ["Microwave Tx SOW"],
+        )
+        self.assertEqual(
+            [match["fingerprint"]["display_header"] for match in resolved["site_code"]["matches"]],
+            ["customer site code"],
+        )
+        self.assertNotIn(
+            "FE Site ID",
+            [match["fingerprint"]["display_header"] for match in resolved["site_code"]["matches"]],
+        )
+
+    def test_rejected_only_columns_do_not_resolve_pr_critical_fields(self):
+        inventory = {
+            "sheets": [
+                {
+                    "sheet_name": "Rejected only",
+                    "columns": [
+                        {
+                            "fingerprint": {
+                                "field_code": "site|fix00002|8638668101234290847|2279585426760368522",
+                                "wbs_stage": "Site Basic Info",
+                                "task_name": "Site Basic Info",
+                                "display_header": "FE Site ID",
+                            },
+                            "fingerprint_key": "site|fix00002|8638668101234290847|2279585426760368522|Site Basic Info|Site Basic Info|FE Site ID",
+                        },
+                        {
+                            "fingerprint": {
+                                "field_code": "docata|ZDCSZ01079156",
+                                "wbs_stage": "Network Planning",
+                                "task_name": "Microwave",
+                                "display_header": "TX SOW Details",
+                            },
+                            "fingerprint_key": "docata|ZDCSZ01079156|Network Planning|Microwave|TX SOW Details",
+                        },
+                        {
+                            "fingerprint": {
+                                "field_code": "docata|ZDCSZ00959241",
+                                "wbs_stage": "Acceptance",
+                                "task_name": "Microwave",
+                                "display_header": "TSS Milestone Date",
+                            },
+                            "fingerprint_key": "docata|ZDCSZ00959241|Acceptance|Microwave|TSS Milestone Date",
+                        },
+                        {
+                            "fingerprint": {
+                                "field_code": "docata|ZDCSZ00959242",
+                                "wbs_stage": "Acceptance",
+                                "task_name": "Microwave",
+                                "display_header": "TI Milestone Date",
+                            },
+                            "fingerprint_key": "docata|ZDCSZ00959242|Acceptance|Microwave|TI Milestone Date",
+                        },
+                    ],
+                }
+            ]
+        }
+        resolved = resolve_profile_field_mappings(inventory, self.profile)
+        self.assertEqual(resolved["site_code"]["status"], "MISSING")
+        self.assertEqual(resolved["tx_sow_raw"]["status"], "MISSING")
+        self.assertEqual(resolved["existing_tss_pr_status"]["status"], "MISSING")
+        self.assertEqual(resolved["existing_ti_pr_status"]["status"], "MISSING")
+
+    def test_pr_reference_fields_normalize_consistently(self):
+        record = self._build_record(
+            {
+                "existing_tss_pr_status": "SQ202506180613-GTSB",
+                "existing_ti_pr_status": "No PR required-Work at TSS only",
+            },
+            scope="TI",
+        )
+        self.assertEqual(record["pr_context"]["existing_tss_pr_status"], PR_STATUS_EXISTS)
+        self.assertEqual(record["pr_context"]["existing_ti_pr_status"], PR_STATUS_NOT_REQUIRED)
+        self.assertEqual(
+            record["source_evidence"]["fields"]["existing_tss_pr_status"]["transformation"],
+            "normalize_pr_reference_status",
+        )
+        self.assertEqual(
+            record["source_evidence"]["fields"]["existing_ti_pr_status"]["transformation"],
+            "normalize_pr_reference_status",
+        )
+
+    def test_tss_and_ti_fields_do_not_swap(self):
+        record = self._build_record(scope="TI")
+        self.assertEqual(record["pr_context"]["subcontractor_tss"], "GTSB TSS")
+        self.assertEqual(record["pr_context"]["subcontractor_ti"], "GTSB TI")
+        self.assertEqual(
+            record["source_evidence"]["fields"]["subcontractor_tss"]["source_header_fingerprint"]["display_header"],
+            "Subcon - TSS",
+        )
+        self.assertEqual(
+            record["source_evidence"]["fields"]["subcontractor_ti"]["source_header_fingerprint"]["display_header"],
+            "Subcon - TI",
+        )
+
+    def test_profile_passes_pr_input_gate_but_current_status_blocks_ecc_output(self):
+        record = self._build_record(scope="TI")
+        self.assertEqual(record["validation"]["pr_input_classification"], "PR_INPUT_READY")
+        gate = evaluate_record(record, self.profile, scope="TI")
+        self.assertFalse(gate["allow_output"])
+        self.assertIn("DU_PROFILE_NOT_PRODUCTION", gate["blocking_reasons"])
+
+    def test_approved_header_hash_passes_without_header_revalidation(self):
+        production = self._production_copy()
+        record = self._build_record(profile=production, scope="TI")
+        gate = evaluate_record(record, production, scope="TI")
+        self.assertNotIn("HEADER_HASH_REVALIDATION_REQUIRED", gate["blocking_reasons"])
+
+    def test_changed_header_hash_still_fails_closed(self):
+        production = self._production_copy()
+        record = self._build_record(profile=production, header_hash="changed-header-hash", scope="TI")
+        gate = evaluate_record(record, production, scope="TI")
+        self.assertFalse(gate["allow_output"])
+        self.assertIn("HEADER_HASH_REVALIDATION_REQUIRED", gate["blocking_reasons"])
+
+    def test_unknown_view_id_fails_closed(self):
+        production = self._production_copy()
+        record = self._build_record(profile=production, view_id="unknown-view-id", scope="TI")
+        gate = evaluate_record(record, production, scope="TI")
+        self.assertFalse(gate["allow_output"])
+        self.assertIn("UNKNOWN_DU_MODEL_OR_VIEW", gate["blocking_reasons"])
+
+    def test_missing_approved_pr_critical_column_fails_closed(self):
+        resolved = self._resolved(missing_fields={"existing_ti_pr_status"})
+        self.assertEqual(resolved["existing_ti_pr_status"]["status"], "MISSING")
+        production = self._production_copy()
+        record = self._build_record(profile=production, resolved=resolved, scope="TI")
+        self.assertIn("MISSING_SOURCE_EVIDENCE:existing_ti_pr_status", record["validation"]["blocking_reasons"])
+
+    def test_ambiguous_required_fingerprint_fails_closed(self):
+        resolved = self._resolved(duplicate_fields={"site_code"})
+        self.assertEqual(resolved["site_code"]["status"], "AMBIGUOUS")
+        production = self._production_copy()
+        record = self._build_record(profile=production, resolved=resolved, scope="TI")
+        self.assertIn("AMBIGUOUS_HEADER_MAPPING:site_code", record["validation"]["blocking_reasons"])
+
+    @unittest.skipUnless(
+        LOCAL_ZTE_TX_MINI_WORKBOOK.exists(),
+        "local-only ZTE TX MINI export is unavailable",
+    )
+    def test_positive_integration_with_workbook_produces_180_canonical_records(self):
+        def has_raw_value(value):
+            return value is not None and str(value).strip() != ""
+
+        inventory = build_header_inventory(self.WORKBOOK_PATH)
+        source_file_hash = sha256_file(self.WORKBOOK_PATH)
+        self.assertEqual(
+            calculate_header_hash(inventory),
+            "a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810",
+        )
+        resolved = resolve_profile_field_mappings(inventory, self.profile)
+        workbook = load_workbook(self.WORKBOOK_PATH, read_only=True, data_only=True)
+        try:
+            worksheet = workbook["data"]
+            columns = {
+                column["fingerprint_key"]: column["source_position"]["one_based_index"]
+                for sheet in inventory["sheets"]
+                if sheet["sheet_name"] == "data"
+                for column in sheet["columns"]
+            }
+            record_count = 0
+            populated_site_codes = 0
+            raw_non_empty_counts = {
+                "tx_sow_raw": 0,
+                "region": 0,
+                "subcontractor_tss": 0,
+                "subcontractor_ti": 0,
+                "existing_tss_pr_status": 0,
+                "existing_ti_pr_status": 0,
+            }
+            unique_site_codes = set()
+            for row_number, row in enumerate(worksheet.iter_rows(min_row=5, values_only=True), start=5):
+                raw = {}
+                for mapping in resolved.values():
+                    if mapping["status"] != "RESOLVED":
+                        continue
+                    for match in mapping["matches"]:
+                        if match["sheet_name"] != "data":
+                            continue
+                        key = fingerprint_key(match["fingerprint"])
+                        raw[key] = row[columns[key] - 1]
+                record = build_canonical_site_record(
+                    raw,
+                    self.profile,
+                    {
+                        "project_key": self.profile["identity"]["project_key"],
+                        "du_model_name": self.profile["identity"]["accepted_du_models"][0],
+                        "du_model_id": self.profile["identity"]["accepted_du_model_ids"][0],
+                        "view_id": self.profile["identity"]["accepted_view_ids"][0],
+                        "source_file_name": self.WORKBOOK_PATH.name,
+                        "source_file_hash": source_file_hash,
+                        "header_hash": calculate_header_hash(inventory),
+                        "source_row_number": row_number,
+                    },
+                    scope="TI",
+                    resolved_mappings=resolved,
+                )
+                record_count += 1
+                for field_name in raw_non_empty_counts:
+                    match = resolved[field_name]["matches"][0]
+                    raw_value = raw.get(fingerprint_key(match["fingerprint"]))
+                    if has_raw_value(raw_value):
+                        raw_non_empty_counts[field_name] += 1
+                if record["site"]["site_code"]:
+                    populated_site_codes += 1
+                    unique_site_codes.add(record["site"]["site_code"])
+            self.assertEqual(record_count, 180)
+            self.assertEqual(populated_site_codes, 180)
+            self.assertEqual(len(unique_site_codes), 180)
+            self.assertEqual(raw_non_empty_counts["tx_sow_raw"], 132)
+            self.assertEqual(raw_non_empty_counts["region"], 180)
+            self.assertEqual(raw_non_empty_counts["subcontractor_tss"], 114)
+            self.assertEqual(raw_non_empty_counts["subcontractor_ti"], 140)
+            self.assertEqual(raw_non_empty_counts["existing_tss_pr_status"], 109)
+            self.assertEqual(raw_non_empty_counts["existing_ti_pr_status"], 18)
+        finally:
+            workbook.close()
 
 
 class TestCelcomdigiBau2023ApprovedProfileAdapter(unittest.TestCase):

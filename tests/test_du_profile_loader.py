@@ -89,23 +89,61 @@ class TestDuProfileLoader(unittest.TestCase):
             "Subcon PR - TI",
         )
 
-    def test_draft_zte_tx_mini_profile_loads_with_discovery_only_candidates(self):
+    def test_pr_input_ready_zte_tx_mini_profile_loads_with_human_approved_pr_critical_mappings(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "zte_tx_mini_pr_v1.yaml")
-        self.assertEqual(profile["status"], "DRAFT")
-        self.assertEqual(profile["mapping_version"], "discovery-2026-07-06-zte-tx-mini-v1")
+        self.assertEqual(profile["status"], "PR_INPUT_READY")
+        self.assertEqual(profile["profile_version"], "0.2.0")
+        self.assertEqual(profile["mapping_version"], "approved-2026-07-15-zte-tx-mini-v1")
         self.assertEqual(profile["identity"]["accepted_du_models"], ["ZTE TX MINI"])
         self.assertEqual(profile["identity"]["accepted_du_model_ids"], ["8638668101234290847"])
         self.assertEqual(profile["identity"]["accepted_view_ids"], ["2279585426760368522"])
-        self.assertEqual(profile["export_structure"]["approved_header_hashes"], [])
+        self.assertEqual(
+            profile["export_structure"]["approved_header_hashes"],
+            ["a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810"],
+        )
         self.assertEqual(profile["export_structure"]["observed_header_hash"], "a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810")
+        approved = {
+            field_name
+            for field_name, config in profile["field_mapping"].items()
+            if any(candidate.get("mapping_status") == "APPROVED" for candidate in config.get("source_candidates", []))
+        }
         self.assertEqual(
-            profile["field_mapping"]["site_code"]["source_candidates"][0]["fingerprint"]["display_header"],
-            "customer site code",
+            approved,
+            {
+                "site_code",
+                "tx_sow_raw",
+                "region",
+                "subcontractor_tss",
+                "subcontractor_ti",
+                "existing_tss_pr_status",
+                "existing_ti_pr_status",
+            },
+        )
+        self.assertEqual(profile["field_mapping"]["site_code"]["source_candidates"][0]["mapping_status"], "APPROVED")
+        self.assertEqual(profile["field_mapping"]["site_code"]["source_candidates"][0]["fingerprint"]["display_header"], "customer site code")
+        self.assertEqual(profile["field_mapping"]["tx_sow_raw"]["source_candidates"][0]["fingerprint"]["display_header"], "Microwave Tx SOW")
+        self.assertEqual(profile["field_mapping"]["subcontractor_tss"]["source_candidates"][0]["fingerprint"]["display_header"], "Subcon - TSS")
+        self.assertEqual(profile["field_mapping"]["subcontractor_ti"]["source_candidates"][0]["fingerprint"]["display_header"], "Subcon - TI")
+        self.assertEqual(profile["field_mapping"]["existing_tss_pr_status"]["source_candidates"][0]["fingerprint"]["display_header"], "Subcon PR - TSS")
+        self.assertEqual(profile["field_mapping"]["existing_ti_pr_status"]["source_candidates"][0]["fingerprint"]["display_header"], "Subcon PR - TI")
+        self.assertFalse(profile["field_mapping"]["subcontractor_tss"]["required"])
+        self.assertEqual(
+            profile["field_mapping"]["existing_tss_pr_status"]["transforms"],
+            ["normalize_pr_reference_status"],
         )
         self.assertEqual(
-            profile["field_mapping"]["tx_sow_raw"]["source_candidates"][0]["fingerprint"]["display_header"],
-            "Microwave Tx SOW",
+            profile["field_mapping"]["existing_ti_pr_status"]["transforms"],
+            ["normalize_pr_reference_status"],
         )
+        self.assertTrue(
+            all(
+                candidate["mapping_status"] == "UNVERIFIED"
+                for field_name, config in profile["field_mapping"].items()
+                if field_name not in approved
+                for candidate in config.get("source_candidates", [])
+            )
+        )
+        self.assertNotEqual(profile["status"], "PRODUCTION")
 
     def test_pr_input_ready_2023_tx_rollout_profile_loads_with_human_approved_pr_critical_mappings(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "tx_rollout_2023_pr_v1.yaml")

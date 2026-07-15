@@ -320,8 +320,8 @@
     },
     {
       "profile_id": "zte_tx_mini_pr_v1",
-      "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-06-zte-tx-mini-v1",
+      "profile_version": "0.2.0",
+      "mapping_version": "approved-2026-07-15-zte-tx-mini-v1",
       "observed_header_hash": "a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810",
       "traceability_status": "TRACEABLE",
       "artifacts": [

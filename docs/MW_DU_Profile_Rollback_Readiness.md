@@ -48,13 +48,14 @@ Discovery-only rollback-readiness review for tracked DU profiles.
 
 ## zte_tx_mini_pr_v1
 
-- Rollback readiness status: `ROLLBACK_BLOCKED`
-- Current status: `DRAFT`
-- Profile version: `0.1.0`
-- Mapping version: `discovery-2026-07-06-zte-tx-mini-v1`
+- Rollback readiness status: `ROLLBACK_BASELINE_RECORDED`
+- Current status: `PR_INPUT_READY`
+- Profile version: `0.2.0`
+- Mapping version: `approved-2026-07-15-zte-tx-mini-v1`
 - Observed header hash: `a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810`
-- Blockers: `NO_APPROVED_HEADER_HASH_BASELINE, PROFILE_NOT_RELEASED`
-- Note: Rollback remains blocked until an approved profile/header-hash baseline exists.
+- Rollback target: `zte_tx_mini_pr_v1` `0.2.0`
+- Rollback target header hashes: `a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810`
+- Note: Rollback baseline is documented from the current approved profile identity and header-hash set.
 
 ## celcomdigi_bau_2023_pr_v1
 

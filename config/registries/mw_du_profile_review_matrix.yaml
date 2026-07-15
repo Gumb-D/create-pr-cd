@@ -133,16 +133,15 @@
     },
     {
       "profile_id": "zte_tx_mini_pr_v1",
-      "profile_version": "0.1.0",
+      "profile_version": "0.2.0",
       "du_model_name": "ZTE TX MINI",
-      "mapping_version": "discovery-2026-07-06-zte-tx-mini-v1",
+      "mapping_version": "approved-2026-07-15-zte-tx-mini-v1",
       "observed_header_hash": "a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810",
       "readiness_status": "DISCOVERY_ONLY_BLOCKED",
-      "action_count": 11,
+      "action_count": 6,
       "action_type_counts": {
-        "CONFIRM_COMPETING_CANDIDATE": 4,
-        "VERIFY_SINGLE_CANDIDATE": 5,
-        "APPROVE_HEADER_HASH": 1,
+        "CONFIRM_COMPETING_CANDIDATE": 2,
+        "VERIFY_SINGLE_CANDIDATE": 3,
         "HOLD_LIFECYCLE_PROMOTION": 1
       }
     }
@@ -206,7 +205,7 @@
         "jendela_tx_migration_pr_v1:02",
         "mw_eos_swap_pr_v1:02",
         "tx_rollout_2023_pr_v1:01",
-        "zte_tx_mini_pr_v1:03"
+        "zte_tx_mini_pr_v1:02"
       ],
       "evidence_hints": [
         "Use the unresolved review packet to compare the currently selected source against alternates."
@@ -230,53 +229,13 @@
         "celcomdigi_usp_pr_v1:01",
         "jendela_tx_migration_pr_v1:01",
         "mw_eos_swap_pr_v1:01",
-        "zte_tx_mini_pr_v1:02"
+        "zte_tx_mini_pr_v1:01"
       ],
       "evidence_hints": [
         "Use the unresolved review packet to compare the currently selected source against alternates."
       ],
       "profile_count": 5,
       "batch_priority": 4
-    },
-    {
-      "action_type": "CONFIRM_COMPETING_CANDIDATE",
-      "field_name": "site_code",
-      "summary": "Choose one exact four-layer source for `site_code` from the competing shortlist candidates.",
-      "profiles": [
-        "cd_consolidation_2023_decom_pr_v1",
-        "cd_consolidation_2023_rollout_pr_v1",
-        "zte_tx_mini_pr_v1"
-      ],
-      "profile_priority_ids": [
-        "cd_consolidation_2023_decom_pr_v1:04",
-        "cd_consolidation_2023_rollout_pr_v1:04",
-        "zte_tx_mini_pr_v1:01"
-      ],
-      "evidence_hints": [
-        "Use the unresolved review packet to compare the currently selected source against alternates."
-      ],
-      "profile_count": 3,
-      "batch_priority": 5
-    },
-    {
-      "action_type": "CONFIRM_COMPETING_CANDIDATE",
-      "field_name": "tx_sow_raw",
-      "summary": "Choose one exact four-layer source for `tx_sow_raw` from the competing shortlist candidates.",
-      "profiles": [
-        "cd_consolidation_2023_decom_pr_v1",
-        "cd_consolidation_2023_rollout_pr_v1",
-        "zte_tx_mini_pr_v1"
-      ],
-      "profile_priority_ids": [
-        "cd_consolidation_2023_decom_pr_v1:06",
-        "cd_consolidation_2023_rollout_pr_v1:05",
-        "zte_tx_mini_pr_v1:04"
-      ],
-      "evidence_hints": [
-        "Use the unresolved review packet to compare the currently selected source against alternates."
-      ],
-      "profile_count": 3,
-      "batch_priority": 6
     },
     {
       "action_type": "CONFIRM_COMPETING_CANDIDATE",
@@ -289,6 +248,42 @@
       "profile_priority_ids": [
         "cd_consolidation_2023_decom_pr_v1:03",
         "cd_consolidation_2023_rollout_pr_v1:03"
+      ],
+      "evidence_hints": [
+        "Use the unresolved review packet to compare the currently selected source against alternates."
+      ],
+      "profile_count": 2,
+      "batch_priority": 5
+    },
+    {
+      "action_type": "CONFIRM_COMPETING_CANDIDATE",
+      "field_name": "site_code",
+      "summary": "Choose one exact four-layer source for `site_code` from the competing shortlist candidates.",
+      "profiles": [
+        "cd_consolidation_2023_decom_pr_v1",
+        "cd_consolidation_2023_rollout_pr_v1"
+      ],
+      "profile_priority_ids": [
+        "cd_consolidation_2023_decom_pr_v1:04",
+        "cd_consolidation_2023_rollout_pr_v1:04"
+      ],
+      "evidence_hints": [
+        "Use the unresolved review packet to compare the currently selected source against alternates."
+      ],
+      "profile_count": 2,
+      "batch_priority": 6
+    },
+    {
+      "action_type": "CONFIRM_COMPETING_CANDIDATE",
+      "field_name": "tx_sow_raw",
+      "summary": "Choose one exact four-layer source for `tx_sow_raw` from the competing shortlist candidates.",
+      "profiles": [
+        "cd_consolidation_2023_decom_pr_v1",
+        "cd_consolidation_2023_rollout_pr_v1"
+      ],
+      "profile_priority_ids": [
+        "cd_consolidation_2023_decom_pr_v1:06",
+        "cd_consolidation_2023_rollout_pr_v1:05"
       ],
       "evidence_hints": [
         "Use the unresolved review packet to compare the currently selected source against alternates."
@@ -320,7 +315,7 @@
         "jendela_tx_migration_pr_v1:05",
         "mw_eos_swap_pr_v1:05",
         "tx_rollout_2023_pr_v1:02",
-        "zte_tx_mini_pr_v1:07"
+        "zte_tx_mini_pr_v1:05"
       ],
       "evidence_hints": [
         "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
@@ -346,7 +341,7 @@
         "celcomdigi_usp_pr_v1:03",
         "jendela_tx_migration_pr_v1:03",
         "mw_eos_swap_pr_v1:03",
-        "zte_tx_mini_pr_v1:05"
+        "zte_tx_mini_pr_v1:03"
       ],
       "evidence_hints": [
         "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
@@ -372,7 +367,7 @@
         "celcomdigi_usp_pr_v1:04",
         "jendela_tx_migration_pr_v1:04",
         "mw_eos_swap_pr_v1:04",
-        "zte_tx_mini_pr_v1:06"
+        "zte_tx_mini_pr_v1:04"
       ],
       "evidence_hints": [
         "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
@@ -408,35 +403,17 @@
       "summary": "Verify the current single shortlist-aligned source for `subcontractor_ti`.",
       "profiles": [
         "cd_consolidation_2023_decom_pr_v1",
-        "cd_consolidation_2023_rollout_pr_v1",
-        "zte_tx_mini_pr_v1"
+        "cd_consolidation_2023_rollout_pr_v1"
       ],
       "profile_priority_ids": [
         "cd_consolidation_2023_decom_pr_v1:08",
-        "cd_consolidation_2023_rollout_pr_v1:08",
-        "zte_tx_mini_pr_v1:09"
+        "cd_consolidation_2023_rollout_pr_v1:08"
       ],
       "evidence_hints": [
         "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
       ],
-      "profile_count": 3,
+      "profile_count": 2,
       "batch_priority": 12
-    },
-    {
-      "action_type": "VERIFY_SINGLE_CANDIDATE",
-      "field_name": "region",
-      "summary": "Verify the current single shortlist-aligned source for `region`.",
-      "profiles": [
-        "zte_tx_mini_pr_v1"
-      ],
-      "profile_priority_ids": [
-        "zte_tx_mini_pr_v1:08"
-      ],
-      "evidence_hints": [
-        "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
-      ],
-      "profile_count": 1,
-      "batch_priority": 13
     },
     {
       "action_type": "APPROVE_HEADER_HASH",
@@ -444,21 +421,18 @@
       "summary": "Approve at least one header hash for this profile version after the field review is complete.",
       "profiles": [
         "cd_consolidation_2023_decom_pr_v1",
-        "cd_consolidation_2023_rollout_pr_v1",
-        "zte_tx_mini_pr_v1"
+        "cd_consolidation_2023_rollout_pr_v1"
       ],
       "profile_priority_ids": [
         "cd_consolidation_2023_decom_pr_v1:09",
-        "cd_consolidation_2023_rollout_pr_v1:09",
-        "zte_tx_mini_pr_v1:10"
+        "cd_consolidation_2023_rollout_pr_v1:09"
       ],
       "evidence_hints": [
-        "Current observed header hash: a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810",
         "Current observed header hash: b86cbc349db66154324092c843593137e83908c3b4b55c09305d6cf6046c7a16",
         "Current observed header hash: d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1"
       ],
-      "profile_count": 3,
-      "batch_priority": 14
+      "profile_count": 2,
+      "batch_priority": 13
     },
     {
       "action_type": "HOLD_LIFECYCLE_PROMOTION",
@@ -486,13 +460,13 @@
         "mw_eos_swap_pr_v1:06",
         "tx_mini_pr_v1:01",
         "tx_rollout_2023_pr_v1:04",
-        "zte_tx_mini_pr_v1:11"
+        "zte_tx_mini_pr_v1:06"
       ],
       "evidence_hints": [
         "Use the transition review as the final stop/go check before any status change."
       ],
       "profile_count": 10,
-      "batch_priority": 15
+      "batch_priority": 14
     }
   ],
   "notes": [

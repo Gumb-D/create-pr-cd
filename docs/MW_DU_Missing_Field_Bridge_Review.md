@@ -32,8 +32,8 @@ Discovery-only bridge guidance for required fields that are still missing in pri
 
 ## zte_tx_mini_pr_v1 (ZTE TX MINI)
 
-- Profile version: `0.1.0`
-- Mapping version: `discovery-2026-07-06-zte-tx-mini-v1`
+- Profile version: `0.2.0`
+- Mapping version: `approved-2026-07-15-zte-tx-mini-v1`
 - Observed header hash: `a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810`
 
 
