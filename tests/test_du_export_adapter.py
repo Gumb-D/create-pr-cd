@@ -1203,6 +1203,9 @@ class TestZteTxMiniApprovedProfileAdapter(unittest.TestCase):
         "local-only ZTE TX MINI export is unavailable",
     )
     def test_positive_integration_with_workbook_produces_180_canonical_records(self):
+        def has_raw_value(value):
+            return value is not None and str(value).strip() != ""
+
         inventory = build_header_inventory(self.WORKBOOK_PATH)
         source_file_hash = sha256_file(self.WORKBOOK_PATH)
         self.assertEqual(
@@ -1221,6 +1224,15 @@ class TestZteTxMiniApprovedProfileAdapter(unittest.TestCase):
             }
             record_count = 0
             populated_site_codes = 0
+            raw_non_empty_counts = {
+                "tx_sow_raw": 0,
+                "region": 0,
+                "subcontractor_tss": 0,
+                "subcontractor_ti": 0,
+                "existing_tss_pr_status": 0,
+                "existing_ti_pr_status": 0,
+            }
+            unique_site_codes = set()
             for row_number, row in enumerate(worksheet.iter_rows(min_row=5, values_only=True), start=5):
                 raw = {}
                 for mapping in resolved.values():
@@ -1248,10 +1260,23 @@ class TestZteTxMiniApprovedProfileAdapter(unittest.TestCase):
                     resolved_mappings=resolved,
                 )
                 record_count += 1
+                for field_name in raw_non_empty_counts:
+                    match = resolved[field_name]["matches"][0]
+                    raw_value = raw.get(fingerprint_key(match["fingerprint"]))
+                    if has_raw_value(raw_value):
+                        raw_non_empty_counts[field_name] += 1
                 if record["site"]["site_code"]:
                     populated_site_codes += 1
+                    unique_site_codes.add(record["site"]["site_code"])
             self.assertEqual(record_count, 180)
             self.assertEqual(populated_site_codes, 180)
+            self.assertEqual(len(unique_site_codes), 180)
+            self.assertEqual(raw_non_empty_counts["tx_sow_raw"], 132)
+            self.assertEqual(raw_non_empty_counts["region"], 180)
+            self.assertEqual(raw_non_empty_counts["subcontractor_tss"], 114)
+            self.assertEqual(raw_non_empty_counts["subcontractor_ti"], 140)
+            self.assertEqual(raw_non_empty_counts["existing_tss_pr_status"], 109)
+            self.assertEqual(raw_non_empty_counts["existing_ti_pr_status"], 18)
         finally:
             workbook.close()
 
