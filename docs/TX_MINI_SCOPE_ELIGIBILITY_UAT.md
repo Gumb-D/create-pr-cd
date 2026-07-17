@@ -52,22 +52,25 @@ These counts have been independently verified against the canonical implementati
 
 ### TSS
 - **UAT_CANDIDATE**: 12
-- **DUPLICATE_BLOCKED**: 1794
-- **NO_PR_OR_IGNORED**: 1166
-- **REVIEW_REQUIRED**: 3
+- **DUPLICATE_BLOCKED**: 1787
+- **NO_PR_OR_IGNORED**: 406
+- **REVIEW_REQUIRED**: 770
 
 ### TI
 - **UAT_CANDIDATE**: 0
 - **DUPLICATE_BLOCKED**: 1765
-- **NO_PR_OR_IGNORED**: 1208
-- **REVIEW_REQUIRED**: 2
+- **NO_PR_OR_IGNORED**: 406
+- **REVIEW_REQUIRED**: 804
 
 ## Local UAT Command
 
 Generate the UAT packet locally to review the candidates:
 
 ```powershell
-python scripts/build_tx_mini_scope_uat.py --input "Info/reference/du_exports/A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx" --profile config/du_profiles/tx_mini_pr_v1.yaml
+python scripts/build_tx_mini_scope_uat.py `
+  --input "Info/reference/du_exports/A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx" `
+  --profile "config/du_profiles/tx_mini_pr_v1.yaml" `
+  --scope-config "config/scope_eligibility/tx_mini_pr_v1.json"
 ```
 
 The output artifacts will be written to `output/tx-mini-scope-eligibility-uat/`.

@@ -18,7 +18,7 @@ from canonical_site_validator import empty_canonical_site_record
 
 
 class TestCanonicalGeneratorBridge(unittest.TestCase):
-    def make_record(self, *, scope="TSS", status="NO_PR", classification="PR_INPUT_READY"):
+    def make_record(self, *, scope="TSS", status="NO_PR", classification="PR_INPUT_READY", date_val="2026-07-17"):
         record = empty_canonical_site_record()
         record["identity"].update(
             {
@@ -59,6 +59,17 @@ class TestCanonicalGeneratorBridge(unittest.TestCase):
             "normalization_status": "APPROVED",
             "sow_classification": "PR_TRIGGER",
         }
+        date_field = "tss_actual_end_date" if scope == "TSS" else "ti_actual_end_date"
+        record["source_evidence"]["fields"][date_field] = {
+            "source_header_fingerprint": {
+                "field_code": "ACTUAL_END",
+                "wbs_stage": "Stage",
+                "task_name": "Task",
+                "display_header": "actual end time",
+            },
+            "source_value": date_val,
+            "mapping_status": "APPROVED",
+        }
         record["validation"].update(
             {
                 "profile_id": "zte_tx_mini_pr_v1",
@@ -82,30 +93,63 @@ class TestCanonicalGeneratorBridge(unittest.TestCase):
         self.assertEqual(row["UAT Classification"], "UAT_CANDIDATE")
         self.assertFalse(row["ECC Allowed"])
 
-    def test_scope_status_drives_duplicate_and_no_pr_required_classification(self):
-        self.assertEqual(classify_uat_record(self.make_record(status="PR_EXISTS"), "TSS")[0], "DUPLICATE_BLOCKED")
-        self.assertEqual(classify_uat_record(self.make_record(status="NO_PR_REQUIRED"), "TSS")[0], "NO_PR_OR_IGNORED")
-        self.assertEqual(classify_uat_record(self.make_record(status="NO_PR"), "TSS")[0], "UAT_CANDIDATE")
+    def test_precedence_2_unresolved_evidence_over_3_duplicate(self):
+        duplicate_unresolved = self.make_record(status="PR_EXISTS", classification="PR_INPUT_INCOMPLETE")
+        self.assertEqual(classify_uat_record(duplicate_unresolved, "TSS")[0], "REVIEW_REQUIRED")
 
-    def test_duplicate_and_no_pr_required_take_precedence_over_incomplete_fields(self):
-        duplicate = self.make_record(status="PR_EXISTS", classification="PR_INPUT_INCOMPLETE")
-        no_pr_required = self.make_record(status="NO_PR_REQUIRED", classification="PR_INPUT_INCOMPLETE")
-        self.assertEqual(classify_uat_record(duplicate, "TSS")[0], "DUPLICATE_BLOCKED")
-        self.assertEqual(classify_uat_record(no_pr_required, "TSS")[0], "NO_PR_OR_IGNORED")
+    def test_precedence_3_duplicate_over_4_blank_actual_end(self):
+        duplicate_blank = self.make_record(status="PR_EXISTS", date_val="")
+        self.assertEqual(classify_uat_record(duplicate_blank, "TSS")[0], "DUPLICATE_BLOCKED")
 
-    def test_incomplete_record_remains_review_required_when_no_existing_pr(self):
-        classification, reasons = classify_uat_record(
-            self.make_record(classification="PR_INPUT_INCOMPLETE"),
-            "TSS",
-        )
-        self.assertEqual(classification, "REVIEW_REQUIRED")
-        self.assertIn("MISSING_PR_CRITICAL_FIELD:tx_sow_raw", reasons)
+    def test_precedence_4_blank_actual_end_over_5_malformed_actual_end(self):
+        # Blank is NO_PR_OR_IGNORED, malformed is REVIEW_REQUIRED. 
+        # A blank date is caught before malformed checks.
+        blank_date = self.make_record(date_val=None)
+        self.assertEqual(classify_uat_record(blank_date, "TSS")[0], "NO_PR_OR_IGNORED")
+
+    def test_precedence_5_malformed_actual_end_over_6_sow_no_pr_trigger(self):
+        malformed_and_no_pr_trigger = self.make_record(date_val="invalid-date")
+        malformed_and_no_pr_trigger["source_evidence"]["fields"]["tx_sow_normalized"]["normalization_status"] = "APPROVED_NO_OUTPUT"
+        self.assertEqual(classify_uat_record(malformed_and_no_pr_trigger, "TSS")[0], "REVIEW_REQUIRED")
+
+    def test_precedence_6_sow_no_pr_trigger_over_7_sow_review_state(self):
+        # If it's APPROVED_NO_OUTPUT, it's NO_PR_OR_IGNORED, instead of REVIEW_REQUIRED.
+        no_pr_trigger = self.make_record()
+        no_pr_trigger["source_evidence"]["fields"]["tx_sow_normalized"]["normalization_status"] = "APPROVED_NO_OUTPUT"
+        self.assertEqual(classify_uat_record(no_pr_trigger, "TSS")[0], "NO_PR_OR_IGNORED")
+
+    def test_precedence_7_sow_review_state_over_8_uat_candidate(self):
+        unapproved_sow = self.make_record()
+        unapproved_sow["source_evidence"]["fields"]["tx_sow_normalized"]["normalization_status"] = "UNVERIFIED"
+        self.assertEqual(classify_uat_record(unapproved_sow, "TSS")[0], "REVIEW_REQUIRED")
+
+    def test_tss_duplicate_cannot_block_ti(self):
+        record = self.make_record(scope="TSS", status="PR_EXISTS")
+        self.assertEqual(classify_uat_record(record, "TSS")[0], "DUPLICATE_BLOCKED")
+        self.assertEqual(classify_uat_record(record, "TI")[0], "UAT_CANDIDATE")
+
+    def test_ti_duplicate_cannot_block_tss(self):
+        record = self.make_record(scope="TI", status="PR_EXISTS")
+        self.assertEqual(classify_uat_record(record, "TI")[0], "DUPLICATE_BLOCKED")
+        self.assertEqual(classify_uat_record(record, "TSS")[0], "UAT_CANDIDATE")
+
+    def test_tss_date_cannot_activate_ti(self):
+        record = self.make_record(scope="TSS", date_val="2026-07-17")
+        # Ensure TI date is blank
+        record["source_evidence"]["fields"]["ti_actual_end_date"] = {"source_value": ""}
+        self.assertEqual(classify_uat_record(record, "TI")[0], "NO_PR_OR_IGNORED")
+
+    def test_ti_date_cannot_activate_tss(self):
+        record = self.make_record(scope="TI", date_val="2026-07-17")
+        # Ensure TSS date is blank
+        record["source_evidence"]["fields"]["tss_actual_end_date"] = {"source_value": ""}
+        self.assertEqual(classify_uat_record(record, "TSS")[0], "NO_PR_OR_IGNORED")
 
     def test_writer_creates_generator_compatible_data_sheet_and_partitions(self):
         records = [
-            self.make_record(status="NO_PR"),
+            self.make_record(),
             self.make_record(status="PR_EXISTS"),
-            self.make_record(status="NO_PR_REQUIRED"),
+            self.make_record(date_val=None),
             self.make_record(classification="PR_INPUT_INCOMPLETE"),
         ]
         with tempfile.TemporaryDirectory() as temp_dir:
