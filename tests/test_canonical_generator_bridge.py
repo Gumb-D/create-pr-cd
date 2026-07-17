@@ -84,14 +84,14 @@ class TestCanonicalGeneratorBridge(unittest.TestCase):
 
     def test_scope_status_drives_duplicate_and_no_pr_required_classification(self):
         self.assertEqual(classify_uat_record(self.make_record(status="PR_EXISTS"), "TSS")[0], "DUPLICATE_BLOCKED")
-        self.assertEqual(classify_uat_record(self.make_record(status="NO_PR_REQUIRED"), "TSS")[0], "NO_PR_REQUIRED")
+        self.assertEqual(classify_uat_record(self.make_record(status="NO_PR_REQUIRED"), "TSS")[0], "NO_PR_OR_IGNORED")
         self.assertEqual(classify_uat_record(self.make_record(status="NO_PR"), "TSS")[0], "UAT_CANDIDATE")
 
     def test_duplicate_and_no_pr_required_take_precedence_over_incomplete_fields(self):
         duplicate = self.make_record(status="PR_EXISTS", classification="PR_INPUT_INCOMPLETE")
         no_pr_required = self.make_record(status="NO_PR_REQUIRED", classification="PR_INPUT_INCOMPLETE")
         self.assertEqual(classify_uat_record(duplicate, "TSS")[0], "DUPLICATE_BLOCKED")
-        self.assertEqual(classify_uat_record(no_pr_required, "TSS")[0], "NO_PR_REQUIRED")
+        self.assertEqual(classify_uat_record(no_pr_required, "TSS")[0], "NO_PR_OR_IGNORED")
 
     def test_incomplete_record_remains_review_required_when_no_existing_pr(self):
         classification, reasons = classify_uat_record(
@@ -123,7 +123,7 @@ class TestCanonicalGeneratorBridge(unittest.TestCase):
                     "summary",
                     "uat_candidates",
                     "duplicate_blocked",
-                    "no_pr_required",
+                    "no_pr_or_ignored",
                     "review_required",
                     "traceability",
                 ],
@@ -139,7 +139,7 @@ class TestCanonicalGeneratorBridge(unittest.TestCase):
             summary = json.loads(outputs["summary_json"].read_text(encoding="utf-8"))
             self.assertEqual(summary["counts"]["UAT_CANDIDATE"], 1)
             self.assertEqual(summary["counts"]["DUPLICATE_BLOCKED"], 1)
-            self.assertEqual(summary["counts"]["NO_PR_REQUIRED"], 1)
+            self.assertEqual(summary["counts"]["NO_PR_OR_IGNORED"], 1)
             self.assertEqual(summary["counts"]["REVIEW_REQUIRED"], 1)
             self.assertEqual(summary["generator_data_row_count"], 1)
             self.assertFalse(summary["ecc_allowed"])

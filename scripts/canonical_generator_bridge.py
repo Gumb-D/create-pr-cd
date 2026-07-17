@@ -26,7 +26,7 @@ from du_profile_loader import load_du_profile
 from profile_du_export import build_header_inventory, calculate_header_hash, fingerprint_key
 
 ALLOWED_UAT_PROFILE_STATUSES = {"PR_INPUT_READY", "PRODUCTION"}
-UAT_CLASSIFICATIONS = ("UAT_CANDIDATE", "DUPLICATE_BLOCKED", "NO_PR_REQUIRED", "REVIEW_REQUIRED")
+UAT_CLASSIFICATIONS = ("UAT_CANDIDATE", "DUPLICATE_BLOCKED", "NO_PR_OR_IGNORED", "REVIEW_REQUIRED")
 
 GENERATOR_COLUMNS = (
     "customer site code",
@@ -99,12 +99,12 @@ def classify_uat_record(record: Mapping[str, Any], scope: str) -> tuple[str, lis
     if status == PR_STATUS_EXISTS:
         return "DUPLICATE_BLOCKED", reasons + [f"{status_field}:PR_EXISTS"]
     if status == PR_STATUS_NOT_REQUIRED:
-        return "NO_PR_REQUIRED", reasons + [f"{status_field}:NO_PR_REQUIRED"]
+        return "NO_PR_OR_IGNORED", reasons + [f"{status_field}:NO_PR_REQUIRED"]
 
     date_field = _scope_date_field(scope)
     date_evidence = record.get("source_evidence", {}).get("fields", {}).get(date_field)
     if isinstance(date_evidence, Mapping) and _is_blank(date_evidence.get("source_value")):
-        return "NO_PR_REQUIRED", reasons + [f"{date_field}:ACTUAL_END_MISSING"]
+        return "NO_PR_OR_IGNORED", reasons + [f"{date_field}:ACTUAL_END_MISSING"]
 
     if validation.get("pr_input_classification") not in {"PR_INPUT_READY", "PR_INPUT_READY_WITH_REVIEW"}:
         return "REVIEW_REQUIRED", reasons or ["CANONICAL_RECORD_NOT_READY"]
@@ -114,7 +114,7 @@ def classify_uat_record(record: Mapping[str, Any], scope: str) -> tuple[str, lis
     if normalization_status not in {"APPROVED", "APPROVED_NO_OUTPUT"}:
         return "REVIEW_REQUIRED", reasons + [f"SOW_NORMALIZATION:{normalization_status or 'MISSING'}"]
     if normalization_status == "APPROVED_NO_OUTPUT":
-        return "NO_PR_REQUIRED", reasons + ["SOW_CLASSIFICATION:NO_PR_TRIGGER"]
+        return "NO_PR_OR_IGNORED", reasons + ["SOW_CLASSIFICATION:NO_PR_TRIGGER"]
 
     return "UAT_CANDIDATE", reasons
 
@@ -221,7 +221,7 @@ def write_uat_packet(
     partitions = {
         "uat_candidates": candidate_rows,
         "duplicate_blocked": [row for row in rows if row["UAT Classification"] == "DUPLICATE_BLOCKED"],
-        "no_pr_required": [row for row in rows if row["UAT Classification"] == "NO_PR_REQUIRED"],
+        "no_pr_or_ignored": [row for row in rows if row["UAT Classification"] == "NO_PR_OR_IGNORED"],
         "review_required": [row for row in rows if row["UAT Classification"] == "REVIEW_REQUIRED"],
     }
     for sheet_name, partition_rows in partitions.items():

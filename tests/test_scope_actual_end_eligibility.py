@@ -58,7 +58,7 @@ class TestScopeActualEndEligibility(unittest.TestCase):
 
     def test_missing_scope_actual_end_is_ignored(self):
         classification, reasons = classify_uat_record(self.make_record(actual_end=None), "TI")
-        self.assertEqual(classification, "NO_PR_REQUIRED")
+        self.assertEqual(classification, "NO_PR_OR_IGNORED")
         self.assertIn("ti_actual_end_date:ACTUAL_END_MISSING", reasons)
 
     def test_completed_scope_remains_candidate_even_when_details_say_drop_by_cd(self):
@@ -81,7 +81,7 @@ class TestScopeActualEndEligibility(unittest.TestCase):
         )
         self.assertEqual(
             classify_uat_record(self.make_record(scope="TSS", actual_end=None), "TSS")[0],
-            "NO_PR_REQUIRED",
+            "NO_PR_OR_IGNORED",
         )
 
 

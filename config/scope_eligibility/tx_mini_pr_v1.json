@@ -1,0 +1,25 @@
+{
+  "profile_id": "tx_mini_pr_v1",
+  "config_version": "0.1.0",
+  "status": "UAT_ONLY",
+  "scopes": {
+    "TSS": {
+      "rule": "actual_end_required",
+      "actual_end_fingerprint": {
+        "field_code": "WP10400|AC0000111560|actual_end_date",
+        "wbs_stage": "Survey&Design",
+        "task_name": "Physical Survey",
+        "display_header": "actual end time"
+      }
+    },
+    "TI": {
+      "rule": "actual_end_required",
+      "actual_end_fingerprint": {
+        "field_code": "WP11100|AC0000111567|actual_end_date",
+        "wbs_stage": "Telecom Installation",
+        "task_name": "Equipment Installation",
+        "display_header": "actual end time"
+      }
+    }
+  }
+}
