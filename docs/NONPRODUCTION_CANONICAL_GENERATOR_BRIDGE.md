@@ -1,6 +1,6 @@
 # Non-Production Canonical-to-Generator Bridge
 
-The bridge converts an approved four-header iEPMS export into a local-only UAT workbook compatible with the existing generator input column contract.
+The bridge converts an approved four-header iEPMS export into a local-only UAT workbook compatible with the existing generator input contract.
 
 It does not import, invoke, or enable the ECC generator. Every output row contains:
 
@@ -28,13 +28,15 @@ python scripts\canonical_generator_bridge.py `
 
 ## Workbook sheets
 
+- `data` — direct generator-compatible sheet. Rows 1–3 are UAT notices, row 4 contains the exact legacy Header names, and only `UAT_CANDIDATE` records are included.
 - `summary`
-- `generator_input`
 - `uat_candidates`
 - `duplicate_blocked`
 - `no_pr_required`
 - `review_required`
 - `traceability`
+
+The current generator can read the bridge workbook through its existing `sheet_name='data', header=3` contract. The bridge itself never invokes the generator.
 
 ## Safety behavior
 
@@ -43,6 +45,6 @@ python scripts\canonical_generator_bridge.py `
 - `PR_INPUT_READY` or `PRODUCTION` profile required for bridge execution.
 - Missing or ambiguous approved required mappings stop execution.
 - Canonical validation and SOW normalization remain fail-closed.
-- Existing PR references are separated into `duplicate_blocked`.
-- `NO_PR_REQUIRED` records are separated from candidates.
+- Existing PR references are separated into `duplicate_blocked` and excluded from `data`.
+- `NO_PR_REQUIRED` records are separated and excluded from `data`.
 - No ECC file is generated.
