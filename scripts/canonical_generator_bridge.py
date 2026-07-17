@@ -23,7 +23,7 @@ from du_export_adapter import (
     resolve_profile_field_mappings,
 )
 from du_profile_loader import load_du_profile
-from profile_du_export import build_header_inventory, calculate_header_hash
+from profile_du_export import build_header_inventory, calculate_header_hash, fingerprint_key
 
 ALLOWED_UAT_PROFILE_STATUSES = {"PR_INPUT_READY", "PRODUCTION"}
 UAT_CLASSIFICATIONS = ("UAT_CANDIDATE", "DUPLICATE_BLOCKED", "NO_PR_REQUIRED", "REVIEW_REQUIRED")
@@ -48,6 +48,7 @@ GENERATOR_COLUMNS = (
     "TX SOW Details",
     "NE SOW Details",
     "FE SOW Details",
+    "Scope Actual End Date",
     "Source Row Number",
     "DU Profile ID",
     "DU Profile Version",
@@ -71,12 +72,20 @@ def _load_json_or_yaml(path: Path) -> Any:
         return yaml.safe_load(text)
 
 
+def _is_blank(value: Any) -> bool:
+    return value is None or (isinstance(value, str) and not value.strip())
+
+
+def _scope_date_field(scope: str) -> str:
+    return f"{scope.lower()}_actual_end_date"
+
+
 def classify_uat_record(record: Mapping[str, Any], scope: str) -> tuple[str, list[str]]:
     """Classify one canonical record for non-production UAT.
 
-    Duplicate prevention and explicit no-PR-required status take precedence over
-    canonical completeness. A record with an existing PR must never be hidden in
-    a generic review bucket merely because another field is incomplete.
+    Existing PR and explicit no-PR-required status take precedence. When a
+    profile has an approved scope actual-end gate, a blank actual end means the
+    scope is not yet eligible and must be ignored rather than generated early.
     """
     scope = str(scope).upper()
     if scope not in {"TSS", "TI"}:
@@ -91,6 +100,11 @@ def classify_uat_record(record: Mapping[str, Any], scope: str) -> tuple[str, lis
         return "DUPLICATE_BLOCKED", reasons + [f"{status_field}:PR_EXISTS"]
     if status == PR_STATUS_NOT_REQUIRED:
         return "NO_PR_REQUIRED", reasons + [f"{status_field}:NO_PR_REQUIRED"]
+
+    date_field = _scope_date_field(scope)
+    date_evidence = record.get("source_evidence", {}).get("fields", {}).get(date_field)
+    if isinstance(date_evidence, Mapping) and _is_blank(date_evidence.get("source_value")):
+        return "NO_PR_REQUIRED", reasons + [f"{date_field}:ACTUAL_END_MISSING"]
 
     if validation.get("pr_input_classification") not in {"PR_INPUT_READY", "PR_INPUT_READY_WITH_REVIEW"}:
         return "REVIEW_REQUIRED", reasons or ["CANONICAL_RECORD_NOT_READY"]
@@ -118,6 +132,7 @@ def canonical_record_to_generator_row(record: Mapping[str, Any], scope: str) -> 
     context = record.get("pr_context", {})
     technical = record.get("technical_context", {})
     validation = record.get("validation", {})
+    date_evidence = record.get("source_evidence", {}).get("fields", {}).get(_scope_date_field(str(scope).upper()), {})
     return {
         "customer site code": site.get("site_code", ""),
         "customer site name": site.get("site_name", ""),
@@ -138,6 +153,7 @@ def canonical_record_to_generator_row(record: Mapping[str, Any], scope: str) -> 
         "TX SOW Details": technical.get("tx_sow_details", ""),
         "NE SOW Details": technical.get("ne_sow_details", ""),
         "FE SOW Details": technical.get("fe_sow_details", ""),
+        "Scope Actual End Date": date_evidence.get("source_value") if isinstance(date_evidence, Mapping) else "",
         "Source Row Number": identity.get("source_row_number"),
         "DU Profile ID": validation.get("profile_id", ""),
         "DU Profile Version": validation.get("profile_version", ""),
@@ -213,6 +229,7 @@ def write_uat_packet(
 
     traceability_columns = (
         "customer site code",
+        "Scope Actual End Date",
         "Source Row Number",
         "DU Profile ID",
         "DU Profile Version",
@@ -276,6 +293,42 @@ def _select_source_sheet(
     raise ValueError("RESOLVED_SOURCE_SHEET_NOT_FOUND")
 
 
+def _load_scope_eligibility(profile: Mapping[str, Any], profile_path: Path) -> Mapping[str, Any]:
+    config_path = profile_path.parent.parent / "scope_eligibility" / f"{profile.get('profile_id', '')}.json"
+    if not config_path.exists():
+        return {}
+    config = _load_json_or_yaml(config_path)
+    if config.get("profile_id") != profile.get("profile_id"):
+        raise ValueError("SCOPE_ELIGIBILITY_PROFILE_MISMATCH")
+    return config.get("scopes", {})
+
+
+def _attach_scope_eligibility(
+    record: dict[str, Any],
+    raw_values: Mapping[str, Any],
+    scope: str,
+    scope_config: Mapping[str, Any],
+) -> dict[str, Any]:
+    config = scope_config.get(scope, {}) if isinstance(scope_config, Mapping) else {}
+    if not config:
+        return record
+    if config.get("rule") != "actual_end_required":
+        raise ValueError("UNSUPPORTED_SCOPE_ELIGIBILITY_RULE")
+    fingerprint = config.get("actual_end_fingerprint")
+    if not isinstance(fingerprint, Mapping):
+        raise ValueError("MISSING_SCOPE_ACTUAL_END_FINGERPRINT")
+    key = fingerprint_key(fingerprint)
+    if key not in raw_values:
+        raise ValueError("SCOPE_ACTUAL_END_HEADER_NOT_FOUND")
+    record["source_evidence"]["fields"][_scope_date_field(scope)] = {
+        "source_header_fingerprint": dict(fingerprint),
+        "source_value": raw_values.get(key),
+        "transformation": "none",
+        "mapping_status": "APPROVED",
+    }
+    return record
+
+
 def build_records_from_export(
     input_path: Path,
     profile_path: Path,
@@ -283,7 +336,9 @@ def build_records_from_export(
     sow_registry_path: Path,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     input_path = Path(input_path)
-    profile = load_du_profile(Path(profile_path))
+    profile_path = Path(profile_path)
+    scope = str(scope).upper()
+    profile = load_du_profile(profile_path)
     if profile.get("status") not in ALLOWED_UAT_PROFILE_STATUSES:
         raise ValueError("DU profile must be PR_INPUT_READY or PRODUCTION for non-production UAT bridging.")
 
@@ -307,6 +362,13 @@ def build_records_from_export(
         column["fingerprint_key"]: column["source_position"]["one_based_index"]
         for column in source_sheet.get("columns", [])
     }
+    scope_config = _load_scope_eligibility(profile, profile_path)
+    configured = scope_config.get(scope, {}) if isinstance(scope_config, Mapping) else {}
+    if configured:
+        expected_key = fingerprint_key(configured.get("actual_end_fingerprint", {}))
+        if expected_key not in positions:
+            raise ValueError("SCOPE_ACTUAL_END_HEADER_NOT_FOUND")
+
     sow_registry = _load_json_or_yaml(Path(sow_registry_path))
     identity = profile["identity"]
     metadata = {
@@ -329,16 +391,15 @@ def build_records_from_export(
     for row_number, raw_values in _iter_source_rows(input_path, source_sheet["sheet_name"], positions):
         if not any(value not in (None, "") for value in raw_values.values()):
             continue
-        records.append(
-            build_canonical_site_record(
-                raw_values,
-                profile,
-                {**context_base, "source_row_number": row_number},
-                scope=scope,
-                resolved_mappings=resolved,
-                sow_registry=sow_registry,
-            )
+        record = build_canonical_site_record(
+            raw_values,
+            profile,
+            {**context_base, "source_row_number": row_number},
+            scope=scope,
+            resolved_mappings=resolved,
+            sow_registry=sow_registry,
         )
+        records.append(_attach_scope_eligibility(record, raw_values, scope, scope_config))
     return records, metadata
 
 
