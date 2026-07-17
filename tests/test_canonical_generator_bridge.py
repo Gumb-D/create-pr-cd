@@ -28,7 +28,7 @@ class TestCanonicalGeneratorBridge(unittest.TestCase):
                 "source_row_number": 5,
             }
         )
-        record["site"].update({"site_code": "A0001", "site_name": "Synthetic"})
+        record["site"].update({"site_code": "A0001", "site_name": "Synthetic", "du_key": "DU0001"})
         record["pr_context"].update(
             {
                 "tx_sow_raw": "MW Swap",
@@ -70,12 +70,14 @@ class TestCanonicalGeneratorBridge(unittest.TestCase):
         )
         return record
 
-    def test_candidate_maps_to_legacy_generator_columns_and_locks_ecc(self):
-        record = self.make_record()
-        row = canonical_record_to_generator_row(record, "TSS")
-        self.assertEqual(row["Site Code"], "A0001")
+    def test_candidate_maps_to_exact_legacy_generator_columns_and_locks_ecc(self):
+        row = canonical_record_to_generator_row(self.make_record(), "TSS")
+        self.assertEqual(row["customer site code"], "A0001")
+        self.assertEqual(row["customer site name"], "Synthetic")
+        self.assertEqual(row["du code"], "DU0001")
         self.assertEqual(row["Tx SOW"], "MW SWAP")
-        self.assertEqual(row["Subcon - TSS"], "GTSB")
+        self.assertEqual(row["SubCon - TSS Team"], "GTSB")
+        self.assertEqual(row["Subcon PR - TSS"], "")
         self.assertEqual(row["MW Config Antenna Size NE"], "0.6m")
         self.assertEqual(row["UAT Classification"], "UAT_CANDIDATE")
         self.assertFalse(row["ECC Allowed"])
@@ -93,7 +95,7 @@ class TestCanonicalGeneratorBridge(unittest.TestCase):
         self.assertEqual(classification, "REVIEW_REQUIRED")
         self.assertIn("MISSING_PR_CRITICAL_FIELD:tx_sow_raw", reasons)
 
-    def test_writer_creates_partitioned_workbook_and_json_summary(self):
+    def test_writer_creates_generator_compatible_data_sheet_and_partitions(self):
         records = [
             self.make_record(status="NO_PR"),
             self.make_record(status="PR_EXISTS"),
@@ -111,8 +113,8 @@ class TestCanonicalGeneratorBridge(unittest.TestCase):
             self.assertEqual(
                 workbook.sheetnames,
                 [
+                    "data",
                     "summary",
-                    "generator_input",
                     "uat_candidates",
                     "duplicate_blocked",
                     "no_pr_required",
@@ -120,12 +122,20 @@ class TestCanonicalGeneratorBridge(unittest.TestCase):
                     "traceability",
                 ],
             )
+            data = workbook["data"]
+            headers = [cell.value for cell in next(data.iter_rows(min_row=4, max_row=4))]
+            self.assertEqual(headers[0], "customer site code")
+            self.assertIn("SubCon - TSS Team", headers)
+            self.assertIn("Subcon PR - TI", headers)
+            self.assertEqual(data.max_row, 5)
             workbook.close()
+
             summary = json.loads(outputs["summary_json"].read_text(encoding="utf-8"))
             self.assertEqual(summary["counts"]["UAT_CANDIDATE"], 1)
             self.assertEqual(summary["counts"]["DUPLICATE_BLOCKED"], 1)
             self.assertEqual(summary["counts"]["NO_PR_REQUIRED"], 1)
             self.assertEqual(summary["counts"]["REVIEW_REQUIRED"], 1)
+            self.assertEqual(summary["generator_data_row_count"], 1)
             self.assertFalse(summary["ecc_allowed"])
 
 
