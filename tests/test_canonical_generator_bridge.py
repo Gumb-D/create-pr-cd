@@ -93,35 +93,31 @@ class TestCanonicalGeneratorBridge(unittest.TestCase):
         self.assertEqual(row["UAT Classification"], "UAT_CANDIDATE")
         self.assertFalse(row["ECC Allowed"])
 
-    def test_precedence_2_unresolved_evidence_over_3_duplicate(self):
+    def test_precedence_2_duplicate_over_6_unresolved_evidence(self):
         duplicate_unresolved = self.make_record(status="PR_EXISTS", classification="PR_INPUT_INCOMPLETE")
-        self.assertEqual(classify_uat_record(duplicate_unresolved, "TSS")[0], "REVIEW_REQUIRED")
+        self.assertEqual(classify_uat_record(duplicate_unresolved, "TSS")[0], "DUPLICATE_BLOCKED")
 
-    def test_precedence_3_duplicate_over_4_blank_actual_end(self):
-        duplicate_blank = self.make_record(status="PR_EXISTS", date_val="")
-        self.assertEqual(classify_uat_record(duplicate_blank, "TSS")[0], "DUPLICATE_BLOCKED")
+    def test_precedence_3_blank_actual_end_over_6_unresolved_evidence(self):
+        blank_unresolved = self.make_record(classification="PR_INPUT_INCOMPLETE", date_val="")
+        self.assertEqual(classify_uat_record(blank_unresolved, "TSS")[0], "NO_PR_OR_IGNORED")
 
-    def test_precedence_4_blank_actual_end_over_5_malformed_actual_end(self):
-        # Blank is NO_PR_OR_IGNORED, malformed is REVIEW_REQUIRED. 
-        # A blank date is caught before malformed checks.
-        blank_date = self.make_record(date_val=None)
-        self.assertEqual(classify_uat_record(blank_date, "TSS")[0], "NO_PR_OR_IGNORED")
+    def test_precedence_6_unresolved_evidence_with_valid_actual_end(self):
+        valid_unresolved = self.make_record(classification="PR_INPUT_INCOMPLETE", date_val="2026-07-17")
+        self.assertEqual(classify_uat_record(valid_unresolved, "TSS")[0], "REVIEW_REQUIRED")
 
-    def test_precedence_5_malformed_actual_end_over_6_sow_no_pr_trigger(self):
-        malformed_and_no_pr_trigger = self.make_record(date_val="invalid-date")
-        malformed_and_no_pr_trigger["source_evidence"]["fields"]["tx_sow_normalized"]["normalization_status"] = "APPROVED_NO_OUTPUT"
-        self.assertEqual(classify_uat_record(malformed_and_no_pr_trigger, "TSS")[0], "REVIEW_REQUIRED")
+    def test_precedence_4_malformed_actual_end_over_6_unresolved_evidence(self):
+        malformed_unresolved = self.make_record(classification="PR_INPUT_INCOMPLETE", date_val="invalid-date")
+        self.assertEqual(classify_uat_record(malformed_unresolved, "TSS")[0], "REVIEW_REQUIRED")
 
-    def test_precedence_6_sow_no_pr_trigger_over_7_sow_review_state(self):
-        # If it's APPROVED_NO_OUTPUT, it's NO_PR_OR_IGNORED, instead of REVIEW_REQUIRED.
-        no_pr_trigger = self.make_record()
-        no_pr_trigger["source_evidence"]["fields"]["tx_sow_normalized"]["normalization_status"] = "APPROVED_NO_OUTPUT"
-        self.assertEqual(classify_uat_record(no_pr_trigger, "TSS")[0], "NO_PR_OR_IGNORED")
+    def test_precedence_3_blank_actual_end_over_7_unknown_sow(self):
+        blank_unknown_sow = self.make_record(date_val="")
+        blank_unknown_sow["source_evidence"]["fields"]["tx_sow_normalized"]["normalization_status"] = "UNVERIFIED"
+        self.assertEqual(classify_uat_record(blank_unknown_sow, "TSS")[0], "NO_PR_OR_IGNORED")
 
-    def test_precedence_7_sow_review_state_over_8_uat_candidate(self):
-        unapproved_sow = self.make_record()
-        unapproved_sow["source_evidence"]["fields"]["tx_sow_normalized"]["normalization_status"] = "UNVERIFIED"
-        self.assertEqual(classify_uat_record(unapproved_sow, "TSS")[0], "REVIEW_REQUIRED")
+    def test_precedence_7_unknown_sow_with_valid_actual_end(self):
+        valid_unknown_sow = self.make_record(date_val="2026-07-17")
+        valid_unknown_sow["source_evidence"]["fields"]["tx_sow_normalized"]["normalization_status"] = "UNVERIFIED"
+        self.assertEqual(classify_uat_record(valid_unknown_sow, "TSS")[0], "REVIEW_REQUIRED")
 
     def test_tss_duplicate_cannot_block_ti(self):
         record = self.make_record(scope="TSS", status="PR_EXISTS")

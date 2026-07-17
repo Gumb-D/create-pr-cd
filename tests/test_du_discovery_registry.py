@@ -18,6 +18,7 @@ from build_du_discovery_registry import (
 )
 
 
+@unittest.skipIf(not list((ROOT / "output/du-20260706-profile").glob("*/header_inventory.json")), "Legacy profile outputs are not present in local workspace")
 class TestDuDiscoveryRegistry(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

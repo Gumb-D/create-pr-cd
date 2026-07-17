@@ -125,10 +125,10 @@ def classify_uat_record(record: Mapping[str, Any], scope: str) -> tuple[str, lis
 
     validation = record.get("validation", {})
     reasons = [str(value) for value in validation.get("blocking_reasons", []) if str(value).strip()]
-    
-    if validation.get("pr_input_classification") not in {"PR_INPUT_READY", "PR_INPUT_READY_WITH_REVIEW"}:
-        return "REVIEW_REQUIRED", reasons or ["CANONICAL_RECORD_NOT_READY"]
 
+    # 1. Scope config invalid is handled externally (fail closed)
+
+    # 2. Scope-specific existing PR exists
     status_field = "existing_tss_pr_status" if scope == "TSS" else "existing_ti_pr_status"
     status = record.get("pr_context", {}).get(status_field, PR_STATUS_NONE)
 
@@ -140,22 +140,31 @@ def classify_uat_record(record: Mapping[str, Any], scope: str) -> tuple[str, lis
     date_field = _scope_date_field(scope)
     date_evidence = record.get("source_evidence", {}).get("fields", {}).get(date_field)
     
+    # 3. Scope Actual End blank
     if isinstance(date_evidence, Mapping):
         source_val = date_evidence.get("source_value")
         if _is_blank(source_val):
             return "NO_PR_OR_IGNORED", reasons + [f"{date_field}:ACTUAL_END_MISSING"]
+        # 4. Scope Actual End malformed
         if not _is_valid_date(source_val):
             return "REVIEW_REQUIRED", reasons + [f"{date_field}:MALFORMED_DATE"]
 
     sow_evidence = record.get("source_evidence", {}).get("fields", {}).get("tx_sow_normalized", {})
     normalization_status = sow_evidence.get("normalization_status")
     
+    # 5. SOW is approved no-output
     if normalization_status == "APPROVED_NO_OUTPUT":
         return "NO_PR_OR_IGNORED", reasons + ["SOW_CLASSIFICATION:NO_PR_TRIGGER"]
 
+    # 6. canonical candidate-required evidence incomplete
+    if validation.get("pr_input_classification") not in {"PR_INPUT_READY", "PR_INPUT_READY_WITH_REVIEW"}:
+        return "REVIEW_REQUIRED", reasons or ["CANONICAL_RECORD_NOT_READY"]
+
+    # 7. SOW/mapping requires review
     if normalization_status not in {"APPROVED", "APPROVED_NO_OUTPUT"}:
         return "REVIEW_REQUIRED", reasons + [f"SOW_NORMALIZATION:{normalization_status or 'MISSING'}"]
 
+    # 8. Otherwise
     return "UAT_CANDIDATE", reasons
 
 
