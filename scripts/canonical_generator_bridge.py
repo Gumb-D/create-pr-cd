@@ -23,20 +23,23 @@ from du_export_adapter import (
     resolve_profile_field_mappings,
 )
 from du_profile_loader import load_du_profile
-from profile_du_export import build_header_inventory, calculate_header_hash, fingerprint_key
+from profile_du_export import build_header_inventory, calculate_header_hash
 
 ALLOWED_UAT_PROFILE_STATUSES = {"PR_INPUT_READY", "PRODUCTION"}
 UAT_CLASSIFICATIONS = ("UAT_CANDIDATE", "DUPLICATE_BLOCKED", "NO_PR_REQUIRED", "REVIEW_REQUIRED")
 
 GENERATOR_COLUMNS = (
-    "Site Code",
+    "customer site code",
+    "customer site name",
+    "du code",
     "Tx SOW",
     "region",
     "Province/State",
-    "Subcon - TSS",
-    "Subcon - TI",
-    "Existing TSS PR Status",
-    "Existing TI PR Status",
+    "SubCon - TSS Team",
+    "SubCon - TI Team",
+    "Subcon PR - TSS",
+    "Subcon PR - TI",
+    "TX Upgrade Scope",
     "Latitude (North Plus South Minus)",
     "Longitude (East Plus West Minus)",
     "MW Config Antenna Size NE",
@@ -94,6 +97,12 @@ def classify_uat_record(record: Mapping[str, Any], scope: str) -> tuple[str, lis
     return "UAT_CANDIDATE", reasons
 
 
+def _legacy_pr_reference_value(value: Any) -> str:
+    if value in (None, "", PR_STATUS_NONE):
+        return ""
+    return str(value)
+
+
 def canonical_record_to_generator_row(record: Mapping[str, Any], scope: str) -> dict[str, Any]:
     classification, reasons = classify_uat_record(record, scope)
     identity = record.get("identity", {})
@@ -102,14 +111,17 @@ def canonical_record_to_generator_row(record: Mapping[str, Any], scope: str) -> 
     technical = record.get("technical_context", {})
     validation = record.get("validation", {})
     return {
-        "Site Code": site.get("site_code", ""),
+        "customer site code": site.get("site_code", ""),
+        "customer site name": site.get("site_name", ""),
+        "du code": site.get("du_key", ""),
         "Tx SOW": context.get("tx_sow_normalized") or context.get("tx_sow_raw", ""),
         "region": context.get("region", ""),
         "Province/State": context.get("state", ""),
-        "Subcon - TSS": context.get("subcontractor_tss", ""),
-        "Subcon - TI": context.get("subcontractor_ti", ""),
-        "Existing TSS PR Status": context.get("existing_tss_pr_status", ""),
-        "Existing TI PR Status": context.get("existing_ti_pr_status", ""),
+        "SubCon - TSS Team": context.get("subcontractor_tss", ""),
+        "SubCon - TI Team": context.get("subcontractor_ti", ""),
+        "Subcon PR - TSS": _legacy_pr_reference_value(context.get("existing_tss_pr_status")),
+        "Subcon PR - TI": _legacy_pr_reference_value(context.get("existing_ti_pr_status")),
+        "TX Upgrade Scope": context.get("tx_upgrade_scope_raw", ""),
         "Latitude (North Plus South Minus)": technical.get("latitude"),
         "Longitude (East Plus West Minus)": technical.get("longitude"),
         "MW Config Antenna Size NE": technical.get("antenna_size_ne", ""),
@@ -136,6 +148,13 @@ def _append_rows(worksheet, rows: Iterable[Mapping[str, Any]], columns: Iterable
         worksheet.append([row.get(column) for column in columns])
 
 
+def _append_generator_data_sheet(worksheet, rows: list[Mapping[str, Any]]) -> None:
+    worksheet.append(["NON-PRODUCTION UAT BRIDGE OUTPUT"])
+    worksheet.append(["This sheet contains UAT_CANDIDATE rows only."])
+    worksheet.append(["ECC Allowed is permanently false; use explicit generator CLI arguments for any later local UAT."])
+    _append_rows(worksheet, rows, GENERATOR_COLUMNS)
+
+
 def write_uat_packet(
     records: list[Mapping[str, Any]],
     metadata: Mapping[str, Any],
@@ -158,6 +177,7 @@ def write_uat_packet(
         "header_hash": metadata.get("header_hash", ""),
         "record_count": len(rows),
         "counts": {name: counts.get(name, 0) for name in UAT_CLASSIFICATIONS},
+        "generator_data_row_count": counts.get("UAT_CANDIDATE", 0),
         "ecc_allowed": False,
     }
 
@@ -166,14 +186,16 @@ def write_uat_packet(
     workbook = Workbook()
     workbook.remove(workbook.active)
 
+    candidate_rows = [row for row in rows if row["UAT Classification"] == "UAT_CANDIDATE"]
+    _append_generator_data_sheet(workbook.create_sheet("data"), candidate_rows)
+
     summary_sheet = workbook.create_sheet("summary")
     summary_sheet.append(["Key", "Value"])
     for key, value in summary.items():
         summary_sheet.append([key, json.dumps(value, ensure_ascii=False) if isinstance(value, dict) else value])
 
     partitions = {
-        "generator_input": rows,
-        "uat_candidates": [row for row in rows if row["UAT Classification"] == "UAT_CANDIDATE"],
+        "uat_candidates": candidate_rows,
         "duplicate_blocked": [row for row in rows if row["UAT Classification"] == "DUPLICATE_BLOCKED"],
         "no_pr_required": [row for row in rows if row["UAT Classification"] == "NO_PR_REQUIRED"],
         "review_required": [row for row in rows if row["UAT Classification"] == "REVIEW_REQUIRED"],
@@ -182,7 +204,7 @@ def write_uat_packet(
         _append_rows(workbook.create_sheet(sheet_name), partition_rows, GENERATOR_COLUMNS)
 
     traceability_columns = (
-        "Site Code",
+        "customer site code",
         "Source Row Number",
         "DU Profile ID",
         "DU Profile Version",
@@ -203,9 +225,14 @@ def _iter_source_rows(input_path: Path, sheet_name: str, positions: Mapping[str,
     if suffix in {".xlsx", ".xlsm"}:
         workbook = load_workbook(input_path, read_only=True, data_only=False)
         worksheet = workbook[sheet_name]
-        for row_number, values in enumerate(worksheet.iter_rows(min_row=5, values_only=True), start=5):
-            yield row_number, {key: values[index - 1] if index <= len(values) else None for key, index in positions.items()}
-        workbook.close()
+        try:
+            for row_number, values in enumerate(worksheet.iter_rows(min_row=5, values_only=True), start=5):
+                yield row_number, {
+                    key: values[index - 1] if index <= len(values) else None
+                    for key, index in positions.items()
+                }
+        finally:
+            workbook.close()
         return
     if suffix == ".csv":
         with input_path.open("r", encoding="utf-8-sig", newline="") as handle:
@@ -213,9 +240,28 @@ def _iter_source_rows(input_path: Path, sheet_name: str, positions: Mapping[str,
             for _ in range(4):
                 next(reader, None)
             for row_number, values in enumerate(reader, start=5):
-                yield row_number, {key: values[index - 1] if index <= len(values) else None for key, index in positions.items()}
+                yield row_number, {
+                    key: values[index - 1] if index <= len(values) else None
+                    for key, index in positions.items()
+                }
         return
     raise ValueError("Only .xlsx, .xlsm, and .csv exports are supported.")
+
+
+def _select_source_sheet(inventory: Mapping[str, Any], resolved: Mapping[str, Any], profile: Mapping[str, Any]) -> Mapping[str, Any]:
+    required_fields = [name for name, config in profile.get("field_mapping", {}).items() if config.get("required")]
+    required_sheets = {
+        match["sheet_name"]
+        for name in required_fields
+        for match in resolved.get(name, {}).get("matches", [])
+    }
+    if len(required_sheets) != 1:
+        raise ValueError("REQUIRED_MAPPINGS_SPAN_MULTIPLE_OR_NO_SHEETS")
+    selected_name = next(iter(required_sheets))
+    for sheet in inventory.get("sheets", []):
+        if sheet.get("sheet_name") == selected_name:
+            return sheet
+    raise ValueError("RESOLVED_SOURCE_SHEET_NOT_FOUND")
 
 
 def build_records_from_export(
@@ -244,10 +290,10 @@ def build_records_from_export(
     if required_missing:
         raise ValueError("MISSING_OR_AMBIGUOUS_REQUIRED_MAPPING:" + ",".join(sorted(required_missing)))
 
-    first_sheet = inventory["sheets"][0]
+    source_sheet = _select_source_sheet(inventory, resolved, profile)
     positions = {
         column["fingerprint_key"]: column["source_position"]["one_based_index"]
-        for column in first_sheet.get("columns", [])
+        for column in source_sheet.get("columns", [])
     }
     sow_registry = _load_json_or_yaml(Path(sow_registry_path))
     identity = profile["identity"]
@@ -268,7 +314,7 @@ def build_records_from_export(
     }
 
     records = []
-    for row_number, raw_values in _iter_source_rows(input_path, first_sheet["sheet_name"], positions):
+    for row_number, raw_values in _iter_source_rows(input_path, source_sheet["sheet_name"], positions):
         if not any(value not in (None, "") for value in raw_values.values()):
             continue
         records.append(
@@ -298,7 +344,16 @@ def main() -> int:
     args = parse_args()
     records, metadata = build_records_from_export(args.input, args.profile, args.scope, args.sow_registry)
     outputs = write_uat_packet(records, metadata, args.output, args.scope)
-    print(json.dumps({"records": len(records), "ecc_allowed": False, **{key: str(value) for key, value in outputs.items()}}, indent=2))
+    print(
+        json.dumps(
+            {
+                "records": len(records),
+                "ecc_allowed": False,
+                **{key: str(value) for key, value in outputs.items()},
+            },
+            indent=2,
+        )
+    )
     return 0
 
 
