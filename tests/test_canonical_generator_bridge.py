@@ -87,7 +87,13 @@ class TestCanonicalGeneratorBridge(unittest.TestCase):
         self.assertEqual(classify_uat_record(self.make_record(status="NO_PR_REQUIRED"), "TSS")[0], "NO_PR_REQUIRED")
         self.assertEqual(classify_uat_record(self.make_record(status="NO_PR"), "TSS")[0], "UAT_CANDIDATE")
 
-    def test_incomplete_record_remains_review_required(self):
+    def test_duplicate_and_no_pr_required_take_precedence_over_incomplete_fields(self):
+        duplicate = self.make_record(status="PR_EXISTS", classification="PR_INPUT_INCOMPLETE")
+        no_pr_required = self.make_record(status="NO_PR_REQUIRED", classification="PR_INPUT_INCOMPLETE")
+        self.assertEqual(classify_uat_record(duplicate, "TSS")[0], "DUPLICATE_BLOCKED")
+        self.assertEqual(classify_uat_record(no_pr_required, "TSS")[0], "NO_PR_REQUIRED")
+
+    def test_incomplete_record_remains_review_required_when_no_existing_pr(self):
         classification, reasons = classify_uat_record(
             self.make_record(classification="PR_INPUT_INCOMPLETE"),
             "TSS",
