@@ -49,6 +49,16 @@ class TestCanonicalGeneratorBridge(unittest.TestCase):
                 "antenna_size_fe": "0.6m",
             }
         )
+        record["source_evidence"]["fields"]["tx_sow_normalized"] = {
+            "source_header_fingerprint": {
+                "field_code": "TX_SOW",
+                "wbs_stage": "Network Planning",
+                "task_name": "Microwave",
+                "display_header": "Microwave Tx SOW",
+            },
+            "normalization_status": "APPROVED",
+            "sow_classification": "PR_TRIGGER",
+        }
         record["validation"].update(
             {
                 "profile_id": "zte_tx_mini_pr_v1",
