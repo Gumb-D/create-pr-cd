@@ -72,12 +72,26 @@ def _load_json_or_yaml(path: Path) -> Any:
 
 
 def classify_uat_record(record: Mapping[str, Any], scope: str) -> tuple[str, list[str]]:
+    """Classify one canonical record for non-production UAT.
+
+    Duplicate prevention and explicit no-PR-required status take precedence over
+    canonical completeness. A record with an existing PR must never be hidden in
+    a generic review bucket merely because another field is incomplete.
+    """
     scope = str(scope).upper()
     if scope not in {"TSS", "TI"}:
         raise ValueError("scope must be TSS or TI")
 
     validation = record.get("validation", {})
     reasons = [str(value) for value in validation.get("blocking_reasons", []) if str(value).strip()]
+    status_field = "existing_tss_pr_status" if scope == "TSS" else "existing_ti_pr_status"
+    status = record.get("pr_context", {}).get(status_field, PR_STATUS_NONE)
+
+    if status == PR_STATUS_EXISTS:
+        return "DUPLICATE_BLOCKED", reasons + [f"{status_field}:PR_EXISTS"]
+    if status == PR_STATUS_NOT_REQUIRED:
+        return "NO_PR_REQUIRED", reasons + [f"{status_field}:NO_PR_REQUIRED"]
+
     if validation.get("pr_input_classification") not in {"PR_INPUT_READY", "PR_INPUT_READY_WITH_REVIEW"}:
         return "REVIEW_REQUIRED", reasons or ["CANONICAL_RECORD_NOT_READY"]
 
@@ -88,12 +102,6 @@ def classify_uat_record(record: Mapping[str, Any], scope: str) -> tuple[str, lis
     if normalization_status == "APPROVED_NO_OUTPUT":
         return "NO_PR_REQUIRED", reasons + ["SOW_CLASSIFICATION:NO_PR_TRIGGER"]
 
-    status_field = "existing_tss_pr_status" if scope == "TSS" else "existing_ti_pr_status"
-    status = record.get("pr_context", {}).get(status_field, PR_STATUS_NONE)
-    if status == PR_STATUS_EXISTS:
-        return "DUPLICATE_BLOCKED", reasons + [f"{status_field}:PR_EXISTS"]
-    if status == PR_STATUS_NOT_REQUIRED:
-        return "NO_PR_REQUIRED", reasons + [f"{status_field}:NO_PR_REQUIRED"]
     return "UAT_CANDIDATE", reasons
 
 
@@ -248,7 +256,11 @@ def _iter_source_rows(input_path: Path, sheet_name: str, positions: Mapping[str,
     raise ValueError("Only .xlsx, .xlsm, and .csv exports are supported.")
 
 
-def _select_source_sheet(inventory: Mapping[str, Any], resolved: Mapping[str, Any], profile: Mapping[str, Any]) -> Mapping[str, Any]:
+def _select_source_sheet(
+    inventory: Mapping[str, Any],
+    resolved: Mapping[str, Any],
+    profile: Mapping[str, Any],
+) -> Mapping[str, Any]:
     required_fields = [name for name, config in profile.get("field_mapping", {}).items() if config.get("required")]
     required_sheets = {
         match["sheet_name"]
