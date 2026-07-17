@@ -4,91 +4,39 @@
 This document outlines the scope eligibility implementation for the TX Mini profile `tx_mini_pr_v1` along with instructions to run the local UAT packet generation. 
 The implementation enforces Actual End date checks before candidates are marked for PR creation, preserving the existing non-production boundaries.
 
-## Source Data
-- **Approved Export**: `Info/reference/du_exports/A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx`
-- **Source SHA-256**: `81de6ba3673dad406e7824727c5c8492dd06b3ef60d088a6e9d680af6c35f8ab`
-- **Approved Header Hash**: `167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221`
+## Final Scope Configuration
+The definitive Actual End Date fingerprints used for eligibility checking are:
+- TSS: `WP10400|AC0000111560|actual_end_date` (Survey&Design / Physical Survey)
+- TI: `WP11100|AC0000111567|actual_end_date` (Telecom Installation / Equipment Installation)
 
-## Scope Eligibility Fingerprints
+## Precedence Rules
+The final evaluation precedence is:
+1. Invalid global scope configuration ? Fail the run.
+2. Existing scope-specific PR ? `DUPLICATE_BLOCKED`.
+3. Scope Actual End blank ? `NO_PR_OR_IGNORED`.
+4. Scope Actual End malformed ? `REVIEW_REQUIRED`.
+5. Approved `NO_PR_TRIGGER` SOW ? `NO_PR_OR_IGNORED`.
+6. Completed scope with incomplete candidate-required evidence ? `REVIEW_REQUIRED`.
+7. Completed scope with unverified SOW/mapping ? `REVIEW_REQUIRED`.
+8. Otherwise ? `UAT_CANDIDATE`.
 
-### TSS Actual End Date
-```json
-{
-  "field_code": "WP10400|AC0000111560|actual_end_date",
-  "wbs_stage": "Survey&Design",
-  "task_name": "Physical Survey",
-  "display_header": "actual end time"
-}
-```
-
-### TI Actual End Date
-```json
-{
-  "field_code": "WP11100|AC0000111567|actual_end_date",
-  "wbs_stage": "Telecom Installation",
-  "task_name": "Equipment Installation",
-  "display_header": "actual end time"
-}
-```
-
-## Classification Rules and Precedence
-
-The scope eligibility rules are enforced via a strictly ordered classification:
-
-1. **REVIEW_REQUIRED**: Invalid or ambiguous scope fingerprint.
-2. **REVIEW_REQUIRED**: Canonical record incomplete or required evidence unresolved.
-3. **DUPLICATE_BLOCKED**: Corresponding existing PR reference exists.
-4. **NO_PR_OR_IGNORED**: Corresponding Actual End Date is blank.
-5. **REVIEW_REQUIRED**: Actual End Date cannot be parsed as a valid date.
-6. **NO_PR_OR_IGNORED**: Tx SOW normalization is `NO_PR_TRIGGER`.
-7. **REVIEW_REQUIRED**: Tx SOW, mapping or business evidence requires review.
-8. **UAT_CANDIDATE**: All criteria met and eligible for UAT.
-
-*Note: Scope eligibility acts independently. A TSS completion does not grant TI eligibility and vice versa.*
-
-## Audited Baseline Counts
-
-These counts have been independently verified against the canonical implementation.
+## Final Verified Classification Counts
 
 ### TSS
-- **UAT_CANDIDATE**: 12
-- **DUPLICATE_BLOCKED**: 1787
-- **NO_PR_OR_IGNORED**: 406
-- **REVIEW_REQUIRED**: 770
+- UAT_CANDIDATE: 12
+- DUPLICATE_BLOCKED: 1794
+- NO_PR_OR_IGNORED: 1168
+- REVIEW_REQUIRED: 1
+- TOTAL: 2975
 
 ### TI
-- **UAT_CANDIDATE**: 0
-- **DUPLICATE_BLOCKED**: 1765
-- **NO_PR_OR_IGNORED**: 406
-- **REVIEW_REQUIRED**: 804
+- UAT_CANDIDATE: 0
+- DUPLICATE_BLOCKED: 1765
+- NO_PR_OR_IGNORED: 1208
+- REVIEW_REQUIRED: 2
+- TOTAL: 2975
 
-## Local UAT Command
+## How to generate the UAT Packet
+To generate the latest UAT packet:
+`python scripts/build_tx_mini_scope_uat.py --input "Info/reference/du_exports/A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx" --profile config/du_profiles/tx_mini_pr_v1.yaml --scope-config config/scope_eligibility/tx_mini_pr_v1.json --output output/tx-mini-scope-eligibility-uat`
 
-Generate the UAT packet locally to review the candidates:
-
-```powershell
-python scripts/build_tx_mini_scope_uat.py `
-  --input "Info/reference/du_exports/A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx" `
-  --profile "config/du_profiles/tx_mini_pr_v1.yaml" `
-  --scope-config "config/scope_eligibility/tx_mini_pr_v1.json"
-```
-
-The output artifacts will be written to `output/tx-mini-scope-eligibility-uat/`.
-
-## Non-Production Boundaries
-
-- The profile `tx_mini_pr_v1` remains securely at `PR_INPUT_READY`.
-- The `scope_eligibility` configuration enforces `status: UAT_ONLY`.
-- All output candidates generated have `ECC Allowed = False`.
-- The production gate continues to block and return `PROFILE_NOT_PRODUCTION`.
-
-## Business Review Requirements
-
-Business UAT is pending. The 12 TSS candidates generated need explicit business sign-off.
-The generated workbooks do not automatically bypass the review process.
-
-## Known Limitations and Blockers Before Production
-
-- Completion of the current Business UAT review and sign-off on the generated candidates.
-- Profiling lifecycle promotion to `PRODUCTION`.
-- Production ECC remains strictly isolated. No automated merging or generator invocation should be initiated during UAT.
