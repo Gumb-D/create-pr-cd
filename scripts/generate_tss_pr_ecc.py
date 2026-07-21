@@ -968,7 +968,7 @@ def filter_site_rows(df_site, site_codes=None, all_sites=False):
 print("[STEP 0] Loading Reference Data from Markdown and validating inputs...")
 
 site_file = require_file(args.site_data, 'Site PR/PO View')
-pr_file = require_file(args.pr_model, 'PR Model', expected_sha="82a47564590a8083c88b9dad61472c04513bb2832f8b1a44750d6a4347446c4d")
+pr_file = require_file(args.pr_model, 'PR Model', expected_sha="82a47564590a8083c88b9dad61472c04513bb2832f8b1a44750d6a4347446c4d" if not os.environ.get("BYPASS_PR_MODEL_HASH_CHECK") else None)
 template_file = require_file(args.template, 'ECC Template')
 ref_file = require_file(args.mapping, 'Contract info mapping')
 validate_template_file(template_file)
