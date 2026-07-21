@@ -48,13 +48,24 @@ def parse_args():
     return parser.parse_args()
 
 
-def require_file(path, description):
+import hashlib
+
+def require_file(path, description, expected_sha=None):
     p = Path(path)
     if not p.exists():
         raise FileNotFoundError(
             f"{description} not found: {p}\n" \
             f"Place the correct file at this path or use the --site-data/--pr-model/--template/--mapping options."
         )
+    if expected_sha:
+        actual_sha = hashlib.sha256(p.read_bytes()).hexdigest()
+        if actual_sha != expected_sha:
+            raise ValueError(
+                f"{description} content hash mismatch!\n"
+                f"Expected: {expected_sha}\n"
+                f"Actual:   {actual_sha}\n"
+                f"Use the officially approved PR Model v3.2 workbook."
+            )
     return p
 
 
@@ -957,7 +968,7 @@ def filter_site_rows(df_site, site_codes=None, all_sites=False):
 print("[STEP 0] Loading Reference Data from Markdown and validating inputs...")
 
 site_file = require_file(args.site_data, 'Site PR/PO View')
-pr_file = require_file(args.pr_model, 'PR Model')
+pr_file = require_file(args.pr_model, 'PR Model', expected_sha="82a47564590a8083c88b9dad61472c04513bb2832f8b1a44750d6a4347446c4d")
 template_file = require_file(args.template, 'ECC Template')
 ref_file = require_file(args.mapping, 'Contract info mapping')
 validate_template_file(template_file)
