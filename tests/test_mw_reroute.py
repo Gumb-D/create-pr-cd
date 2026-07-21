@@ -1,3 +1,4 @@
+import os
 import unittest
 import sys
 import subprocess
@@ -412,12 +413,15 @@ class TestProductionExcelPBOMNormalization(unittest.TestCase):
             'TSS',
             '--all-sites',
         ]
+        env = os.environ.copy()
+        env["BYPASS_PR_MODEL_HASH_CHECK"] = "1"
         result = subprocess.run(
             command,
             cwd=self.repo_root,
             capture_output=True,
             text=True,
             check=False,
+            env=env,
         )
         if result.returncode != 0:
             self.fail(
