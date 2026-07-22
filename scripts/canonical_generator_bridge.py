@@ -444,3 +444,78 @@ def build_records_from_export(
         )
         records.append(_attach_scope_eligibility(record, raw_values, scope, scope_config))
     return records, metadata
+
+
+def parse_args(args: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Build generator-compatible UAT packets from approved DU exports."
+    )
+    parser.add_argument("--input", required=True, type=Path, help="Path to DU export file")
+    parser.add_argument("--profile", required=True, type=Path, help="Path to DU profile YAML file")
+    parser.add_argument("--scope", required=True, choices=["TSS", "TI", "tss", "ti"], help="Scope (TSS or TI)")
+    parser.add_argument("--sow-registry", required=True, type=Path, help="Path to canonical SOW registry file")
+    parser.add_argument("--scope-config", type=Path, default=None, help="Path to scope eligibility config JSON file")
+    parser.add_argument("--output", required=True, type=Path, help="Output directory")
+    return parser.parse_args(args)
+
+
+def main(args: list[str] | None = None) -> int:
+    parsed = parse_args(args)
+
+    if not parsed.input.exists():
+        raise FileNotFoundError(f"Input file not found: {parsed.input}")
+    if not parsed.profile.exists():
+        raise FileNotFoundError(f"Profile file not found: {parsed.profile}")
+    if not parsed.sow_registry.exists():
+        raise FileNotFoundError(f"SOW registry file not found: {parsed.sow_registry}")
+
+    scope_config = None
+    if parsed.scope_config:
+        if not parsed.scope_config.exists():
+            raise FileNotFoundError(f"Scope config file not found: {parsed.scope_config}")
+        scope_config = _load_json_or_yaml(parsed.scope_config)
+        if isinstance(scope_config, Mapping) and "scopes" in scope_config:
+            scope_config = scope_config["scopes"]
+
+    records, metadata = build_records_from_export(
+        input_path=parsed.input,
+        profile_path=parsed.profile,
+        scope=parsed.scope.upper(),
+        sow_registry_path=parsed.sow_registry,
+        scope_config=scope_config,
+    )
+
+    outputs = write_uat_packet(
+        records=records,
+        metadata=metadata,
+        output_dir=parsed.output,
+        scope=parsed.scope.upper(),
+    )
+
+    wb_path = outputs["workbook"]
+    summary_path = outputs["summary_json"]
+
+    if not wb_path.exists() or not summary_path.exists():
+        raise RuntimeError("Expected UAT packet outputs were not generated successfully.")
+
+    result_summary = {
+        "status": "SUCCESS",
+        "records": len(records),
+        "scope": parsed.scope.upper(),
+        "ecc_allowed": False,
+        "generated_output_paths": {
+            "workbook": str(wb_path.resolve()),
+            "summary_json": str(summary_path.resolve()),
+        },
+    }
+    print(json.dumps(result_summary, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    try:
+        sys.exit(main())
+    except Exception as err:
+        print(json.dumps({"status": "ERROR", "error": str(err)}, indent=2), file=sys.stderr)
+        sys.exit(1)

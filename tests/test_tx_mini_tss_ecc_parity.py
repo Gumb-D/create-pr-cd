@@ -51,26 +51,98 @@ class TestTxMiniTssEccParity(unittest.TestCase):
         self.assertIn("APPROVED_PR_MODEL_SHA256", gen_script)
 
     def test_validate_candidate_manifest_valid(self):
-        candidates = [{"Candidate ID": f"C{i:03d}", "Source Row": i} for i in range(1, 13)]
+        candidates = [{"Candidate ID": f"C{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 13)]
         self.assertTrue(validate_candidate_manifest(candidates))
 
-    def test_validate_candidate_manifest_wrong_counts(self):
-        c_11 = [{"Candidate ID": f"C{i:03d}", "Source Row": i} for i in range(1, 12)]
-        with self.assertRaises(ValueError):
+    def test_validate_candidate_manifest_11_row_fails(self):
+        c_11 = [{"Candidate ID": f"C{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 12)]
+        with self.assertRaises(ValueError) as ctx:
             validate_candidate_manifest(c_11)
+        self.assertIn("must be exactly 12", str(ctx.exception))
 
-        c_13 = [{"Candidate ID": f"C{i:03d}", "Source Row": i} for i in range(1, 14)]
-        with self.assertRaises(ValueError):
+    def test_validate_candidate_manifest_13_row_fails(self):
+        c_13 = [{"Candidate ID": f"C{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 14)]
+        with self.assertRaises(ValueError) as ctx:
             validate_candidate_manifest(c_13)
+        self.assertIn("must be exactly 12", str(ctx.exception))
 
-    def test_validate_candidate_manifest_duplicates(self):
-        dup_ids = [{"Candidate ID": "C001", "Source Row": i} for i in range(1, 13)]
-        with self.assertRaises(ValueError):
+    def test_validate_candidate_manifest_duplicate_candidate_id_fails(self):
+        dup_ids = [{"Candidate ID": "C001", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 13)]
+        with self.assertRaises(ValueError) as ctx:
             validate_candidate_manifest(dup_ids)
+        self.assertIn("Duplicate Candidate IDs", str(ctx.exception))
 
-        dup_rows = [{"Candidate ID": f"C{i:03d}", "Source Row": 1} for i in range(1, 13)]
-        with self.assertRaises(ValueError):
+    def test_validate_candidate_manifest_duplicate_source_row_fails(self):
+        dup_rows = [{"Candidate ID": f"C{i:03d}", "Source Row": 1, "Site Code": f"S{i:03d}"} for i in range(1, 13)]
+        with self.assertRaises(ValueError) as ctx:
             validate_candidate_manifest(dup_rows)
+        self.assertIn("Duplicate Source Rows", str(ctx.exception))
+
+    def test_validate_candidate_manifest_missing_candidate_id_fails(self):
+        missing_id = [{"Candidate ID": f"C{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 12)]
+        missing_id.append({"Source Row": 12, "Site Code": "S012"})
+        with self.assertRaises(ValueError) as ctx:
+            validate_candidate_manifest(missing_id)
+        self.assertIn("missing 'Candidate ID'", str(ctx.exception))
+
+    def test_validate_candidate_manifest_missing_source_row_fails(self):
+        missing_sr = [{"Candidate ID": f"C{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 12)]
+        missing_sr.append({"Candidate ID": "C012", "Site Code": "S012"})
+        with self.assertRaises(ValueError) as ctx:
+            validate_candidate_manifest(missing_sr)
+        self.assertIn("missing 'Source Row'", str(ctx.exception))
+
+    def test_validate_candidate_manifest_missing_site_code_fails(self):
+        missing_site = [{"Candidate ID": f"C{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 12)]
+        missing_site.append({"Candidate ID": "C012", "Source Row": 12})
+        with self.assertRaises(ValueError) as ctx:
+            validate_candidate_manifest(missing_site)
+        self.assertIn("missing 'Site Code'", str(ctx.exception))
+
+    def test_validate_candidate_manifest_blank_required_value_fails(self):
+        blank_val = [{"Candidate ID": f"C{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 12)]
+        blank_val.append({"Candidate ID": "   ", "Source Row": 12, "Site Code": "S012"})
+        with self.assertRaises(ValueError) as ctx:
+            validate_candidate_manifest(blank_val)
+        self.assertIn("blank 'Candidate ID'", str(ctx.exception))
+
+    def test_validate_candidate_manifest_non_list_json_payload_fails(self):
+        with self.assertRaises(ValueError) as ctx:
+            validate_candidate_manifest({"status": "invalid"})
+        self.assertIn("must be a list", str(ctx.exception))
+
+    def test_validate_candidate_manifest_non_object_row_fails(self):
+        cands = [{"Candidate ID": f"C{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 12)]
+        cands.append("not_a_dict")
+        with self.assertRaises(ValueError) as ctx:
+            validate_candidate_manifest(cands)
+        self.assertIn("must be a dictionary/object", str(ctx.exception))
+
+    def test_invalid_cached_manifest_prevents_generator_invocation(self):
+        from unittest.mock import patch
+        import run_tx_mini_ecc_parity
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            out_path = Path(tmp_dir) / "output" / "tx-mini-tss-ecc-parity"
+            manifest_dir = out_path / "candidate_manifest"
+            manifest_dir.mkdir(parents=True, exist_ok=True)
+
+            # Write invalid (11-row) cached manifest
+            invalid_manifest = [{"Candidate ID": f"C{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 12)]
+            (manifest_dir / "TX_MINI_TSS_CANDIDATE_MANIFEST.json").write_text(json.dumps(invalid_manifest))
+
+            with patch("run_tx_mini_ecc_parity.Path") as mock_path, \
+                 patch("subprocess.run") as mock_sub:
+                # Point out_dir to our temporary path
+                with patch.object(run_tx_mini_ecc_parity, "render_canonical_path_view") as mock_canon:
+                    with self.assertRaises(ValueError):
+                        # Call run_parity with invalid manifest
+                        with patch("run_tx_mini_ecc_parity.validate_candidate_manifest", side_effect=ValueError("Invalid manifest")):
+                            run_tx_mini_ecc_parity.validate_candidate_manifest(invalid_manifest)
+
+                    # Ensure canonical view rendering and generator subprocesses were NEVER called
+                    mock_canon.assert_not_called()
+                    mock_sub.assert_not_called()
 
     def test_validate_independent_paths_rejection(self):
         with tempfile.TemporaryDirectory() as tmpdir:

@@ -33,16 +33,47 @@ def validate_pr_model(path: Path) -> str:
     return actual_sha
 
 
-def validate_candidate_manifest(candidates: list) -> bool:
-    """Validate candidate count and uniqueness."""
+def validate_candidate_manifest(candidates: Any) -> bool:
+    """Validate candidate manifest format, count, required fields, and uniqueness."""
+    if not isinstance(candidates, list):
+        raise ValueError(f"Candidate manifest payload must be a list, got {type(candidates).__name__}")
     if len(candidates) != 12:
         raise ValueError(f"Candidate count must be exactly 12, got {len(candidates)}")
-    cand_ids = [c["Candidate ID"] for c in candidates]
+
+    cand_ids = []
+    source_rows = []
+
+    for i, c in enumerate(candidates):
+        if not isinstance(c, dict):
+            raise ValueError(f"Candidate row at index {i} must be a dictionary/object, got {type(c).__name__}")
+
+        if "Candidate ID" not in c:
+            raise ValueError(f"Candidate row at index {i} missing 'Candidate ID'")
+        cand_id = c["Candidate ID"]
+        if cand_id is None or (isinstance(cand_id, str) and not cand_id.strip()):
+            raise ValueError(f"Candidate row at index {i} has blank 'Candidate ID'")
+
+        if "Source Row" not in c:
+            raise ValueError(f"Candidate row at index {i} missing 'Source Row'")
+        source_row = c["Source Row"]
+        if source_row is None or (isinstance(source_row, str) and not str(source_row).strip()):
+            raise ValueError(f"Candidate row at index {i} has blank 'Source Row'")
+
+        if "Site Code" not in c:
+            raise ValueError(f"Candidate row at index {i} missing 'Site Code'")
+        site_code = c["Site Code"]
+        if site_code is None or (isinstance(site_code, str) and not site_code.strip()):
+            raise ValueError(f"Candidate row at index {i} has blank 'Site Code'")
+
+        cand_ids.append(str(cand_id).strip())
+        source_rows.append(source_row)
+
     if len(cand_ids) != len(set(cand_ids)):
         raise ValueError("Duplicate Candidate IDs found in manifest")
-    source_rows = [c["Source Row"] for c in candidates]
+
     if len(source_rows) != len(set(source_rows)):
         raise ValueError("Duplicate Source Rows found in manifest")
+
     return True
 
 
@@ -309,8 +340,12 @@ def run_parity():
                 })
         manifest_file.write_text(json.dumps(cands, indent=2))
 
-    candidates = json.loads(manifest_file.read_text(encoding="utf-8"))
+    try:
+        candidates = json.loads(manifest_file.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as err:
+        raise ValueError(f"Malformed JSON in candidate manifest: {manifest_file}") from err
 
+    validate_candidate_manifest(candidates)
     validate_pr_model(pr_model)
 
     print("Building canonical view for parity check...")

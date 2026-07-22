@@ -184,6 +184,77 @@ class TestCanonicalGeneratorBridge(unittest.TestCase):
             self.assertEqual(summary["generator_data_row_count"], 1)
             self.assertFalse(summary["ecc_allowed"])
 
+    def test_bridge_cli_valid_invocation_creates_expected_workbook_and_summary(self):
+        import subprocess
+        input_file = ROOT / "Info" / "reference" / "du_exports" / "A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx"
+        profile_file = ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml"
+        registry_file = ROOT / "config" / "registries" / "canonical_sow_registry.yaml"
+        scope_config = ROOT / "config" / "scope_eligibility" / "tx_mini_pr_v1.json"
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            cmd = [
+                sys.executable,
+                str(ROOT / "scripts" / "canonical_generator_bridge.py"),
+                "--input", str(input_file),
+                "--profile", str(profile_file),
+                "--scope", "TSS",
+                "--sow-registry", str(registry_file),
+                "--scope-config", str(scope_config),
+                "--output", temp_dir,
+            ]
+            res = subprocess.run(cmd, capture_output=True, text=True)
+            self.assertEqual(res.returncode, 0, f"Bridge CLI failed with stderr:\n{res.stderr}")
+
+            wb_file = Path(temp_dir) / "canonical_generator_uat_tss.xlsx"
+            summary_file = Path(temp_dir) / "canonical_generator_uat_tss_summary.json"
+            self.assertTrue(wb_file.exists(), "Expected workbook output missing")
+            self.assertTrue(summary_file.exists(), "Expected summary JSON missing")
+
+            cli_output = json.loads(res.stdout)
+            self.assertEqual(cli_output["status"], "SUCCESS")
+            self.assertFalse(cli_output["ecc_allowed"])
+            self.assertGreater(cli_output["records"], 0)
+
+            summary = json.loads(summary_file.read_text(encoding="utf-8"))
+            self.assertFalse(summary["ecc_allowed"])
+
+    def test_bridge_cli_invalid_scope_fails(self):
+        import subprocess
+        input_file = ROOT / "Info" / "reference" / "du_exports" / "A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx"
+        profile_file = ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml"
+        registry_file = ROOT / "config" / "registries" / "canonical_sow_registry.yaml"
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            cmd = [
+                sys.executable,
+                str(ROOT / "scripts" / "canonical_generator_bridge.py"),
+                "--input", str(input_file),
+                "--profile", str(profile_file),
+                "--scope", "INVALID_SCOPE",
+                "--sow-registry", str(registry_file),
+                "--output", temp_dir,
+            ]
+            res = subprocess.run(cmd, capture_output=True, text=True)
+            self.assertNotEqual(res.returncode, 0, "CLI with invalid scope should fail")
+
+    def test_bridge_cli_missing_input_fails(self):
+        import subprocess
+        profile_file = ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml"
+        registry_file = ROOT / "config" / "registries" / "canonical_sow_registry.yaml"
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            cmd = [
+                sys.executable,
+                str(ROOT / "scripts" / "canonical_generator_bridge.py"),
+                "--input", "non_existent_input_file.xlsx",
+                "--profile", str(profile_file),
+                "--scope", "TSS",
+                "--sow-registry", str(registry_file),
+                "--output", temp_dir,
+            ]
+            res = subprocess.run(cmd, capture_output=True, text=True)
+            self.assertNotEqual(res.returncode, 0, "CLI with missing input file should fail")
+
 
 if __name__ == "__main__":
     unittest.main()
