@@ -6,6 +6,8 @@ import unittest
 from pathlib import Path
 import openpyxl
 
+ROOT = Path(__file__).resolve().parent.parent
+
 from run_tx_mini_ecc_parity import (
     APPROVED_PR_MODEL_SHA256,
     validate_pr_model,
@@ -265,6 +267,60 @@ class TestTxMiniTssEccParity(unittest.TestCase):
         self.assertEqual(calculate_overall_parity(12, 12, 12, 12, 11, 1, 0, 0, 0), "PASS")
         self.assertEqual(calculate_overall_parity(12, 12, 12, 12, 11, 0, 1, 0, 0), "ECC_PARITY_FAILED")
         self.assertEqual(calculate_overall_parity(11, 11, 11, 11, 11, 0, 0, 0, 0), "ECC_PARITY_FAILED")
+
+
+    def test_normalize_source_row_integer_accepted(self):
+        from run_tx_mini_ecc_parity import normalize_source_row
+        self.assertEqual(normalize_source_row(123), 123)
+
+    def test_normalize_source_row_numeric_string_accepted_and_normalized(self):
+        from run_tx_mini_ecc_parity import normalize_source_row
+        self.assertEqual(normalize_source_row("123"), 123)
+
+    def test_normalize_source_row_whitespace_numeric_string_normalized(self):
+        from run_tx_mini_ecc_parity import normalize_source_row
+        self.assertEqual(normalize_source_row(" 123 "), 123)
+
+    def test_normalize_source_row_float_integer_accepted_non_integer_rejected(self):
+        from run_tx_mini_ecc_parity import normalize_source_row
+        self.assertEqual(normalize_source_row(123.0), 123)
+        with self.assertRaises(ValueError):
+            normalize_source_row(123.45)
+
+    def test_normalize_source_row_duplicate_mixed_types_rejected(self):
+        dup_mixed = [{"Candidate ID": f"C{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 11)]
+        dup_mixed.append({"Candidate ID": "C011", "Source Row": 1, "Site Code": "S011"})
+        dup_mixed.append({"Candidate ID": "C012", "Source Row": "1", "Site Code": "S012"})
+        with self.assertRaises(ValueError) as ctx:
+            validate_candidate_manifest(dup_mixed)
+        self.assertIn("Duplicate Source Rows", str(ctx.exception))
+
+    def test_normalize_source_row_invalid_values_rejected(self):
+        from run_tx_mini_ecc_parity import normalize_source_row
+        for invalid_val in [None, True, False, 0, -1, "-5", "abc", "", "   "]:
+            with self.subTest(val=invalid_val):
+                with self.assertRaises(ValueError):
+                    normalize_source_row(invalid_val)
+
+    def test_normalized_source_row_used_in_candidate_processing(self):
+        manifest_data = [{"Candidate ID": f"C{i:03d}", "Source Row": str(i), "Site Code": f"S{i:03d}"} for i in range(1, 13)]
+        self.assertTrue(validate_candidate_manifest(manifest_data))
+        for row in manifest_data:
+            self.assertIsInstance(row["Source Row"], int, "Source Row must be coerced in place to canonical int")
+
+    def test_tracked_fixture_exists_repository_relative(self):
+        fixture_file = ROOT / "tests" / "fixtures" / "tx_mini_du_export_fixture.xlsx"
+        self.assertTrue(fixture_file.exists(), "Tracked synthetic test fixture file must exist")
+        self.assertGreater(fixture_file.stat().st_size, 0)
+
+    def test_tests_pass_when_reference_exports_absent(self):
+        fixture_file = ROOT / "tests" / "fixtures" / "tx_mini_du_export_fixture.xlsx"
+        profile_file = ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml"
+        from canonical_generator_bridge import build_header_inventory, calculate_header_hash
+        inv = build_header_inventory(fixture_file)
+        h_hash = calculate_header_hash(inv)
+        prof_data = json.loads(profile_file.read_text(encoding="utf-8"))
+        self.assertIn(h_hash, prof_data["export_structure"]["approved_header_hashes"])
 
 
 if __name__ == "__main__":

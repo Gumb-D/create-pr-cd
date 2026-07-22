@@ -403,14 +403,42 @@ def build_records_from_export(
         for column in source_sheet.get("columns", [])
     }
     
-    if scope_config:
-        configured = scope_config.get(scope, {}) if isinstance(scope_config, Mapping) else {}
-        if configured:
-            expected_key = fingerprint_key(configured.get("actual_end_fingerprint", {}))
-            if expected_key not in positions:
-                raise ValueError("SCOPE_ACTUAL_END_HEADER_NOT_FOUND")
-    else:
-        scope_config = {}
+    if scope_config is None:
+        profile_id = profile.get("profile_id", "")
+        base_dir = profile_path.resolve().parent.parent
+        candidates = [
+            base_dir / "scope_eligibility" / f"{profile_id}.json",
+            Path(__file__).resolve().parent.parent / "config" / "scope_eligibility" / f"{profile_id}.json",
+        ]
+        resolved_cfg_path = None
+        for candidate_path in candidates:
+            if candidate_path.exists():
+                resolved_cfg_path = candidate_path
+                break
+
+        if resolved_cfg_path is None:
+            raise ValueError(f"MISSING_REGISTERED_SCOPE_CONFIG:{profile_id}")
+
+        loaded_cfg = _load_json_or_yaml(resolved_cfg_path)
+        if isinstance(loaded_cfg, Mapping):
+            scope_config = loaded_cfg.get("scopes", loaded_cfg)
+        else:
+            raise ValueError(f"MALFORMED_SCOPE_CONFIG:{resolved_cfg_path.name}")
+
+    if not isinstance(scope_config, Mapping):
+        raise ValueError("MALFORMED_SCOPE_CONFIG:scope_config_must_be_mapping")
+
+    configured = scope_config.get(scope, {})
+    if not isinstance(configured, Mapping) or not configured:
+        raise ValueError(f"MISSING_SCOPE_CONFIG_FOR_SCOPE:{scope}")
+
+    actual_end_fp = configured.get("actual_end_fingerprint")
+    if not isinstance(actual_end_fp, Mapping) or not actual_end_fp:
+        raise ValueError(f"MALFORMED_SCOPE_CONFIG:actual_end_fingerprint_missing_for_{scope}")
+
+    expected_key = fingerprint_key(actual_end_fp)
+    if expected_key not in positions:
+        raise ValueError("SCOPE_ACTUAL_END_HEADER_NOT_FOUND")
 
     sow_registry = _load_json_or_yaml(Path(sow_registry_path))
     identity = profile["identity"]

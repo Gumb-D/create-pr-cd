@@ -33,6 +33,34 @@ def validate_pr_model(path: Path) -> str:
     return actual_sha
 
 
+def normalize_source_row(val: Any) -> int:
+    """Normalize Source Row value to a positive integer (> 0) or raise ValueError."""
+    if val is None or isinstance(val, bool):
+        raise ValueError(f"Invalid Source Row value: {val!r} (must be a positive integer)")
+
+    if isinstance(val, int):
+        if val <= 0:
+            raise ValueError(f"Source Row must be positive integer (> 0), got {val}")
+        return val
+
+    if isinstance(val, float):
+        if val > 0 and val.is_integer():
+            return int(val)
+        raise ValueError(f"Invalid Source Row float value: {val!r}")
+
+    if isinstance(val, str):
+        val_str = val.strip()
+        if not val_str:
+            raise ValueError("Source Row cannot be blank")
+        if val_str.isdigit():
+            num = int(val_str)
+            if num <= 0:
+                raise ValueError(f"Source Row must be positive integer (> 0), got {num}")
+            return num
+
+    raise ValueError(f"Invalid non-integer Source Row value: {val!r}")
+
+
 def validate_candidate_manifest(candidates: Any) -> bool:
     """Validate candidate manifest format, count, required fields, and uniqueness."""
     if not isinstance(candidates, list):
@@ -55,9 +83,8 @@ def validate_candidate_manifest(candidates: Any) -> bool:
 
         if "Source Row" not in c:
             raise ValueError(f"Candidate row at index {i} missing 'Source Row'")
-        source_row = c["Source Row"]
-        if source_row is None or (isinstance(source_row, str) and not str(source_row).strip()):
-            raise ValueError(f"Candidate row at index {i} has blank 'Source Row'")
+        norm_source_row = normalize_source_row(c["Source Row"])
+        c["Source Row"] = norm_source_row  # Coerce to canonical int in place
 
         if "Site Code" not in c:
             raise ValueError(f"Candidate row at index {i} missing 'Site Code'")
@@ -66,7 +93,7 @@ def validate_candidate_manifest(candidates: Any) -> bool:
             raise ValueError(f"Candidate row at index {i} has blank 'Site Code'")
 
         cand_ids.append(str(cand_id).strip())
-        source_rows.append(source_row)
+        source_rows.append(norm_source_row)
 
     if len(cand_ids) != len(set(cand_ids)):
         raise ValueError("Duplicate Candidate IDs found in manifest")

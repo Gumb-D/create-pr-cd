@@ -43,7 +43,7 @@ class TestBuildTxMiniScopeUat(unittest.TestCase):
             }
         }
         
-        self.input_file = ROOT / "Info/reference/du_exports/A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx"
+        self.input_file = ROOT / "tests" / "fixtures" / "tx_mini_du_export_fixture.xlsx"
         self.profile = ROOT / "config/du_profiles/tx_mini_pr_v1.yaml"
         
     def tearDown(self):

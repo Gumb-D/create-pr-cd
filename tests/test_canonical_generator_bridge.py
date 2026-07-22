@@ -186,7 +186,7 @@ class TestCanonicalGeneratorBridge(unittest.TestCase):
 
     def test_bridge_cli_valid_invocation_creates_expected_workbook_and_summary(self):
         import subprocess
-        input_file = ROOT / "Info" / "reference" / "du_exports" / "A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx"
+        input_file = ROOT / "tests" / "fixtures" / "tx_mini_du_export_fixture.xlsx"
         profile_file = ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml"
         registry_file = ROOT / "config" / "registries" / "canonical_sow_registry.yaml"
         scope_config = ROOT / "config" / "scope_eligibility" / "tx_mini_pr_v1.json"
@@ -220,7 +220,7 @@ class TestCanonicalGeneratorBridge(unittest.TestCase):
 
     def test_bridge_cli_invalid_scope_fails(self):
         import subprocess
-        input_file = ROOT / "Info" / "reference" / "du_exports" / "A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx"
+        input_file = ROOT / "tests" / "fixtures" / "tx_mini_du_export_fixture.xlsx"
         profile_file = ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml"
         registry_file = ROOT / "config" / "registries" / "canonical_sow_registry.yaml"
 
@@ -254,6 +254,86 @@ class TestCanonicalGeneratorBridge(unittest.TestCase):
             ]
             res = subprocess.run(cmd, capture_output=True, text=True)
             self.assertNotEqual(res.returncode, 0, "CLI with missing input file should fail")
+
+    def test_tx_mini_cli_without_scope_config_automatically_loads_registered_config(self):
+        import subprocess
+        input_file = ROOT / "tests" / "fixtures" / "tx_mini_du_export_fixture.xlsx"
+        profile_file = ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml"
+        registry_file = ROOT / "config" / "registries" / "canonical_sow_registry.yaml"
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            cmd = [
+                sys.executable,
+                str(ROOT / "scripts" / "canonical_generator_bridge.py"),
+                "--input", str(input_file),
+                "--profile", str(profile_file),
+                "--scope", "TSS",
+                "--sow-registry", str(registry_file),
+                "--output", temp_dir,
+            ]
+            res = subprocess.run(cmd, capture_output=True, text=True)
+            self.assertEqual(res.returncode, 0, f"Bridge CLI without --scope-config should succeed by auto-loading registered config. Stderr:\n{res.stderr}")
+
+            wb_file = Path(temp_dir) / "canonical_generator_uat_tss.xlsx"
+            summary_file = Path(temp_dir) / "canonical_generator_uat_tss_summary.json"
+            self.assertTrue(wb_file.exists())
+            self.assertTrue(summary_file.exists())
+
+    def test_tx_mini_build_records_without_explicit_scope_config_uses_registered_config(self):
+        from canonical_generator_bridge import build_records_from_export
+        input_file = ROOT / "tests" / "fixtures" / "tx_mini_du_export_fixture.xlsx"
+        profile_file = ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml"
+        registry_file = ROOT / "config" / "registries" / "canonical_sow_registry.yaml"
+
+        records, meta = build_records_from_export(
+            input_path=input_file,
+            profile_path=profile_file,
+            scope="TSS",
+            sow_registry_path=registry_file,
+            scope_config=None,
+        )
+        self.assertGreater(len(records), 0)
+        # Verify date evidence attached via auto-loaded registered config
+        has_date_evidence = any("tss_actual_end_date" in r.get("source_evidence", {}).get("fields", {}) for r in records)
+        self.assertTrue(has_date_evidence, "Registered scope config should attach tss_actual_end_date evidence")
+
+    def test_missing_registered_scope_config_fails_closed(self):
+        from canonical_generator_bridge import build_records_from_export
+        input_file = ROOT / "tests" / "fixtures" / "tx_mini_du_export_fixture.xlsx"
+        profile_file = ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml"
+        registry_file = ROOT / "config" / "registries" / "canonical_sow_registry.yaml"
+
+        # Mock profile_id to unknown profile with no registered scope config
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            dummy_prof = Path(tmp_dir) / "dummy_pr_v1.yaml"
+            prof_content = profile_file.read_text(encoding="utf-8").replace('"profile_id": "tx_mini_pr_v1"', '"profile_id": "non_existent_profile_v1"')
+            dummy_prof.write_text(prof_content, encoding="utf-8")
+
+            with self.assertRaises(ValueError) as ctx:
+                build_records_from_export(
+                    input_path=input_file,
+                    profile_path=dummy_prof,
+                    scope="TSS",
+                    sow_registry_path=registry_file,
+                    scope_config=None,
+                )
+            self.assertIn("MISSING_REGISTERED_SCOPE_CONFIG", str(ctx.exception))
+
+    def test_malformed_scope_config_fails_closed(self):
+        from canonical_generator_bridge import build_records_from_export
+        input_file = ROOT / "tests" / "fixtures" / "tx_mini_du_export_fixture.xlsx"
+        profile_file = ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml"
+        registry_file = ROOT / "config" / "registries" / "canonical_sow_registry.yaml"
+
+        with self.assertRaises(ValueError) as ctx:
+            build_records_from_export(
+                input_path=input_file,
+                profile_path=profile_file,
+                scope="TSS",
+                sow_registry_path=registry_file,
+                scope_config={"TSS": "invalid_non_mapping"},
+            )
+        self.assertIn("MISSING_SCOPE_CONFIG_FOR_SCOPE", str(ctx.exception))
 
 
 if __name__ == "__main__":
