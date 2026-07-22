@@ -395,7 +395,8 @@ class TestProductionExcelPBOMNormalization(unittest.TestCase):
 
         wb.save(workbook_path)
 
-    def _run_generator(self, site_path: Path, pr_model_path: Path, output_dir: Path) -> None:
+        import hashlib
+        pr_model_hash = hashlib.sha256(pr_model_path.read_bytes()).hexdigest()
         command = [
             sys.executable,
             str(self.generator_path),
@@ -412,16 +413,15 @@ class TestProductionExcelPBOMNormalization(unittest.TestCase):
             '--scope',
             'TSS',
             '--all-sites',
+            '--expected-pr-model-hash',
+            pr_model_hash,
         ]
-        env = os.environ.copy()
-        env["BYPASS_PR_MODEL_HASH_CHECK"] = "1"
         result = subprocess.run(
             command,
             cwd=self.repo_root,
             capture_output=True,
             text=True,
             check=False,
-            env=env,
         )
         if result.returncode != 0:
             self.fail(

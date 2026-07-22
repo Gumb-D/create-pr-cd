@@ -45,6 +45,7 @@ def parse_args():
     parser.add_argument('--site-code', help='Comma-separated Site Code(s) to generate PR ECC for')
     parser.add_argument('--all-sites', action='store_true', help='Generate PR ECC for all eligible sites')
     parser.add_argument('--scope', choices=['TSS', 'TI'], default='TSS', type=str.upper, help='PR scope to generate: TSS or TI')
+    parser.add_argument('--expected-pr-model-hash', default='82a47564590a8083c88b9dad61472c04513bb2832f8b1a44750d6a4347446c4d', help='Expected SHA-256 hash for PR model validation')
     return parser.parse_args()
 
 
@@ -968,7 +969,7 @@ def filter_site_rows(df_site, site_codes=None, all_sites=False):
 print("[STEP 0] Loading Reference Data from Markdown and validating inputs...")
 
 site_file = require_file(args.site_data, 'Site PR/PO View')
-pr_file = require_file(args.pr_model, 'PR Model', expected_sha="82a47564590a8083c88b9dad61472c04513bb2832f8b1a44750d6a4347446c4d")
+pr_file = require_file(args.pr_model, 'PR Model', expected_sha=args.expected_pr_model_hash)
 template_file = require_file(args.template, 'ECC Template')
 ref_file = require_file(args.mapping, 'Contract info mapping')
 validate_template_file(template_file)
