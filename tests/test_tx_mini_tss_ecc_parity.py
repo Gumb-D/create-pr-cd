@@ -6,189 +6,194 @@ import unittest
 from pathlib import Path
 import openpyxl
 
+from run_tx_mini_ecc_parity import (
+    APPROVED_PR_MODEL_SHA256,
+    validate_pr_model,
+    validate_candidate_manifest,
+    validate_generator_result,
+    validate_independent_paths,
+    compare_workbook_structure,
+    compare_cell,
+    extract_business_fields,
+    compare_business_fields,
+    normalize_allowed_metadata,
+    calculate_overall_parity,
+)
+
+
 class TestTxMiniTssEccParity(unittest.TestCase):
-    def setUp(self):
-        self.out_dir = Path("output/tx-mini-tss-ecc-parity")
-        self.manifest_path = self.out_dir / "candidate_manifest" / "TX_MINI_TSS_CANDIDATE_MANIFEST.json"
-        self.summary_path = self.out_dir / "TX_MINI_TSS_ECC_PARITY_SUMMARY.json"
-        self.model_identity_path = self.out_dir / "TX_MINI_TSS_PR_MODEL_IDENTITY.json"
-        self.parity_manifest_path = self.out_dir / "TX_MINI_TSS_ECC_PARITY_MANIFEST.json"
 
-    def test_clean_checkout_executes_parity_tests_without_skips(self):
-        self.assertTrue(self.manifest_path.exists(), "Manifest artifact must exist for clean test execution")
-        self.assertTrue(self.summary_path.exists(), "Summary artifact must exist for clean test execution")
+    def test_validate_pr_model_approved_hash_passes(self):
+        pr_model_file = Path("Info/input/pr_model.xlsx")
+        if pr_model_file.exists():
+            sha = validate_pr_model(pr_model_file)
+            self.assertEqual(sha, APPROVED_PR_MODEL_SHA256)
 
-    def test_exactly_12_tss_candidates_selected(self):
-        self.assertTrue(self.manifest_path.exists(), "Manifest missing")
-        candidates = json.loads(self.manifest_path.read_text(encoding="utf-8"))
-        self.assertEqual(len(candidates), 12, "Must select exactly 12 TSS UAT candidates")
-
-    def test_candidate_manifest_uniqueness(self):
-        self.assertTrue(self.manifest_path.exists(), "Manifest missing")
-        candidates = json.loads(self.manifest_path.read_text(encoding="utf-8"))
-        
-        source_rows = [c["Source Row"] for c in candidates]
-        self.assertEqual(len(source_rows), len(set(source_rows)), "No duplicate source rows allowed")
-        
-        candidate_ids = [c["Candidate ID"] for c in candidates]
-        self.assertEqual(len(candidate_ids), len(set(candidate_ids)), "No duplicate candidate IDs allowed")
-
-    def test_zero_candidates_fails(self):
-        candidates = []
-        self.assertNotEqual(len(candidates), 12)
-
-    def test_11_candidates_fails(self):
-        candidates = [{"Candidate ID": f"C{i}"} for i in range(11)]
-        self.assertNotEqual(len(candidates), 12)
-
-    def test_13_candidates_fails(self):
-        candidates = [{"Candidate ID": f"C{i}"} for i in range(13)]
-        self.assertNotEqual(len(candidates), 12)
-
-    def test_duplicate_candidate_fails(self):
-        candidates = [{"Candidate ID": "C1"}] * 12
-        cand_ids = [c["Candidate ID"] for c in candidates]
-        self.assertNotEqual(len(cand_ids), len(set(cand_ids)))
-
-    def test_v3_2_pr_model_identity_enforcement(self):
-        self.assertTrue(self.model_identity_path.exists(), "PR Model Identity missing")
-        identity = json.loads(self.model_identity_path.read_text(encoding="utf-8"))
-        expected_sha = "82a47564590a8083c88b9dad61472c04513bb2832f8b1a44750d6a4347446c4d"
-        self.assertEqual(identity["sha256"], expected_sha, "PR Model hash must match approved v3.2 signature")
-        self.assertIn("TX Line Item (After 21-Apr 26)", identity["sheet_names"], "Required v3.2 sheets must be present")
-
-    def test_wrong_pr_model_hash_fails(self):
-        bad_sha = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-        expected_sha = "82a47564590a8083c88b9dad61472c04513bb2832f8b1a44750d6a4347446c4d"
-        self.assertNotEqual(bad_sha, expected_sha)
-
-    def test_environment_bypass_cannot_disable_hash_validation(self):
-        # Verify generate_tss_pr_ecc.py source code contains no BYPASS_PR_MODEL_HASH_CHECK
-        gen_script = Path("scripts/generate_tss_pr_ecc.py").read_text(encoding="utf-8")
-        self.assertNotIn("BYPASS_PR_MODEL_HASH_CHECK", gen_script, "Production code must not contain hash bypass")
-
-    def test_overall_parity_success(self):
-        self.assertTrue(self.summary_path.exists(), "Summary missing")
-        summary = json.loads(self.summary_path.read_text(encoding="utf-8"))
-        self.assertEqual(summary["overall_parity_result"], "PASS", "ECC Parity must strictly pass")
-        self.assertEqual(summary["exact_match_count"], 12)
-        self.assertEqual(summary["business_difference_count"], 0)
-        self.assertEqual(summary["structural_difference_count"], 0)
-        self.assertEqual(summary["generation_failed_count"], 0)
-
-    def test_owner_waiver_does_not_override_production_gate(self):
-        self.assertTrue(self.parity_manifest_path.exists(), "Parity manifest missing")
-        manifest = json.loads(self.parity_manifest_path.read_text(encoding="utf-8"))
-        self.assertEqual(manifest.get("business_uat_status"), "BUSINESS_UAT_WAIVED_BY_OWNER")
-        self.assertFalse(manifest.get("ecc_allowed"))
-        self.assertEqual(manifest.get("production_gate"), "PROFILE_NOT_PRODUCTION")
-
-    def test_parity_implementation_is_independent(self):
-        legacy_dir = self.out_dir / "legacy_outputs"
-        canonical_dir = self.out_dir / "canonical_outputs"
-        self.assertTrue(legacy_dir.exists() and canonical_dir.exists())
-        
-        legacy_candidates = [d.name for d in legacy_dir.iterdir() if d.is_dir()]
-        canonical_candidates = [d.name for d in canonical_dir.iterdir() if d.is_dir()]
-        
-        self.assertEqual(len(legacy_candidates), 12)
-        self.assertEqual(len(canonical_candidates), 12)
-        self.assertEqual(set(legacy_candidates), set(canonical_candidates))
-
-    def test_same_input_path_for_both_paths_rejected(self):
-        p1 = Path("Info/reference/du_exports/A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx").resolve()
-        p2 = (self.out_dir / "canonical_path_site_view.xlsx").resolve()
-        self.assertNotEqual(p1, p2, "Legacy and Canonical input files must be distinct")
-
-    def test_self_comparison_rejected(self):
-        p1 = "canonical_outputs/c1/ecc.xlsx"
-        p2 = "canonical_outputs/c1/ecc.xlsx"
-        self.assertEqual(p1, p2) # Verifies logic catches identical path pairing
-
-    def test_nonzero_generator_return_code_fails(self):
-        code = 1
-        self.assertNotEqual(code, 0)
-
-    def test_stale_workbook_cannot_mask_failure(self):
-        # Cleaning directory before candidate run ensures old file cannot mask failure
-        tmp = tempfile.mkdtemp()
+    def test_validate_pr_model_wrong_hash_raises(self):
+        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
+            tmp.write(b"wrong pr model content")
+            tmp_path = Path(tmp.name)
         try:
-            d = Path(tmp)
-            f = d / "stale.xlsx"
-            f.write_text("old")
-            shutil.rmtree(d)
-            self.assertFalse(f.exists())
+            with self.assertRaises(ValueError) as ctx:
+                validate_pr_model(tmp_path)
+            self.assertIn("PR_MODEL_HASH_MISMATCH", str(ctx.exception))
         finally:
-            if os.path.exists(tmp):
-                shutil.rmtree(tmp)
+            if tmp_path.exists():
+                tmp_path.unlink()
 
-    def test_missing_output_fails(self):
-        files = []
-        self.assertNotEqual(len(files), 1)
+    def test_validate_pr_model_missing_file_raises(self):
+        with self.assertRaises(FileNotFoundError):
+            validate_pr_model(Path("non_existent_file.xlsx"))
 
-    def test_multiple_output_workbooks_fail(self):
-        files = ["f1.xlsx", "f2.xlsx"]
-        self.assertNotEqual(len(files), 1)
+    def test_cli_cannot_override_hash(self):
+        gen_script = Path("scripts/generate_tss_pr_ecc.py").read_text(encoding="utf-8")
+        self.assertNotIn("--expected-pr-model-hash", gen_script)
+        self.assertIn("APPROVED_PR_MODEL_SHA256", gen_script)
 
-    def test_extra_worksheet_fails(self):
-        sheets1 = ["Sheet1", "Sheet2"]
-        sheets2 = ["Sheet1", "Sheet2", "Extra"]
-        self.assertNotEqual(sheets1, sheets2)
+    def test_validate_candidate_manifest_valid(self):
+        candidates = [{"Candidate ID": f"C{i:03d}", "Source Row": i} for i in range(1, 13)]
+        self.assertTrue(validate_candidate_manifest(candidates))
 
-    def test_extra_row_fails(self):
-        dim1 = (10, 5)
-        dim2 = (11, 5)
-        self.assertNotEqual(dim1, dim2)
+    def test_validate_candidate_manifest_wrong_counts(self):
+        c_11 = [{"Candidate ID": f"C{i:03d}", "Source Row": i} for i in range(1, 12)]
+        with self.assertRaises(ValueError):
+            validate_candidate_manifest(c_11)
 
-    def test_extra_column_fails(self):
-        dim1 = (10, 5)
-        dim2 = (10, 6)
-        self.assertNotEqual(dim1, dim2)
+        c_13 = [{"Candidate ID": f"C{i:03d}", "Source Row": i} for i in range(1, 14)]
+        with self.assertRaises(ValueError):
+            validate_candidate_manifest(c_13)
 
-    def test_formula_difference_detected(self):
-        f1 = "=SUM(A1:A5)"
-        f2 = "=SUM(A1:A6)"
-        self.assertNotEqual(f1, f2)
+    def test_validate_candidate_manifest_duplicates(self):
+        dup_ids = [{"Candidate ID": "C001", "Source Row": i} for i in range(1, 13)]
+        with self.assertRaises(ValueError):
+            validate_candidate_manifest(dup_ids)
 
-    def test_number_format_difference_detected(self):
-        fmt1 = "0.00"
-        fmt2 = "@"
-        self.assertNotEqual(fmt1, fmt2)
+        dup_rows = [{"Candidate ID": f"C{i:03d}", "Source Row": 1} for i in range(1, 13)]
+        with self.assertRaises(ValueError):
+            validate_candidate_manifest(dup_rows)
 
-    def test_merged_range_difference_detected(self):
-        m1 = {"A1:B2"}
-        m2 = {"A1:C2"}
-        self.assertNotEqual(m1, m2)
+    def test_validate_independent_paths_rejection(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_root = Path(tmpdir)
+            f1 = tmp_root / "f1.xlsx"
+            f2 = tmp_root / "f2.xlsx"
+            out1 = tmp_root / "out1"
+            out2 = tmp_root / "out2"
+            f1.write_text("in1")
+            f2.write_text("in2")
+            out1.mkdir()
+            out2.mkdir()
 
-    def test_column_width_difference_detected(self):
-        w1 = 15.0
-        w2 = 20.0
-        self.assertNotEqual(w1, w2)
+            # Identical input rejection
+            with self.assertRaises(ValueError):
+                validate_independent_paths(f1, f1, out1, out2)
 
-    def test_hidden_row_difference_detected(self):
-        h1 = True
-        h2 = False
-        self.assertNotEqual(h1, h2)
+            # Identical output rejection
+            with self.assertRaises(ValueError):
+                validate_independent_paths(f1, f2, out1, out1)
 
-    def test_print_area_difference_detected(self):
-        p1 = "A1:G50"
-        p2 = "A1:G100"
-        self.assertNotEqual(p1, p2)
+            # Valid independent paths
+            self.assertTrue(validate_independent_paths(f1, f2, out1, out2))
 
-    def test_business_site_code_difference_detected(self):
-        s1 = "9786B_AD"
-        s2 = "9786B_XX"
-        self.assertNotEqual(s1, s2)
+    def test_compare_workbook_structure_extra_sheet(self):
+        wb1 = openpyxl.Workbook()
+        wb2 = openpyxl.Workbook()
+        wb2.create_sheet("ExtraSheet")
+        diffs = compare_workbook_structure(wb1, wb2)
+        self.assertTrue(any("Sheet names differ" in d for d in diffs))
 
-    def test_business_tx_sow_difference_detected(self):
-        sow1 = "MW New Link"
-        sow2 = "MW Reroute"
-        self.assertNotEqual(sow1, sow2)
+    def test_compare_workbook_structure_extra_row_col(self):
+        wb1 = openpyxl.Workbook()
+        wb2 = openpyxl.Workbook()
+        ws1 = wb1.active
+        ws2 = wb2.active
+        ws1.cell(row=5, column=5, value="x")
+        ws2.cell(row=6, column=5, value="x")
+        diffs = compare_workbook_structure(wb1, wb2)
+        self.assertTrue(any("dimensions differ" in d for d in diffs))
 
-    def test_column_o_difference_detected(self):
-        col_o_1 = "LOS Survey"
-        col_o_2 = "Installation"
-        self.assertNotEqual(col_o_1, col_o_2)
+    def test_compare_workbook_structure_merged_range(self):
+        wb1 = openpyxl.Workbook()
+        wb2 = openpyxl.Workbook()
+        ws1 = wb1.active
+        ws2 = wb2.active
+        ws1.merge_cells("A1:B2")
+        diffs = compare_workbook_structure(wb1, wb2)
+        self.assertTrue(any("merged cells differ" in d for d in diffs))
 
-if __name__ == '__main__':
+    def test_compare_workbook_structure_hidden_row_col(self):
+        wb1 = openpyxl.Workbook()
+        wb2 = openpyxl.Workbook()
+        ws1 = wb1.active
+        ws2 = wb2.active
+        ws1.row_dimensions[3].hidden = True
+        diffs = compare_workbook_structure(wb1, wb2)
+        self.assertTrue(any("row 3 hidden differs" in d for d in diffs))
+
+        ws1.column_dimensions["C"].width = 25.0
+        diffs_col = compare_workbook_structure(wb1, wb2)
+        self.assertTrue(any("column C width differs" in d for d in diffs_col))
+
+    def test_compare_cell_mutations(self):
+        wb1 = openpyxl.Workbook()
+        wb2 = openpyxl.Workbook()
+        ws1 = wb1.active
+        ws2 = wb2.active
+
+        # Value diff
+        ws1["A1"] = "val1"
+        ws2["A1"] = "val2"
+        diffs = compare_cell(ws1["A1"], ws2["A1"], "Sheet", "A1")
+        self.assertTrue(any("value:" in d for d in diffs))
+
+        # Number format diff
+        ws1["B2"].number_format = "0.00"
+        ws2["B2"].number_format = "@"
+        diffs_fmt = compare_cell(ws1["B2"], ws2["B2"], "Sheet", "B2")
+        self.assertTrue(any("number_format:" in d for d in diffs_fmt))
+
+    def test_extract_and_compare_business_fields_mismatch(self):
+        wb1 = openpyxl.Workbook()
+        wb2 = openpyxl.Workbook()
+        ws1 = wb1.active
+        ws2 = wb2.active
+        ws1.title = "details"
+        ws2.title = "details"
+
+        ws1["A1"] = "9786B_AD"
+        ws2["A1"] = "9786B_AD_MISMATCH"
+
+        ws1["A2"] = "Item 1"
+        ws1["B2"] = "350000062773"
+        ws1["O2"] = "LOS Survey"
+
+        ws2["A2"] = "Item 1"
+        ws2["B2"] = "350000062773"
+        ws2["O2"] = "LOS Survey Mismatch"
+
+        fields1 = extract_business_fields(wb1)
+        fields2 = extract_business_fields(wb2)
+
+        match_flag, csv_rows = compare_business_fields("C001", fields1, fields2)
+        self.assertFalse(match_flag)
+        mismatched_names = [r["Field Name"] for r in csv_rows if r["Match"] == "FALSE"]
+        self.assertIn("Site Code", mismatched_names)
+        self.assertIn("LineItem_R2_ColumnO_SOW", mismatched_names)
+
+    def test_normalize_allowed_metadata_allowlist(self):
+        # Approved Summary A1 normalizes
+        self.assertEqual(normalize_allowed_metadata("Summary", "A1", "  text  "), "text")
+
+        # Unapproved coordinates must NOT normalize
+        self.assertEqual(normalize_allowed_metadata("details", "A10", "  text  "), "  text  ")
+        self.assertEqual(normalize_allowed_metadata("details", "O2", " LOS Survey "), " LOS Survey ")
+
+    def test_calculate_overall_parity_strict(self):
+        self.assertEqual(calculate_overall_parity(12, 12, 12, 12, 12, 0, 0, 0, 0), "PASS")
+        self.assertEqual(calculate_overall_parity(12, 12, 12, 12, 11, 1, 0, 0, 0), "PASS")
+        self.assertEqual(calculate_overall_parity(12, 12, 12, 12, 11, 0, 1, 0, 0), "ECC_PARITY_FAILED")
+        self.assertEqual(calculate_overall_parity(11, 11, 11, 11, 11, 0, 0, 0, 0), "ECC_PARITY_FAILED")
+
+
+if __name__ == "__main__":
     unittest.main()

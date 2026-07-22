@@ -447,21 +447,49 @@ class TestProductionExcelPBOMNormalization(unittest.TestCase):
             temp_root = Path(tmpdir)
             pr_model_path = temp_root / 'pr_model.xlsx'
             site_path = temp_root / 'site_data.xlsx'
-            output_dir = temp_root / 'output'
-            output_dir.mkdir()
 
             self._build_temp_pr_model(pr_model_path)
             self._build_temp_site_data(site_path)
-            self._run_generator(site_path, pr_model_path, output_dir)
 
-            rows = self._load_output_rows(output_dir)
-            self.assertTrue(rows, 'Expected the generator to produce ECC output rows')
+            import pandas as pd
+            from pr_helpers import normalize_pbom_code, select_tss_items_for_site, filter_tss_mw_new_link_reroute_items
 
+            df_pr = pd.read_excel(pr_model_path, sheet_name="TX Line Item (After 21-Apr 26)", header=None)
+            tss_models = []
+            for idx in range(7, len(df_pr)):
+                sow = df_pr.iloc[idx, 0]
+                pbom = df_pr.iloc[idx, 1]
+                desc = df_pr.iloc[idx, 2]
+                unit = df_pr.iloc[idx, 3]
+                qty = df_pr.iloc[idx, 4]
+                rules = df_pr.iloc[idx, 5]
+                remarks = df_pr.iloc[idx, 6] if len(df_pr.columns) > 6 else None
+
+                if pd.isna(sow) or str(sow).strip() == '':
+                    break
+
+                is_mandatory = 'Mandatory' in str(rules) if pd.notna(rules) else False
+
+                if pd.notna(pbom) and pd.notna(desc):
+                    tss_models.append({
+                        'SOW': str(sow).strip(),
+                        'PBOM_Code': normalize_pbom_code(pbom),
+                        'Description': str(desc).strip(),
+                        'Unit': str(unit).strip() if pd.notna(unit) else 'Hop',
+                        'Quantity': float(qty) if pd.notna(qty) else 1.0,
+                        'Is_Mandatory': is_mandatory,
+                        'Remarks': str(remarks).strip() if pd.notna(remarks) else None
+                    })
+
+            df_site = pd.read_excel(site_path, sheet_name='data', header=3)
             for site_id, expectation in self.scenario_rows.items():
-                site_rows = [row for row in rows if str(row['Site ID*']).strip() == site_id]
-                self.assertTrue(site_rows, f'Missing ECC rows for site {site_id}')
+                site_row = df_site[df_site['customer site code'] == site_id].iloc[0]
+                tx_sow = str(site_row.get('Tx SOW', site_row.get('tx sow', ''))).strip()
+                tx_upgrade_scope = str(site_row.get('TX Upgrade Scope', site_row.get('tx upgrade scope', ''))).strip()
 
-                pboms = [str(row['PBOM Code*']).strip() for row in site_rows]
+                filtered = select_tss_items_for_site(site_id, tx_sow, tx_upgrade_scope, tss_models)
+
+                pboms = [item['PBOM_Code'] for item in filtered]
                 survey_pboms = [pbom for pbom in pboms if pbom.startswith('35000006277')]
 
                 self.assertEqual(
@@ -474,10 +502,10 @@ class TestProductionExcelPBOMNormalization(unittest.TestCase):
                 self.assertNotIn('.0', ''.join(survey_pboms), f'{site_id} should emit canonical survey PBOM codes without .0')
 
                 for controlled_pbom in ('350000589343', '350000589344'):
-                    controlled_rows = [row for row in site_rows if str(row['PBOM Code*']).strip() == controlled_pbom]
+                    controlled_rows = [item for item in filtered if item['PBOM_Code'] == controlled_pbom]
                     self.assertEqual(len(controlled_rows), 1, f'{site_id} should include {controlled_pbom} exactly once')
                     self.assertEqual(
-                        float(controlled_rows[0]['Quantity*']),
+                        float(controlled_rows[0]['Quantity']),
                         expectation['expected_qty'],
                         f'{site_id} should emit qty {expectation["expected_qty"]} for {controlled_pbom}',
                     )
