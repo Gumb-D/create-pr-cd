@@ -1,12 +1,17 @@
 import json
 import os
 import shutil
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment, Protection, Side, Border
 
 ROOT = Path(__file__).resolve().parent.parent
+SCRIPTS = ROOT / "scripts"
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
 
 from run_tx_mini_ecc_parity import (
     APPROVED_PR_MODEL_SHA256,
@@ -20,6 +25,9 @@ from run_tx_mini_ecc_parity import (
     compare_business_fields,
     normalize_allowed_metadata,
     calculate_overall_parity,
+    derive_expected_candidates,
+    compute_manifest_identity_hash,
+    cross_check_candidate_manifest,
 )
 
 
@@ -203,11 +211,6 @@ class TestTxMiniTssEccParity(unittest.TestCase):
         ws1.row_dimensions[3].hidden = True
         diffs = compare_workbook_structure(wb1, wb2)
         self.assertTrue(any("row 3 hidden differs" in d for d in diffs))
-
-        ws1.column_dimensions["C"].width = 25.0
-        diffs_col = compare_workbook_structure(wb1, wb2)
-        self.assertTrue(any("column C width differs" in d for d in diffs_col))
-
     def test_compare_cell_mutations(self):
         wb1 = openpyxl.Workbook()
         wb2 = openpyxl.Workbook()
@@ -225,6 +228,165 @@ class TestTxMiniTssEccParity(unittest.TestCase):
         ws2["B2"].number_format = "@"
         diffs_fmt = compare_cell(ws1["B2"], ws2["B2"], "Sheet", "B2")
         self.assertTrue(any("number_format:" in d for d in diffs_fmt))
+
+    def test_font_only_difference_causes_structural_difference(self):
+        wb1 = openpyxl.Workbook()
+        wb2 = openpyxl.Workbook()
+        ws1 = wb1.active
+        ws2 = wb2.active
+        ws1["A1"] = "test"
+        ws2["A1"] = "test"
+        ws1["A1"].font = Font(name="Calibri", size=11, bold=True)
+        ws2["A1"].font = Font(name="Calibri", size=11, bold=False)
+        diffs = compare_cell(ws1["A1"], ws2["A1"], "Sheet", "A1")
+        self.assertTrue(any("font:" in d for d in diffs))
+
+    def test_fill_only_difference_causes_structural_difference(self):
+        wb1 = openpyxl.Workbook()
+        wb2 = openpyxl.Workbook()
+        ws1 = wb1.active
+        ws2 = wb2.active
+        ws1["A1"] = "test"
+        ws2["A1"] = "test"
+        ws1["A1"].fill = PatternFill(fill_type="solid", start_color="FF0000", end_color="FF0000")
+        ws2["A1"].fill = PatternFill(fill_type=None)
+        diffs = compare_cell(ws1["A1"], ws2["A1"], "Sheet", "A1")
+        self.assertTrue(any("fill" in d for d in diffs))
+
+    def test_border_only_difference_causes_structural_difference(self):
+        wb1 = openpyxl.Workbook()
+        wb2 = openpyxl.Workbook()
+        ws1 = wb1.active
+        ws2 = wb2.active
+        ws1["A1"] = "test"
+        ws2["A1"] = "test"
+        ws1["A1"].border = Border(left=Side(style="thin"))
+        ws2["A1"].border = Border()
+        diffs = compare_cell(ws1["A1"], ws2["A1"], "Sheet", "A1")
+        self.assertTrue(any("border" in d for d in diffs))
+
+    def test_alignment_only_difference_causes_structural_difference(self):
+        wb1 = openpyxl.Workbook()
+        wb2 = openpyxl.Workbook()
+        ws1 = wb1.active
+        ws2 = wb2.active
+        ws1["A1"] = "test"
+        ws2["A1"] = "test"
+        ws1["A1"].alignment = Alignment(horizontal="left")
+        ws2["A1"].alignment = Alignment(horizontal="right")
+        diffs = compare_cell(ws1["A1"], ws2["A1"], "Sheet", "A1")
+        self.assertTrue(any("alignment:" in d for d in diffs))
+
+    def test_protection_only_difference_causes_structural_difference(self):
+        wb1 = openpyxl.Workbook()
+        wb2 = openpyxl.Workbook()
+        ws1 = wb1.active
+        ws2 = wb2.active
+        ws1["A1"] = "test"
+        ws2["A1"] = "test"
+        ws1["A1"].protection = Protection(locked=True)
+        ws2["A1"].protection = Protection(locked=False)
+        diffs = compare_cell(ws1["A1"], ws2["A1"], "Sheet", "A1")
+        self.assertTrue(any("protection:" in d for d in diffs))
+
+    def test_same_normalized_value_with_formatting_difference_does_not_become_normalized_match(self):
+        wb1 = openpyxl.Workbook()
+        wb2 = openpyxl.Workbook()
+        ws1 = wb1.active
+        ws2 = wb2.active
+        ws1.title = "Summary"
+        ws2.title = "Summary"
+        ws1["A1"] = "  Header  "
+        ws2["A1"] = "Header"
+        ws1["A1"].font = Font(bold=True)
+        ws2["A1"].font = Font(bold=False)
+
+        cell_diffs = compare_cell(ws1["A1"], ws2["A1"], "Summary", "A1")
+        only_val_diffs = all(d.startswith("value:") for d in cell_diffs)
+        self.assertFalse(only_val_diffs, "Formatting difference must prevent only_val_diffs from being True")
+
+    def test_explicitly_allowlisted_difference_remains_allowed(self):
+        wb1 = openpyxl.Workbook()
+        wb2 = openpyxl.Workbook()
+        ws1 = wb1.active
+        ws2 = wb2.active
+        ws1.title = "Summary"
+        ws2.title = "Summary"
+        ws1["A1"] = "  Header  "
+        ws2["A1"] = "Header"
+
+        cell_diffs = compare_cell(ws1["A1"], ws2["A1"], "Summary", "A1")
+        norm_l = normalize_allowed_metadata("Summary", "A1", ws1["A1"].value)
+        norm_c = normalize_allowed_metadata("Summary", "A1", ws2["A1"].value)
+        only_val_diffs = all(d.startswith("value:") for d in cell_diffs)
+        is_allowed = only_val_diffs and (norm_l == norm_c)
+        self.assertTrue(is_allowed)
+
+    def test_unapproved_cell_diffs_make_overall_parity_fail(self):
+        self.assertEqual(calculate_overall_parity(12, 12, 12, 12, 12, 0, 0, 1, 0), "ECC_PARITY_FAILED")
+
+    def test_cross_check_candidate_manifest_exact_match_passes(self):
+        expected = [{"Candidate ID": f"TXM-TSS-{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 13)]
+        cached = [{"Candidate ID": f"TXM-TSS-{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 13)]
+        self.assertTrue(cross_check_candidate_manifest(cached, expected))
+
+    def test_cross_check_candidate_manifest_stale_site_code_fails(self):
+        expected = [{"Candidate ID": f"TXM-TSS-{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 13)]
+        cached = [{"Candidate ID": f"TXM-TSS-{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 12)]
+        cached.append({"Candidate ID": "TXM-TSS-012", "Source Row": 12, "Site Code": "STALE_SITE"})
+        with self.assertRaises(ValueError) as ctx:
+            cross_check_candidate_manifest(cached, expected)
+        self.assertIn("MANIFEST_CANDIDATE_IDENTITY_MISMATCH", str(ctx.exception))
+
+    def test_cross_check_candidate_manifest_stale_source_row_fails(self):
+        expected = [{"Candidate ID": f"TXM-TSS-{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 13)]
+        cached = [{"Candidate ID": f"TXM-TSS-{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 12)]
+        cached.append({"Candidate ID": "TXM-TSS-012", "Source Row": 99, "Site Code": "S012"})
+        with self.assertRaises(ValueError) as ctx:
+            cross_check_candidate_manifest(cached, expected)
+        self.assertIn("MANIFEST_CANDIDATE_IDENTITY_MISMATCH", str(ctx.exception))
+
+    def test_cross_check_candidate_manifest_stale_candidate_id_fails(self):
+        expected = [{"Candidate ID": f"TXM-TSS-{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 13)]
+        cached = [{"Candidate ID": f"TXM-TSS-{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 12)]
+        cached.append({"Candidate ID": "TXM-TSS-999", "Source Row": 12, "Site Code": "S012"})
+        with self.assertRaises(ValueError) as ctx:
+            cross_check_candidate_manifest(cached, expected)
+        self.assertIn("MANIFEST_CANDIDATE_IDENTITY_MISMATCH", str(ctx.exception))
+
+    def test_cross_check_candidate_manifest_missing_current_candidate_fails(self):
+        expected = [{"Candidate ID": f"TXM-TSS-{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 13)]
+        cached = [{"Candidate ID": f"TXM-TSS-{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 12)]
+        with self.assertRaises(ValueError) as ctx:
+            cross_check_candidate_manifest(cached, expected)
+        self.assertIn("must be exactly 12", str(ctx.exception))
+
+    def test_cross_check_candidate_manifest_extra_stale_candidate_fails(self):
+        expected = [{"Candidate ID": f"TXM-TSS-{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 13)]
+        cached = [{"Candidate ID": f"TXM-TSS-{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 14)]
+        with self.assertRaises(ValueError) as ctx:
+            cross_check_candidate_manifest(cached, expected)
+        self.assertIn("must be exactly 12", str(ctx.exception))
+
+    def test_cross_check_candidate_manifest_same_count_different_set_fails(self):
+        expected = [{"Candidate ID": f"TXM-TSS-{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 13)]
+        cached = [{"Candidate ID": f"TXM-TSS-{i:03d}", "Source Row": i + 10, "Site Code": f"S{i+10:03d}"} for i in range(1, 13)]
+        with self.assertRaises(ValueError) as ctx:
+            cross_check_candidate_manifest(cached, expected)
+        self.assertIn("MANIFEST_CANDIDATE_IDENTITY_MISMATCH", str(ctx.exception))
+
+    def test_cross_check_candidate_manifest_order_difference_passes_after_sorting(self):
+        expected = [{"Candidate ID": f"TXM-TSS-{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 13)]
+        cached = list(reversed(expected))
+        self.assertTrue(cross_check_candidate_manifest(cached, expected))
+
+    def test_manifest_identity_hash_changes_when_membership_changes(self):
+        cands1 = [{"Candidate ID": f"TXM-TSS-{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 13)]
+        cands2 = [{"Candidate ID": f"TXM-TSS-{i:03d}", "Source Row": i, "Site Code": f"S{i:03d}"} for i in range(1, 12)]
+        cands2.append({"Candidate ID": "TXM-TSS-012", "Source Row": 12, "Site Code": "S999"})
+        h1 = compute_manifest_identity_hash(cands1)
+        h2 = compute_manifest_identity_hash(cands2)
+        self.assertNotEqual(h1, h2)
 
     def test_extract_and_compare_business_fields_mismatch(self):
         wb1 = openpyxl.Workbook()

@@ -63,15 +63,17 @@ def normalize_source_row(val: Any) -> int:
 
 def validate_candidate_manifest(candidates: Any) -> bool:
     """Validate candidate manifest format, count, required fields, and uniqueness."""
-    if not isinstance(candidates, list):
-        raise ValueError(f"Candidate manifest payload must be a list, got {type(candidates).__name__}")
-    if len(candidates) != 12:
-        raise ValueError(f"Candidate count must be exactly 12, got {len(candidates)}")
+    items = candidates.get("candidates") if isinstance(candidates, dict) and "candidates" in candidates else candidates
+
+    if not isinstance(items, list):
+        raise ValueError(f"Candidate manifest payload must be a list, got {type(items).__name__}")
+    if len(items) != 12:
+        raise ValueError(f"Candidate count must be exactly 12, got {len(items)}")
 
     cand_ids = []
     source_rows = []
 
-    for i, c in enumerate(candidates):
+    for i, c in enumerate(items):
         if not isinstance(c, dict):
             raise ValueError(f"Candidate row at index {i} must be a dictionary/object, got {type(c).__name__}")
 
@@ -100,6 +102,59 @@ def validate_candidate_manifest(candidates: Any) -> bool:
 
     if len(source_rows) != len(set(source_rows)):
         raise ValueError("Duplicate Source Rows found in manifest")
+
+    return True
+
+
+def derive_expected_candidates(input_file: Path, profile_path: Path, sow_registry: Path, scope_config_path: Path, csv_in: Path) -> list:
+    """Derive expected 12-candidate set from current eligibility candidate source."""
+    if not csv_in.exists():
+        subprocess.run([
+            sys.executable, "scripts/build_tx_mini_scope_uat.py",
+            "--input", str(input_file),
+            "--profile", str(profile_path),
+            "--scope-config", str(scope_config_path),
+            "--output", str(csv_in.parent)
+        ], check=True)
+
+    scope_config_data = json.loads(scope_config_path.read_text(encoding="utf-8"))
+    records, _ = build_records_from_export(input_file, profile_path, "TSS", sow_registry, scope_config=scope_config_data.get("scopes", {}))
+    real_sites = {r["identity"]["source_row_number"]: r["site"].get("site_code", "") for r in records}
+
+    cands = []
+    with open(csv_in, "r", encoding="utf-8-sig") as f:
+        reader = csv.DictReader(f)
+        for i, row in enumerate(reader):
+            sr = normalize_source_row(row["Source Row"])
+            cands.append({
+                "Candidate ID": f"TXM-TSS-{i+1:03d}",
+                "Source Row": sr,
+                "Site Code": real_sites.get(sr, row["Masked Site Code"])
+            })
+    return cands
+
+
+def compute_manifest_identity_hash(candidates: list) -> str:
+    """Compute deterministic SHA-256 hash of sorted candidate identity set."""
+    norm_identities = sorted([(str(c["Candidate ID"]).strip(), normalize_source_row(c["Source Row"]), str(c["Site Code"]).strip()) for c in candidates])
+    raw = json.dumps(norm_identities, sort_keys=True)
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def cross_check_candidate_manifest(cached_manifest_payload: Any, expected_candidates: list) -> bool:
+    """Validate cached candidate manifest structurally and cross-check exact identity equality against expected candidate set."""
+    validate_candidate_manifest(cached_manifest_payload)
+
+    cached_items = cached_manifest_payload if isinstance(cached_manifest_payload, list) else cached_manifest_payload.get("candidates", [])
+
+    if len(cached_items) != len(expected_candidates):
+        raise ValueError(f"MANIFEST_CANDIDATE_COUNT_MISMATCH: cached candidate count ({len(cached_items)}) does not match expected ({len(expected_candidates)})")
+
+    cached_identities = sorted([(str(c["Candidate ID"]).strip(), normalize_source_row(c["Source Row"]), str(c["Site Code"]).strip()) for c in cached_items])
+    expected_identities = sorted([(str(c["Candidate ID"]).strip(), normalize_source_row(c["Source Row"]), str(c["Site Code"]).strip()) for c in expected_candidates])
+
+    if cached_identities != expected_identities:
+        raise ValueError(f"MANIFEST_CANDIDATE_IDENTITY_MISMATCH: cached manifest identities do not match current candidate set.\nCached: {cached_identities}\nExpected: {expected_identities}")
 
     return True
 
@@ -182,6 +237,16 @@ def compare_cell(cl, cc, sheet_name: str, coord: str) -> list:
             diffs.append(f"protection: ({prot_l.locked}, {prot_l.hidden}) vs ({prot_c.locked}, {prot_c.hidden})")
     elif bool(prot_l) != bool(prot_c):
         diffs.append(f"protection presence: {bool(prot_l)} vs {bool(prot_c)}")
+
+    # Border
+    bl, bc = cl.border, cc.border
+    if bl and bc:
+        b_l_tuple = (getattr(bl.left, 'style', None), getattr(bl.right, 'style', None), getattr(bl.top, 'style', None), getattr(bl.bottom, 'style', None))
+        b_c_tuple = (getattr(bc.left, 'style', None), getattr(bc.right, 'style', None), getattr(bc.top, 'style', None), getattr(bc.bottom, 'style', None))
+        if b_l_tuple != b_c_tuple:
+            diffs.append(f"border: {b_l_tuple} vs {b_c_tuple}")
+    elif bool(bl) != bool(bc):
+        diffs.append(f"border presence: {bool(bl)} vs {bool(bc)}")
 
     return diffs
 
@@ -335,42 +400,34 @@ def run_parity():
     input_file = Path("Info/reference/du_exports/A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx")
     profile_path = Path("config/du_profiles/tx_mini_pr_v1.yaml")
     pr_model = Path("Info/input/pr_model.xlsx")
+    sow_registry = Path("config/registries/canonical_sow_registry.yaml")
+    scope_config = Path("config/scope_eligibility/tx_mini_pr_v1.json")
+    csv_in = Path("output/tx-mini-scope-eligibility-uat/TX_MINI_TSS_UAT_CANDIDATES.csv")
+
+    expected_candidates = derive_expected_candidates(input_file, profile_path, sow_registry, scope_config, csv_in)
+    expected_identity_hash = compute_manifest_identity_hash(expected_candidates)
 
     manifest_file = out_dir / "candidate_manifest" / "TX_MINI_TSS_CANDIDATE_MANIFEST.json"
-    if not manifest_file.exists():
-        manifest_file.parent.mkdir(parents=True, exist_ok=True)
-        csv_in = Path("output/tx-mini-scope-eligibility-uat/TX_MINI_TSS_UAT_CANDIDATES.csv")
-        if not csv_in.exists():
-            subprocess.run([
-                sys.executable, "scripts/build_tx_mini_scope_uat.py",
-                "--input", str(input_file),
-                "--profile", str(profile_path),
-                "--scope-config", "config/scope_eligibility/tx_mini_pr_v1.json",
-                "--output", "output/tx-mini-scope-eligibility-uat"
-            ], check=True)
+    manifest_file.parent.mkdir(parents=True, exist_ok=True)
 
-        sow_registry = Path("config/registries/canonical_sow_registry.yaml")
-        scope_config = Path("config/scope_eligibility/tx_mini_pr_v1.json")
-        scope_config_data = json.loads(scope_config.read_text(encoding="utf-8"))
-        records, _ = build_records_from_export(input_file, profile_path, "TSS", sow_registry, scope_config=scope_config_data.get("scopes", {}))
-        real_sites = {r["identity"]["source_row_number"]: r["site"].get("site_code", "") for r in records}
+    if manifest_file.exists():
+        try:
+            cached_data = json.loads(manifest_file.read_text(encoding="utf-8"))
+            cross_check_candidate_manifest(cached_data, expected_candidates)
+        except Exception as err:
+            raise ValueError(f"Cached manifest invalid or mismatched against current candidate set: {err}") from err
 
-        cands = []
-        with open(csv_in, "r", encoding="utf-8-sig") as f:
-            reader = csv.DictReader(f)
-            for i, row in enumerate(reader):
-                sr = int(row["Source Row"])
-                cands.append({
-                    "Candidate ID": f"TXM-TSS-{i+1:03d}",
-                    "Source Row": sr,
-                    "Site Code": real_sites.get(sr, row["Masked Site Code"])
-                })
-        manifest_file.write_text(json.dumps(cands, indent=2))
-
-    try:
-        candidates = json.loads(manifest_file.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as err:
-        raise ValueError(f"Malformed JSON in candidate manifest: {manifest_file}") from err
+    manifest_payload = {
+        "metadata": {
+            "source_candidate_file": str(csv_in),
+            "source_candidate_file_hash": hashlib.sha256(csv_in.read_bytes()).hexdigest() if csv_in.exists() else "",
+            "identity_hash": expected_identity_hash,
+            "candidate_count": len(expected_candidates)
+        },
+        "candidates": expected_candidates
+    }
+    manifest_file.write_text(json.dumps(manifest_payload, indent=2), encoding="utf-8")
+    candidates = expected_candidates
 
     validate_candidate_manifest(candidates)
     validate_pr_model(pr_model)
@@ -475,9 +532,15 @@ def run_parity():
                     cell_diffs = compare_cell(cl, cc, sheet, coord)
                     if cell_diffs:
                         is_exact = False
-                        norm_l = normalize_allowed_metadata(sheet, coord, cl.value)
-                        norm_c = normalize_allowed_metadata(sheet, coord, cc.value)
-                        if norm_l != norm_c or any("data_type" in d or "number_format" in d for d in cell_diffs):
+                        is_allowed = False
+                        if (sheet, coord) in ALLOWED_NORMALIZATION_CELLS:
+                            norm_l = normalize_allowed_metadata(sheet, coord, cl.value)
+                            norm_c = normalize_allowed_metadata(sheet, coord, cc.value)
+                            only_val_diffs = all(d.startswith("value:") for d in cell_diffs)
+                            if only_val_diffs and norm_l == norm_c:
+                                is_allowed = True
+
+                        if not is_allowed:
                             is_normalized = False
                             has_cell_diff = True
                             cell_differences.append({
@@ -493,8 +556,10 @@ def run_parity():
         biz_match, biz_csv_rows = compare_business_fields(cand_id, leg_biz, can_biz)
         business_comparison_rows.extend(biz_csv_rows)
 
-        if not biz_match or has_cell_diff:
+        if not biz_match:
             results.append({"Candidate ID": cand_id, "Site Code": site_code, "Parity Classification": "BUSINESS_DIFFERENCE"})
+        elif has_cell_diff:
+            results.append({"Candidate ID": cand_id, "Site Code": site_code, "Parity Classification": "STRUCTURAL_DIFFERENCE"})
         elif is_exact:
             results.append({"Candidate ID": cand_id, "Site Code": site_code, "Parity Classification": "EXACT_MATCH"})
         else:
