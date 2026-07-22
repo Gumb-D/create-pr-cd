@@ -395,6 +395,7 @@ class TestProductionExcelPBOMNormalization(unittest.TestCase):
 
         wb.save(workbook_path)
 
+    def _run_generator(self, site_path: Path, pr_model_path: Path, output_dir: Path) -> None:
         import hashlib
         pr_model_hash = hashlib.sha256(pr_model_path.read_bytes()).hexdigest()
         command = [
