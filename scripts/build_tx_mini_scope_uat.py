@@ -208,14 +208,15 @@ def main() -> int:
                 raise ValueError(f"Count consistency violation in {scope}")
                 
             legacy_comparisons[scope] = {
-                "legacy_selected": counts["UAT_CANDIDATE"], # this is mocked for reporting if ECC wasn't invoked, but let's fulfill the report keys
+                "scope_selection_parity": "NOT_EXECUTED",
+                "legacy_selected": None,
                 "eligibility_selected": counts["UAT_CANDIDATE"],
-                "selected_by_both": counts["UAT_CANDIDATE"],
-                "legacy_only": 0,
-                "eligibility_only": 0,
-                "excluded_missing_actual_end": counts["NO_PR_OR_IGNORED"],
-                "excluded_duplicate": counts["DUPLICATE_BLOCKED"],
-                "excluded_no_pr_sow": 0,
+                "selected_by_both": None,
+                "legacy_only": None,
+                "eligibility_only": None,
+                "excluded_missing_actual_end": None,
+                "excluded_duplicate": None,
+                "excluded_no_pr_sow": None,
                 "review_required": counts["REVIEW_REQUIRED"]
             }
 
@@ -245,21 +246,16 @@ def main() -> int:
             "# Legacy Selection Comparison",
             "",
             "Canonical column rendering parity: PASS",
-            "Scope selection parity: PASS",
+            "Scope selection parity: NOT_EXECUTED",
             "ECC output parity for the 12 TSS candidates: NOT YET EXECUTED",
             ""
         ]
         for scope in scopes:
             legacy_comp_md.extend([
                 f"## {scope}",
-                f"- legacy-selected row count: {legacy_comparisons[scope]['legacy_selected']}",
+                f"- scope selection parity: NOT_EXECUTED",
+                f"- legacy-selected row count: NOT_EXECUTED",
                 f"- eligibility-selected candidate count: {legacy_comparisons[scope]['eligibility_selected']}",
-                f"- selected by both: {legacy_comparisons[scope]['selected_by_both']}",
-                f"- legacy only: {legacy_comparisons[scope]['legacy_only']}",
-                f"- eligibility only: {legacy_comparisons[scope]['eligibility_only']}",
-                f"- excluded due to missing Actual End: {legacy_comparisons[scope]['excluded_missing_actual_end']}",
-                f"- excluded due to duplicate: {legacy_comparisons[scope]['excluded_duplicate']}",
-                f"- excluded due to no-PR SOW: {legacy_comparisons[scope]['excluded_no_pr_sow']}",
                 f"- review required: {legacy_comparisons[scope]['review_required']}",
                 ""
             ])
