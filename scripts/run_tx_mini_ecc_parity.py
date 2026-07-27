@@ -106,21 +106,40 @@ def validate_candidate_manifest(candidates: Any) -> bool:
     return True
 
 
+def _extract_color_attrs(color) -> tuple:
+    """Extract comparable color attributes (type, rgb, indexed, theme, tint) from an openpyxl Color."""
+    if color is None:
+        return (None, None, None, None, None)
+    return (
+        getattr(color, 'type', None),
+        getattr(color, 'rgb', None),
+        getattr(color, 'indexed', None),
+        getattr(color, 'theme', None),
+        getattr(color, 'tint', None),
+    )
+
+
 def derive_expected_candidates(input_file: Path, profile_path: Path, sow_registry: Path, scope_config_path: Path, csv_in: Path) -> list:
-    """Derive expected 12-candidate set from current eligibility candidate source."""
-    if not csv_in.exists():
-        subprocess.run([
-            sys.executable, "scripts/build_tx_mini_scope_uat.py",
-            "--input", str(input_file),
-            "--profile", str(profile_path),
-            "--scope-config", str(scope_config_path),
-            "--output", str(csv_in.parent)
-        ], check=True)
+    """Derive expected 12-candidate set from current eligibility source.
+
+    Always rebuilds the candidate CSV from build_records_from_export to ensure
+    the parity set reflects the current scope config and classifier. A stale
+    existing CSV is never accepted as the current candidate set.
+    """
+    # Always rebuild the CSV from current classifications
+    subprocess.run([
+        sys.executable, "scripts/build_tx_mini_scope_uat.py",
+        "--input", str(input_file),
+        "--profile", str(profile_path),
+        "--scope-config", str(scope_config_path),
+        "--output", str(csv_in.parent)
+    ], check=True)
 
     scope_config_data = json.loads(scope_config_path.read_text(encoding="utf-8"))
     records, _ = build_records_from_export(input_file, profile_path, "TSS", sow_registry, scope_config=scope_config_data.get("scopes", {}))
     real_sites = {r["identity"]["source_row_number"]: r["site"].get("site_code", "") for r in records}
 
+    # Read the freshly-built CSV and cross-check against current classifications
     cands = []
     with open(csv_in, "r", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
@@ -131,6 +150,27 @@ def derive_expected_candidates(input_file: Path, profile_path: Path, sow_registr
                 "Source Row": sr,
                 "Site Code": real_sites.get(sr, row["Masked Site Code"])
             })
+
+    # Verify every CSV candidate source row exists in the classified record set
+    # with a matching site code. build_records_from_export returns ALL TSS records,
+    # so CSV rows (12 UAT candidates) are a subset.
+    for c in cands:
+        sr = c["Source Row"]
+        if sr not in real_sites:
+            raise ValueError(
+                f"STALE_CANDIDATE_CSV: CSV candidate source row {sr} "
+                f"(Site Code={c['Site Code']}) is not present in the freshly "
+                f"classified record set. The candidate CSV must be rebuilt "
+                f"from current classifications."
+            )
+        if real_sites[sr] != c["Site Code"]:
+            raise ValueError(
+                f"STALE_CANDIDATE_CSV: CSV candidate source row {sr} has "
+                f"Site Code={c['Site Code']} but fresh classification has "
+                f"Site Code={real_sites[sr]}. The candidate CSV must be "
+                f"rebuilt from current classifications."
+            )
+
     return cands
 
 
@@ -214,11 +254,21 @@ def compare_cell(cl, cc, sheet_name: str, coord: str) -> list:
     elif bool(fl) != bool(fc):
         diffs.append(f"font presence: {bool(fl)} vs {bool(fc)}")
 
-    # Fill
+    # Fill — compare fill_type AND foreground/background color attributes
     fill_l, fill_c = cl.fill, cc.fill
     if fill_l and fill_c:
         if fill_l.fill_type != fill_c.fill_type:
             diffs.append(f"fill_type: {fill_l.fill_type} vs {fill_c.fill_type}")
+        else:
+            # Same fill_type — compare foreground and background color properties
+            fg_l = _extract_color_attrs(fill_l.fgColor)
+            fg_c = _extract_color_attrs(fill_c.fgColor)
+            if fg_l != fg_c:
+                diffs.append(f"fill_fgColor: {fg_l} vs {fg_c}")
+            bg_l = _extract_color_attrs(fill_l.bgColor)
+            bg_c = _extract_color_attrs(fill_c.bgColor)
+            if bg_l != bg_c:
+                diffs.append(f"fill_bgColor: {bg_l} vs {bg_c}")
     elif bool(fill_l) != bool(fill_c):
         diffs.append(f"fill presence: {bool(fill_l)} vs {bool(fill_c)}")
 

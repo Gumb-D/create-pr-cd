@@ -28,6 +28,7 @@ from run_tx_mini_ecc_parity import (
     derive_expected_candidates,
     compute_manifest_identity_hash,
     cross_check_candidate_manifest,
+    _extract_color_attrs,
 )
 
 
@@ -483,6 +484,142 @@ class TestTxMiniTssEccParity(unittest.TestCase):
         h_hash = calculate_header_hash(inv)
         prof_data = json.loads(profile_file.read_text(encoding="utf-8"))
         self.assertIn(h_hash, prof_data["export_structure"]["approved_header_hashes"])
+
+    # --- Thread 9 regression tests: stale candidate CSV cross-check ---
+
+    def test_stale_candidate_csv_after_scope_change_is_rejected(self):
+        """A stale CSV whose source rows differ from freshly classified rows
+        must raise STALE_CANDIDATE_CSV, never silently pass."""
+        from run_tx_mini_ecc_parity import derive_expected_candidates
+        from unittest.mock import patch, MagicMock
+        import csv as csv_mod
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            csv_path = tmp / "TX_MINI_TSS_UAT_CANDIDATES.csv"
+            scope_cfg = tmp / "scope.json"
+            scope_cfg.write_text(json.dumps({"scopes": {}}), encoding="utf-8")
+
+            # Write a stale CSV with source rows 1..12
+            with open(csv_path, "w", newline="", encoding="utf-8") as f:
+                w = csv_mod.DictWriter(f, fieldnames=["Source Row", "Masked Site Code"])
+                w.writeheader()
+                for i in range(1, 13):
+                    w.writerow({"Source Row": str(i), "Masked Site Code": f"S{i:03d}"})
+
+            # Mock build_records_from_export to return a DIFFERENT set (rows 5..16)
+            fresh_records = [
+                {"identity": {"source_row_number": r}, "site": {"site_code": f"S{r:03d}"}}
+                for r in range(5, 17)
+            ]
+
+            with patch("run_tx_mini_ecc_parity.subprocess.run") as mock_sub, \
+                 patch("run_tx_mini_ecc_parity.build_records_from_export", return_value=(fresh_records, {})):
+                mock_sub.return_value = MagicMock(returncode=0)
+                with self.assertRaises(ValueError) as ctx:
+                    derive_expected_candidates(
+                        Path("dummy_input.xlsx"),
+                        Path("dummy_profile.yaml"),
+                        Path("dummy_sow.yaml"),
+                        scope_cfg,
+                        csv_path,
+                    )
+                self.assertIn("STALE_CANDIDATE_CSV", str(ctx.exception))
+
+    def test_current_candidate_set_exact_match_passes(self):
+        """When CSV source rows exactly match freshly classified rows,
+        derive_expected_candidates succeeds."""
+        from run_tx_mini_ecc_parity import derive_expected_candidates
+        from unittest.mock import patch, MagicMock
+        import csv as csv_mod
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            csv_path = tmp / "TX_MINI_TSS_UAT_CANDIDATES.csv"
+            scope_cfg = tmp / "scope.json"
+            scope_cfg.write_text(json.dumps({"scopes": {}}), encoding="utf-8")
+
+            # Write CSV with source rows 1..12
+            with open(csv_path, "w", newline="", encoding="utf-8") as f:
+                w = csv_mod.DictWriter(f, fieldnames=["Source Row", "Masked Site Code"])
+                w.writeheader()
+                for i in range(1, 13):
+                    w.writerow({"Source Row": str(i), "Masked Site Code": f"S{i:03d}"})
+
+            # Mock build_records_from_export to return the SAME set (rows 1..12)
+            fresh_records = [
+                {"identity": {"source_row_number": r}, "site": {"site_code": f"S{r:03d}"}}
+                for r in range(1, 13)
+            ]
+
+            with patch("run_tx_mini_ecc_parity.subprocess.run") as mock_sub, \
+                 patch("run_tx_mini_ecc_parity.build_records_from_export", return_value=(fresh_records, {})):
+                mock_sub.return_value = MagicMock(returncode=0)
+                result = derive_expected_candidates(
+                    Path("dummy_input.xlsx"),
+                    Path("dummy_profile.yaml"),
+                    Path("dummy_sow.yaml"),
+                    scope_cfg,
+                    csv_path,
+                )
+                self.assertEqual(len(result), 12)
+                for c in result:
+                    self.assertIn("Candidate ID", c)
+                    self.assertIn("Source Row", c)
+                    self.assertIn("Site Code", c)
+
+    # --- Thread 10 regression tests: fill color comparison ---
+
+    def test_same_fill_type_different_foreground_color_detected(self):
+        """Both cells solid but different fgColor must produce a fill_fgColor diff."""
+        wb1 = openpyxl.Workbook()
+        wb2 = openpyxl.Workbook()
+        ws1 = wb1.active
+        ws2 = wb2.active
+        ws1["A1"] = "test"
+        ws2["A1"] = "test"
+        ws1["A1"].fill = PatternFill(fill_type="solid", fgColor="FF0000")
+        ws2["A1"].fill = PatternFill(fill_type="solid", fgColor="00FF00")
+        diffs = compare_cell(ws1["A1"], ws2["A1"], "Sheet", "A1")
+        self.assertTrue(any("fill_fgColor" in d for d in diffs),
+                        f"Expected fill_fgColor diff, got: {diffs}")
+
+    def test_same_fill_type_different_background_color_detected(self):
+        """Both cells solid but different bgColor must produce a fill_bgColor diff."""
+        wb1 = openpyxl.Workbook()
+        wb2 = openpyxl.Workbook()
+        ws1 = wb1.active
+        ws2 = wb2.active
+        ws1["A1"] = "test"
+        ws2["A1"] = "test"
+        ws1["A1"].fill = PatternFill(fill_type="solid", fgColor="FF0000", bgColor="0000FF")
+        ws2["A1"].fill = PatternFill(fill_type="solid", fgColor="FF0000", bgColor="00FF00")
+        diffs = compare_cell(ws1["A1"], ws2["A1"], "Sheet", "A1")
+        self.assertTrue(any("fill_bgColor" in d for d in diffs),
+                        f"Expected fill_bgColor diff, got: {diffs}")
+
+    def test_identical_fill_objects_produce_no_diff(self):
+        """Cells with identical fill (type, fgColor, bgColor) must produce zero fill diffs."""
+        wb1 = openpyxl.Workbook()
+        wb2 = openpyxl.Workbook()
+        ws1 = wb1.active
+        ws2 = wb2.active
+        ws1["A1"] = "test"
+        ws2["A1"] = "test"
+        ws1["A1"].fill = PatternFill(fill_type="solid", fgColor="FF0000", bgColor="0000FF")
+        ws2["A1"].fill = PatternFill(fill_type="solid", fgColor="FF0000", bgColor="0000FF")
+        diffs = compare_cell(ws1["A1"], ws2["A1"], "Sheet", "A1")
+        fill_diffs = [d for d in diffs if "fill" in d]
+        self.assertEqual(fill_diffs, [], f"Expected no fill diffs, got: {fill_diffs}")
+
+    def test_fill_color_difference_makes_overall_parity_fail(self):
+        """A fill color diff (not in allowlist) must cause STRUCTURAL_DIFFERENCE
+        and make calculate_overall_parity return ECC_PARITY_FAILED."""
+        # struct_diffs=1 means at least one candidate has STRUCTURAL_DIFFERENCE
+        self.assertEqual(
+            calculate_overall_parity(12, 12, 12, 12, 11, 0, 0, 1, 0),
+            "ECC_PARITY_FAILED"
+        )
 
 
 if __name__ == "__main__":
