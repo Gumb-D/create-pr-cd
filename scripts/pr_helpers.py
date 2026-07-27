@@ -179,7 +179,7 @@ def filter_tss_mw_new_link_reroute_items(
     for item in matched_items:
         pbom = normalize_pbom_code(item.get('PBOM_Code'))
         qty = item['Quantity']
-        remarks = item.get('Remarks', '').strip().lower()
+        remarks = (item.get('Remarks') or '').strip().lower()
 
         # 1. Model-driven filtering via Remarks
         if remarks:

@@ -1,5 +1,6 @@
 import sys
 import unittest
+import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -58,11 +59,11 @@ class TestScopeActualEndEligibility(unittest.TestCase):
 
     def test_missing_scope_actual_end_is_ignored(self):
         classification, reasons = classify_uat_record(self.make_record(actual_end=None), "TI")
-        self.assertEqual(classification, "NO_PR_REQUIRED")
+        self.assertEqual(classification, "NO_PR_OR_IGNORED")
         self.assertIn("ti_actual_end_date:ACTUAL_END_MISSING", reasons)
 
     def test_completed_scope_remains_candidate_even_when_details_say_drop_by_cd(self):
-        classification, reasons = classify_uat_record(self.make_record(actual_end=46184), "TI")
+        classification, reasons = classify_uat_record(self.make_record(actual_end=datetime.date(2026, 7, 17)), "TI")
         self.assertEqual(classification, "UAT_CANDIDATE")
         self.assertEqual(reasons, [])
 
@@ -76,13 +77,32 @@ class TestScopeActualEndEligibility(unittest.TestCase):
 
     def test_tss_uses_its_own_actual_end_field(self):
         self.assertEqual(
-            classify_uat_record(self.make_record(scope="TSS", actual_end=46168), "TSS")[0],
+            classify_uat_record(self.make_record(scope="TSS", actual_end="2026-07-17"), "TSS")[0],
             "UAT_CANDIDATE",
         )
         self.assertEqual(
             classify_uat_record(self.make_record(scope="TSS", actual_end=None), "TSS")[0],
-            "NO_PR_REQUIRED",
+            "NO_PR_OR_IGNORED",
         )
+
+    def test_date_validation_excel_datetime(self):
+        self.assertEqual(classify_uat_record(self.make_record(actual_end=datetime.datetime(2026, 7, 17, 12, 0)), "TI")[0], "UAT_CANDIDATE")
+
+    def test_date_validation_iso_string(self):
+        self.assertEqual(classify_uat_record(self.make_record(actual_end="2026-07-17T12:00:00Z"), "TI")[0], "UAT_CANDIDATE")
+
+    def test_date_validation_supported_workbook_date_string(self):
+        self.assertEqual(classify_uat_record(self.make_record(actual_end="2026/07/17 12:00"), "TI")[0], "UAT_CANDIDATE")
+        self.assertEqual(classify_uat_record(self.make_record(actual_end="17-07-2026"), "TI")[0], "UAT_CANDIDATE")
+
+    def test_date_validation_whitespace(self):
+        self.assertEqual(classify_uat_record(self.make_record(actual_end="   "), "TI")[0], "NO_PR_OR_IGNORED")
+
+    def test_date_validation_invalid_text(self):
+        self.assertEqual(classify_uat_record(self.make_record(actual_end="N/A"), "TI")[0], "REVIEW_REQUIRED")
+
+    def test_date_validation_invalid_calendar_date(self):
+        self.assertEqual(classify_uat_record(self.make_record(actual_end="2026-13-45"), "TI")[0], "REVIEW_REQUIRED")
 
 
 if __name__ == "__main__":

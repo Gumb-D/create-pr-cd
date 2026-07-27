@@ -18,7 +18,7 @@ from canonical_site_validator import empty_canonical_site_record
 
 
 class TestCanonicalGeneratorBridge(unittest.TestCase):
-    def make_record(self, *, scope="TSS", status="NO_PR", classification="PR_INPUT_READY"):
+    def make_record(self, *, scope="TSS", status="NO_PR", classification="PR_INPUT_READY", date_val="2026-07-17"):
         record = empty_canonical_site_record()
         record["identity"].update(
             {
@@ -59,6 +59,17 @@ class TestCanonicalGeneratorBridge(unittest.TestCase):
             "normalization_status": "APPROVED",
             "sow_classification": "PR_TRIGGER",
         }
+        date_field = "tss_actual_end_date" if scope == "TSS" else "ti_actual_end_date"
+        record["source_evidence"]["fields"][date_field] = {
+            "source_header_fingerprint": {
+                "field_code": "ACTUAL_END",
+                "wbs_stage": "Stage",
+                "task_name": "Task",
+                "display_header": "actual end time",
+            },
+            "source_value": date_val,
+            "mapping_status": "APPROVED",
+        }
         record["validation"].update(
             {
                 "profile_id": "zte_tx_mini_pr_v1",
@@ -82,30 +93,59 @@ class TestCanonicalGeneratorBridge(unittest.TestCase):
         self.assertEqual(row["UAT Classification"], "UAT_CANDIDATE")
         self.assertFalse(row["ECC Allowed"])
 
-    def test_scope_status_drives_duplicate_and_no_pr_required_classification(self):
-        self.assertEqual(classify_uat_record(self.make_record(status="PR_EXISTS"), "TSS")[0], "DUPLICATE_BLOCKED")
-        self.assertEqual(classify_uat_record(self.make_record(status="NO_PR_REQUIRED"), "TSS")[0], "NO_PR_REQUIRED")
-        self.assertEqual(classify_uat_record(self.make_record(status="NO_PR"), "TSS")[0], "UAT_CANDIDATE")
+    def test_precedence_2_duplicate_over_6_unresolved_evidence(self):
+        duplicate_unresolved = self.make_record(status="PR_EXISTS", classification="PR_INPUT_INCOMPLETE")
+        self.assertEqual(classify_uat_record(duplicate_unresolved, "TSS")[0], "DUPLICATE_BLOCKED")
 
-    def test_duplicate_and_no_pr_required_take_precedence_over_incomplete_fields(self):
-        duplicate = self.make_record(status="PR_EXISTS", classification="PR_INPUT_INCOMPLETE")
-        no_pr_required = self.make_record(status="NO_PR_REQUIRED", classification="PR_INPUT_INCOMPLETE")
-        self.assertEqual(classify_uat_record(duplicate, "TSS")[0], "DUPLICATE_BLOCKED")
-        self.assertEqual(classify_uat_record(no_pr_required, "TSS")[0], "NO_PR_REQUIRED")
+    def test_precedence_3_blank_actual_end_over_6_unresolved_evidence(self):
+        blank_unresolved = self.make_record(classification="PR_INPUT_INCOMPLETE", date_val="")
+        self.assertEqual(classify_uat_record(blank_unresolved, "TSS")[0], "NO_PR_OR_IGNORED")
 
-    def test_incomplete_record_remains_review_required_when_no_existing_pr(self):
-        classification, reasons = classify_uat_record(
-            self.make_record(classification="PR_INPUT_INCOMPLETE"),
-            "TSS",
-        )
-        self.assertEqual(classification, "REVIEW_REQUIRED")
-        self.assertIn("MISSING_PR_CRITICAL_FIELD:tx_sow_raw", reasons)
+    def test_precedence_6_unresolved_evidence_with_valid_actual_end(self):
+        valid_unresolved = self.make_record(classification="PR_INPUT_INCOMPLETE", date_val="2026-07-17")
+        self.assertEqual(classify_uat_record(valid_unresolved, "TSS")[0], "REVIEW_REQUIRED")
+
+    def test_precedence_4_malformed_actual_end_over_6_unresolved_evidence(self):
+        malformed_unresolved = self.make_record(classification="PR_INPUT_INCOMPLETE", date_val="invalid-date")
+        self.assertEqual(classify_uat_record(malformed_unresolved, "TSS")[0], "REVIEW_REQUIRED")
+
+    def test_precedence_3_blank_actual_end_over_7_unknown_sow(self):
+        blank_unknown_sow = self.make_record(date_val="")
+        blank_unknown_sow["source_evidence"]["fields"]["tx_sow_normalized"]["normalization_status"] = "UNVERIFIED"
+        self.assertEqual(classify_uat_record(blank_unknown_sow, "TSS")[0], "NO_PR_OR_IGNORED")
+
+    def test_precedence_7_unknown_sow_with_valid_actual_end(self):
+        valid_unknown_sow = self.make_record(date_val="2026-07-17")
+        valid_unknown_sow["source_evidence"]["fields"]["tx_sow_normalized"]["normalization_status"] = "UNVERIFIED"
+        self.assertEqual(classify_uat_record(valid_unknown_sow, "TSS")[0], "REVIEW_REQUIRED")
+
+    def test_tss_duplicate_cannot_block_ti(self):
+        record = self.make_record(scope="TSS", status="PR_EXISTS")
+        self.assertEqual(classify_uat_record(record, "TSS")[0], "DUPLICATE_BLOCKED")
+        self.assertEqual(classify_uat_record(record, "TI")[0], "UAT_CANDIDATE")
+
+    def test_ti_duplicate_cannot_block_tss(self):
+        record = self.make_record(scope="TI", status="PR_EXISTS")
+        self.assertEqual(classify_uat_record(record, "TI")[0], "DUPLICATE_BLOCKED")
+        self.assertEqual(classify_uat_record(record, "TSS")[0], "UAT_CANDIDATE")
+
+    def test_tss_date_cannot_activate_ti(self):
+        record = self.make_record(scope="TSS", date_val="2026-07-17")
+        # Ensure TI date is blank
+        record["source_evidence"]["fields"]["ti_actual_end_date"] = {"source_value": ""}
+        self.assertEqual(classify_uat_record(record, "TI")[0], "NO_PR_OR_IGNORED")
+
+    def test_ti_date_cannot_activate_tss(self):
+        record = self.make_record(scope="TI", date_val="2026-07-17")
+        # Ensure TSS date is blank
+        record["source_evidence"]["fields"]["tss_actual_end_date"] = {"source_value": ""}
+        self.assertEqual(classify_uat_record(record, "TSS")[0], "NO_PR_OR_IGNORED")
 
     def test_writer_creates_generator_compatible_data_sheet_and_partitions(self):
         records = [
-            self.make_record(status="NO_PR"),
+            self.make_record(),
             self.make_record(status="PR_EXISTS"),
-            self.make_record(status="NO_PR_REQUIRED"),
+            self.make_record(date_val=None),
             self.make_record(classification="PR_INPUT_INCOMPLETE"),
         ]
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -123,7 +163,7 @@ class TestCanonicalGeneratorBridge(unittest.TestCase):
                     "summary",
                     "uat_candidates",
                     "duplicate_blocked",
-                    "no_pr_required",
+                    "no_pr_or_ignored",
                     "review_required",
                     "traceability",
                 ],
@@ -139,10 +179,161 @@ class TestCanonicalGeneratorBridge(unittest.TestCase):
             summary = json.loads(outputs["summary_json"].read_text(encoding="utf-8"))
             self.assertEqual(summary["counts"]["UAT_CANDIDATE"], 1)
             self.assertEqual(summary["counts"]["DUPLICATE_BLOCKED"], 1)
-            self.assertEqual(summary["counts"]["NO_PR_REQUIRED"], 1)
+            self.assertEqual(summary["counts"]["NO_PR_OR_IGNORED"], 1)
             self.assertEqual(summary["counts"]["REVIEW_REQUIRED"], 1)
             self.assertEqual(summary["generator_data_row_count"], 1)
             self.assertFalse(summary["ecc_allowed"])
+
+    def test_bridge_cli_valid_invocation_creates_expected_workbook_and_summary(self):
+        import subprocess
+        input_file = ROOT / "tests" / "fixtures" / "tx_mini_du_export_fixture.xlsx"
+        profile_file = ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml"
+        registry_file = ROOT / "config" / "registries" / "canonical_sow_registry.yaml"
+        scope_config = ROOT / "config" / "scope_eligibility" / "tx_mini_pr_v1.json"
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            cmd = [
+                sys.executable,
+                str(ROOT / "scripts" / "canonical_generator_bridge.py"),
+                "--input", str(input_file),
+                "--profile", str(profile_file),
+                "--scope", "TSS",
+                "--sow-registry", str(registry_file),
+                "--scope-config", str(scope_config),
+                "--output", temp_dir,
+            ]
+            res = subprocess.run(cmd, capture_output=True, text=True)
+            self.assertEqual(res.returncode, 0, f"Bridge CLI failed with stderr:\n{res.stderr}")
+
+            wb_file = Path(temp_dir) / "canonical_generator_uat_tss.xlsx"
+            summary_file = Path(temp_dir) / "canonical_generator_uat_tss_summary.json"
+            self.assertTrue(wb_file.exists(), "Expected workbook output missing")
+            self.assertTrue(summary_file.exists(), "Expected summary JSON missing")
+
+            cli_output = json.loads(res.stdout)
+            self.assertEqual(cli_output["status"], "SUCCESS")
+            self.assertFalse(cli_output["ecc_allowed"])
+            self.assertGreater(cli_output["records"], 0)
+
+            summary = json.loads(summary_file.read_text(encoding="utf-8"))
+            self.assertFalse(summary["ecc_allowed"])
+
+    def test_bridge_cli_invalid_scope_fails(self):
+        import subprocess
+        input_file = ROOT / "tests" / "fixtures" / "tx_mini_du_export_fixture.xlsx"
+        profile_file = ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml"
+        registry_file = ROOT / "config" / "registries" / "canonical_sow_registry.yaml"
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            cmd = [
+                sys.executable,
+                str(ROOT / "scripts" / "canonical_generator_bridge.py"),
+                "--input", str(input_file),
+                "--profile", str(profile_file),
+                "--scope", "INVALID_SCOPE",
+                "--sow-registry", str(registry_file),
+                "--output", temp_dir,
+            ]
+            res = subprocess.run(cmd, capture_output=True, text=True)
+            self.assertNotEqual(res.returncode, 0, "CLI with invalid scope should fail")
+
+    def test_bridge_cli_missing_input_fails(self):
+        import subprocess
+        profile_file = ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml"
+        registry_file = ROOT / "config" / "registries" / "canonical_sow_registry.yaml"
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            cmd = [
+                sys.executable,
+                str(ROOT / "scripts" / "canonical_generator_bridge.py"),
+                "--input", "non_existent_input_file.xlsx",
+                "--profile", str(profile_file),
+                "--scope", "TSS",
+                "--sow-registry", str(registry_file),
+                "--output", temp_dir,
+            ]
+            res = subprocess.run(cmd, capture_output=True, text=True)
+            self.assertNotEqual(res.returncode, 0, "CLI with missing input file should fail")
+
+    def test_tx_mini_cli_without_scope_config_automatically_loads_registered_config(self):
+        import subprocess
+        input_file = ROOT / "tests" / "fixtures" / "tx_mini_du_export_fixture.xlsx"
+        profile_file = ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml"
+        registry_file = ROOT / "config" / "registries" / "canonical_sow_registry.yaml"
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            cmd = [
+                sys.executable,
+                str(ROOT / "scripts" / "canonical_generator_bridge.py"),
+                "--input", str(input_file),
+                "--profile", str(profile_file),
+                "--scope", "TSS",
+                "--sow-registry", str(registry_file),
+                "--output", temp_dir,
+            ]
+            res = subprocess.run(cmd, capture_output=True, text=True)
+            self.assertEqual(res.returncode, 0, f"Bridge CLI without --scope-config should succeed by auto-loading registered config. Stderr:\n{res.stderr}")
+
+            wb_file = Path(temp_dir) / "canonical_generator_uat_tss.xlsx"
+            summary_file = Path(temp_dir) / "canonical_generator_uat_tss_summary.json"
+            self.assertTrue(wb_file.exists())
+            self.assertTrue(summary_file.exists())
+
+    def test_tx_mini_build_records_without_explicit_scope_config_uses_registered_config(self):
+        from canonical_generator_bridge import build_records_from_export
+        input_file = ROOT / "tests" / "fixtures" / "tx_mini_du_export_fixture.xlsx"
+        profile_file = ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml"
+        registry_file = ROOT / "config" / "registries" / "canonical_sow_registry.yaml"
+
+        records, meta = build_records_from_export(
+            input_path=input_file,
+            profile_path=profile_file,
+            scope="TSS",
+            sow_registry_path=registry_file,
+            scope_config=None,
+        )
+        self.assertGreater(len(records), 0)
+        # Verify date evidence attached via auto-loaded registered config
+        has_date_evidence = any("tss_actual_end_date" in r.get("source_evidence", {}).get("fields", {}) for r in records)
+        self.assertTrue(has_date_evidence, "Registered scope config should attach tss_actual_end_date evidence")
+
+    def test_missing_registered_scope_config_fails_closed(self):
+        from canonical_generator_bridge import build_records_from_export
+        input_file = ROOT / "tests" / "fixtures" / "tx_mini_du_export_fixture.xlsx"
+        profile_file = ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml"
+        registry_file = ROOT / "config" / "registries" / "canonical_sow_registry.yaml"
+
+        # Mock profile_id to unknown profile with no registered scope config
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            dummy_prof = Path(tmp_dir) / "dummy_pr_v1.yaml"
+            prof_content = profile_file.read_text(encoding="utf-8").replace('"profile_id": "tx_mini_pr_v1"', '"profile_id": "non_existent_profile_v1"')
+            dummy_prof.write_text(prof_content, encoding="utf-8")
+
+            with self.assertRaises(ValueError) as ctx:
+                build_records_from_export(
+                    input_path=input_file,
+                    profile_path=dummy_prof,
+                    scope="TSS",
+                    sow_registry_path=registry_file,
+                    scope_config=None,
+                )
+            self.assertIn("MISSING_REGISTERED_SCOPE_CONFIG", str(ctx.exception))
+
+    def test_malformed_scope_config_fails_closed(self):
+        from canonical_generator_bridge import build_records_from_export
+        input_file = ROOT / "tests" / "fixtures" / "tx_mini_du_export_fixture.xlsx"
+        profile_file = ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml"
+        registry_file = ROOT / "config" / "registries" / "canonical_sow_registry.yaml"
+
+        with self.assertRaises(ValueError) as ctx:
+            build_records_from_export(
+                input_path=input_file,
+                profile_path=profile_file,
+                scope="TSS",
+                sow_registry_path=registry_file,
+                scope_config={"TSS": "invalid_non_mapping"},
+            )
+        self.assertIn("MISSING_SCOPE_CONFIG_FOR_SCOPE", str(ctx.exception))
 
 
 if __name__ == "__main__":

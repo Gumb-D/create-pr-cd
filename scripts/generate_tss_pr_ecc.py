@@ -39,13 +39,32 @@ def parse_args():
     parser.add_argument('--pr-model', default='Info/input/pr_model.xlsx', help='Path to PR model Excel file')
     parser.add_argument('--template', default='Info/input/ecc_template.xls', help='Path to ECC template file')
     parser.add_argument('--mapping', default='Info/input/contract_info_reference.md', help='Path to region/subcontractor mapping markdown')
-    # Default output is the 'output' folder at the skill root (one level up from this script)
     default_output = str(Path(__file__).resolve().parent.parent / 'output')
     parser.add_argument('--output', default=default_output, help='Output directory for generated ECC files (default: <skill-root>/output)')
     parser.add_argument('--site-code', help='Comma-separated Site Code(s) to generate PR ECC for')
     parser.add_argument('--all-sites', action='store_true', help='Generate PR ECC for all eligible sites')
     parser.add_argument('--scope', choices=['TSS', 'TI'], default='TSS', type=str.upper, help='PR scope to generate: TSS or TI')
     return parser.parse_args()
+
+
+import hashlib
+
+APPROVED_PR_MODEL_SHA256 = "82a47564590a8083c88b9dad61472c04513bb2832f8b1a44750d6a4347446c4d"
+
+
+def validate_pr_model_file(path, description="PR Model"):
+    p = Path(path)
+    if not p.exists():
+        raise FileNotFoundError(f"{description} not found: {p}")
+    actual_sha = hashlib.sha256(p.read_bytes()).hexdigest()
+    if actual_sha != APPROVED_PR_MODEL_SHA256:
+        raise ValueError(
+            f"PR_MODEL_HASH_MISMATCH: {description} content hash mismatch!\n"
+            f"Expected: {APPROVED_PR_MODEL_SHA256}\n"
+            f"Actual:   {actual_sha}\n"
+            f"Use the officially approved PR Model v3.2 workbook."
+        )
+    return p
 
 
 def require_file(path, description):
@@ -957,7 +976,7 @@ def filter_site_rows(df_site, site_codes=None, all_sites=False):
 print("[STEP 0] Loading Reference Data from Markdown and validating inputs...")
 
 site_file = require_file(args.site_data, 'Site PR/PO View')
-pr_file = require_file(args.pr_model, 'PR Model')
+pr_file = validate_pr_model_file(args.pr_model, 'PR Model')
 template_file = require_file(args.template, 'ECC Template')
 ref_file = require_file(args.mapping, 'Contract info mapping')
 validate_template_file(template_file)
