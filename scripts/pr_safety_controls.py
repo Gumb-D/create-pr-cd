@@ -234,7 +234,9 @@ def validate_candidate_contracts(
             )
             missing.append(record)
             continue
-        record["approved_contract"] = dict(mapping)
+        approved_contract = dict(mapping)
+        approved_contract["scope"] = normalized_scope
+        record["approved_contract"] = approved_contract
         valid.append(record)
     return valid, missing
 
