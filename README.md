@@ -43,50 +43,104 @@ create-pr-cd/
 3. Ensure the PR model is available as `Info/input/pr_model.xlsx`.
 4. Ensure the ECC template is available as `Info/input/ecc_template.xls`.
 5. Ensure the mapping file is available as `Info/input/contract_info_reference.md`.
-6. Run the generator.
-7. Review generated files under `output/`.
+6. Run either formal production mode or explicit non-production UAT mode, according to the resolved DU Profile status.
+7. Review generated files under the effective output directory recorded in the JSON summary.
 
-## Command Examples
+## Lifecycle Gate and Command Examples
 
-Basic execution:
+The official entrypoint enforces the structured DU Profile lifecycle status:
+
+```text
+PRODUCTION
+→ formal ECC generation is allowed
+
+PR_INPUT_READY
+→ formal ECC generation is blocked
+→ explicit --non-production-uat is required for business validation
+
+DRAFT / PROFILED / BUSINESS_VALIDATED / DEPRECATED
+→ ECC generation is blocked in both modes
+```
+
+The gate uses `profile.status`; profile notes cannot enable ECC output.
+
+### Formal production execution
+
+Use this command only when the resolved DU Profile status is `PRODUCTION`:
 
 ```bash
 python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --scope TSS --all-sites --output output
 ```
 
-Generate TI scope for selected sites:
+A non-`PRODUCTION` profile returns:
+
+```text
+PROFILE_NOT_PRODUCTION
+```
+
+### Explicit non-production UAT execution
+
+Use this mode to generate reviewable ECC output from a `PR_INPUT_READY` profile:
 
 ```bash
-python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --scope TI --site-code A01073_AD --output output
+python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --scope TSS --all-sites --output output --non-production-uat
+```
+
+Generate TI scope for selected sites in UAT mode:
+
+```bash
+python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --scope TI --site-code A01073_AD --output output --non-production-uat
 ```
 
 Override paths if needed:
 
 ```bash
-python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --pr-model Info/input/pr_model.xlsx --template Info/input/ecc_template.xls --mapping Info/input/contract_info_reference.md --scope TSS --all-sites --output output
+python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --pr-model Info/input/pr_model.xlsx --template Info/input/ecc_template.xls --mapping Info/input/contract_info_reference.md --scope TSS --all-sites --output output --non-production-uat
 ```
+
+UAT output is isolated under:
+
+```text
+<requested-output>/NON_PRODUCTION_UAT/<UTC-run-id>/
+```
+
+The directory, ECC/review filenames, and summary filename contain `NON_PRODUCTION_UAT`. The summary records:
+
+```text
+run_mode
+profile_status
+non_production_uat
+production_ecc_allowed
+requested_output
+output_root
+run_id
+```
+
+UAT files are validation artefacts and must not be treated as production ECC.
 
 ## Site Selection Mode
 
 The generator supports explicit site selection or full-site generation.
 
-### Generate selected site
+### Generate selected site for UAT
 
 ```bash
-python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --scope TSS --site-code B00123 --output output
+python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --scope TSS --site-code B00123 --output output --non-production-uat
 ```
 
-### Generate multiple selected sites
+### Generate multiple selected sites for UAT
 
 ```bash
-python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --scope TSS --site-code B00123,B00456,K00340 --output output
+python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --scope TSS --site-code B00123,B00456,K00340 --output output --non-production-uat
 ```
 
-### Generate all eligible sites
+### Generate all eligible sites for UAT
 
 ```bash
-python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --scope TSS --all-sites --output output
+python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --scope TSS --all-sites --output output --non-production-uat
 ```
+
+Remove `--non-production-uat` only for a formally promoted `PRODUCTION` profile.
 
 The script requires either `--site-code` or `--all-sites`.
 Do not use both at the same time.
@@ -96,10 +150,10 @@ Do not use both at the same time.
 
 ## Output Naming Convention
 
-Generated ECC files follow this format:
+Generated formal ECC files follow this format:
 
 ```text
-<Region>-<Subcontractor> TX Mini Project <Scope> PR <YYYYMMDD>.xlsx
+<Region>-<Subcontractor> <DU Model> <Scope> PR <YYYYMMDD>.xlsx
 ```
 
 **Examples:**
@@ -116,6 +170,8 @@ Sabah-Seri Pancar TX Mini Project TSS PR 20260518.xlsx
 Northern-GCI TX Mini Project TSS PR 20260518 Part 1.xlsx
 Northern-GCI TX Mini Project TSS PR 20260518 Part 2.xlsx
 ```
+
+Explicit UAT artefacts insert `_NON_PRODUCTION_UAT` before the file extension and are stored in the isolated UAT run directory.
 
 **Operation Backoffice** files use `Allstar` as the subcontractor:
 
@@ -212,8 +268,14 @@ Current stable baseline:
 - `PBOM Code*` is sourced from the PR model code.
 - `Unit*` is sourced from the PR model unit.
 - Output files contain no more than `30` unique site IDs.
+- Formal output is generated only for a `PRODUCTION` profile.
+- UAT output is visibly marked and isolated under `NON_PRODUCTION_UAT/<run-id>/`.
 
 ## Troubleshooting
+
+**Profile lifecycle gate:**
+- `PROFILE_NOT_PRODUCTION`: the resolved profile is not approved for formal ECC. Use `--non-production-uat` only for approved business validation, or complete formal production promotion.
+- `PROFILE_NOT_UAT_ELIGIBLE`: the profile has not reached `PR_INPUT_READY`, is deprecated, or is otherwise ineligible for ECC UAT.
 
 **Missing input files:**
 - If a required input file is missing, place it in `Info/input/` or pass the correct path via CLI.

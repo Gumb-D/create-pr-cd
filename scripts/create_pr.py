@@ -8,6 +8,7 @@ import json
 import subprocess
 import sys
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -24,6 +25,11 @@ PROFILE_ROOT = ROOT / "config" / "du_profiles"
 IDENTITY_REGISTRY = ROOT / "config" / "registries" / "mw_du_profile_identity_registry.yaml"
 SOW_REGISTRY = ROOT / "config" / "registries" / "canonical_sow_registry.yaml"
 RENDERER = ROOT / "scripts" / "generate_tss_pr_ecc.py"
+
+RUN_MODE_PRODUCTION = "PRODUCTION"
+RUN_MODE_NON_PRODUCTION_UAT = "NON_PRODUCTION_UAT"
+UAT_MARKER = RUN_MODE_NON_PRODUCTION_UAT
+UAT_ELIGIBLE_PROFILE_STATUSES = {"PR_INPUT_READY", "PRODUCTION"}
 
 CANONICAL_RENDERER_COLUMNS = (
     "customer site code",
@@ -55,6 +61,83 @@ class CreatePrError(RuntimeError):
         self.details = dict(details or {})
 
 
+def _resolve_run_mode(profile_status: str, non_production_uat: bool) -> str:
+    status = str(profile_status or "").strip().upper()
+    if non_production_uat:
+        if status not in UAT_ELIGIBLE_PROFILE_STATUSES:
+            raise CreatePrError(
+                "PROFILE_NOT_UAT_ELIGIBLE",
+                f"DU Profile status {status or '(blank)'} is not eligible for explicit non-production UAT ECC generation.",
+                {
+                    "profile_status": status or None,
+                    "eligible_statuses": sorted(UAT_ELIGIBLE_PROFILE_STATUSES),
+                    "required_action": "Complete profile validation and promote the profile to PR_INPUT_READY before UAT.",
+                },
+            )
+        return RUN_MODE_NON_PRODUCTION_UAT
+    if status != RUN_MODE_PRODUCTION:
+        raise CreatePrError(
+            "PROFILE_NOT_PRODUCTION",
+            f"DU Profile status {status or '(blank)'} is not PRODUCTION; formal ECC generation is blocked.",
+            {
+                "profile_status": status or None,
+                "required_action": "Use --non-production-uat for approved UAT or promote the profile through the formal production gate.",
+            },
+        )
+    return RUN_MODE_PRODUCTION
+
+
+def _new_uat_run_id() -> str:
+    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+
+
+def _resolve_output_directory(
+    requested_output: Path,
+    run_mode: str,
+    run_id: str | None = None,
+) -> tuple[Path, str | None]:
+    output = Path(requested_output)
+    if run_mode == RUN_MODE_PRODUCTION:
+        return output, None
+    if run_mode != RUN_MODE_NON_PRODUCTION_UAT:
+        raise CreatePrError(
+            "INVALID_RUN_MODE",
+            f"Unsupported PR generation run mode: {run_mode}",
+            {"run_mode": run_mode},
+        )
+    resolved_run_id = str(run_id or _new_uat_run_id()).strip()
+    if not resolved_run_id:
+        raise CreatePrError("INVALID_UAT_RUN_ID", "Non-production UAT run ID must not be blank.")
+    return output / UAT_MARKER / resolved_run_id, resolved_run_id
+
+
+def _mark_uat_artifacts(paths: list[Path]) -> list[Path]:
+    renamed: list[Path] = []
+    for raw_path in paths:
+        source = Path(raw_path)
+        if UAT_MARKER in source.stem:
+            renamed.append(source)
+            continue
+        target = source.with_name(f"{source.stem}_{UAT_MARKER}{source.suffix}")
+        if target.exists():
+            raise CreatePrError(
+                "UAT_ARTIFACT_COLLISION",
+                "A marker-bearing UAT artefact already exists.",
+                {"source": str(source), "target": str(target)},
+            )
+        source.rename(target)
+        renamed.append(target)
+    return renamed
+
+
+def _new_output_artifacts(output: Path, before: set[Path]) -> list[Path]:
+    return sorted(
+        path.resolve()
+        for path in output.glob("*")
+        if path.is_file() and path.resolve() not in before
+    )
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Identify DU Profile, canonicalize iEPMS data, and generate ECC.")
     parser.add_argument("--site-data", required=True, type=Path, help="Original four-header iEPMS export")
@@ -65,6 +148,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--pr-model", type=Path, default=ROOT / "Info" / "input" / "pr_model.xlsx")
     parser.add_argument("--template", type=Path, default=ROOT / "Info" / "input" / "ecc_template.xls")
     parser.add_argument("--mapping", type=Path, default=ROOT / "Info" / "input" / "contract_info_reference.md")
+    parser.add_argument(
+        "--non-production-uat",
+        action="store_true",
+        help=(
+            "Explicitly generate visibly isolated non-production UAT ECC output "
+            "for PR_INPUT_READY or PRODUCTION profiles."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -178,10 +269,16 @@ def _write_renderer_input(path: Path, records: list[dict[str, Any]]) -> None:
     workbook.save(path)
 
 
-def _write_review_report(output: Path, scope: str, records: list[dict[str, Any]]) -> Path | None:
+def _write_review_report(
+    output: Path,
+    scope: str,
+    records: list[dict[str, Any]],
+    run_mode: str = RUN_MODE_PRODUCTION,
+) -> Path | None:
     if not records:
         return None
-    path = output / f"CANONICAL_REVIEW_REQUIRED_{scope}.csv"
+    marker = f"_{UAT_MARKER}" if run_mode == RUN_MODE_NON_PRODUCTION_UAT else ""
+    path = output / f"CANONICAL_REVIEW_REQUIRED_{scope}{marker}.csv"
     with path.open("w", encoding="utf-8-sig", newline="") as handle:
         writer = csv.DictWriter(
             handle,
@@ -202,13 +299,20 @@ def _write_review_report(output: Path, scope: str, records: list[dict[str, Any]]
 
 
 def run(parsed: argparse.Namespace) -> dict[str, Any]:
-    output = parsed.output.resolve()
-    output.mkdir(parents=True, exist_ok=True)
     resolution = resolve_du_profile(
         parsed.site_data,
         profile_root=PROFILE_ROOT,
         identity_registry_path=IDENTITY_REGISTRY,
     )
+    profile_status = str(resolution["profile"].get("status", "")).strip().upper()
+    run_mode = _resolve_run_mode(
+        profile_status,
+        bool(getattr(parsed, "non_production_uat", False)),
+    )
+    requested_output = parsed.output.resolve()
+    output, run_id = _resolve_output_directory(requested_output, run_mode)
+    output.mkdir(parents=True, exist_ok=True)
+
     records, metadata = build_canonical_records(
         input_path=parsed.site_data,
         profile=resolution["profile"],
@@ -219,9 +323,9 @@ def run(parsed: argparse.Namespace) -> dict[str, Any]:
     )
     selected = _select_records(records, _parse_site_codes(parsed.site_code), parsed.all_sites)
     partitions = _partition_records(selected, parsed.scope)
-    review_path = _write_review_report(output, parsed.scope, partitions["review_required"])
+    review_path = _write_review_report(output, parsed.scope, partitions["review_required"], run_mode)
 
-    before = {path.resolve() for path in output.glob("*") if path.is_file()}
+    before_renderer = {path.resolve() for path in output.glob("*") if path.is_file()}
     if partitions["candidates"]:
         with tempfile.TemporaryDirectory(prefix="create-pr-canonical-") as temp_dir:
             canonical_input = Path(temp_dir) / "canonical_input.xlsx"
@@ -244,20 +348,33 @@ def run(parsed: argparse.Namespace) -> dict[str, Any]:
             if result.stderr:
                 print(result.stderr, file=sys.stderr, end="")
             if result.returncode != 0:
+                partial_artifacts = _new_output_artifacts(output, before_renderer)
+                if run_mode == RUN_MODE_NON_PRODUCTION_UAT:
+                    partial_artifacts = _mark_uat_artifacts(partial_artifacts)
                 raise CreatePrError(
                     "ECC_RENDERER_FAILED",
                     "Validated canonical records could not be rendered to ECC.",
-                    {"exit_code": result.returncode},
+                    {
+                        "exit_code": result.returncode,
+                        "partial_artifacts": [str(path.resolve()) for path in partial_artifacts],
+                    },
                 )
 
-    created = sorted(
-        str(path.resolve())
-        for path in output.glob("*")
-        if path.is_file() and path.resolve() not in before
-    )
+    renderer_created = _new_output_artifacts(output, before_renderer)
+    if run_mode == RUN_MODE_NON_PRODUCTION_UAT:
+        renderer_created = _mark_uat_artifacts(renderer_created)
+    created = sorted(str(path.resolve()) for path in renderer_created)
+
     summary = {
         "status": "SUCCESS",
         "entrypoint": "create_pr.py",
+        "run_mode": run_mode,
+        "profile_status": profile_status,
+        "non_production_uat": run_mode == RUN_MODE_NON_PRODUCTION_UAT,
+        "production_ecc_allowed": run_mode == RUN_MODE_PRODUCTION,
+        "requested_output": str(requested_output),
+        "output_root": str(output.resolve()),
+        "run_id": run_id,
         "scope": parsed.scope,
         "profile_id": metadata["profile_id"],
         "profile_version": metadata["profile_version"],
@@ -276,9 +393,10 @@ def run(parsed: argparse.Namespace) -> dict[str, Any]:
         "review_report": str(review_path.resolve()) if review_path else None,
         "created_files": created,
     }
-    summary_path = output / f"CREATE_PR_SUMMARY_{parsed.scope}.json"
-    summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    marker = f"_{UAT_MARKER}" if run_mode == RUN_MODE_NON_PRODUCTION_UAT else ""
+    summary_path = output / f"CREATE_PR_SUMMARY_{parsed.scope}{marker}.json"
     summary["summary_path"] = str(summary_path.resolve())
+    summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
     return summary
 
 
