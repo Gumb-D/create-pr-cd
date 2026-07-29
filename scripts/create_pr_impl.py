@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -128,6 +129,26 @@ def _new_uat_run_id() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
 
 
+def _windows_extended_path(path: Path) -> str:
+    resolved = Path(path).resolve()
+    path_str = str(resolved)
+    if not os.name == "nt":
+        return path_str
+    if path_str.startswith("\\\\?\\"):
+        return path_str
+    if path_str.startswith("\\\\"):
+        # UNC path: convert to extended UNC prefix
+        return "\\\\?\\UNC\\" + path_str[2:]
+    return "\\\\?\\" + path_str
+
+
+def _rename_path(source: Path, target: Path) -> None:
+    if os.name == "nt":
+        os.rename(_windows_extended_path(source), _windows_extended_path(target))
+    else:
+        source.rename(target)
+
+
 def _resolve_output_directory(
     requested_output: Path,
     run_mode: str,
@@ -162,7 +183,7 @@ def _mark_uat_artifacts(paths: list[Path]) -> list[Path]:
                 "A marker-bearing UAT artefact already exists.",
                 {"source": str(source), "target": str(target)},
             )
-        source.rename(target)
+        _rename_path(source, target)
         renamed.append(target)
     return renamed
 
