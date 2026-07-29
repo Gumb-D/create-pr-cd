@@ -22,6 +22,19 @@ PROFILE_ROOT = ROOT / "config" / "du_profiles"
 IDENTITY_REGISTRY = ROOT / "config" / "registries" / "mw_du_profile_identity_registry.yaml"
 
 
+def _last_json_object(text: str) -> dict:
+    """Parse the final JSON object when dependencies emit warnings first."""
+    starts = [index for index, char in enumerate(text) if char == "{"]
+    for start in reversed(starts):
+        try:
+            payload = json.loads(text[start:])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(payload, dict):
+            return payload
+    raise AssertionError(f"No JSON object found in process output: {text!r}")
+
+
 class TestCreatePrEntrypoint(unittest.TestCase):
     def test_resolver_identifies_profile_from_model_view_and_header_hash(self):
         resolution = resolve_du_profile(
@@ -168,7 +181,7 @@ class TestCreatePrEntrypoint(unittest.TestCase):
                 check=False,
             )
             self.assertEqual(result.returncode, 1, result.stdout)
-            payload = json.loads(result.stderr)
+            payload = _last_json_object(result.stderr)
             self.assertEqual(payload["code"], "PROFILE_NOT_PRODUCTION")
             self.assertEqual(list(Path(temp_dir).rglob("*.xlsx")), [])
 
