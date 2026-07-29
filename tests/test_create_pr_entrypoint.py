@@ -20,6 +20,8 @@ from du_profile_resolver import DuProfileResolutionError, resolve_du_profile
 FIXTURE = ROOT / "tests" / "fixtures" / "tx_mini_du_export_fixture.xlsx"
 PROFILE_ROOT = ROOT / "config" / "du_profiles"
 IDENTITY_REGISTRY = ROOT / "config" / "registries" / "mw_du_profile_identity_registry.yaml"
+CONTRACT_PATH = ROOT / "Info" / "input" / "contract_info_reference.md"
+POLICY_PATH = ROOT / "config" / "subcontractor_pr_policy.json"
 
 
 def _last_json_object(text: str) -> dict:
@@ -274,7 +276,8 @@ class TestCreatePrEntrypoint(unittest.TestCase):
                 all_sites=True,
                 pr_model=Path("pr_model.xlsx"),
                 template=Path("template.xls"),
-                mapping=Path("mapping.md"),
+                mapping=CONTRACT_PATH,
+                subcontractor_policy=POLICY_PATH,
                 non_production_uat=False,
             )
             with mock.patch.object(create_pr, "resolve_du_profile", return_value=resolution), mock.patch.object(
@@ -314,7 +317,8 @@ class TestCreatePrEntrypoint(unittest.TestCase):
                 all_sites=True,
                 pr_model=Path("pr_model.xlsx"),
                 template=Path("template.xls"),
-                mapping=Path("mapping.md"),
+                mapping=CONTRACT_PATH,
+                subcontractor_policy=POLICY_PATH,
                 non_production_uat=True,
             )
             with mock.patch.object(create_pr, "resolve_du_profile", return_value=resolution), mock.patch.object(
