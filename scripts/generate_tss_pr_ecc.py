@@ -29,8 +29,7 @@ from pr_helpers import (
     parse_mw_new_link_reroute,
     filter_tss_mw_new_link_reroute_items,
     select_tss_items_for_site,
-    has_duplicate_pbom,
-    resolve_subcontractor_column
+    has_duplicate_pbom
 )
 
 
@@ -45,6 +44,7 @@ def parse_args():
     parser.add_argument('--site-code', help='Comma-separated Site Code(s) to generate PR ECC for')
     parser.add_argument('--all-sites', action='store_true', help='Generate PR ECC for all eligible sites')
     parser.add_argument('--scope', choices=['TSS', 'TI'], default='TSS', type=str.upper, help='PR scope to generate: TSS or TI')
+    parser.add_argument('--du-model-name', default='TX Mini Project', help='Resolved DU model name for ECC output filenames')
     return parser.parse_args()
 
 
@@ -1123,13 +1123,18 @@ except ValueError as e:
     sys.exit(1)
 
 scope_name = args.scope.upper()
-try:
-    subcon_column = resolve_subcontractor_column(df_site.columns, scope_name)
-    print(f"[OK] Resolved {scope_name} subcontractor column: {subcon_column}")
-except ValueError as e:
-    print(f"ERROR: {e}")
+subcon_column = 'SubCon - TSS Team' if scope_name == 'TSS' else 'SubCon - TI Team'
+if subcon_column not in df_site.columns:
+    print(
+        f"ERROR: CANONICAL_INPUT_SCHEMA_ERROR: internal renderer input is missing "
+        f"'{subcon_column}'. Use scripts/create_pr.py for original iEPMS exports."
+    )
     sys.exit(1)
 pr_status_column = 'Subcon PR - TSS' if scope_name == 'TSS' else 'Subcon PR - TI'
+du_model_name = re.sub(r'[<>:"/\\|?*]+', ' ', str(args.du_model_name)).strip().strip('.')
+if not du_model_name:
+    print("ERROR: CANONICAL_INPUT_SCHEMA_ERROR: resolved DU model name is blank.")
+    sys.exit(1)
 
 # Track review-required and skipped items for TI Phase 1
 review_required_items = []
@@ -1513,9 +1518,9 @@ for (region, subcon), rows in sorted(grouped.items()):
         # Generate filename
         timestamp = datetime.now().strftime('%Y%m%d')
         if num_files == 1:
-            filename = output_dir / f"{region}-{subcon} TX Mini Project {scope_name} PR {timestamp}.xlsx"
+            filename = output_dir / f"{region}-{subcon} {du_model_name} {scope_name} PR {timestamp}.xlsx"
         else:
-            filename = output_dir / f"{region}-{subcon} TX Mini Project {scope_name} PR {timestamp} Part {part_num}.xlsx"
+            filename = output_dir / f"{region}-{subcon} {du_model_name} {scope_name} PR {timestamp} Part {part_num}.xlsx"
         
         # Save file
         wb.save(str(filename))
