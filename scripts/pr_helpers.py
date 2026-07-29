@@ -11,59 +11,6 @@ import re
 from typing import Dict, List, Tuple, Optional, Any, Iterable
 
 
-SUBCONTRACTOR_COLUMN_CANDIDATES = {
-    'TSS': (
-        'Subcon -TSS',
-        'Subcon - TSS',
-        'SubCon - TSS',
-        'SubCon - TSS Team',
-    ),
-    'TI': (
-        'Subcon -TI',
-        'Subcon - TI',
-        'SubCon - TI',
-        'SubCon - TI Team',
-    ),
-}
-
-
-def _normalize_site_data_header(value: Any) -> str:
-    normalized = ' '.join(str(value).strip().split()).casefold()
-    return re.sub(r'\s*-\s*', '-', normalized)
-
-
-def resolve_subcontractor_column(columns: Iterable[Any], scope: str) -> Any:
-    """Resolve the approved DU-specific subcontractor header for a PR scope."""
-    normalized_scope = str(scope or '').strip().upper()
-    candidates = SUBCONTRACTOR_COLUMN_CANDIDATES.get(normalized_scope)
-    if candidates is None:
-        raise ValueError(f"Unsupported PR scope for subcontractor column resolution: {scope}")
-
-    available = list(columns)
-    for candidate in candidates:
-        if candidate in available:
-            return candidate
-
-    normalized_available: Dict[str, List[Any]] = {}
-    for column in available:
-        normalized_available.setdefault(_normalize_site_data_header(column), []).append(column)
-
-    for candidate in candidates:
-        matches = normalized_available.get(_normalize_site_data_header(candidate), [])
-        if len(matches) == 1:
-            return matches[0]
-        if len(matches) > 1:
-            raise ValueError(
-                f"Ambiguous {normalized_scope} subcontractor columns: "
-                f"{', '.join(str(match) for match in matches)}"
-            )
-
-    raise ValueError(
-        f"{normalized_scope} subcontractor column not found. "
-        f"Expected one of: {', '.join(candidates)}"
-    )
-
-
 def normalize_pbom_code(value: Any) -> str:
     """
     Normalize PBOM/material codes into a canonical string form.
