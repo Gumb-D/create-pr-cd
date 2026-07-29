@@ -27,7 +27,10 @@ jobs:
           python -m unittest \
             tests.test_pr_safety_controls \
             tests.test_create_pr_safety_integration \
+            tests.test_create_pr_ignored_audit \
             tests.test_run_all_du_ecc_uat \
+            tests.test_run_all_du_ecc_uat_multi_profile \
+            tests.test_discovery_packet_header_compatibility \
             tests.test_create_pr_entrypoint -v
       - name: Blocked-only all-DU command smoke
         shell: bash
@@ -84,9 +87,16 @@ jobs:
         run: |
           python -m py_compile \
             scripts/create_pr.py \
+            scripts/create_pr_impl.py \
             scripts/pr_safety_controls.py \
             scripts/run_all_du_ecc_uat.py \
+            scripts/all_du_uat_impl.py \
+            scripts/check_discovery_packet_consistency.py \
+            scripts/check_discovery_packet_consistency_impl.py \
             tests/test_pr_safety_controls.py \
             tests/test_create_pr_safety_integration.py \
-            tests/test_run_all_du_ecc_uat.py
+            tests/test_create_pr_ignored_audit.py \
+            tests/test_run_all_du_ecc_uat.py \
+            tests/test_run_all_du_ecc_uat_multi_profile.py \
+            tests/test_discovery_packet_header_compatibility.py
           git diff --check origin/main...HEAD
