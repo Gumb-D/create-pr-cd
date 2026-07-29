@@ -1,0 +1,92 @@
+name: Issues 40-44 verification
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -r requirements.txt
+      - name: Targeted issues 40-44 tests
+        run: |
+          python -m unittest \
+            tests.test_pr_safety_controls \
+            tests.test_create_pr_safety_integration \
+            tests.test_run_all_du_ecc_uat \
+            tests.test_create_pr_entrypoint -v
+      - name: Blocked-only all-DU command smoke
+        shell: bash
+        run: |
+          set +e
+          python scripts/run_all_du_ecc_uat.py \
+            --manifest config/all_du_ecc_uat_manifest.template.json \
+            --output /tmp/all-du-uat \
+            --run-id CI-BLOCKED > /tmp/all-du-uat.log 2>&1
+          exit_code=$?
+          set -e
+          cat /tmp/all-du-uat.log
+          test "$exit_code" -eq 2
+          test -f /tmp/all-du-uat/NON_PRODUCTION_UAT/CI-BLOCKED/UAT_MASTER_MANIFEST.xlsx
+          test -f /tmp/all-du-uat/NON_PRODUCTION_UAT/CI-BLOCKED/UAT_MASTER_SUMMARY.json
+          test -f /tmp/all-du-uat/NON_PRODUCTION_UAT/CI-BLOCKED/UAT_BLOCKED_PROFILES.csv
+          grep -F '"status": "COMPLETED_WITH_BLOCKS"' /tmp/all-du-uat/NON_PRODUCTION_UAT/CI-BLOCKED/UAT_MASTER_SUMMARY.json
+          grep -F 'MISSING_SOURCE_EXPORT' /tmp/all-du-uat/NON_PRODUCTION_UAT/CI-BLOCKED/UAT_BLOCKED_PROFILES.csv
+          grep -F 'PROFILE_STATUS_BLOCKED' /tmp/all-du-uat/NON_PRODUCTION_UAT/CI-BLOCKED/UAT_BLOCKED_PROFILES.csv
+      - name: Verify discovery-registry CI limitation exists on main and PR
+        shell: bash
+        run: |
+          set +e
+          python -m unittest tests.test_du_discovery_registry -v > /tmp/pr-discovery.log 2>&1
+          pr_exit=$?
+          git worktree add --detach /tmp/create-pr-main origin/main
+          (cd /tmp/create-pr-main && python -m unittest tests.test_du_discovery_registry -v > /tmp/main-discovery.log 2>&1)
+          main_exit=$?
+          set -e
+          cat /tmp/pr-discovery.log
+          cat /tmp/main-discovery.log
+          test "$pr_exit" -ne 0
+          test "$main_exit" -ne 0
+          grep -F "No DU profiler artifact root found under output/ or Info/reference/." /tmp/pr-discovery.log
+          grep -F "No DU profiler artifact root found under output/ or Info/reference/." /tmp/main-discovery.log
+      - name: Full regression suite excluding artifact-dependent discovery registry
+        run: |
+          python - <<'PY'
+          import sys
+          import unittest
+          from pathlib import Path
+
+          root = Path.cwd()
+          suite = unittest.TestSuite()
+          loader = unittest.TestLoader()
+          for path in sorted((root / "tests").glob("test_*.py")):
+              if path.name == "test_du_discovery_registry.py":
+                  continue
+              suite.addTests(loader.loadTestsFromName(f"tests.{path.stem}"))
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          sys.exit(0 if result.wasSuccessful() else 1)
+          PY
+      - name: Syntax and diff checks
+        run: |
+          python -m py_compile \
+            scripts/create_pr.py \
+            scripts/pr_safety_controls.py \
+            scripts/run_all_du_ecc_uat.py \
+            tests/test_pr_safety_controls.py \
+            tests/test_create_pr_safety_integration.py \
+            tests/test_run_all_du_ecc_uat.py
+          git diff --check origin/main...HEAD
