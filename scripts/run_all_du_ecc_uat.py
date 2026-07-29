@@ -10,9 +10,32 @@ import all_du_uat_impl as _impl
 from all_du_uat_impl import *  # noqa: F401,F403 - preserve the tested public module surface
 
 
+_TESTABLE_DEPENDENCIES = (
+    "load_input_manifest",
+    "load_structured_profiles",
+    "resolve_du_profile",
+    "run_scope_pack",
+    "deterministic_review_site_codes",
+    "write_empty_review_summary",
+    "write_master_manifest",
+    "write_blocked_profiles",
+)
+
+
+def _sync_testable_dependencies() -> None:
+    """Propagate public test seams into the implementation module."""
+
+    module_globals = globals()
+    for name in _TESTABLE_DEPENDENCIES:
+        public_value = module_globals.get(name)
+        if public_value is not None and getattr(_impl, name, None) is not public_value:
+            setattr(_impl, name, public_value)
+
+
 def run_batch(args):
     """Run the batch and classify any blocked profile as a controlled block."""
 
+    _sync_testable_dependencies()
     summary = _impl.run_batch(args)
     has_blocks = bool(summary.get("blocked_profile_count", 0))
     has_failures = bool(summary.get("failed_scope_runs", 0))
