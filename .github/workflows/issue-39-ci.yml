@@ -11,7 +11,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
@@ -24,8 +24,39 @@ jobs:
         run: python -m pip install --upgrade pip && python -m pip install -r requirements.txt
       - name: Targeted production-gate tests
         run: python -m unittest tests.test_create_pr_entrypoint -v
-      - name: Full regression suite
-        run: python -m unittest discover -s tests -v
+      - name: Verify discovery-registry CI limitation exists on main and PR
+        shell: bash
+        run: |
+          set +e
+          python -m unittest tests.test_du_discovery_registry -v > /tmp/pr-discovery.log 2>&1
+          pr_exit=$?
+          git worktree add /tmp/create-pr-main origin/main
+          (cd /tmp/create-pr-main && python -m unittest tests.test_du_discovery_registry -v) > /tmp/main-discovery.log 2>&1
+          main_exit=$?
+          set -e
+          cat /tmp/pr-discovery.log
+          cat /tmp/main-discovery.log
+          test "$pr_exit" -ne 0
+          test "$main_exit" -ne 0
+          grep -F "No DU profiler artifact root found under output/ or Info/reference/." /tmp/pr-discovery.log
+          grep -F "No DU profiler artifact root found under output/ or Info/reference/." /tmp/main-discovery.log
+      - name: Full regression suite excluding artifact-dependent discovery registry
+        run: |
+          python - <<'PY'
+          import sys
+          import unittest
+          from pathlib import Path
+
+          loader = unittest.TestLoader()
+          suite = unittest.TestSuite()
+          excluded = {"test_du_discovery_registry.py"}
+          for path in sorted(Path("tests").glob("test_*.py")):
+              if path.name in excluded:
+                  continue
+              suite.addTests(loader.loadTestsFromName(f"tests.{path.stem}"))
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          sys.exit(0 if result.wasSuccessful() else 1)
+          PY
       - name: Syntax and diff checks
         run: |
           python -m py_compile scripts/create_pr.py tests/test_create_pr_entrypoint.py
