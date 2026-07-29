@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "excluded_from_pr": {
+    "SM": {
+      "scopes": [
+        "TSS",
+        "TI"
+      ],
+      "classification": "IGNORED",
+      "reason_code": "PR_NOT_REQUIRED_OUTSOURCED_TO_OTHER_VENDOR",
+      "reason": "Work is assigned to another vendor; no PR shall be issued."
+    }
+  }
+}

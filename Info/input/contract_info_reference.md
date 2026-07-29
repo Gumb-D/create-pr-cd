@@ -43,3 +43,5 @@ This reference file provides standardized mappings for region purchasing areas a
 | N-Wave | S1MY2024071028WBF1 | N-WAVE TECHNOLOGIES (MALAYSIA) SDN. BHD. |
 | Redtone | S1MY2025102004WBF1 | Redtone |
 | Iezzpro | S1MY2025041506WBF1 | Iezzpro |
+| Nera | S1MY2023083002WBF1 | Nera |
+| Perwira | S1MY2023062002WBF1 | Perwira |

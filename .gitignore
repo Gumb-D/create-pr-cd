@@ -9,6 +9,9 @@ output_*/
 output_ti_dryrun/
 output_tss_test/
 
+# Local-only all-DU UAT manifest may contain machine-specific source paths.
+config/all_du_ecc_uat_manifest.local.json
+
 # Superseded PR discovery/design documents
 **/AMENDMENT_IMPLEMENTATION*.md
 **/BUSINESS_DESIGN_PR_MODEL_RULE_DISCOVERY*.md
