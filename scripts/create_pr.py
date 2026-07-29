@@ -18,6 +18,17 @@ from canonical_input_pipeline import build_canonical_records
 from canonical_site_validator import PR_INPUT_READY
 from du_export_adapter import PR_STATUS_EXISTS, PR_STATUS_NOT_REQUIRED
 from du_profile_resolver import DuProfileResolutionError, resolve_du_profile
+from pr_safety_controls import (
+    CONTRACT_MISSING_REASON_CODE,
+    EXCLUDED_REASON_CODE,
+    SafetyControlError,
+    get_exclusion_rule,
+    load_contract_reference,
+    load_subcontractor_policy,
+    reason_distribution,
+    set_generation_decision,
+    validate_candidate_contracts,
+)
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -25,6 +36,7 @@ PROFILE_ROOT = ROOT / "config" / "du_profiles"
 IDENTITY_REGISTRY = ROOT / "config" / "registries" / "mw_du_profile_identity_registry.yaml"
 SOW_REGISTRY = ROOT / "config" / "registries" / "canonical_sow_registry.yaml"
 RENDERER = ROOT / "scripts" / "generate_tss_pr_ecc.py"
+PR_POLICY_PATH = ROOT / "config" / "subcontractor_pr_policy.json"
 
 RUN_MODE_PRODUCTION = "PRODUCTION"
 RUN_MODE_NON_PRODUCTION_UAT = "NON_PRODUCTION_UAT"
@@ -51,6 +63,31 @@ CANONICAL_RENDERER_COLUMNS = (
     "TX SOW Details",
     "NE SOW Details",
     "FE SOW Details",
+)
+
+REVIEW_REPORT_FIELDS = (
+    "Source_Row",
+    "Site_Code",
+    "Region",
+    "Scope",
+    "Subcontractor",
+    "Tx_SOW",
+    "Profile_ID",
+    "Classification",
+    "Reason_Code",
+    "Reason",
+    "Required_Action",
+    "Blocking_Reasons",
+)
+
+CONTRACT_REVIEW_FIELDS = (
+    "Site_Code",
+    "Region",
+    "Scope",
+    "Subcontractor",
+    "Tx_SOW",
+    "Reason_Code",
+    "Required_Action",
 )
 
 
@@ -149,6 +186,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--template", type=Path, default=ROOT / "Info" / "input" / "ecc_template.xls")
     parser.add_argument("--mapping", type=Path, default=ROOT / "Info" / "input" / "contract_info_reference.md")
     parser.add_argument(
+        "--subcontractor-policy",
+        type=Path,
+        default=PR_POLICY_PATH,
+        help="Approved fail-closed subcontractor PR policy JSON",
+    )
+    parser.add_argument(
         "--non-production-uat",
         action="store_true",
         help=(
@@ -187,15 +230,41 @@ def _select_records(records: list[dict[str, Any]], site_codes: list[str], all_si
     ]
 
 
-def _partition_records(records: list[dict[str, Any]], scope: str) -> dict[str, list[dict[str, Any]]]:
+def _scope_subcontractor(record: Mapping[str, Any], scope: str) -> str:
+    field = "subcontractor_tss" if str(scope).upper() == "TSS" else "subcontractor_ti"
+    return str(record.get("pr_context", {}).get(field, "") or "").strip()
+
+
+def _partition_records(
+    records: list[dict[str, Any]],
+    scope: str,
+    policy: Mapping[str, Any] | None = None,
+) -> dict[str, list[dict[str, Any]]]:
     scope = scope.upper()
+    effective_policy = dict(policy or load_subcontractor_policy(PR_POLICY_PATH))
     subcontractor_field = "subcontractor_tss" if scope == "TSS" else "subcontractor_ti"
     status_field = "existing_tss_pr_status" if scope == "TSS" else "existing_ti_pr_status"
     partitions = {"candidates": [], "duplicates": [], "ignored": [], "review_required": []}
     for record in records:
         context = record.get("pr_context", {})
         subcontractor = str(context.get(subcontractor_field, "") or "").strip()
+        exclusion = get_exclusion_rule(effective_policy, subcontractor, scope)
+        if exclusion:
+            set_generation_decision(
+                record,
+                exclusion["classification"],
+                exclusion["reason_code"],
+                exclusion["reason"],
+            )
+            partitions["ignored"].append(record)
+            continue
         if not subcontractor:
+            set_generation_decision(
+                record,
+                "IGNORED",
+                "MISSING_SUBCONTRACTOR",
+                "No scope-specific subcontractor was provided.",
+            )
             partitions["ignored"].append(record)
             continue
         status = context.get(status_field)
@@ -204,9 +273,21 @@ def _partition_records(records: list[dict[str, Any]], scope: str) -> dict[str, l
         # available for downstream Final PO audit comparison.
         if scope == "TI":
             if status == PR_STATUS_EXISTS:
+                set_generation_decision(
+                    record,
+                    "DUPLICATE_BLOCKED",
+                    "EXISTING_PR_REFERENCE",
+                    "An existing TI PR reference is already present.",
+                )
                 partitions["duplicates"].append(record)
                 continue
             if status == PR_STATUS_NOT_REQUIRED:
+                set_generation_decision(
+                    record,
+                    "IGNORED",
+                    "PR_STATUS_NOT_REQUIRED",
+                    "The approved TI PR status states that a PR is not required.",
+                )
                 partitions["ignored"].append(record)
                 continue
         normalization = (
@@ -216,14 +297,35 @@ def _partition_records(records: list[dict[str, Any]], scope: str) -> dict[str, l
             .get("normalization_status")
         )
         if normalization == "APPROVED_NO_OUTPUT":
+            set_generation_decision(
+                record,
+                "IGNORED",
+                "APPROVED_NO_OUTPUT",
+                "The approved SOW normalization intentionally produces no PR output.",
+            )
             partitions["ignored"].append(record)
             continue
         if record.get("validation", {}).get("pr_input_classification") != PR_INPUT_READY:
+            set_generation_decision(
+                record,
+                "REVIEW_REQUIRED",
+                "CANONICAL_INPUT_NOT_READY",
+                "The canonical record is not classified PR_INPUT_READY.",
+                "Resolve canonical validation blockers before PR generation.",
+            )
             partitions["review_required"].append(record)
             continue
         if normalization != "APPROVED":
+            set_generation_decision(
+                record,
+                "REVIEW_REQUIRED",
+                "TX_SOW_NOT_APPROVED",
+                "The Tx SOW normalization is not approved for PR output.",
+                "Review and approve the Tx SOW normalization before PR generation.",
+            )
             partitions["review_required"].append(record)
             continue
+        set_generation_decision(record, "CANDIDATE", "ELIGIBLE", "All pre-contract eligibility checks passed.")
         partitions["candidates"].append(record)
     return partitions
 
@@ -232,6 +334,15 @@ def _renderer_row(record: Mapping[str, Any]) -> dict[str, Any]:
     site = record.get("site", {})
     context = record.get("pr_context", {})
     technical = record.get("technical_context", {})
+    approved_contract = record.get("approved_contract", {})
+    approved_scope = str(approved_contract.get("scope", "")).upper()
+    canonical_subcontractor = approved_contract.get("subcontractor", "")
+    tss_subcontractor = context.get("subcontractor_tss", "")
+    ti_subcontractor = context.get("subcontractor_ti", "")
+    if approved_scope == "TSS" and canonical_subcontractor:
+        tss_subcontractor = canonical_subcontractor
+    if approved_scope == "TI" and canonical_subcontractor:
+        ti_subcontractor = canonical_subcontractor
     return {
         "customer site code": site.get("site_code", ""),
         "customer site name": site.get("site_name", ""),
@@ -244,9 +355,9 @@ def _renderer_row(record: Mapping[str, Any]) -> dict[str, Any]:
         "Tx SOW": context.get("tx_sow_normalized") or context.get("tx_sow_raw", ""),
         "MW Config Antenna Size NE": technical.get("antenna_size_ne", ""),
         "MW Config Antenna Size FE": technical.get("antenna_size_fe", ""),
-        "SubCon - TSS Team": context.get("subcontractor_tss", ""),
+        "SubCon - TSS Team": tss_subcontractor,
         "Subcon PR - TSS": "",
-        "SubCon - TI Team": context.get("subcontractor_ti", ""),
+        "SubCon - TI Team": ti_subcontractor,
         "Subcon PR - TI": "",
         "BOQ Configuration": technical.get("boq_configuration", ""),
         "TX SOW Details": technical.get("tx_sow_details", ""),
@@ -261,12 +372,33 @@ def _write_renderer_input(path: Path, records: list[dict[str, Any]]) -> None:
     worksheet.title = "data"
     worksheet.append(["CANONICAL CREATE-PR-CD INPUT"])
     worksheet.append(["Generated from an approved DU Profile."])
-    worksheet.append(["Only validated scope candidates are included."])
+    worksheet.append(["Only validated scope candidates with approved contracts are included."])
     worksheet.append(list(CANONICAL_RENDERER_COLUMNS))
     for record in records:
         row = _renderer_row(record)
         worksheet.append([row.get(column) for column in CANONICAL_RENDERER_COLUMNS])
     workbook.save(path)
+
+
+def _report_row(record: Mapping[str, Any], scope: str) -> dict[str, Any]:
+    decision = record.get("pr_generation_decision", {})
+    context = record.get("pr_context", {})
+    validation = record.get("validation", {})
+    classification = decision.get("classification") or validation.get("pr_input_classification", "")
+    return {
+        "Source_Row": record.get("identity", {}).get("source_row_number"),
+        "Site_Code": record.get("site", {}).get("site_code", ""),
+        "Region": context.get("region", ""),
+        "Scope": str(scope).upper(),
+        "Subcontractor": _scope_subcontractor(record, scope),
+        "Tx_SOW": context.get("tx_sow_normalized") or context.get("tx_sow_raw", ""),
+        "Profile_ID": validation.get("profile_id", ""),
+        "Classification": classification,
+        "Reason_Code": decision.get("reason_code", ""),
+        "Reason": decision.get("reason", ""),
+        "Required_Action": decision.get("required_action", ""),
+        "Blocking_Reasons": " | ".join(validation.get("blocking_reasons", [])),
+    }
 
 
 def _write_review_report(
@@ -280,21 +412,29 @@ def _write_review_report(
     marker = f"_{UAT_MARKER}" if run_mode == RUN_MODE_NON_PRODUCTION_UAT else ""
     path = output / f"CANONICAL_REVIEW_REQUIRED_{scope}{marker}.csv"
     with path.open("w", encoding="utf-8-sig", newline="") as handle:
-        writer = csv.DictWriter(
-            handle,
-            fieldnames=["Source_Row", "Site_Code", "Profile_ID", "Classification", "Blocking_Reasons"],
-        )
+        writer = csv.DictWriter(handle, fieldnames=REVIEW_REPORT_FIELDS)
         writer.writeheader()
         for record in records:
-            writer.writerow(
-                {
-                    "Source_Row": record.get("identity", {}).get("source_row_number"),
-                    "Site_Code": record.get("site", {}).get("site_code", ""),
-                    "Profile_ID": record.get("validation", {}).get("profile_id", ""),
-                    "Classification": record.get("validation", {}).get("pr_input_classification", ""),
-                    "Blocking_Reasons": " | ".join(record.get("validation", {}).get("blocking_reasons", [])),
-                }
-            )
+            writer.writerow(_report_row(record, scope))
+    return path
+
+
+def _write_contract_review_report(
+    output: Path,
+    scope: str,
+    records: list[dict[str, Any]],
+    run_mode: str,
+) -> Path | None:
+    if not records:
+        return None
+    marker = f"_{UAT_MARKER}" if run_mode == RUN_MODE_NON_PRODUCTION_UAT else ""
+    path = output / f"CONTRACT_MAPPING_REVIEW_{scope}{marker}.csv"
+    with path.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=CONTRACT_REVIEW_FIELDS)
+        writer.writeheader()
+        for record in records:
+            row = _report_row(record, scope)
+            writer.writerow({field: row[field] for field in CONTRACT_REVIEW_FIELDS})
     return path
 
 
@@ -310,8 +450,16 @@ def run(parsed: argparse.Namespace) -> dict[str, Any]:
         bool(getattr(parsed, "non_production_uat", False)),
     )
     requested_output = parsed.output.resolve()
-    output, run_id = _resolve_output_directory(requested_output, run_mode)
+    output, run_id = _resolve_output_directory(
+        requested_output,
+        run_mode,
+        getattr(parsed, "uat_run_id", None),
+    )
     output.mkdir(parents=True, exist_ok=True)
+
+    policy_path = Path(getattr(parsed, "subcontractor_policy", PR_POLICY_PATH))
+    policy = load_subcontractor_policy(policy_path)
+    contract_mappings = load_contract_reference(Path(parsed.mapping))
 
     records, metadata = build_canonical_records(
         input_path=parsed.site_data,
@@ -322,8 +470,18 @@ def run(parsed: argparse.Namespace) -> dict[str, Any]:
         sow_registry_path=SOW_REGISTRY,
     )
     selected = _select_records(records, _parse_site_codes(parsed.site_code), parsed.all_sites)
-    partitions = _partition_records(selected, parsed.scope)
+    partitions = _partition_records(selected, parsed.scope, policy)
+    pre_contract_candidate_count = len(partitions["candidates"])
+    contract_valid, contract_missing = validate_candidate_contracts(
+        partitions["candidates"],
+        parsed.scope,
+        contract_mappings,
+    )
+    partitions["candidates"] = contract_valid
+    partitions["review_required"].extend(contract_missing)
+
     review_path = _write_review_report(output, parsed.scope, partitions["review_required"], run_mode)
+    contract_review_path = _write_contract_review_report(output, parsed.scope, contract_missing, run_mode)
 
     before_renderer = {path.resolve() for path in output.glob("*") if path.is_file()}
     if partitions["candidates"]:
@@ -365,6 +523,14 @@ def run(parsed: argparse.Namespace) -> dict[str, Any]:
         renderer_created = _mark_uat_artifacts(renderer_created)
     created = sorted(str(path.resolve()) for path in renderer_created)
 
+    missing_subcontractors = sorted(
+        {_scope_subcontractor(record, parsed.scope) for record in contract_missing if _scope_subcontractor(record, parsed.scope)},
+        key=str.casefold,
+    )
+    ignored_distribution = reason_distribution(partitions["ignored"])
+    review_distribution = reason_distribution(partitions["review_required"])
+    sm_excluded_count = ignored_distribution.get(EXCLUDED_REASON_CODE, 0)
+
     summary = {
         "status": "SUCCESS",
         "entrypoint": "create_pr.py",
@@ -386,10 +552,20 @@ def run(parsed: argparse.Namespace) -> dict[str, Any]:
         "header_hash": metadata["header_hash"],
         "source_record_count": len(records),
         "selected_record_count": len(selected),
+        "pre_contract_candidate_count": pre_contract_candidate_count,
         "candidate_count": len(partitions["candidates"]),
         "duplicate_count": len(partitions["duplicates"]),
         "ignored_count": len(partitions["ignored"]),
+        "ignored_reason_distribution": ignored_distribution,
         "review_required_count": len(partitions["review_required"]),
+        "review_required_reason_distribution": review_distribution,
+        "sm_excluded_count": sm_excluded_count,
+        "sm_excluded_by_scope": {parsed.scope: sm_excluded_count},
+        "contract_mapping_missing_count": len(contract_missing),
+        "contract_mapping_missing_subcontractors": missing_subcontractors,
+        "contract_mapping_review_report": str(contract_review_path.resolve()) if contract_review_path else None,
+        "subcontractor_policy": str(policy_path.resolve()),
+        "contract_reference": str(Path(parsed.mapping).resolve()),
         "review_report": str(review_path.resolve()) if review_path else None,
         "created_files": created,
     }
@@ -407,7 +583,7 @@ def main() -> int:
         return 0
     except DuProfileResolutionError as error:
         payload = {"status": "ERROR", "code": error.code, "message": str(error), "details": error.details}
-    except CreatePrError as error:
+    except (CreatePrError, SafetyControlError) as error:
         payload = {"status": "ERROR", "code": error.code, "message": str(error), "details": error.details}
     except Exception as error:
         payload = {"status": "ERROR", "code": "CREATE_PR_FAILED", "message": str(error)}
