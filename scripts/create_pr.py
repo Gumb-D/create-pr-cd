@@ -130,6 +130,14 @@ def _mark_uat_artifacts(paths: list[Path]) -> list[Path]:
     return renamed
 
 
+def _new_output_artifacts(output: Path, before: set[Path]) -> list[Path]:
+    return sorted(
+        path.resolve()
+        for path in output.glob("*")
+        if path.is_file() and path.resolve() not in before
+    )
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Identify DU Profile, canonicalize iEPMS data, and generate ECC.")
     parser.add_argument("--site-data", required=True, type=Path, help="Original four-header iEPMS export")
@@ -340,17 +348,19 @@ def run(parsed: argparse.Namespace) -> dict[str, Any]:
             if result.stderr:
                 print(result.stderr, file=sys.stderr, end="")
             if result.returncode != 0:
+                partial_artifacts = _new_output_artifacts(output, before_renderer)
+                if run_mode == RUN_MODE_NON_PRODUCTION_UAT:
+                    partial_artifacts = _mark_uat_artifacts(partial_artifacts)
                 raise CreatePrError(
                     "ECC_RENDERER_FAILED",
                     "Validated canonical records could not be rendered to ECC.",
-                    {"exit_code": result.returncode},
+                    {
+                        "exit_code": result.returncode,
+                        "partial_artifacts": [str(path.resolve()) for path in partial_artifacts],
+                    },
                 )
 
-    renderer_created = sorted(
-        path.resolve()
-        for path in output.glob("*")
-        if path.is_file() and path.resolve() not in before_renderer
-    )
+    renderer_created = _new_output_artifacts(output, before_renderer)
     if run_mode == RUN_MODE_NON_PRODUCTION_UAT:
         renderer_created = _mark_uat_artifacts(renderer_created)
     created = sorted(str(path.resolve()) for path in renderer_created)
