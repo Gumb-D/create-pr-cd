@@ -15,8 +15,9 @@ def _packet_compatible_profiles(profiles, discovery_registry):
 
     Discovery artifacts describe the exact export from which they were built. A
     profile may later approve another compatible header hash without rewriting
-    that historical packet. The packet remains valid only when its hash is still
-    explicitly approved by the current profile.
+    that historical packet. An unchanged current packet remains valid even for
+    DRAFT profiles whose approved hash list is intentionally empty. A differing
+    historical hash remains valid only when it is explicitly approved.
     """
 
     discovery_by_profile = _impl._index_by_profile(discovery_registry)
@@ -30,19 +31,23 @@ def _packet_compatible_profiles(profiles, discovery_registry):
             continue
 
         current_hash = str(profile.get("export_structure", {}).get("observed_header_hash", ""))
-        approved_hashes = {
-            str(value)
-            for value in profile.get("export_structure", {}).get("approved_header_hashes", [])
-            if str(value)
-        }
         packet_hash = str(discovery_entry.get("observed_header_hash", ""))
-        if not packet_hash or packet_hash not in approved_hashes:
+        if not packet_hash:
             raise _impl.ProfileValidationError(
-                f"Discovery registry header-hash mismatch for {profile_id}: "
-                f"{packet_hash or '(blank)'} is not in approved_header_hashes"
+                f"Discovery registry header-hash mismatch for {profile_id}: packet hash is blank"
             )
 
         if packet_hash != current_hash:
+            approved_hashes = {
+                str(value)
+                for value in profile.get("export_structure", {}).get("approved_header_hashes", [])
+                if str(value)
+            }
+            if packet_hash not in approved_hashes:
+                raise _impl.ProfileValidationError(
+                    f"Discovery registry header-hash mismatch for {profile_id}: "
+                    f"{packet_hash} is not in approved_header_hashes"
+                )
             profile.setdefault("export_structure", {})["observed_header_hash"] = packet_hash
             historical_version = str(discovery_entry.get("profile_version", "")).strip()
             if not historical_version:
