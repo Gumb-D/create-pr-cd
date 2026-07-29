@@ -29,7 +29,8 @@ from pr_helpers import (
     parse_mw_new_link_reroute,
     filter_tss_mw_new_link_reroute_items,
     select_tss_items_for_site,
-    has_duplicate_pbom
+    has_duplicate_pbom,
+    resolve_subcontractor_column
 )
 
 
@@ -1122,7 +1123,12 @@ except ValueError as e:
     sys.exit(1)
 
 scope_name = args.scope.upper()
-subcon_column = 'SubCon - TSS Team' if scope_name == 'TSS' else 'SubCon - TI Team'
+try:
+    subcon_column = resolve_subcontractor_column(df_site.columns, scope_name)
+    print(f"[OK] Resolved {scope_name} subcontractor column: {subcon_column}")
+except ValueError as e:
+    print(f"ERROR: {e}")
+    sys.exit(1)
 pr_status_column = 'Subcon PR - TSS' if scope_name == 'TSS' else 'Subcon PR - TI'
 
 # Track review-required and skipped items for TI Phase 1
@@ -1138,7 +1144,7 @@ if scope_name == 'TI':
         (df_site[subcon_column].astype(str).str.strip() != '')
     ].copy()
     
-    print(f"[OK] Found {len(candidates_all)} rows with SubCon - TI Team")
+    print(f"[OK] Found {len(candidates_all)} rows with {subcon_column}")
     
     # Split into candidates and duplicates
     candidates_list = []
