@@ -1,6 +1,6 @@
 {
   "profile_id": "tx_rollout_2023_pr_v1",
-  "profile_version": "0.1.0",
+  "profile_version": "0.1.1",
   "mapping_version": "approved-2026-07-10-2023-tx-rollout-v2",
   "status": "PR_INPUT_READY",
   "identity": {
@@ -13,8 +13,8 @@
     "sheet_selector": null,
     "header_rows": [0, 1, 2, 3],
     "header_hash_policy": "strict",
-    "observed_header_hash": "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320",
-    "approved_header_hashes": ["8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320"]
+    "observed_header_hash": "e61b834994eeef30e7d8249f87616cb04d60598eea323feea50178fc4292c162",
+    "approved_header_hashes": ["8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320", "e61b834994eeef30e7d8249f87616cb04d60598eea323feea50178fc4292c162"]
   },
   "field_mapping": {
     "site_code": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|fix00012|1027190858144623081|8530399820526021092", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "customer site code"}, "mapping_status": "APPROVED"}], "transforms": ["trim", "uppercase"]},
@@ -54,6 +54,7 @@
       "Only the six human-approved PR-critical mappings are promoted for PR input review; all other fields remain discovery-only or optional.",
       "TX SOW uses the approved LLD override columns in fail-closed priority order: Post MOCN TX SOW (LLD), then TX SOW (LLD).",
       "This profile is PR_INPUT_READY for non-production validation only; it must not enable ECC output or skip header-hash validation.",
+      "The 2026-07-28 header hash e61b834994eeef30e7d8249f87616cb04d60598eea323feea50178fc4292c162 was revalidated with all seven TSS/TI PR-critical mappings resolved; no canonical mapping changed.",
       "Antenna fields are currently absent from the discovery shortlist and must not be inferred from unrelated columns.",
       "This profile is not production-ready and must never enable ECC generation."
     ]
