@@ -35,6 +35,36 @@ def _last_json_object(text: str) -> dict:
     raise AssertionError(f"No JSON object found in process output: {text!r}")
 
 
+def _candidate_record(site_code: str = "TEST-1") -> dict:
+    return {
+        "site": {"site_code": site_code, "site_name": "Test Site", "du_key": "DU-1"},
+        "pr_context": {
+            "subcontractor_tss": "GTSB",
+            "existing_tss_pr_status": "NO_PR",
+            "tx_sow_normalized": "MW NEW LINK",
+            "region": "Central",
+        },
+        "technical_context": {},
+        "source_evidence": {
+            "fields": {"tx_sow_normalized": {"normalization_status": "APPROVED"}}
+        },
+        "validation": {"pr_input_classification": "PR_INPUT_READY"},
+    }
+
+
+def _metadata(profile_id: str = "test_profile") -> dict:
+    return {
+        "profile_id": profile_id,
+        "profile_version": "1.0.0",
+        "mapping_version": "approved-v1",
+        "project_key": "project",
+        "du_model_name": "Test DU",
+        "du_model_id": "1",
+        "view_id": "2",
+        "header_hash": "abc",
+    }
+
+
 class TestCreatePrEntrypoint(unittest.TestCase):
     def test_resolver_identifies_profile_from_model_view_and_header_hash(self):
         resolution = resolve_du_profile(
@@ -224,30 +254,6 @@ class TestCreatePrEntrypoint(unittest.TestCase):
             )
 
     def test_run_production_mode_invokes_renderer_without_uat_marker(self):
-        candidate = {
-            "site": {"site_code": "PROD-1", "site_name": "Production Site", "du_key": "DU-1"},
-            "pr_context": {
-                "subcontractor_tss": "GTSB",
-                "existing_tss_pr_status": "NO_PR",
-                "tx_sow_normalized": "MW NEW LINK",
-                "region": "Central",
-            },
-            "technical_context": {},
-            "source_evidence": {
-                "fields": {"tx_sow_normalized": {"normalization_status": "APPROVED"}}
-            },
-            "validation": {"pr_input_classification": "PR_INPUT_READY"},
-        }
-        metadata = {
-            "profile_id": "production_profile",
-            "profile_version": "1.0.0",
-            "mapping_version": "approved-v1",
-            "project_key": "project",
-            "du_model_name": "Production DU",
-            "du_model_id": "1",
-            "view_id": "2",
-            "header_hash": "abc",
-        }
         resolution = {
             "profile": {"profile_id": "production_profile", "status": "PRODUCTION"},
             "inventory": [],
@@ -274,7 +280,7 @@ class TestCreatePrEntrypoint(unittest.TestCase):
             with mock.patch.object(create_pr, "resolve_du_profile", return_value=resolution), mock.patch.object(
                 create_pr,
                 "build_canonical_records",
-                return_value=([candidate], metadata),
+                return_value=([_candidate_record("PROD-1")], _metadata("production_profile")),
             ), mock.patch.object(create_pr.subprocess, "run", side_effect=fake_renderer):
                 summary = create_pr.run(parsed)
 
@@ -286,6 +292,44 @@ class TestCreatePrEntrypoint(unittest.TestCase):
             self.assertIsNone(summary["run_id"])
             self.assertEqual(len(summary["created_files"]), 1)
             self.assertNotIn("NON_PRODUCTION_UAT", Path(summary["created_files"][0]).name)
+
+    def test_uat_renderer_failure_marks_partial_artifacts_before_raising(self):
+        resolution = {
+            "profile": {"profile_id": "uat_profile", "status": "PR_INPUT_READY"},
+            "inventory": [],
+            "header_hash": "abc",
+        }
+
+        def failing_renderer(command, **_kwargs):
+            output = Path(command[command.index("--output") + 1])
+            (output / "Central-GTSB Test DU TSS PR 20260729.xlsx").write_bytes(b"partial")
+            return SimpleNamespace(returncode=1, stdout="", stderr="renderer failed")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            parsed = argparse.Namespace(
+                site_data=Path("input.xlsx"),
+                output=Path(temp_dir),
+                scope="TSS",
+                site_code=None,
+                all_sites=True,
+                pr_model=Path("pr_model.xlsx"),
+                template=Path("template.xls"),
+                mapping=Path("mapping.md"),
+                non_production_uat=True,
+            )
+            with mock.patch.object(create_pr, "resolve_du_profile", return_value=resolution), mock.patch.object(
+                create_pr,
+                "build_canonical_records",
+                return_value=([_candidate_record()], _metadata("uat_profile")),
+            ), mock.patch.object(create_pr.subprocess, "run", side_effect=failing_renderer):
+                with self.assertRaises(create_pr.CreatePrError) as context:
+                    create_pr.run(parsed)
+
+            self.assertEqual(context.exception.code, "ECC_RENDERER_FAILED")
+            partial_files = list((Path(temp_dir) / "NON_PRODUCTION_UAT").rglob("*.xlsx"))
+            self.assertEqual(len(partial_files), 1)
+            self.assertIn("NON_PRODUCTION_UAT", partial_files[0].name)
+            self.assertEqual(context.exception.details["partial_artifacts"], [str(partial_files[0].resolve())])
 
 
 if __name__ == "__main__":
