@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import shutil
@@ -83,7 +84,8 @@ class TestAllDuLongPathDiscovery(unittest.TestCase):
                 return real_isfile(strip_extended(str(raw_path)))
 
             def fake_rmtree(raw_path):
-                real_rmtree(strip_extended(str(raw_path)))
+                candidate = str(raw_path) if os.name == "nt" else strip_extended(str(raw_path))
+                real_rmtree(candidate)
 
             with mock.patch.object(batch, "_is_windows", return_value=True), mock.patch.object(
                 batch.os, "walk", side_effect=fake_walk
@@ -116,6 +118,71 @@ class TestAllDuLongPathDiscovery(unittest.TestCase):
         finally:
             cleanup_root = batch._windows_extended_path(temp_root) if os.name == "nt" else str(temp_root)
             shutil.rmtree(cleanup_root, ignore_errors=True)
+
+    def test_run_scope_pack_uses_short_temporary_renderer_staging(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source_export = root / "source.xlsx"
+            source_export.write_bytes(b"source")
+            scope_dir = root / ("final-" + "x" * 120) / "REVIEW_PACK" / "TSS"
+            args = argparse.Namespace(
+                pr_model=Path("pr_model.xlsx"),
+                template=Path("template.xls"),
+                mapping=Path("mapping.md"),
+                subcontractor_policy=Path("policy.json"),
+            )
+            observed = {}
+
+            def fake_create_pr_run(parsed):
+                engine_root = Path(parsed.output)
+                observed["engine_root"] = engine_root
+                observed["child_run_id"] = parsed.uat_run_id
+                artifact_root = engine_root / batch._impl.UAT_MARKER / parsed.uat_run_id
+                artifact_root.mkdir(parents=True, exist_ok=True)
+                artifact = artifact_root / "Central-GTSB Test TSS PR.xlsx"
+                artifact.write_bytes(b"uat")
+                summary_path = artifact_root / "summary.json"
+                summary = {
+                    "scope": "TSS",
+                    "created_files": [str(artifact)],
+                    "summary_path": str(summary_path),
+                    "review_report": None,
+                    "contract_mapping_review_report": None,
+                    "ignored_report": None,
+                }
+                summary_path.write_text(json.dumps(summary), encoding="utf-8")
+                return summary
+
+            def fake_materialize(engine_root, final_scope_dir, summary, pack_type, batch_run_id):
+                observed["materialize_engine_root"] = Path(engine_root)
+                observed["final_scope_dir"] = Path(final_scope_dir)
+                return summary, []
+
+            with mock.patch.object(batch._impl.create_pr, "run", side_effect=fake_create_pr_run), mock.patch.object(
+                batch, "materialize_scope_artifacts", side_effect=fake_materialize
+            ), mock.patch.object(
+                batch._impl, "materialize_scope_artifacts", side_effect=fake_materialize
+            ):
+                result = batch.run_scope_pack(
+                    source_export,
+                    scope_dir,
+                    "TSS",
+                    "REVIEW_PACK",
+                    ["SITE-1"],
+                    "celcomdigi_bau_2023_pr_v1",
+                    "20260730T055547239667Z",
+                    args,
+                )
+
+            engine_root = observed["engine_root"]
+            self.assertEqual(observed["materialize_engine_root"], engine_root)
+            self.assertEqual(observed["final_scope_dir"], scope_dir)
+            self.assertNotEqual(engine_root, scope_dir / "_ENGINE")
+            self.assertNotIn(scope_dir, engine_root.parents)
+            self.assertLess(len(str(engine_root)), 160)
+            self.assertLess(len(observed["child_run_id"]), 80)
+            self.assertFalse(engine_root.exists())
+            self.assertEqual(result[1], [])
 
 
 if __name__ == "__main__":
