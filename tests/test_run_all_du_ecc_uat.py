@@ -157,6 +157,7 @@ class TestAllDuEccUat(unittest.TestCase):
             source.write_bytes(b"uat")
             summary = scope_summary("profile_a", "TSS", engine_root)
             rename_calls: list[tuple[str, str]] = []
+            real_os_rename = batch.os.rename
 
             def strip_extended_path(value: str) -> str:
                 prefix = "\\\\?\\"
@@ -171,7 +172,7 @@ class TestAllDuEccUat(unittest.TestCase):
                 rename_calls.append((raw_source, raw_target))
                 self.assertTrue(raw_source.startswith("\\\\?\\"))
                 self.assertTrue(raw_target.startswith("\\\\?\\"))
-                Path(strip_extended_path(raw_source)).rename(Path(strip_extended_path(raw_target)))
+                real_os_rename(strip_extended_path(raw_source), strip_extended_path(raw_target))
 
             with mock.patch.object(batch, "_is_windows", return_value=True, create=True), mock.patch.object(
                 batch.os, "rename", side_effect=fake_rename
