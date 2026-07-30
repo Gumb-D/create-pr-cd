@@ -147,6 +147,53 @@ class TestAllDuEccUat(unittest.TestCase):
                 batch.deterministic_review_site_codes([ecc], 1)
         self.assertEqual(context.exception.code, "REVIEW_SAMPLE_CAP_TOO_LOW")
 
+    def test_materialize_scope_artifacts_uses_extended_windows_paths(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            scope_dir = root / "FULL_PACK" / "TSS"
+            engine_root = scope_dir / "_ENGINE"
+            source = engine_root / "NON_PRODUCTION_UAT" / "child" / "Central-Nera Test TSS PR.xlsx"
+            source.parent.mkdir(parents=True, exist_ok=True)
+            source.write_bytes(b"uat")
+            summary = scope_summary("profile_a", "TSS", engine_root)
+            rename_calls: list[tuple[str, str]] = []
+
+            def strip_extended_path(value: str) -> str:
+                prefix = "\\\\?\\"
+                unc_prefix = "\\\\?\\UNC\\"
+                if value.startswith(unc_prefix):
+                    return "\\\\" + value[len(unc_prefix) :]
+                if value.startswith(prefix):
+                    return value[len(prefix) :]
+                return value
+
+            def fake_rename(raw_source: str, raw_target: str) -> None:
+                rename_calls.append((raw_source, raw_target))
+                self.assertTrue(raw_source.startswith("\\\\?\\"))
+                self.assertTrue(raw_target.startswith("\\\\?\\"))
+                Path(strip_extended_path(raw_source)).rename(Path(strip_extended_path(raw_target)))
+
+            with mock.patch.object(batch, "_is_windows", return_value=True, create=True), mock.patch.object(
+                batch.os, "rename", side_effect=fake_rename
+            ), mock.patch.object(
+                batch.shutil, "move", side_effect=AssertionError("materialisation must not use shutil.move")
+            ):
+                adjusted, generated = batch.materialize_scope_artifacts(
+                    engine_root,
+                    scope_dir,
+                    summary,
+                    "FULL_PACK",
+                    "RUN-1",
+                )
+
+            expected = scope_dir / "Central-Nera Test TSS PR_FULL_PACK_NON_PRODUCTION_UAT_RUN-1.xlsx"
+            self.assertEqual(len(rename_calls), 1)
+            self.assertFalse(source.exists())
+            self.assertTrue(expected.is_file())
+            self.assertEqual(generated, [expected.resolve()])
+            self.assertEqual(adjusted["created_files"], [])
+            self.assertFalse(engine_root.exists())
+
     def test_master_manifest_initializes_pending_business_status(self):
         row = {column: "" for column in batch.MANIFEST_COLUMNS}
         row.update(
