@@ -12,8 +12,6 @@ import all_du_uat_impl as _impl
 from all_du_uat_impl import *  # noqa: F401,F403 - preserve the tested public module surface
 
 
-_ORIGINAL_MATERIALIZE = _impl.materialize_scope_artifacts
-_ORIGINAL_RMTREE = shutil.rmtree
 _TESTABLE_DEPENDENCIES = (
     "load_input_manifest",
     "load_structured_profiles",
@@ -31,59 +29,132 @@ def _is_windows() -> bool:
     return os.name == "nt"
 
 
+def _absolute_path_string(path: Path | str) -> str:
+    return os.path.abspath(os.fspath(path))
+
+
 def _windows_extended_path(path: Path | str) -> str:
-    path_str = str(Path(path).resolve())
+    raw_path = os.fspath(path)
     if not _is_windows():
-        return path_str
-    if path_str.startswith("\\\\?\\"):
-        return path_str
+        return _absolute_path_string(raw_path)
+    if raw_path.startswith("\\\\?\\"):
+        return raw_path
+    path_str = _absolute_path_string(raw_path)
     if path_str.startswith("\\\\"):
         return "\\\\?\\UNC\\" + path_str[2:]
     return "\\\\?\\" + path_str
 
 
+def _strip_windows_extended_path(path: Path | str) -> str:
+    path_str = os.fspath(path)
+    if path_str.startswith("\\\\?\\UNC\\"):
+        return "\\\\" + path_str[len("\\\\?\\UNC\\") :]
+    if path_str.startswith("\\\\?\\"):
+        return path_str[len("\\\\?\\") :]
+    return path_str
+
+
+def _path_exists(path: Path | str) -> bool:
+    candidate = _windows_extended_path(path) if _is_windows() else os.fspath(path)
+    return os.path.exists(candidate)
+
+
+def _path_is_file(path: Path | str) -> bool:
+    candidate = _windows_extended_path(path) if _is_windows() else os.fspath(path)
+    return os.path.isfile(candidate)
+
+
+def _iter_materialization_files(engine_root: Path | str) -> list[Path]:
+    root = _windows_extended_path(engine_root) if _is_windows() else os.fspath(engine_root)
+    discovered: list[Path] = []
+    for current, directories, filenames in os.walk(root):
+        directories.sort(key=str.casefold)
+        filenames.sort(key=str.casefold)
+        logical_current = _strip_windows_extended_path(current) if _is_windows() else current
+        discovered.extend(Path(logical_current) / filename for filename in filenames)
+    return sorted(discovered, key=lambda path: _absolute_path_string(path).casefold())
+
+
 def _path_safe_move(source: Path | str, target: Path | str) -> str:
     source_path = Path(source)
     target_path = Path(target)
-    target_path.parent.mkdir(parents=True, exist_ok=True)
     if _is_windows():
+        os.makedirs(_windows_extended_path(target_path.parent), exist_ok=True)
         os.rename(_windows_extended_path(source_path), _windows_extended_path(target_path))
     else:
+        target_path.parent.mkdir(parents=True, exist_ok=True)
         source_path.rename(target_path)
     return str(target_path)
 
 
-class _PathSafeShutilProxy:
-    move = staticmethod(_path_safe_move)
-    rmtree = staticmethod(_ORIGINAL_RMTREE)
+def _path_safe_rmtree(path: Path | str) -> None:
+    candidate = _windows_extended_path(path) if _is_windows() else os.fspath(path)
+    shutil.rmtree(candidate)
 
 
 def materialize_scope_artifacts(engine_root, scope_dir, summary, pack_type, batch_run_id):
-    """Materialize child files with Windows long-path support and retain ignored-audit references."""
+    """Materialize child files without normal-path Windows MAX_PATH operations."""
 
-    old_ignored = summary.get("ignored_report")
-    original_shutil = _impl.shutil
-    _impl.shutil = _PathSafeShutilProxy
-    try:
-        adjusted, generated = _ORIGINAL_MATERIALIZE(
-            engine_root,
-            scope_dir,
-            summary,
-            pack_type,
-            batch_run_id,
-        )
-    finally:
-        _impl.shutil = original_shutil
-    if old_ignored:
-        target = Path(scope_dir) / _impl._artifact_name(Path(old_ignored), pack_type, batch_run_id)
-        adjusted["ignored_report"] = str(target.resolve()) if target.is_file() else None
+    engine_root = Path(engine_root)
+    scope_dir = Path(scope_dir)
+    if _is_windows():
+        os.makedirs(_windows_extended_path(scope_dir), exist_ok=True)
     else:
-        adjusted["ignored_report"] = None
-    Path(adjusted["summary_path"]).write_text(
-        json.dumps(adjusted, ensure_ascii=False, indent=2),
-        encoding="utf-8",
+        scope_dir.mkdir(parents=True, exist_ok=True)
+
+    old_summary = summary.get("summary_path")
+    old_summary_key = _absolute_path_string(old_summary) if old_summary else None
+    path_map: dict[str, str] = {}
+    generated_xlsx: list[Path] = []
+
+    for source in _iter_materialization_files(engine_root):
+        source_key = _absolute_path_string(source)
+        if old_summary_key and source_key == old_summary_key:
+            continue
+
+        target = scope_dir / _impl._artifact_name(source, pack_type, batch_run_id)
+        if _path_exists(target):
+            raise _impl.BatchUatError(
+                "UAT_ARTIFACT_COLLISION",
+                "Batch UAT artefact target already exists.",
+                {"source": str(source), "target": str(target)},
+            )
+        if not _path_is_file(source):
+            raise _impl.BatchUatError(
+                "UAT_ARTIFACT_SOURCE_MISSING",
+                "Batch UAT artefact source is missing before materialisation.",
+                {"source": str(source), "target": str(target)},
+            )
+
+        _path_safe_move(source, target)
+        target_absolute = Path(_absolute_path_string(target))
+        path_map[source_key] = str(target_absolute)
+        if target.suffix.lower() == ".xlsx":
+            generated_xlsx.append(target_absolute)
+
+    if _path_exists(engine_root):
+        _path_safe_rmtree(engine_root)
+
+    adjusted = dict(summary)
+    adjusted["pack_type"] = pack_type
+    adjusted["batch_run_id"] = batch_run_id
+    adjusted["output_root"] = _absolute_path_string(scope_dir)
+    adjusted["created_files"] = [
+        path_map[key]
+        for path in summary.get("created_files", [])
+        if (key := _absolute_path_string(path)) in path_map
+    ]
+    for key in ("review_report", "contract_mapping_review_report", "ignored_report"):
+        old_value = summary.get(key)
+        adjusted[key] = path_map.get(_absolute_path_string(old_value)) if old_value else None
+
+    summary_path = scope_dir / (
+        f"CREATE_PR_SUMMARY_{adjusted['scope']}_{pack_type}_"
+        f"{_impl.UAT_MARKER}_{batch_run_id}.json"
     )
-    return adjusted, generated
+    adjusted["summary_path"] = _absolute_path_string(summary_path)
+    summary_path.write_text(json.dumps(adjusted, ensure_ascii=False, indent=2), encoding="utf-8")
+    return adjusted, sorted(generated_xlsx, key=lambda path: str(path).casefold())
 
 
 def _sync_testable_dependencies() -> None:
