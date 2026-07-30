@@ -45,6 +45,9 @@ class TestAllDuLongPathDiscovery(unittest.TestCase):
 
             real_walk = os.walk
             real_rename = os.rename
+            real_makedirs = os.makedirs
+            real_exists = os.path.exists
+            real_isfile = os.path.isfile
             real_rmtree = shutil.rmtree
             walk_roots = []
             rename_calls = []
@@ -70,14 +73,25 @@ class TestAllDuLongPathDiscovery(unittest.TestCase):
                 rename_calls.append((str(raw_source), str(raw_target)))
                 real_rename(strip_extended(str(raw_source)), strip_extended(str(raw_target)))
 
+            def fake_makedirs(raw_path, exist_ok=False):
+                real_makedirs(strip_extended(str(raw_path)), exist_ok=exist_ok)
+
+            def fake_exists(raw_path):
+                return real_exists(strip_extended(str(raw_path)))
+
+            def fake_isfile(raw_path):
+                return real_isfile(strip_extended(str(raw_path)))
+
             def fake_rmtree(raw_path):
                 real_rmtree(strip_extended(str(raw_path)))
 
             with mock.patch.object(batch, "_is_windows", return_value=True), mock.patch.object(
                 batch.os, "walk", side_effect=fake_walk
             ), mock.patch.object(batch.os, "rename", side_effect=fake_rename), mock.patch.object(
-                batch.shutil, "rmtree", side_effect=fake_rmtree
-            ):
+                batch.os, "makedirs", side_effect=fake_makedirs
+            ), mock.patch.object(batch.os.path, "exists", side_effect=fake_exists), mock.patch.object(
+                batch.os.path, "isfile", side_effect=fake_isfile
+            ), mock.patch.object(batch.shutil, "rmtree", side_effect=fake_rmtree):
                 adjusted, generated = batch.materialize_scope_artifacts(
                     engine_root,
                     scope_dir,
