@@ -61,31 +61,37 @@ class TestAllDuLongPathDiscovery(unittest.TestCase):
                 return value
 
             def add_extended(value: str) -> str:
+                if value.startswith("\\\\?\\"):
+                    return value
                 if value.startswith("\\\\"):
                     return "\\\\?\\UNC\\" + value[2:]
                 return "\\\\?\\" + value
 
+            def native_argument(value) -> str:
+                raw = str(value)
+                return raw if os.name == "nt" else strip_extended(raw)
+
             def fake_walk(raw_root):
                 walk_roots.append(str(raw_root))
-                for current, directories, files in real_walk(strip_extended(str(raw_root))):
-                    yield add_extended(current), directories, files
+                for current, directories, files in real_walk(native_argument(raw_root)):
+                    yielded_current = current if os.name == "nt" else add_extended(current)
+                    yield yielded_current, directories, files
 
             def fake_rename(raw_source, raw_target):
                 rename_calls.append((str(raw_source), str(raw_target)))
-                real_rename(strip_extended(str(raw_source)), strip_extended(str(raw_target)))
+                real_rename(native_argument(raw_source), native_argument(raw_target))
 
             def fake_makedirs(raw_path, exist_ok=False):
-                real_makedirs(strip_extended(str(raw_path)), exist_ok=exist_ok)
+                real_makedirs(native_argument(raw_path), exist_ok=exist_ok)
 
             def fake_exists(raw_path):
-                return real_exists(strip_extended(str(raw_path)))
+                return real_exists(native_argument(raw_path))
 
             def fake_isfile(raw_path):
-                return real_isfile(strip_extended(str(raw_path)))
+                return real_isfile(native_argument(raw_path))
 
             def fake_rmtree(raw_path):
-                candidate = str(raw_path) if os.name == "nt" else strip_extended(str(raw_path))
-                real_rmtree(candidate)
+                real_rmtree(native_argument(raw_path))
 
             with mock.patch.object(batch, "_is_windows", return_value=True), mock.patch.object(
                 batch.os, "walk", side_effect=fake_walk
