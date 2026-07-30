@@ -21,6 +21,26 @@ from difflib import SequenceMatcher
 import re
 import csv
 from geography_resolver import GeographyResolver
+
+
+def _console_safe_text(value: object, encoding: str | None = None) -> str:
+    text = str(value)
+    encoding = encoding or getattr(sys.stdout, "encoding", None)
+    if not encoding:
+        return text
+    try:
+        text.encode(encoding)
+        return text
+    except UnicodeEncodeError:
+        return text.encode(encoding, errors="backslashreplace").decode(encoding)
+
+
+def _safe_print(*args, file=None, **kwargs):
+    if file is None:
+        file = sys.stdout
+    encoding = getattr(file, "encoding", None) or getattr(sys.stdout, "encoding", None)
+    safe_args = tuple(_console_safe_text(arg, encoding) for arg in args)
+    print(*safe_args, file=file, **kwargs)
 from pr_helpers import (
     normalize_pbom_code,
     normalize_ti_sow,
@@ -1200,14 +1220,16 @@ else:
 
 
 # Display first 5 for dry run
-print(f"[OK] First 5 candidates:")
+_safe_print(f"[OK] First 5 candidates:")
 for i in range(min(5, len(candidates))):
     site_id = candidates.iloc[i]['customer site code']
     site_name = candidates.iloc[i]['customer site name']
     region = candidates.iloc[i]['region']
     subcon = candidates.iloc[i][subcon_column]
     sow = str(candidates.iloc[i]['Tx SOW'])
-    print(f"  {i+1}. {site_id} ({site_name}) - Region: {region}, SubCon: {subcon}, SOW: {sow[:40]}")
+    _safe_print(
+        f"  {i+1}. {site_id} ({site_name}) - Region: {region}, SubCon: {subcon}, SOW: {sow[:40]}"
+    )
 
 # ===== STEP 3: BUILD ECC OUTPUT ROWS =====
 print("\n[STEP 3] Building ECC Output Rows...")
@@ -1618,10 +1640,10 @@ print("=" * 100)
 print(f"Scope: {scope_name}")
 print(f"Total files generated: {file_count}")
 print(f"Total ECC rows: {total_rows}")
-print(f"Fuzzy matched subcontractors: {len(fuzzy_matches)}")
+_safe_print(f"Fuzzy matched subcontractors: {len(fuzzy_matches)}")
 if fuzzy_matches:
     for original, matched in fuzzy_matches.items():
-        print(f"  - '{original}' -> '{matched}'")
+        _safe_print(f"  - '{original}' -> '{matched}'")
 
 # TI Phase 1 summary
 if scope_name == 'TI':

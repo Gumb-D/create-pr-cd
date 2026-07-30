@@ -1,5 +1,8 @@
 import argparse
+import importlib
+import io
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -195,6 +198,99 @@ class TestCreatePrEntrypoint(unittest.TestCase):
             self.assertEqual(renamed, [expected])
             self.assertFalse(source.exists())
             self.assertTrue(expected.exists())
+
+    def test_mark_uat_artifacts_handles_windows_extended_paths(self):
+        marker = getattr(create_pr, "_mark_uat_artifacts", None)
+        self.assertIsNotNone(marker, "create_pr must visibly mark renderer-created UAT files")
+
+        def extended_path(path_str: str) -> str:
+            if os.name != "nt":
+                return path_str
+            if path_str.startswith("\\\\?\\"):
+                return path_str
+            if path_str.startswith("\\\\"):
+                return "\\\\?\\UNC\\" + path_str[2:]
+            return "\\\\?\\" + path_str
+
+        temp_dir = tempfile.mkdtemp()
+        try:
+            root = Path(temp_dir)
+            max_source = 259
+            suffix = ".xlsx"
+            base_length = len(str(root)) + 1 + len(suffix)
+            stem_length = max_source - base_length
+            self.assertGreater(stem_length, 0, "Temporary root path is too long for the regression test")
+            source = root / ("A" * stem_length + suffix)
+            expected = source.with_name(f"{source.stem}_NON_PRODUCTION_UAT{source.suffix}")
+            self.assertTrue(len(str(source)) < 260, f"Source path length should be below MAX_PATH: {len(str(source))}")
+            self.assertTrue(len(str(expected)) > 260, f"Target path length should exceed MAX_PATH: {len(str(expected))}")
+            source.write_bytes(b"uat")
+            self.assertTrue(source.exists())
+            self.assertTrue(expected.parent.exists())
+            renamed = marker([source])
+            self.assertEqual(renamed, [expected])
+            self.assertFalse(source.exists())
+            self.assertEqual([p.name for p in root.iterdir()], [expected.name])
+        finally:
+            expected_path = extended_path(str(expected))
+            if os.path.exists(expected_path):
+                os.remove(expected_path)
+            try:
+                os.rmdir(temp_dir)
+            except OSError:
+                pass
+
+    def test_generate_tss_pr_ecc_console_safe_print(self):
+        class CP1252Writer:
+            encoding = "cp1252"
+
+            def __init__(self):
+                self._buffer = []
+
+            def write(self, text):
+                text.encode(self.encoding)
+                self._buffer.append(text)
+
+            def getvalue(self):
+                return "".join(self._buffer)
+
+        writer = CP1252Writer()
+        site_name = "\u200bW066N_W00832IB_MENARATANTAN"
+        with self.assertRaises(UnicodeEncodeError):
+            print(f"  1. site ({site_name})", file=writer)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            script_path = Path(temp_dir) / "run_generate_tss_helper.py"
+            script_lines = [
+                "import sys",
+                "from importlib.util import spec_from_file_location, module_from_spec",
+                "sys.path.insert(0, r'{}')".format(r"{}".format(str(ROOT / "scripts"))),
+                "script_path = r'{}'".format(r"{}".format(str(ROOT / "scripts" / "generate_tss_pr_ecc.py"))),
+                "site_data = r'{}'".format(r"{}".format(str(FIXTURE))),
+                "output_dir = r'{}'".format(r"{}".format(str(temp_dir))),
+                "spec = spec_from_file_location('generate_tss_pr_ecc', script_path)",
+                "module = module_from_spec(spec)",
+                "sys.argv = [",
+                "    'generate_tss_pr_ecc.py',",
+                "    '--site-data', site_data,",
+                "    '--scope', 'TSS',",
+                "    '--all-sites',",
+                "    '--output', output_dir,",
+                "]",
+                "spec.loader.exec_module(module)",
+                "print(module._console_safe_text('  1. site (\u200bW066N_W00832IB_MENARATANTAN)', encoding='cp1252'))",
+            ]
+            script_text = "\n".join(script_lines) + "\n"
+            script_path.write_text(script_text, encoding='utf-8')
+            result = subprocess.run(
+                [sys.executable, str(script_path)],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+
+        self.assertIn("\\u200b", result.stdout)
 
     def test_official_cli_blocks_pr_input_ready_without_explicit_uat(self):
         with tempfile.TemporaryDirectory() as temp_dir:
