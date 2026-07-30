@@ -6,6 +6,7 @@ import json
 import os
 import shutil
 import sys
+import tempfile
 from pathlib import Path
 
 import all_du_uat_impl as _impl
@@ -155,6 +156,40 @@ def materialize_scope_artifacts(engine_root, scope_dir, summary, pack_type, batc
     adjusted["summary_path"] = _absolute_path_string(summary_path)
     summary_path.write_text(json.dumps(adjusted, ensure_ascii=False, indent=2), encoding="utf-8")
     return adjusted, sorted(generated_xlsx, key=lambda path: str(path).casefold())
+
+
+def run_scope_pack(
+    source_export,
+    scope_dir,
+    scope,
+    pack_type,
+    site_codes,
+    profile_id,
+    batch_run_id,
+    args,
+):
+    """Render in a short temporary directory, then materialize into the final UAT evidence path."""
+
+    scope_dir = Path(scope_dir)
+    child_run_id = f"{batch_run_id}_{pack_type}_{scope}"
+    with tempfile.TemporaryDirectory(prefix="create-pr-uat-") as temp_dir:
+        engine_root = Path(temp_dir)
+        parsed = _impl._create_pr_namespace(
+            Path(source_export),
+            engine_root,
+            scope,
+            site_codes,
+            args,
+            child_run_id,
+        )
+        summary = _impl.create_pr.run(parsed)
+        return materialize_scope_artifacts(
+            engine_root,
+            scope_dir,
+            summary,
+            pack_type,
+            batch_run_id,
+        )
 
 
 def _sync_testable_dependencies() -> None:
