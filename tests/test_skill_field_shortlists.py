@@ -10,6 +10,45 @@ from build_skill_field_shortlists import shortlist_skill_fields
 
 
 class TestSkillFieldShortlists(unittest.TestCase):
+    def test_jendela_migration_fields_use_exact_four_layer_candidates(self):
+        inventory = {
+            "sheets": [
+                {
+                    "columns": [
+                        {
+                            "fingerprint": {
+                                "field_code": "docata|ZDCSZ01016454",
+                                "wbs_stage": "Installation",
+                                "task_name": "Wireless RAN",
+                                "display_header": "TX Before Migration",
+                            },
+                            "source_position": {"one_based_index": 10},
+                        },
+                        {
+                            "fingerprint": {
+                                "field_code": "docata|ZDCSZ00823600",
+                                "wbs_stage": "Installation",
+                                "task_name": "Wireless RAN",
+                                "display_header": "Final Backhaul",
+                            },
+                            "source_position": {"one_based_index": 11},
+                        },
+                    ]
+                }
+            ]
+        }
+
+        shortlists = shortlist_skill_fields(inventory)
+
+        self.assertEqual(
+            shortlists["tx_before_migration"][0]["fingerprint"],
+            inventory["sheets"][0]["columns"][0]["fingerprint"],
+        )
+        self.assertEqual(
+            shortlists["final_backhaul"][0]["fingerprint"],
+            inventory["sheets"][0]["columns"][1]["fingerprint"],
+        )
+
     def test_site_id_prefers_customer_site_code(self):
         inventory = {
             "sheets": [
@@ -239,7 +278,7 @@ class TestSkillFieldShortlists(unittest.TestCase):
         source_names = [entry["source_file_name"] for entry in registry["entries"]]
         self.assertIn("A-P202211283695_D002-ZTE TX MINI-ZTE TX MINI v1-20260703160312.xlsx", source_names)
         self.assertIn("A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx", source_names)
-        self.assertIn("A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260703160246.xlsx", source_names)
+        self.assertIn("A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260804195447.xlsx", source_names)
         self.assertIn("A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx", source_names)
         self.assertIn("A-P202202168750_D002-2024 Celcomdigi BAU-2024 BAU Rollout (TX)-20260703160253.xlsx", source_names)
         self.assertIn("A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx", source_names)

@@ -12,6 +12,8 @@ SKILL_FIELDS = (
     "du_code",
     "region",
     "tx_sow",
+    "tx_before_migration",
+    "final_backhaul",
     "antenna_size_ne",
     "antenna_size_fe",
     "subcon_tss_team",
@@ -66,6 +68,12 @@ def _reason_and_score(field: str, column: Mapping[str, Any]) -> tuple[int, str] 
             return 80, "Likely direct SOW planning field."
         if "tx sow details" in display:
             return 45, "SOW details field; likely evidence, not primary trigger."
+    elif field == "tx_before_migration":
+        if display == "tx before migration":
+            return 100, "Exact Jendela migration-source field."
+    elif field == "final_backhaul":
+        if display == "final backhaul":
+            return 100, "Exact Jendela migration-destination field."
     elif field == "antenna_size_ne":
         if "antenna size ne" in display:
             return 100, "Direct NE antenna size field."

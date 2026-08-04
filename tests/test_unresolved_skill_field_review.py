@@ -236,6 +236,34 @@ class TestUnresolvedSkillFieldReview(unittest.TestCase):
             "Subcon PR - TI",
         )
         self.assertIn("subcontractor_planning", review_entry["summary"]["competing_candidate_fields"])
+        self.assertEqual(
+            review_entry["field_reviews"]["tx_before_migration"]["recommended_source"]["fingerprint"]["display_header"],
+            "TX Before Migration",
+        )
+        self.assertEqual(
+            review_entry["field_reviews"]["final_backhaul"]["recommended_source"]["fingerprint"]["display_header"],
+            "Final Backhaul",
+        )
+
+    def test_jendela_missing_migration_mapping_is_reported_truthfully(self):
+        shortlist_registry = json.loads(
+            (ROOT / "config" / "registries" / "mw_du_priority_skill_field_shortlists.yaml").read_text(encoding="utf-8")
+        )
+        profile = json.loads((ROOT / "config" / "du_profiles" / "jendela_tx_migration_pr_v1.yaml").read_text(encoding="utf-8"))
+        shortlist_entry = next(
+            entry for entry in shortlist_registry["entries"] if "Jendela TX Migration" in entry["source_file_name"]
+        )
+
+        for field_name in ("tx_before_migration", "final_backhaul"):
+            with self.subTest(field_name=field_name):
+                missing = json.loads(json.dumps(profile))
+                missing["field_mapping"][field_name]["source_candidates"] = []
+                review_entry = build_review_entry(missing, shortlist_entry)
+                self.assertIn(field_name, review_entry["summary"]["missing_required_fields"])
+                self.assertEqual(
+                    review_entry["field_reviews"][field_name]["review_status"],
+                    "REVIEW_REQUIRED_NO_PROFILE_SELECTION",
+                )
 
     def test_2023_celcomdigi_bau_entry_uses_corrected_tx_prpo_candidates(self):
         shortlist_registry = json.loads(

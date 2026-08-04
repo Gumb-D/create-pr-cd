@@ -1,7 +1,7 @@
 {
   "profile_id": "jendela_tx_migration_pr_v1",
-  "profile_version": "0.3.0",
-  "mapping_version": "approved-2026-08-04-jendela-tx-migration-v2",
+  "profile_version": "0.4.0",
+  "mapping_version": "approved-2026-08-04-jendela-tx-migration-v3",
   "status": "PR_INPUT_READY",
   "identity": {
     "project_key": "Malaysia_CelcomDigi_Project",
@@ -13,9 +13,9 @@
     "sheet_selector": null,
     "header_rows": [0, 1, 2, 3],
     "header_hash_policy": "strict",
-    "observed_header_hash": "904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3",
+    "observed_header_hash": "f45c209df5ca75b333f9b590ebc01c05c097e44231d22433290f8078e57c9056",
     "approved_header_hashes": [
-      "904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3"
+      "f45c209df5ca75b333f9b590ebc01c05c097e44231d22433290f8078e57c9056"
     ]
   },
   "field_mapping": {
@@ -27,7 +27,7 @@
     "tx_before_migration": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01016454", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "TX Before Migration"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "final_backhaul": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00823600", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Final Backhaul"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "region": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|region_name", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "region"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
-    "state": {"required": false, "source_candidates": [], "transforms": ["trim"]},
+    "state": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00008", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "Province/State"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "subcontractor_tss": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ640307", "wbs_stage": "RPM", "task_name": "SubCon - TSS", "display_header": "SubCon - TSS"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "subcontractor_ti": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ640242", "wbs_stage": "RPM", "task_name": "Wireless RAN", "display_header": "SubCon - TI"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "subcontractor_planning": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01036640", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Subcon Planning"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
@@ -47,9 +47,10 @@
     "reject_ambiguous_source_mapping": true,
     "require_evidence_for_every_canonical_field": true,
     "profile_notes": [
-      "Nine mappings are human-approved for PR_INPUT_READY operation: site_code, tx_sow_raw, tx_before_migration, final_backhaul, region, subcontractor_tss, subcontractor_ti, existing_tss_pr_status, and existing_ti_pr_status.",
+      "Ten mappings are human-approved for PR_INPUT_READY operation: site_code, tx_sow_raw, tx_before_migration, final_backhaul, region, state, subcontractor_tss, subcontractor_ti, existing_tss_pr_status, and existing_ti_pr_status.",
       "The approved migration decision matrix applies only to TI and derives complete atomic work plans from TX Before Migration plus Final Backhaul; TSS remains under ordinary Tx SOW controls.",
-      "Header hash enforcement remains strict and accepts only 904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3 for this export shape.",
+      "The exact Jendela migration source value MW normalizes to Microwave only at the TI migration decision boundary; original source values remain in decision audit evidence.",
+      "Header hash enforcement remains strict and accepts only f45c209df5ca75b333f9b590ebc01c05c097e44231d22433290f8078e57c9056 for the corrected official export shape.",
       "Duplicate-prevention fields existing_tss_pr_status and existing_ti_pr_status both normalize via normalize_pr_reference_status before validation and downstream use.",
       "subcontractor_tss remains optional for this Jendela scope even though its approved source is locked for PR review workflows.",
       "All non-approved Jendela candidates remain UNVERIFIED, this profile is validated for non-production PR input only, and ECC generation stays permanently blocked until a separate PRODUCTION approval is granted."

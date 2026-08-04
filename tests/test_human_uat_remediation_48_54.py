@@ -21,6 +21,7 @@ import create_pr
 import pr_helpers
 from du_export_adapter import build_canonical_site_record, resolve_profile_field_mappings
 from du_profile_loader import load_du_profile
+from geography_resolver import GeographyResolver
 from profile_du_export import fingerprint_key
 
 
@@ -124,6 +125,124 @@ class TestJendelaMigrationDecision(unittest.TestCase):
                 evidence = record["source_evidence"]["fields"][field_name]
                 self.assertEqual(evidence["source_header_fingerprint"], fingerprint)
                 self.assertEqual(evidence["mapping_status"], "APPROVED")
+
+    def test_profile_maps_corrected_jendela_state_with_full_approved_provenance(self):
+        expected = {
+            "field_code": "site|fix00008",
+            "wbs_stage": "Site Basic Info",
+            "task_name": "Site Basic Info",
+            "display_header": "Province/State",
+        }
+        mapping = self.factory.profile["field_mapping"]["state"]
+        self.assertEqual(mapping["source_candidates"], [{"fingerprint": expected, "mapping_status": "APPROVED"}])
+
+        record = self.factory.build(
+            {
+                "state": "Johor",
+                "region": "Southern",
+                "tx_before_migration": "Starlink",
+                "final_backhaul": "MW",
+                "tx_sow_raw": "",
+            },
+            sow_registry=self.sow_registry,
+        )
+        self.assertEqual(record["pr_context"]["state"], "Johor")
+        self.assertEqual(
+            record["source_evidence"]["fields"]["state"],
+            {
+                "source_header_fingerprint": expected,
+                "source_value": "Johor",
+                "transformation": "trim",
+                "mapping_status": "APPROVED",
+            },
+        )
+
+    def test_exact_mw_source_value_normalizes_at_jendela_decision_boundary(self):
+        cases = [
+            ("Starlink", "STARLINK_TO_MICROWAVE", ["Dismantle Starlink", "MW New Link"]),
+            ("MW", "MICROWAVE_TO_MICROWAVE", ["Dismantle MW", "MW New Link"]),
+        ]
+        for before, expected_code, expected_work_items in cases:
+            with self.subTest(before=before):
+                record = self.factory.build(
+                    {
+                        "tx_before_migration": before,
+                        "final_backhaul": "MW",
+                        "state": "Johor",
+                        "region": "Southern",
+                        "tx_sow_raw": "",
+                    },
+                    sow_registry=self.sow_registry,
+                )
+                decision = record["pr_context"]["migration_decision"]
+                self.assertEqual(decision["classification"], "APPROVED")
+                self.assertEqual(decision["decision_code"], expected_code)
+                self.assertEqual([item["work_item"] for item in decision["work_items"]], expected_work_items)
+                self.assertEqual(decision["source_values"]["tx_before_migration"], before)
+                self.assertEqual(decision["source_values"]["final_backhaul"], "MW")
+
+    def test_mw_normalization_is_exact_and_unknown_values_fail_closed(self):
+        for value in ("MW link", "BMW", "MW-1"):
+            with self.subTest(value=value):
+                record = self.factory.build(
+                    {
+                        "tx_before_migration": "Starlink",
+                        "final_backhaul": value,
+                        "state": "Johor",
+                        "region": "Southern",
+                        "tx_sow_raw": "",
+                    },
+                    sow_registry=self.sow_registry,
+                )
+                decision = record["pr_context"]["migration_decision"]
+                self.assertEqual(decision["classification"], "REVIEW_REQUIRED")
+                self.assertEqual(decision["reason_code"], "JENDELA_MIGRATION_COMBINATION_NOT_APPROVED")
+
+    def test_jendela_state_reaches_existing_west_and_east_malaysia_routing(self):
+        cases = [
+            ("Southern", "Johor", 1.49, 103.74, "Johor"),
+            ("Sabah", "Sabah", 5.9804, 116.0735, "Sabah"),
+            ("Sarawak", "Sarawak", 1.5533, 110.3592, "Sarawak"),
+        ]
+        resolver = GeographyResolver()
+        for region, state, latitude, longitude, expected_state in cases:
+            with self.subTest(region=region, state=state):
+                record = self.factory.build(
+                    {
+                        "tx_before_migration": "Starlink",
+                        "final_backhaul": "MW",
+                        "region": region,
+                        "state": state,
+                        "latitude": latitude,
+                        "longitude": longitude,
+                        "tx_sow_raw": "",
+                    },
+                    sow_registry=self.sow_registry,
+                )
+                mw_row = create_pr._renderer_rows(record)[-1]
+                result = resolver.resolve_route_bucket(mw_row, "inbound_route")
+                self.assertEqual(result["status"], "RESOLVED", result)
+                self.assertEqual(result["state"], expected_state)
+                self.assertEqual(mw_row["Province/State"], state)
+
+    def test_jendela_blank_or_unknown_state_fails_closed_at_existing_route_boundary(self):
+        resolver = GeographyResolver()
+        for state in ("", "Atlantis"):
+            with self.subTest(state=state):
+                record = self.factory.build(
+                    {
+                        "tx_before_migration": "Starlink",
+                        "final_backhaul": "MW",
+                        "region": "Southern",
+                        "state": state,
+                        "tx_sow_raw": "",
+                    },
+                    sow_registry=self.sow_registry,
+                )
+                mw_row = create_pr._renderer_rows(record)[-1]
+                result = resolver.resolve_route_bucket(mw_row, "inbound_route")
+                self.assertEqual(result["status"], "REVIEW_REQUIRED")
+                self.assertEqual(result["reason_code"], "UNKNOWN_STATE")
 
     def test_all_four_approved_combinations_create_complete_ti_work_plans(self):
         cases = {
@@ -404,6 +523,107 @@ class TestJendelaRendererAndPbomAtomicity(unittest.TestCase):
             with review_files[0].open(encoding="utf-8-sig", newline="") as handle:
                 review_rows = list(csv.DictReader(handle))
         self.assertEqual({row["Site_ID"] for row in review_rows}, {"8048R"})
+
+    def test_approved_mw_transitions_reach_complete_atomic_ecc_output(self):
+        cases = [
+            (
+                "STARLINK_TO_MICROWAVE",
+                [
+                    {
+                        "work_item": "Dismantle Starlink",
+                        "model_sow": "Starlink Dismantle (Return/MRCF included) & Migration",
+                        "required_pbom_codes": ["350000597850", "350000597852"],
+                    },
+                    {"work_item": "MW New Link", "model_sow": "MW Installation", "required_pbom_codes": []},
+                ],
+                {"350000597850", "350000597852", "350000214932", "350001095409"},
+            ),
+            (
+                "MICROWAVE_TO_MICROWAVE",
+                [
+                    {"work_item": "Dismantle MW", "model_sow": "MW Dismantle", "required_pbom_codes": []},
+                    {"work_item": "MW New Link", "model_sow": "MW Installation", "required_pbom_codes": []},
+                ],
+                {"350000589265", "350001095413", "350000214932", "350001095409"},
+            ),
+        ]
+        for decision_code, work_items, expected_pboms in cases:
+            with self.subTest(decision_code=decision_code), tempfile.TemporaryDirectory() as temp_dir:
+                temp_path = Path(temp_dir)
+                renderer_input = temp_path / "renderer.xlsx"
+                pr_model = temp_path / "pr-model-with-jendela-migration.xlsx"
+                output = temp_path / "output"
+                output.mkdir()
+
+                candidate = self._candidate_record()
+                candidate["pr_context"]["region"] = "Southern"
+                candidate["pr_context"]["state"] = "Johor"
+                candidate["pr_context"]["migration_decision"] = {
+                    "classification": "APPROVED",
+                    "decision_code": decision_code,
+                    "work_items": work_items,
+                }
+                create_pr._write_renderer_input(renderer_input, [candidate])
+
+                approved_model = ROOT / "Info" / "input" / "pr_model.xlsx"
+                shutil.copy2(approved_model, pr_model)
+                workbook = load_workbook(pr_model)
+                worksheet = workbook["TX Line Item (After 21-Apr 26)"]
+                worksheet.insert_rows(392, amount=6)
+                model_rows = [
+                    ["Starlink Dismantle (Return/MRCF included) & Migration", "350000597850", "Starlink dismantling", "Site", 1, "Mandatory"],
+                    ["Starlink Dismantle (Return/MRCF included) & Migration", "350000597852", "Starlink cutover", "Site", 1, "Mandatory"],
+                    ["MW Installation", "350000214932", "Inland transportation to South Region--Johor", "Hop", 1, "Mandatory"],
+                    ["MW Installation", "350001095409", "New - MW Link (0.3/0.6m, 2 antenna)", "Hop", 1, "4 choose 1 (Mandatory)"],
+                    ["MW Installation", "350001095410", "New - MW Link (0.9/1.2m, 2 antenna)", "Hop", 1, "4 choose 1 (Mandatory)"],
+                    ["MW Installation", "350001095411", "New - MW Link (1.8m, 2 antenna)", "Hop", 1, "4 choose 1 (Mandatory)"],
+                ]
+                for row_number, values in enumerate(model_rows, start=392):
+                    for column_number, value in enumerate(values, start=1):
+                        worksheet.cell(row=row_number, column=column_number, value=value)
+                workbook.save(pr_model)
+                workbook.close()
+
+                original_read_bytes = Path.read_bytes
+                approved_bytes = approved_model.read_bytes()
+
+                def approved_hash_bytes(path):
+                    if Path(path).resolve() == pr_model.resolve():
+                        return approved_bytes
+                    return original_read_bytes(path)
+
+                argv = [
+                    "generate_tss_pr_ecc.py",
+                    "--site-data", str(renderer_input),
+                    "--pr-model", str(pr_model),
+                    "--template", str(ROOT / "Info" / "input" / "ecc_template.xls"),
+                    "--mapping", str(ROOT / "Info" / "input" / "contract_info_reference.md"),
+                    "--output", str(output),
+                    "--scope", "TI",
+                    "--all-sites",
+                ]
+                captured_stdout = io.StringIO()
+                captured_stderr = io.StringIO()
+                with (
+                    mock.patch.object(sys, "argv", argv),
+                    mock.patch.object(Path, "read_bytes", approved_hash_bytes),
+                    contextlib.redirect_stdout(captured_stdout),
+                    contextlib.redirect_stderr(captured_stderr),
+                ):
+                    runpy.run_path(str(ROOT / "scripts" / "generate_tss_pr_ecc.py"), run_name="__main__")
+
+                output_files = list(output.glob("*.xlsx"))
+                self.assertEqual(
+                    len(output_files),
+                    1,
+                    f"stdout:\n{captured_stdout.getvalue()}\nstderr:\n{captured_stderr.getvalue()}",
+                )
+                self.assertEqual(list(output.glob("REVIEW_REQUIRED_TI_*.csv")), [])
+                workbook = load_workbook(output_files[0], read_only=True, data_only=True)
+                worksheet = workbook["details"]
+                actual_pboms = {str(row[9]) for row in worksheet.iter_rows(min_row=2, values_only=True)}
+                workbook.close()
+                self.assertEqual(actual_pboms, expected_pboms)
 
 
 class TestGlobalGeographyCorrection(unittest.TestCase):

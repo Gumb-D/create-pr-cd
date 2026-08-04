@@ -32,10 +32,10 @@ class TestProfileRollbackReadiness(unittest.TestCase):
 
         self.assertEqual(entry["rollback_readiness_status"], "ROLLBACK_BASELINE_RECORDED")
         self.assertEqual(entry["rollback_target_profile_id"], "jendela_tx_migration_pr_v1")
-        self.assertEqual(entry["rollback_target_profile_version"], "0.3.0")
+        self.assertEqual(entry["rollback_target_profile_version"], "0.4.0")
         self.assertEqual(
             entry["rollback_target_header_hashes"],
-            ["904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3"],
+            ["f45c209df5ca75b333f9b590ebc01c05c097e44231d22433290f8078e57c9056"],
         )
 
     def test_zte_records_rollback_baseline_after_pr_input_ready(self):

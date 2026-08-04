@@ -88,8 +88,8 @@ class TestDuDiscoveryRegistry(unittest.TestCase):
         self.assertEqual(entry["du_model_name"], "Jendela TX Migration")
         self.assertEqual(entry["profile_id"], "jendela_tx_migration_pr_v1")
         self.assertEqual(entry["profile_status"], "PR_INPUT_READY")
-        self.assertEqual(entry["profile_version"], "0.3.0")
-        self.assertEqual(entry["mapping_version"], "approved-2026-08-04-jendela-tx-migration-v2")
+        self.assertEqual(entry["profile_version"], "0.4.0")
+        self.assertEqual(entry["mapping_version"], "approved-2026-08-04-jendela-tx-migration-v3")
 
     def test_build_discovery_entry_for_2023_celcomdigi_bau_uses_existing_profile_file(self):
         profile_dir = self.profiler_root / "A-P202202168750_D002-2023_Celcomdigi_BAU-2023_Celcomdigi_BAU__TX_-20260703160239"
@@ -136,6 +136,34 @@ class TestDuDiscoveryRegistry(unittest.TestCase):
         presence = _skill_field_presence(inventory)
         self.assertTrue(presence["existing_tss_pr"])
         self.assertTrue(presence["existing_ti_pr"])
+
+    def test_jendela_migration_fields_are_present_in_discovery_governance(self):
+        inventory = {
+            "sheets": [
+                {
+                    "columns": [
+                        {"fingerprint": {"display_header": "TX Before Migration"}},
+                        {"fingerprint": {"display_header": "Final Backhaul"}},
+                    ]
+                }
+            ]
+        }
+        presence = _skill_field_presence(inventory)
+        self.assertTrue(presence["tx_before_migration"])
+        self.assertTrue(presence["final_backhaul"])
+
+        registry = json.loads(
+            (ROOT / "config" / "registries" / "mw_du_model_discovery_registry.yaml").read_text(encoding="utf-8")
+        )
+        entry = next(item for item in registry["entries"] if item.get("profile_id") == "jendela_tx_migration_pr_v1")
+        self.assertEqual(
+            entry["source_file_name"],
+            "A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260804195447.xlsx",
+        )
+        self.assertEqual(entry["source_file_hash"], "6e8f8959dcf2564a914c0039ae6aa4aee9d53d7880360f0639084547e1fb946b")
+        self.assertEqual(entry["observed_header_hash"], "f45c209df5ca75b333f9b590ebc01c05c097e44231d22433290f8078e57c9056")
+        self.assertTrue(entry["skill_field_presence"]["tx_before_migration"])
+        self.assertTrue(entry["skill_field_presence"]["final_backhaul"])
 
     def test_skill_field_presence_keeps_existing_non_pr_discovery_variants(self):
         inventory = {

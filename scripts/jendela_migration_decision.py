@@ -53,7 +53,10 @@ _MATRIX = {
 def _normalized(value: Any) -> str:
     if value is None:
         return ""
-    return " ".join(str(value).strip().split()).casefold()
+    normalized = " ".join(str(value).strip().split()).casefold()
+    if normalized == "mw":
+        return "microwave"
+    return normalized
 
 
 def derive_jendela_migration_decision(

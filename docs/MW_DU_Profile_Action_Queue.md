@@ -52,8 +52,8 @@ Discovery-only prioritized manual action queue for the current DRAFT profiles.
 
 - Readiness status: `DISCOVERY_ONLY_BLOCKED`
 - Profile status: `PR_INPUT_READY`
-- Mapping version: `approved-2026-08-04-jendela-tx-migration-v2`
-- Observed header hash: `904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3`
+- Mapping version: `approved-2026-08-04-jendela-tx-migration-v3`
+- Observed header hash: `f45c209df5ca75b333f9b590ebc01c05c097e44231d22433290f8078e57c9056`
 - Action queue:
   - `jendela_tx_migration_pr_v1:01` `CONFIRM_COMPETING_CANDIDATE` `site_name`: Choose one exact four-layer source for `site_name` from the competing shortlist candidates.
     hint: Use the unresolved review packet to compare the currently selected source against alternates.

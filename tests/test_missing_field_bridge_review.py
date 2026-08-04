@@ -10,6 +10,46 @@ from build_missing_field_bridge_review import build_bridge_entry, build_bridge_r
 
 
 class TestMissingFieldBridgeReview(unittest.TestCase):
+    def test_missing_jendela_migration_field_uses_discovery_presence_without_crashing(self):
+        unresolved_entry = {
+            "profile_id": "jendela_tx_migration_pr_v1",
+            "profile_version": "0.4.0",
+            "mapping_version": "approved-2026-08-04-jendela-tx-migration-v3",
+            "observed_header_hash": "jendela-hash",
+            "du_model_name": "Jendela TX Migration",
+            "source_file_name": "jendela.xlsx",
+            "summary": {"missing_required_fields": ["tx_before_migration", "final_backhaul"]},
+        }
+        grouping = {
+            "entries": [
+                {
+                    "source_file_name": "jendela.xlsx",
+                    "closest_neighbors": [],
+                }
+            ]
+        }
+        discovery = {
+            "entries": [
+                {
+                    "du_model_name": "Jendela TX Migration",
+                    "source_file_name": "jendela.xlsx",
+                    "observed_header_hash": "jendela-hash",
+                    "profile_id": "jendela_tx_migration_pr_v1",
+                    "skill_field_presence": {
+                        "tx_before_migration": True,
+                        "final_backhaul": True,
+                    },
+                }
+            ]
+        }
+
+        bridge_entry = build_bridge_entry(unresolved_entry, grouping, discovery)
+
+        self.assertEqual(
+            sorted(bridge_entry["field_bridges"]),
+            ["final_backhaul", "tx_before_migration"],
+        )
+
     def test_tx_mini_bridge_is_empty_after_approved_pr_status_mappings(self):
         # Since the 2026-07-07 approvals, TX Mini maps existing_*_pr_status from
         # its own export, so it no longer needs cross-model donor fields.
@@ -73,8 +113,8 @@ class TestMissingFieldBridgeReview(unittest.TestCase):
         bridge_entry = build_bridge_entry(unresolved_entry, grouping, discovery)
 
         self.assertEqual(bridge_entry["profile_id"], "jendela_tx_migration_pr_v1")
-        self.assertEqual(bridge_entry["profile_version"], "0.3.0")
-        self.assertEqual(bridge_entry["mapping_version"], "approved-2026-08-04-jendela-tx-migration-v2")
+        self.assertEqual(bridge_entry["profile_version"], "0.4.0")
+        self.assertEqual(bridge_entry["mapping_version"], "approved-2026-08-04-jendela-tx-migration-v3")
         self.assertEqual(bridge_entry["field_bridges"], {})
 
     def test_zte_bridge_is_empty_after_local_pr_shortlist_candidates_are_detected(self):
