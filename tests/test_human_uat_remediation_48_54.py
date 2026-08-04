@@ -3,7 +3,6 @@ import csv
 import contextlib
 import io
 import runpy
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -410,7 +409,11 @@ class TestJendelaRendererAndPbomAtomicity(unittest.TestCase):
             renderer_input = temp_path / "renderer.xlsx"
             output = temp_path / "output"
             output.mkdir()
-            create_pr._write_renderer_input(renderer_input, [self._candidate_record()])
+            candidate = self._candidate_record()
+            candidate["pr_context"]["migration_decision"]["work_items"][0]["required_pbom_codes"].append(
+                "MISSING-PBOM"
+            )
+            create_pr._write_renderer_input(renderer_input, [candidate])
             result = subprocess.run(
                 [
                     sys.executable,
@@ -461,44 +464,16 @@ class TestJendelaRendererAndPbomAtomicity(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             renderer_input = temp_path / "renderer.xlsx"
-            pr_model = temp_path / "pr-model-with-jendela-migration.xlsx"
             output = temp_path / "output"
             output.mkdir()
             create_pr._write_renderer_input(renderer_input, [candidate])
-
-            approved_model = ROOT / "Info" / "input" / "pr_model.xlsx"
-            shutil.copy2(approved_model, pr_model)
-            workbook = load_workbook(pr_model)
-            worksheet = workbook["TX Line Item (After 21-Apr 26)"]
-            worksheet.insert_rows(392, amount=6)
-            model_rows = [
-                ["Starlink Dismantle (Return/MRCF included) & Migration", "350000597850", "Starlink dismantling", "Site", 1, "Mandatory"],
-                ["Starlink Dismantle (Return/MRCF included) & Migration", "350000597852", "Starlink cutover", "Site", 1, "Mandatory"],
-                ["MW Installation", "350000214923", "Inland transportation to North Region--Perak", "Hop", 1, "Mandatory"],
-                ["MW Installation", "350001095409", "New - MW Link (0.3/0.6m, 2 antenna)", "Hop", 1, "4 choose 1 (Mandatory)"],
-                ["MW Installation", "350001095410", "New - MW Link (0.9/1.2m, 2 antenna)", "Hop", 1, "4 choose 1 (Mandatory)"],
-                ["MW Installation", "350001095411", "New - MW Link (1.8m, 2 antenna)", "Hop", 1, "4 choose 1 (Mandatory)"],
-            ]
-            for row_number, values in enumerate(model_rows, start=392):
-                for column_number, value in enumerate(values, start=1):
-                    worksheet.cell(row=row_number, column=column_number, value=value)
-            workbook.save(pr_model)
-            workbook.close()
-
-            original_read_bytes = Path.read_bytes
-            approved_bytes = approved_model.read_bytes()
-
-            def approved_hash_bytes(path):
-                if Path(path).resolve() == pr_model.resolve():
-                    return approved_bytes
-                return original_read_bytes(path)
 
             argv = [
                 "generate_tss_pr_ecc.py",
                 "--site-data",
                 str(renderer_input),
                 "--pr-model",
-                str(pr_model),
+                str(ROOT / "Info" / "input" / "pr_model.xlsx"),
                 "--template",
                 str(ROOT / "Info" / "input" / "ecc_template.xls"),
                 "--mapping",
@@ -511,7 +486,6 @@ class TestJendelaRendererAndPbomAtomicity(unittest.TestCase):
             ]
             with (
                 mock.patch.object(sys, "argv", argv),
-                mock.patch.object(Path, "read_bytes", approved_hash_bytes),
                 contextlib.redirect_stdout(io.StringIO()),
                 contextlib.redirect_stderr(io.StringIO()),
             ):
@@ -551,7 +525,6 @@ class TestJendelaRendererAndPbomAtomicity(unittest.TestCase):
             with self.subTest(decision_code=decision_code), tempfile.TemporaryDirectory() as temp_dir:
                 temp_path = Path(temp_dir)
                 renderer_input = temp_path / "renderer.xlsx"
-                pr_model = temp_path / "pr-model-with-jendela-migration.xlsx"
                 output = temp_path / "output"
                 output.mkdir()
 
@@ -565,37 +538,10 @@ class TestJendelaRendererAndPbomAtomicity(unittest.TestCase):
                 }
                 create_pr._write_renderer_input(renderer_input, [candidate])
 
-                approved_model = ROOT / "Info" / "input" / "pr_model.xlsx"
-                shutil.copy2(approved_model, pr_model)
-                workbook = load_workbook(pr_model)
-                worksheet = workbook["TX Line Item (After 21-Apr 26)"]
-                worksheet.insert_rows(392, amount=6)
-                model_rows = [
-                    ["Starlink Dismantle (Return/MRCF included) & Migration", "350000597850", "Starlink dismantling", "Site", 1, "Mandatory"],
-                    ["Starlink Dismantle (Return/MRCF included) & Migration", "350000597852", "Starlink cutover", "Site", 1, "Mandatory"],
-                    ["MW Installation", "350000214932", "Inland transportation to South Region--Johor", "Hop", 1, "Mandatory"],
-                    ["MW Installation", "350001095409", "New - MW Link (0.3/0.6m, 2 antenna)", "Hop", 1, "4 choose 1 (Mandatory)"],
-                    ["MW Installation", "350001095410", "New - MW Link (0.9/1.2m, 2 antenna)", "Hop", 1, "4 choose 1 (Mandatory)"],
-                    ["MW Installation", "350001095411", "New - MW Link (1.8m, 2 antenna)", "Hop", 1, "4 choose 1 (Mandatory)"],
-                ]
-                for row_number, values in enumerate(model_rows, start=392):
-                    for column_number, value in enumerate(values, start=1):
-                        worksheet.cell(row=row_number, column=column_number, value=value)
-                workbook.save(pr_model)
-                workbook.close()
-
-                original_read_bytes = Path.read_bytes
-                approved_bytes = approved_model.read_bytes()
-
-                def approved_hash_bytes(path):
-                    if Path(path).resolve() == pr_model.resolve():
-                        return approved_bytes
-                    return original_read_bytes(path)
-
                 argv = [
                     "generate_tss_pr_ecc.py",
                     "--site-data", str(renderer_input),
-                    "--pr-model", str(pr_model),
+                    "--pr-model", str(ROOT / "Info" / "input" / "pr_model.xlsx"),
                     "--template", str(ROOT / "Info" / "input" / "ecc_template.xls"),
                     "--mapping", str(ROOT / "Info" / "input" / "contract_info_reference.md"),
                     "--output", str(output),
@@ -606,7 +552,6 @@ class TestJendelaRendererAndPbomAtomicity(unittest.TestCase):
                 captured_stderr = io.StringIO()
                 with (
                     mock.patch.object(sys, "argv", argv),
-                    mock.patch.object(Path, "read_bytes", approved_hash_bytes),
                     contextlib.redirect_stdout(captured_stdout),
                     contextlib.redirect_stderr(captured_stderr),
                 ):

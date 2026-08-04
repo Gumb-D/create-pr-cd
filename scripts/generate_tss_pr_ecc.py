@@ -53,6 +53,7 @@ from pr_helpers import (
     validate_required_pbom_selection,
     filter_failed_migration_decisions,
     optional_cell_text,
+    load_pr_model_items,
 )
 
 
@@ -73,7 +74,7 @@ def parse_args():
 
 import hashlib
 
-APPROVED_PR_MODEL_SHA256 = "82a47564590a8083c88b9dad61472c04513bb2832f8b1a44750d6a4347446c4d"
+APPROVED_PR_MODEL_SHA256 = "d3cc64664fc147f8c560688e41264753592eb0b8cdc513d7ebe2d9b989e8aefd"
 
 
 def validate_pr_model_file(path, description="PR Model"):
@@ -86,7 +87,7 @@ def validate_pr_model_file(path, description="PR Model"):
             f"PR_MODEL_HASH_MISMATCH: {description} content hash mismatch!\n"
             f"Expected: {APPROVED_PR_MODEL_SHA256}\n"
             f"Actual:   {actual_sha}\n"
-            f"Use the officially approved PR Model v3.2 workbook."
+            f"Use the officially approved PR Model v4 workbook."
         )
     return p
 
@@ -1022,71 +1023,9 @@ print(f"  Subcons: {', '.join(sorted(subcon_mapping.keys()))[:80]}...")
 # ===== STEP 1: EXTRACT PR MODEL DATA =====
 print("\n[STEP 1] Extracting PR Model Data...")
 
-df_pr = pd.read_excel(pr_file, sheet_name="TX Line Item (After 21-Apr 26)", header=None)
+tss_models, ti_models = load_pr_model_items(pr_file)
 
-# Extract TSS models (starting from row 7 = index 7)
-tss_models = []
-
-for idx in range(7, len(df_pr)):
-    sow = df_pr.iloc[idx, 0]
-    pbom = df_pr.iloc[idx, 1]
-    desc = df_pr.iloc[idx, 2]
-    unit = df_pr.iloc[idx, 3]
-    qty = df_pr.iloc[idx, 4]
-    rules = df_pr.iloc[idx, 5]
-    remarks = df_pr.iloc[idx, 6] if len(df_pr.columns) > 6 else None
-
-    # Stop at next section
-    if pd.isna(sow) or str(sow).strip() == '':
-        break
-
-    # Check if mandatory
-    is_mandatory = 'Mandatory' in str(rules) if pd.notna(rules) else False
-
-    if pd.notna(pbom) and pd.notna(desc):
-        tss_models.append({
-            'SOW': str(sow).strip(),
-            'PBOM_Code': normalize_pbom_code(pbom),
-            'Description': str(desc).strip(),
-            'Unit': str(unit).strip() if pd.notna(unit) else 'Hop',
-            'Quantity': float(qty) if pd.notna(qty) else 1,
-            'Is_Mandatory': is_mandatory,
-            'Remarks': str(remarks).strip() if pd.notna(remarks) else ''
-        })
-
-# Extract TI models (starting from TI Model header)
-ti_models = []
-ti_header_idx = None
-for idx in range(len(df_pr)):
-    cell_value = df_pr.iloc[idx, 0]
-    if isinstance(cell_value, str) and 'TI Model' in cell_value:
-        ti_header_idx = idx
-        break
-
-if ti_header_idx is not None:
-    for idx in range(ti_header_idx + 1, len(df_pr)):
-        sow = df_pr.iloc[idx, 0]
-        pbom = df_pr.iloc[idx, 1]
-        desc = df_pr.iloc[idx, 2]
-        unit = df_pr.iloc[idx, 3]
-        qty = df_pr.iloc[idx, 4]
-        rules = df_pr.iloc[idx, 5]
-
-        if pd.isna(sow) or str(sow).strip() == '':
-            break
-
-        is_mandatory = 'Mandatory' in str(rules) if pd.notna(rules) else False
-        if pd.notna(pbom) and pd.notna(desc):
-            ti_models.append({
-                'SOW': str(sow).strip(),
-                'PBOM_Code': normalize_pbom_code(pbom),
-                'Description': str(desc).strip(),
-                'Unit': str(unit).strip() if pd.notna(unit) else 'Hop',
-                'Quantity': float(qty) if pd.notna(qty) else 1,
-                'Is_Mandatory': is_mandatory,
-                'Rules': str(rules).strip() if pd.notna(rules) else ''
-            })
-
+if ti_models:
     print(f"[OK] Extracted {len(ti_models)} TI line items")
 else:
     print('Warning: TI Model section not found in PR model sheet.')

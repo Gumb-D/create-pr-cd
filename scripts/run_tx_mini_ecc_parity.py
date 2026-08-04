@@ -18,7 +18,7 @@ from run_tx_mini_golden_parity import resolution_report, build_canonical_records
 from canonical_generator_bridge import build_records_from_export
 from du_profile_loader import load_du_profile
 
-APPROVED_PR_MODEL_SHA256 = "82a47564590a8083c88b9dad61472c04513bb2832f8b1a44750d6a4347446c4d"
+APPROVED_PR_MODEL_SHA256 = "d3cc64664fc147f8c560688e41264753592eb0b8cdc513d7ebe2d9b989e8aefd"
 ALLOWED_NORMALIZATION_CELLS = {("Summary", "A1"), ("Summary", "B1")}
 
 
@@ -639,7 +639,7 @@ def run_parity():
     model_sha = hashlib.sha256(pr_model.read_bytes()).hexdigest()
     model_id = {
         "actual_filename": pr_model.name,
-        "logical_model_identity": "Celcomdigi TX PR Model & Line Item 20250420 v3.2",
+        "logical_model_identity": "Celcomdigi TX PR Model & Line Item v4",
         "absolute_path": str(pr_model.resolve()),
         "sha256": model_sha,
         "sheet_names": openpyxl.load_workbook(pr_model, data_only=True).sheetnames
