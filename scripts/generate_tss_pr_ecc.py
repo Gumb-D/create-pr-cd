@@ -1372,6 +1372,8 @@ for idx in range(len(candidates)):
                         )
                     )
 
+                    if migration_decision_id:
+                        failed_migration_decisions.add(migration_decision_id)
                     continue
 
             matched_items, review_required = match_ti_models(
