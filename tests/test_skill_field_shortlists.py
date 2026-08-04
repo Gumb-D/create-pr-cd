@@ -1,15 +1,117 @@
 import json
+import os
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from build_skill_field_shortlists import shortlist_skill_fields
+from build_skill_field_shortlists import main as build_shortlist_main, shortlist_skill_fields
 
 
 class TestSkillFieldShortlists(unittest.TestCase):
+    def test_main_regenerates_from_corrected_jendela_cache_when_obsolete_cache_is_absent(self):
+        non_jendela_names = [
+            "A-P202202168750_D002-TX_Mini_Project-TX_Mini_PR_PO_View-20260703160246",
+            "A-P202211283695_D002-MW_EOS_Swap-MW_EOS_Swap_Rollout-20260703160307",
+            "A-P202202168750_D002-2023_TX_Rollout-TX_Rollout_PR_PO_View-20260703160446",
+            "A-P202211283695_D002-ZTE_TX_MINI-ZTE_TX_MINI_v1-20260703160312",
+            "A-P202202168750_D002-2023_Celcomdigi_BAU-2023_Celcomdigi_BAU__TX_-20260703160239",
+            "A-P202202168750_D002-2024_Celcomdigi_BAU-2024_BAU_Rollout_TX_-20260703160253",
+            "A-P202202168750_D002-Celcomdigi_USP-Celcomdigi_USP_TX_-20260703160234",
+            "A-P202202168750_D002-CD_consolidation_2023-CD_2023_Decom_Site-20260703160415",
+            "A-P202202168750_D002-CD_consolidation_2023-CD_consolidation_2023_Rollout-20260703160351",
+        ]
+        corrected_name = (
+            "A-P202202168750_D002-Jendela_TX_Migration-"
+            "Migration_Rollout_TX_-20260804195447"
+        )
+        corrected_source = "A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260804195447.xlsx"
+        corrected_source_hash = "6e8f8959dcf2564a914c0039ae6aa4aee9d53d7880360f0639084547e1fb946b"
+        corrected_header_hash = "f45c209df5ca75b333f9b590ebc01c05c097e44231d22433290f8078e57c9056"
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = Path(temp_dir)
+            profiler_root = temp_root / "output" / "du-20260706-profile"
+            profiler_root.mkdir(parents=True)
+
+            def write_profile(name, source_name, source_hash, header_hash, columns=None):
+                profile_dir = profiler_root / name
+                profile_dir.mkdir()
+                inventory = {
+                    "source": {"file_name": source_name, "source_file_hash": source_hash},
+                    "sheets": [{"columns": columns or []}],
+                }
+                (profile_dir / "header_inventory.json").write_text(json.dumps(inventory), encoding="utf-8")
+                (profile_dir / "header_hash.txt").write_text(header_hash + "\n", encoding="utf-8")
+
+            for index, name in enumerate(non_jendela_names):
+                write_profile(name, f"profile-{index}.xlsx", f"source-{index}", f"header-{index}")
+            write_profile(
+                corrected_name,
+                corrected_source,
+                corrected_source_hash,
+                corrected_header_hash,
+                [
+                    {
+                        "fingerprint": {
+                            "field_code": "site|fix00008",
+                            "wbs_stage": "Site Basic Info",
+                            "task_name": "Site Basic Info",
+                            "display_header": "Province/State",
+                        },
+                        "source_position": {"one_based_index": 7},
+                    },
+                    {
+                        "fingerprint": {
+                            "field_code": "docata|ZDCSZ01016454",
+                            "wbs_stage": "Installation",
+                            "task_name": "Wireless RAN",
+                            "display_header": "TX Before Migration",
+                        },
+                        "source_position": {"one_based_index": 10},
+                    },
+                    {
+                        "fingerprint": {
+                            "field_code": "docata|ZDCSZ00823600",
+                            "wbs_stage": "Installation",
+                            "task_name": "Wireless RAN",
+                            "display_header": "Final Backhaul",
+                        },
+                        "source_position": {"one_based_index": 11},
+                    },
+                ],
+            )
+
+            original_cwd = Path.cwd()
+            try:
+                os.chdir(temp_root)
+                try:
+                    result = build_shortlist_main()
+                except FileNotFoundError as exc:
+                    self.fail(f"regeneration referenced a profiler directory that was not present: {exc}")
+                self.assertEqual(result, 0)
+            finally:
+                os.chdir(original_cwd)
+
+            registry = json.loads(
+                (temp_root / "config" / "registries" / "mw_du_priority_skill_field_shortlists.yaml").read_text(
+                    encoding="utf-8"
+                )
+            )
+        jendela = next(entry for entry in registry["entries"] if entry["source_file_name"] == corrected_source)
+        self.assertEqual(jendela["observed_header_hash"], corrected_header_hash)
+        self.assertEqual(
+            jendela["skill_field_shortlists"]["tx_before_migration"][0]["fingerprint"]["field_code"],
+            "docata|ZDCSZ01016454",
+        )
+        self.assertEqual(
+            jendela["skill_field_shortlists"]["final_backhaul"][0]["fingerprint"]["field_code"],
+            "docata|ZDCSZ00823600",
+        )
+
     def test_jendela_migration_fields_use_exact_four_layer_candidates(self):
         inventory = {
             "sheets": [
