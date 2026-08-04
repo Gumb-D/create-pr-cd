@@ -64,6 +64,10 @@ CANONICAL_RENDERER_COLUMNS = (
     "TX SOW Details",
     "NE SOW Details",
     "FE SOW Details",
+    "DU Profile ID",
+    "Migration Decision ID",
+    "Migration Work Item",
+    "Required PBOM Codes",
 )
 
 REVIEW_REPORT_FIELDS = (
@@ -317,6 +321,15 @@ def _partition_records(
             .get("tx_sow_normalized", {})
             .get("normalization_status")
         )
+        migration_decision = context.get("migration_decision", {})
+        approved_jendela_ti_decision = (
+            scope == "TI"
+            and record.get("validation", {}).get("profile_id") == "jendela_tx_migration_pr_v1"
+            and isinstance(migration_decision, Mapping)
+            and migration_decision.get("classification") == "APPROVED"
+        )
+        # Business hard stop: the approved Cancel / Drop SOW (and every other
+        # APPROVED_NO_OUTPUT value) outranks Jendela migration eligibility.
         if normalization == "APPROVED_NO_OUTPUT":
             set_generation_decision(
                 record,
@@ -336,7 +349,7 @@ def _partition_records(
             )
             partitions["review_required"].append(record)
             continue
-        if normalization != "APPROVED":
+        if normalization != "APPROVED" and not approved_jendela_ti_decision:
             set_generation_decision(
                 record,
                 "REVIEW_REQUIRED",
@@ -384,7 +397,38 @@ def _renderer_row(record: Mapping[str, Any]) -> dict[str, Any]:
         "TX SOW Details": technical.get("tx_sow_details", ""),
         "NE SOW Details": technical.get("ne_sow_details", ""),
         "FE SOW Details": technical.get("fe_sow_details", ""),
+        "DU Profile ID": record.get("validation", {}).get("profile_id", ""),
+        "Migration Decision ID": "",
+        "Migration Work Item": "",
+        "Required PBOM Codes": "",
     }
+
+
+def _renderer_rows(record: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Render the decision result; this function never re-evaluates its matrix."""
+    base = _renderer_row(record)
+    decision = record.get("pr_context", {}).get("migration_decision", {})
+    if not isinstance(decision, Mapping) or decision.get("classification") != "APPROVED":
+        return [base]
+    work_items = decision.get("work_items", [])
+    if not isinstance(work_items, list) or not work_items:
+        return [base]
+    profile_id = str(record.get("validation", {}).get("profile_id", ""))
+    source_row = record.get("identity", {}).get("source_row_number")
+    site_code = str(record.get("site", {}).get("site_code", ""))
+    decision_id = f"{profile_id}:{source_row}:{site_code}"
+    rendered = []
+    for work_item in work_items:
+        if not isinstance(work_item, Mapping):
+            continue
+        row = dict(base)
+        row["Tx SOW"] = work_item.get("model_sow", "")
+        row["Migration Decision ID"] = decision_id
+        row["Migration Work Item"] = work_item.get("work_item", "")
+        required_codes = work_item.get("required_pbom_codes", [])
+        row["Required PBOM Codes"] = "|".join(str(code) for code in required_codes)
+        rendered.append(row)
+    return rendered
 
 
 def _write_renderer_input(path: Path, records: list[dict[str, Any]]) -> None:
@@ -396,8 +440,8 @@ def _write_renderer_input(path: Path, records: list[dict[str, Any]]) -> None:
     worksheet.append(["Only validated scope candidates with approved contracts are included."])
     worksheet.append(list(CANONICAL_RENDERER_COLUMNS))
     for record in records:
-        row = _renderer_row(record)
-        worksheet.append([row.get(column) for column in CANONICAL_RENDERER_COLUMNS])
+        for row in _renderer_rows(record):
+            worksheet.append([row.get(column) for column in CANONICAL_RENDERER_COLUMNS])
     workbook.save(path)
 
 

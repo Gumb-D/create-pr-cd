@@ -31,6 +31,8 @@ SCOPE_REQUIRED_FIELDS = {
     ),
 }
 
+JENDELA_PROFILE_ID = "jendela_tx_migration_pr_v1"
+
 FIELD_PATHS = {
     "site_code": ("site", "site_code"),
     "site_name": ("site", "site_name"),
@@ -38,6 +40,8 @@ FIELD_PATHS = {
     "tx_sow_raw": ("pr_context", "tx_sow_raw"),
     "tx_sow_normalized": ("pr_context", "tx_sow_normalized"),
     "tx_upgrade_scope_raw": ("pr_context", "tx_upgrade_scope_raw"),
+    "tx_before_migration": ("pr_context", "tx_before_migration"),
+    "final_backhaul": ("pr_context", "final_backhaul"),
     "region": ("pr_context", "region"),
     "state": ("pr_context", "state"),
     "subcontractor_ti": ("pr_context", "subcontractor_ti"),
@@ -76,6 +80,8 @@ def empty_canonical_site_record() -> Dict[str, Any]:
             "tx_sow_raw": "",
             "tx_sow_normalized": "",
             "tx_upgrade_scope_raw": "",
+            "tx_before_migration": "",
+            "final_backhaul": "",
             "region": "",
             "state": "",
             "subcontractor_ti": "",
@@ -156,7 +162,13 @@ def validate_canonical_site_record(record: Mapping[str, Any], scope: str) -> Dic
     if ambiguous_fields:
         _append_unique(blocking_reasons, [f"AMBIGUOUS_HEADER_MAPPING:{field}" for field in ambiguous_fields])
 
-    for field in SCOPE_REQUIRED_FIELDS[scope]:
+    required_fields = list(SCOPE_REQUIRED_FIELDS[scope])
+    profile_id = str(validation.get("profile_id", ""))
+    if profile_id == JENDELA_PROFILE_ID and scope == "TI":
+        required_fields = [field for field in required_fields if field not in {"tx_sow_raw", "tx_sow_normalized"}]
+        required_fields.extend(["tx_before_migration", "final_backhaul"])
+
+    for field in required_fields:
         value = _get_path(record, FIELD_PATHS[field])
         # Existing PR status is allowed to be blank, but its source must remain
         # mapped for duplicate prevention to be trustworthy.
@@ -165,6 +177,16 @@ def validate_canonical_site_record(record: Mapping[str, Any], scope: str) -> Dic
         evidence = evidence_fields.get(field) if isinstance(evidence_fields, Mapping) else None
         if not isinstance(evidence, Mapping) or not evidence.get("source_header_fingerprint"):
             blocking_reasons.append(f"MISSING_SOURCE_EVIDENCE:{field}")
+
+    if profile_id == JENDELA_PROFILE_ID and scope == "TI":
+        decision = record.get("pr_context", {}).get("migration_decision", {})
+        if not isinstance(decision, Mapping) or decision.get("classification") != "APPROVED":
+            reason_code = (
+                decision.get("reason_code")
+                if isinstance(decision, Mapping)
+                else "JENDELA_MIGRATION_DECISION_MISSING"
+            )
+            blocking_reasons.append(str(reason_code or "JENDELA_MIGRATION_DECISION_MISSING"))
 
     raw_warnings = validation.get("warnings", [])
     if isinstance(raw_warnings, list):

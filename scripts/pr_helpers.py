@@ -11,6 +11,82 @@ import re
 from typing import Dict, List, Tuple, Optional, Any, Iterable
 
 
+PR_MODEL_SHEET_NAME = "TX Line Item (After 21-Apr 26)"
+
+
+def load_pr_model_items(path: Any) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """Load TSS and every valid TI model row, including named sections after blank separators."""
+    import pandas as pd
+
+    dataframe = pd.read_excel(path, sheet_name=PR_MODEL_SHEET_NAME, header=None)
+
+    tss_models: List[Dict[str, Any]] = []
+    for index in range(7, len(dataframe)):
+        sow = dataframe.iloc[index, 0]
+        if pd.isna(sow) or not str(sow).strip():
+            break
+        pbom = dataframe.iloc[index, 1]
+        description = dataframe.iloc[index, 2]
+        if pd.notna(pbom) and pd.notna(description):
+            rules = dataframe.iloc[index, 5]
+            remarks = dataframe.iloc[index, 6] if len(dataframe.columns) > 6 else None
+            tss_models.append(
+                {
+                    "SOW": str(sow).strip(),
+                    "PBOM_Code": normalize_pbom_code(pbom),
+                    "Description": str(description).strip(),
+                    "Unit": str(dataframe.iloc[index, 3]).strip() if pd.notna(dataframe.iloc[index, 3]) else "Hop",
+                    "Quantity": float(dataframe.iloc[index, 4]) if pd.notna(dataframe.iloc[index, 4]) else 1,
+                    "Is_Mandatory": "Mandatory" in str(rules) if pd.notna(rules) else False,
+                    "Remarks": str(remarks).strip() if pd.notna(remarks) else "",
+                }
+            )
+
+    ti_header_index = next(
+        (
+            index
+            for index in range(len(dataframe))
+            if isinstance(dataframe.iloc[index, 0], str) and "TI Model" in dataframe.iloc[index, 0]
+        ),
+        None,
+    )
+    ti_models: List[Dict[str, Any]] = []
+    if ti_header_index is None:
+        return tss_models, ti_models
+
+    for index in range(ti_header_index + 1, len(dataframe)):
+        sow = dataframe.iloc[index, 0]
+        pbom = dataframe.iloc[index, 1]
+        description = dataframe.iloc[index, 2]
+        if pd.isna(sow) or not str(sow).strip() or pd.isna(pbom) or pd.isna(description):
+            continue
+        if str(pbom).strip().casefold() == "code":
+            continue
+        rules = dataframe.iloc[index, 5]
+        ti_models.append(
+            {
+                "SOW": str(sow).strip(),
+                "PBOM_Code": normalize_pbom_code(pbom),
+                "Description": str(description).strip(),
+                "Unit": str(dataframe.iloc[index, 3]).strip() if pd.notna(dataframe.iloc[index, 3]) else "Hop",
+                "Quantity": float(dataframe.iloc[index, 4]) if pd.notna(dataframe.iloc[index, 4]) else 1,
+                "Is_Mandatory": "Mandatory" in str(rules) if pd.notna(rules) else False,
+                "Rules": str(rules).strip() if pd.notna(rules) else "",
+            }
+        )
+
+    return tss_models, ti_models
+
+
+def optional_cell_text(value: Any) -> str:
+    """Return trimmed text while treating spreadsheet numeric NaN as blank."""
+    if value is None:
+        return ""
+    if isinstance(value, numbers.Real) and math.isnan(float(value)):
+        return ""
+    return str(value).strip()
+
+
 def normalize_pbom_code(value: Any) -> str:
     """
     Normalize PBOM/material codes into a canonical string form.
@@ -96,6 +172,33 @@ def _normalize_ti_sow_alias_map(alias_map: Optional[Dict[str, Iterable[str]]]) -
             normalized[normalized_input] = aliases
 
     return normalized
+
+
+def validate_required_pbom_selection(
+    matched_items: List[Dict[str, Any]], required_codes: Iterable[Any]
+) -> tuple[bool, Optional[str]]:
+    """Require every declared PBOM exactly once and reject extra selections."""
+    required = [normalize_pbom_code(code) for code in required_codes]
+    selected = [normalize_pbom_code(item.get("PBOM_Code")) for item in matched_items]
+    if not required:
+        return True, None
+    if sorted(selected) != sorted(required) or any(selected.count(code) != 1 for code in required):
+        return False, "JENDELA_REQUIRED_PBOM_NOT_UNIQUE"
+    return True, None
+
+
+def filter_failed_migration_decisions(
+    ecc_rows: List[Dict[str, Any]], failed_decision_ids: Iterable[Any]
+) -> List[Dict[str, Any]]:
+    """Drop every line belonging to an atomic migration decision that failed."""
+    failed = {str(value).strip() for value in failed_decision_ids if str(value).strip()}
+    if not failed:
+        return list(ecc_rows)
+    return [
+        row
+        for row in ecc_rows
+        if str(row.get("Migration_Decision_ID") or "").strip() not in failed
+    ]
 
 
 TI_SOW_ALIAS_MAP: Dict[str, set[str]] = _normalize_ti_sow_alias_map({})

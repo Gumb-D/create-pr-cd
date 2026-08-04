@@ -7,6 +7,8 @@ from typing import Any, Dict, Iterable, Mapping
 
 
 PROFILE_FIELD_TO_DISCOVERY_KEY = {
+    "tx_before_migration": "tx_before_migration",
+    "final_backhaul": "final_backhaul",
     "existing_tss_pr_status": "existing_tss_pr",
     "existing_ti_pr_status": "existing_ti_pr",
 }

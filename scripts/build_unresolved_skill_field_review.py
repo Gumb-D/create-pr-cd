@@ -11,6 +11,8 @@ PROFILE_TO_SKILL_FIELD = {
     "du_key": "du_code",
     "region": "region",
     "tx_sow_raw": "tx_sow",
+    "tx_before_migration": "tx_before_migration",
+    "final_backhaul": "final_backhaul",
     "subcontractor_ti": "subcon_ti_team",
     "subcontractor_planning": "subcon_planning",
     "antenna_size_ne": "antenna_size_ne",
@@ -66,13 +68,19 @@ def build_review_entry(profile: Mapping[str, Any], shortlist_entry: Mapping[str,
         review_status = "NO_REVIEW_REQUIRED"
         review_reason = "Profile field is outside the current unresolved-skill review scope."
 
-        if selected is None and required and not shortlist_candidates:
-            review_status = "REVIEW_REQUIRED_MISSING_CANDIDATE"
-            review_reason = "Required profile field has no selected source candidate and no shortlist candidate."
+        if selected is None and required:
             missing_required_fields.append(profile_field_name)
+            if shortlist_candidates:
+                review_status = "REVIEW_REQUIRED_NO_PROFILE_SELECTION"
+                review_reason = "Shortlist candidates exist, but the profile has not selected a source candidate yet."
+                no_profile_selection_fields.append(profile_field_name)
+                alternate_candidates = shortlist_candidates
+            else:
+                review_status = "REVIEW_REQUIRED_MISSING_CANDIDATE"
+                review_reason = "Required profile field has no selected source candidate and no shortlist candidate."
         elif selected is None and shortlist_candidates:
             review_status = "REVIEW_REQUIRED_NO_PROFILE_SELECTION"
-            review_reason = "Shortlist candidates exist, but the DRAFT profile has not selected a source candidate yet."
+            review_reason = "Shortlist candidates exist, but the profile has not selected a source candidate yet."
             no_profile_selection_fields.append(profile_field_name)
             alternate_candidates = shortlist_candidates
         elif selected is not None:

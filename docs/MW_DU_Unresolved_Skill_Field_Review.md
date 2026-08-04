@@ -299,8 +299,8 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 
 ## jendela_tx_migration_pr_v1 (Jendela TX Migration)
 
-- Source file: `A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260703160246.xlsx`
-- Observed header hash: `904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3`
+- Source file: `A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260804195447.xlsx`
+- Observed header hash: `f45c209df5ca75b333f9b590ebc01c05c097e44231d22433290f8078e57c9056`
 - Missing required fields: None
 - Competing candidate fields: site_name, subcontractor_planning
 - Single-candidate but unverified fields: antenna_size_fe, antenna_size_ne, du_key
@@ -346,6 +346,20 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 - Alternate shortlist candidates:
   - score 45: `docata|ZDCSZ642123 | Planner | TX SOW Details | TX SOW Details`
     reason: SOW details field; likely evidence, not primary trigger.
+
+### `tx_before_migration`
+
+- Skill field: `tx_before_migration`
+- Review status: `READY_IF_APPROVAL_EVIDENCE_EXISTS`
+- Reason: Profile-selected source matches the shortlist and is already approved.
+- Selected source: `docata|ZDCSZ01016454 | Installation | Wireless RAN | TX Before Migration`
+
+### `final_backhaul`
+
+- Skill field: `final_backhaul`
+- Review status: `READY_IF_APPROVAL_EVIDENCE_EXISTS`
+- Reason: Profile-selected source matches the shortlist and is already approved.
+- Selected source: `docata|ZDCSZ00823600 | Installation | Wireless RAN | Final Backhaul`
 
 ### `subcontractor_ti`
 

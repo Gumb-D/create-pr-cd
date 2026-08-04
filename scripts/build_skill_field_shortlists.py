@@ -12,6 +12,8 @@ SKILL_FIELDS = (
     "du_code",
     "region",
     "tx_sow",
+    "tx_before_migration",
+    "final_backhaul",
     "antenna_size_ne",
     "antenna_size_fe",
     "subcon_tss_team",
@@ -21,6 +23,24 @@ SKILL_FIELDS = (
     "existing_tss_pr",
     "existing_ti_pr",
 )
+
+PRIORITY_PROFILER_DIR_NAMES = (
+    "A-P202202168750_D002-TX_Mini_Project-TX_Mini_PR_PO_View-20260703160246",
+    "A-P202211283695_D002-MW_EOS_Swap-MW_EOS_Swap_Rollout-20260703160307",
+    "A-P202202168750_D002-2023_TX_Rollout-TX_Rollout_PR_PO_View-20260703160446",
+    "A-P202202168750_D002-Jendela_TX_Migration-Migration_Rollout_TX_-20260804195447",
+    "A-P202211283695_D002-ZTE_TX_MINI-ZTE_TX_MINI_v1-20260703160312",
+    "A-P202202168750_D002-2023_Celcomdigi_BAU-2023_Celcomdigi_BAU__TX_-20260703160239",
+    "A-P202202168750_D002-2024_Celcomdigi_BAU-2024_BAU_Rollout_TX_-20260703160253",
+    "A-P202202168750_D002-Celcomdigi_USP-Celcomdigi_USP_TX_-20260703160234",
+    "A-P202202168750_D002-CD_consolidation_2023-CD_2023_Decom_Site-20260703160415",
+    "A-P202202168750_D002-CD_consolidation_2023-CD_consolidation_2023_Rollout-20260703160351",
+)
+
+
+def priority_profiler_dirs(root: Path) -> List[Path]:
+    """Return the registered profiler inputs used by shortlist and packet regeneration."""
+    return [root / name for name in PRIORITY_PROFILER_DIR_NAMES]
 
 
 def _text_for_column(column: Mapping[str, Any]) -> str:
@@ -66,6 +86,12 @@ def _reason_and_score(field: str, column: Mapping[str, Any]) -> tuple[int, str] 
             return 80, "Likely direct SOW planning field."
         if "tx sow details" in display:
             return 45, "SOW details field; likely evidence, not primary trigger."
+    elif field == "tx_before_migration":
+        if display == "tx before migration":
+            return 100, "Exact Jendela migration-source field."
+    elif field == "final_backhaul":
+        if display == "final backhaul":
+            return 100, "Exact Jendela migration-destination field."
     elif field == "antenna_size_ne":
         if "antenna size ne" in display:
             return 100, "Direct NE antenna size field."
@@ -207,21 +233,8 @@ def shortlist_markdown(registry: Mapping[str, Any]) -> str:
 
 def main() -> int:
     root = Path("output/du-20260706-profile")
-    priority_names = [
-        "A-P202202168750_D002-TX_Mini_Project-TX_Mini_PR_PO_View-20260703160246",
-        "A-P202211283695_D002-MW_EOS_Swap-MW_EOS_Swap_Rollout-20260703160307",
-        "A-P202202168750_D002-2023_TX_Rollout-TX_Rollout_PR_PO_View-20260703160446",
-        "A-P202202168750_D002-Jendela_TX_Migration-Migration_Rollout_TX_-20260703160246",
-        "A-P202211283695_D002-ZTE_TX_MINI-ZTE_TX_MINI_v1-20260703160312",
-        "A-P202202168750_D002-2023_Celcomdigi_BAU-2023_Celcomdigi_BAU__TX_-20260703160239",
-        "A-P202202168750_D002-2024_Celcomdigi_BAU-2024_BAU_Rollout_TX_-20260703160253",
-        "A-P202202168750_D002-Celcomdigi_USP-Celcomdigi_USP_TX_-20260703160234",
-        "A-P202202168750_D002-CD_consolidation_2023-CD_2023_Decom_Site-20260703160415",
-        "A-P202202168750_D002-CD_consolidation_2023-CD_consolidation_2023_Rollout-20260703160351",
-    ]
-    profile_dirs = [root / name for name in priority_names]
     write_shortlist_outputs(
-        profile_dirs,
+        priority_profiler_dirs(root),
         Path("config/registries/mw_du_priority_skill_field_shortlists.yaml"),
         Path("docs/MW_DU_Priority_Skill_Field_Shortlists.md"),
     )

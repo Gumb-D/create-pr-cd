@@ -818,12 +818,12 @@
     },
     {
       "profile_id": "jendela_tx_migration_pr_v1",
-      "profile_version": "0.2.0",
-      "mapping_version": "approved-2026-07-13-jendela-tx-migration-v1",
+      "profile_version": "0.4.0",
+      "mapping_version": "approved-2026-08-04-jendela-tx-migration-v3",
       "profile_status": "PR_INPUT_READY",
       "du_model_name": "Jendela TX Migration",
-      "source_file_name": "A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260703160246.xlsx",
-      "observed_header_hash": "904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3",
+      "source_file_name": "A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260804195447.xlsx",
+      "observed_header_hash": "f45c209df5ca75b333f9b590ebc01c05c097e44231d22433290f8078e57c9056",
       "summary": {
         "missing_required_fields": [],
         "competing_candidate_fields": [
@@ -883,8 +883,8 @@
                 "display_header": "FE Site Name"
               },
               "source_position": {
-                "excel_column": "EQ",
-                "one_based_index": 147
+                "excel_column": "ES",
+                "one_based_index": 149
               }
             }
           ],
@@ -949,13 +949,47 @@
                 "display_header": "TX SOW Details"
               },
               "source_position": {
-                "excel_column": "W",
-                "one_based_index": 23
+                "excel_column": "Y",
+                "one_based_index": 25
               }
             }
           ],
           "review_status": "RESOLVED_BY_APPROVED_MAPPING",
           "review_reason": "Profile-selected source is human-approved; the remaining shortlist alternates were rejected by that recorded decision."
+        },
+        "tx_before_migration": {
+          "skill_field": "tx_before_migration",
+          "required": true,
+          "selected_status": "APPROVED",
+          "recommended_source": {
+            "fingerprint": {
+              "field_code": "docata|ZDCSZ01016454",
+              "wbs_stage": "Installation",
+              "task_name": "Wireless RAN",
+              "display_header": "TX Before Migration"
+            },
+            "mapping_status": "APPROVED"
+          },
+          "alternate_candidates": [],
+          "review_status": "READY_IF_APPROVAL_EVIDENCE_EXISTS",
+          "review_reason": "Profile-selected source matches the shortlist and is already approved."
+        },
+        "final_backhaul": {
+          "skill_field": "final_backhaul",
+          "required": true,
+          "selected_status": "APPROVED",
+          "recommended_source": {
+            "fingerprint": {
+              "field_code": "docata|ZDCSZ00823600",
+              "wbs_stage": "Installation",
+              "task_name": "Wireless RAN",
+              "display_header": "Final Backhaul"
+            },
+            "mapping_status": "APPROVED"
+          },
+          "alternate_candidates": [],
+          "review_status": "READY_IF_APPROVAL_EVIDENCE_EXISTS",
+          "review_reason": "Profile-selected source matches the shortlist and is already approved."
         },
         "subcontractor_ti": {
           "skill_field": "subcon_ti_team",
@@ -998,8 +1032,8 @@
                 "display_header": "Subcon PR - Planning"
               },
               "source_position": {
-                "excel_column": "DF",
-                "one_based_index": 110
+                "excel_column": "DH",
+                "one_based_index": 112
               }
             }
           ],

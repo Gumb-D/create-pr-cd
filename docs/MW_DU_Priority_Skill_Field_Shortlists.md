@@ -21,6 +21,8 @@ Discovery-only shortlist of exact four-layer fingerprints for skill-scoped field
     reason: Direct Tx SOW field.
   - score 45: docata|ZDCSZ642123 | TX Solution | TX SOW Details | TX SOW Details
     reason: SOW details field; likely evidence, not primary trigger.
+- `tx_before_migration`: no shortlist candidate
+- `final_backhaul`: no shortlist candidate
 - `antenna_size_ne`:
   - score 100: docata|ZDCSZ00969578 | Network Planning | Microwave | MW Config Antenna Size NE
     reason: Direct NE antenna size field.
@@ -69,6 +71,8 @@ Discovery-only shortlist of exact four-layer fingerprints for skill-scoped field
     reason: Direct Microwave Tx SOW variant.
   - score 45: docata|ZDCSZ01079156 | Network Planning | Microwave | TX SOW Details
     reason: SOW details field; likely evidence, not primary trigger.
+- `tx_before_migration`: no shortlist candidate
+- `final_backhaul`: no shortlist candidate
 - `antenna_size_ne`:
   - score 100: docata|ZDCSZ01093667 | Planner | Microwave | MW Antenna Size NE
     reason: Direct NE antenna size field.
@@ -115,6 +119,8 @@ Discovery-only shortlist of exact four-layer fingerprints for skill-scoped field
     reason: Likely direct SOW planning field.
   - score 80: docata|ZDCSZ640870 | Network Planning | Microwave | TX SOW (LLD)
     reason: Likely direct SOW planning field.
+- `tx_before_migration`: no shortlist candidate
+- `final_backhaul`: no shortlist candidate
 - `antenna_size_ne`: no shortlist candidate
 - `antenna_size_fe`: no shortlist candidate
 - `subcon_tss_team`:
@@ -144,7 +150,7 @@ Discovery-only shortlist of exact four-layer fingerprints for skill-scoped field
   - score 65: docata|ZDCSZ00904400 | Acceptance | Microwave | PR TI rectification status
     reason: TI rectification status field.
 
-## A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260703160246.xlsx
+## A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260804195447.xlsx
 
 - `site_id`:
   - score 100: site|fix00012|4972593269368006257|4026888666764910245 | Site Basic Info | Site Basic Info | customer site code
@@ -165,6 +171,12 @@ Discovery-only shortlist of exact four-layer fingerprints for skill-scoped field
     reason: Direct Tx SOW field.
   - score 45: docata|ZDCSZ642123 | Planner | TX SOW Details | TX SOW Details
     reason: SOW details field; likely evidence, not primary trigger.
+- `tx_before_migration`:
+  - score 100: docata|ZDCSZ01016454 | Installation | Wireless RAN | TX Before Migration
+    reason: Exact Jendela migration-source field.
+- `final_backhaul`:
+  - score 100: docata|ZDCSZ00823600 | Installation | Wireless RAN | Final Backhaul
+    reason: Exact Jendela migration-destination field.
 - `antenna_size_ne`:
   - score 100: docata|ZDCSZ00969578 | Planner | Microwave | Antenna Size NE
     reason: Direct NE antenna size field.
@@ -213,6 +225,8 @@ Discovery-only shortlist of exact four-layer fingerprints for skill-scoped field
     reason: Direct Microwave Tx SOW variant.
   - score 45: docata|ZDCSZ01079156 | Network Planning | Microwave | TX SOW Details
     reason: SOW details field; likely evidence, not primary trigger.
+- `tx_before_migration`: no shortlist candidate
+- `final_backhaul`: no shortlist candidate
 - `antenna_size_ne`:
   - score 100: docata|ZDCSZ01093667 | Network Planning | Microwave | MW Antenna Size NE
     reason: Direct NE antenna size field.
@@ -257,6 +271,8 @@ Discovery-only shortlist of exact four-layer fingerprints for skill-scoped field
     reason: Direct Tx SOW field.
   - score 45: docata|ZDCSZ642123 | TX Solution | TX SOW Details | TX SOW Details
     reason: SOW details field; likely evidence, not primary trigger.
+- `tx_before_migration`: no shortlist candidate
+- `final_backhaul`: no shortlist candidate
 - `antenna_size_ne`:
   - score 100: docata|ZDCSZ00969578 | Network Planning | Microwave | MW Config Antenna Size NE
     reason: Direct NE antenna size field.
@@ -301,6 +317,8 @@ Discovery-only shortlist of exact four-layer fingerprints for skill-scoped field
     reason: Direct Tx SOW field.
   - score 45: docata|ZDCSZ642123 | TX Solution | TX SOW Details | TX SOW Details
     reason: SOW details field; likely evidence, not primary trigger.
+- `tx_before_migration`: no shortlist candidate
+- `final_backhaul`: no shortlist candidate
 - `antenna_size_ne`:
   - score 100: docata|ZDCSZ00969578 | Network Planning | Microwave | MW Config Antenna Size NE
     reason: Direct NE antenna size field.
@@ -353,6 +371,8 @@ Discovery-only shortlist of exact four-layer fingerprints for skill-scoped field
     reason: SOW details field; likely evidence, not primary trigger.
   - score 45: docata|ZDCSZ642123 | TX Solution | TX SOW Details | TX SOW Details
     reason: SOW details field; likely evidence, not primary trigger.
+- `tx_before_migration`: no shortlist candidate
+- `final_backhaul`: no shortlist candidate
 - `antenna_size_ne`:
   - score 100: docata|ZDCSZ00969578 | Network Planning | Microwave | Antenna Size NE
     reason: Direct NE antenna size field.
@@ -407,6 +427,8 @@ Discovery-only shortlist of exact four-layer fingerprints for skill-scoped field
     reason: Likely direct SOW planning field.
   - score 45: docata|ZDCSZ642123 | TX | TX SOW Details | TX SOW Details
     reason: SOW details field; likely evidence, not primary trigger.
+- `tx_before_migration`: no shortlist candidate
+- `final_backhaul`: no shortlist candidate
 - `antenna_size_ne`: no shortlist candidate
 - `antenna_size_fe`: no shortlist candidate
 - `subcon_tss_team`:
@@ -443,6 +465,8 @@ Discovery-only shortlist of exact four-layer fingerprints for skill-scoped field
     reason: Direct Tx SOW field.
   - score 45: docata|ZDCSZ642123 | Installation | Wireless RAN | TX SOW Details
     reason: SOW details field; likely evidence, not primary trigger.
+- `tx_before_migration`: no shortlist candidate
+- `final_backhaul`: no shortlist candidate
 - `antenna_size_ne`: no shortlist candidate
 - `antenna_size_fe`: no shortlist candidate
 - `subcon_tss_team`:

@@ -136,9 +136,9 @@ Discovery-only cross-profile review matrix for the current DRAFT profiles.
 ### jendela_tx_migration_pr_v1 (Jendela TX Migration)
 
 - Readiness status: `DISCOVERY_ONLY_BLOCKED`
-- Profile version: `0.2.0`
-- Mapping version: `approved-2026-07-13-jendela-tx-migration-v1`
-- Observed header hash: `904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3`
+- Profile version: `0.4.0`
+- Mapping version: `approved-2026-08-04-jendela-tx-migration-v3`
+- Observed header hash: `f45c209df5ca75b333f9b590ebc01c05c097e44231d22433290f8078e57c9056`
 - Action count: `6`
 - Action type counts:
   - `CONFIRM_COMPETING_CANDIDATE`: `2`

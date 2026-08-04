@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from build_du_discovery_registry import write_registry_outputs
-from build_skill_field_shortlists import write_shortlist_outputs
+from build_skill_field_shortlists import priority_profiler_dirs, write_shortlist_outputs
 from build_unresolved_skill_field_review import write_review_outputs
 from build_du_structure_grouping import write_grouping_outputs
 from build_missing_field_bridge_review import write_bridge_outputs
@@ -69,18 +69,7 @@ def refresh_discovery_packet() -> None:
         Path("config/du_profiles/cd_consolidation_2023_decom_pr_v1.yaml"),
         Path("config/du_profiles/cd_consolidation_2023_rollout_pr_v1.yaml"),
     ]
-    priority_dirs = [
-        profile_root / "A-P202202168750_D002-TX_Mini_Project-TX_Mini_PR_PO_View-20260703160246",
-        profile_root / "A-P202211283695_D002-MW_EOS_Swap-MW_EOS_Swap_Rollout-20260703160307",
-        profile_root / "A-P202202168750_D002-2023_TX_Rollout-TX_Rollout_PR_PO_View-20260703160446",
-        profile_root / "A-P202202168750_D002-Jendela_TX_Migration-Migration_Rollout_TX_-20260703160246",
-        profile_root / "A-P202211283695_D002-ZTE_TX_MINI-ZTE_TX_MINI_v1-20260703160312",
-        profile_root / "A-P202202168750_D002-2023_Celcomdigi_BAU-2023_Celcomdigi_BAU__TX_-20260703160239",
-        profile_root / "A-P202202168750_D002-2024_Celcomdigi_BAU-2024_BAU_Rollout_TX_-20260703160253",
-        profile_root / "A-P202202168750_D002-Celcomdigi_USP-Celcomdigi_USP_TX_-20260703160234",
-        profile_root / "A-P202202168750_D002-CD_consolidation_2023-CD_2023_Decom_Site-20260703160415",
-        profile_root / "A-P202202168750_D002-CD_consolidation_2023-CD_consolidation_2023_Rollout-20260703160351",
-    ]
+    priority_dirs = priority_profiler_dirs(profile_root)
 
     write_registry_outputs(
         profile_root,

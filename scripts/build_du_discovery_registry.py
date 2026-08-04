@@ -99,6 +99,8 @@ def _skill_field_presence(header_inventory: Mapping[str, Any]) -> Dict[str, bool
         "du_code": ("du code",),
         "region": ("region",),
         "tx_sow": ("tx sow",),
+        "tx_before_migration": ("tx before migration",),
+        "final_backhaul": ("final backhaul",),
         "antenna_size_ne": ("antenna size ne",),
         "antenna_size_fe": ("antenna size fe",),
         "subcon_tss_team": ("subcon - tss",),

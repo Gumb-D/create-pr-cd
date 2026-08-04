@@ -10,6 +10,37 @@ from refresh_mw_du_discovery_packet import _find_profiler_root, refresh_discover
 
 
 class TestRefreshMwDuDiscoveryPacket(unittest.TestCase):
+    def test_refresh_passes_only_corrected_jendela_profiler_directory_to_shortlist_builder(self):
+        with (
+            patch("refresh_mw_du_discovery_packet.write_registry_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_shortlist_outputs") as shortlist_mock,
+            patch("refresh_mw_du_discovery_packet.write_review_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_grouping_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_bridge_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_pair_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_readiness_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_action_queue_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_review_matrix_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_coverage_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_transition_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_deprecation_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_traceability_outputs"),
+            patch("refresh_mw_du_discovery_packet.write_rollback_outputs"),
+            patch("refresh_mw_du_discovery_packet.validate_profiles_against_transition_registry"),
+            patch("refresh_mw_du_discovery_packet.validate_live_discovery_packets"),
+            patch("refresh_mw_du_discovery_packet.Path.exists", autospec=True) as exists,
+        ):
+            exists.side_effect = lambda path_self: str(path_self).replace("/", "\\") == "output\\du-20260706-profile"
+            refresh_discovery_packet()
+
+        priority_dirs = [str(path).replace("/", "\\") for path in shortlist_mock.call_args.args[0]]
+        self.assertIn(
+            "output\\du-20260706-profile\\A-P202202168750_D002-Jendela_TX_Migration-"
+            "Migration_Rollout_TX_-20260804195447",
+            priority_dirs,
+        )
+        self.assertFalse(any(path.endswith("Jendela_TX_Migration-Migration_Rollout_TX_-20260703160246") for path in priority_dirs))
+
     def test_find_profiler_root_falls_back_to_info_reference(self):
         with (
             patch("refresh_mw_du_discovery_packet.Path.exists", autospec=True) as exists,

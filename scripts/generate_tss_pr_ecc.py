@@ -49,7 +49,11 @@ from pr_helpers import (
     parse_mw_new_link_reroute,
     filter_tss_mw_new_link_reroute_items,
     select_tss_items_for_site,
-    has_duplicate_pbom
+    has_duplicate_pbom,
+    validate_required_pbom_selection,
+    filter_failed_migration_decisions,
+    optional_cell_text,
+    load_pr_model_items,
 )
 
 
@@ -70,7 +74,7 @@ def parse_args():
 
 import hashlib
 
-APPROVED_PR_MODEL_SHA256 = "82a47564590a8083c88b9dad61472c04513bb2832f8b1a44750d6a4347446c4d"
+APPROVED_PR_MODEL_SHA256 = "d3cc64664fc147f8c560688e41264753592eb0b8cdc513d7ebe2d9b989e8aefd"
 
 
 def validate_pr_model_file(path, description="PR Model"):
@@ -83,7 +87,7 @@ def validate_pr_model_file(path, description="PR Model"):
             f"PR_MODEL_HASH_MISMATCH: {description} content hash mismatch!\n"
             f"Expected: {APPROVED_PR_MODEL_SHA256}\n"
             f"Actual:   {actual_sha}\n"
-            f"Use the officially approved PR Model v3.2 workbook."
+            f"Use the officially approved PR Model v4 workbook."
         )
     return p
 
@@ -1019,71 +1023,9 @@ print(f"  Subcons: {', '.join(sorted(subcon_mapping.keys()))[:80]}...")
 # ===== STEP 1: EXTRACT PR MODEL DATA =====
 print("\n[STEP 1] Extracting PR Model Data...")
 
-df_pr = pd.read_excel(pr_file, sheet_name="TX Line Item (After 21-Apr 26)", header=None)
+tss_models, ti_models = load_pr_model_items(pr_file)
 
-# Extract TSS models (starting from row 7 = index 7)
-tss_models = []
-
-for idx in range(7, len(df_pr)):
-    sow = df_pr.iloc[idx, 0]
-    pbom = df_pr.iloc[idx, 1]
-    desc = df_pr.iloc[idx, 2]
-    unit = df_pr.iloc[idx, 3]
-    qty = df_pr.iloc[idx, 4]
-    rules = df_pr.iloc[idx, 5]
-    remarks = df_pr.iloc[idx, 6] if len(df_pr.columns) > 6 else None
-
-    # Stop at next section
-    if pd.isna(sow) or str(sow).strip() == '':
-        break
-
-    # Check if mandatory
-    is_mandatory = 'Mandatory' in str(rules) if pd.notna(rules) else False
-
-    if pd.notna(pbom) and pd.notna(desc):
-        tss_models.append({
-            'SOW': str(sow).strip(),
-            'PBOM_Code': normalize_pbom_code(pbom),
-            'Description': str(desc).strip(),
-            'Unit': str(unit).strip() if pd.notna(unit) else 'Hop',
-            'Quantity': float(qty) if pd.notna(qty) else 1,
-            'Is_Mandatory': is_mandatory,
-            'Remarks': str(remarks).strip() if pd.notna(remarks) else ''
-        })
-
-# Extract TI models (starting from TI Model header)
-ti_models = []
-ti_header_idx = None
-for idx in range(len(df_pr)):
-    cell_value = df_pr.iloc[idx, 0]
-    if isinstance(cell_value, str) and 'TI Model' in cell_value:
-        ti_header_idx = idx
-        break
-
-if ti_header_idx is not None:
-    for idx in range(ti_header_idx + 1, len(df_pr)):
-        sow = df_pr.iloc[idx, 0]
-        pbom = df_pr.iloc[idx, 1]
-        desc = df_pr.iloc[idx, 2]
-        unit = df_pr.iloc[idx, 3]
-        qty = df_pr.iloc[idx, 4]
-        rules = df_pr.iloc[idx, 5]
-
-        if pd.isna(sow) or str(sow).strip() == '':
-            break
-
-        is_mandatory = 'Mandatory' in str(rules) if pd.notna(rules) else False
-        if pd.notna(pbom) and pd.notna(desc):
-            ti_models.append({
-                'SOW': str(sow).strip(),
-                'PBOM_Code': normalize_pbom_code(pbom),
-                'Description': str(desc).strip(),
-                'Unit': str(unit).strip() if pd.notna(unit) else 'Hop',
-                'Quantity': float(qty) if pd.notna(qty) else 1,
-                'Is_Mandatory': is_mandatory,
-                'Rules': str(rules).strip() if pd.notna(rules) else ''
-            })
-
+if ti_models:
     print(f"[OK] Extracted {len(ti_models)} TI line items")
 else:
     print('Warning: TI Model section not found in PR model sheet.')
@@ -1237,6 +1179,7 @@ print("\n[STEP 3] Building ECC Output Rows...")
 ecc_rows = []
 fuzzy_matches = {}
 unmatched_ti_items = []  # Phase 2B-1: capture unmatched TI candidates
+failed_migration_decisions = set()
 
 for idx in range(len(candidates)):
     row = candidates.iloc[idx]
@@ -1248,6 +1191,13 @@ for idx in range(len(candidates)):
     region = str(row['region']).strip()
     subcon = str(row[subcon_column]).strip()
     sow = str(row['Tx SOW']).strip()
+    migration_decision_id = optional_cell_text(row.get('Migration Decision ID', ''))
+    migration_work_item = optional_cell_text(row.get('Migration Work Item', ''))
+    required_pbom_codes = [
+        code.strip()
+        for code in optional_cell_text(row.get('Required PBOM Codes', '')).split('|')
+        if code.strip()
+    ]
     delivery_unit = str(row.get('du code', '')).strip() if pd.notna(row.get('du code')) else ''
     logical_site = str(row.get('customer site code', '')).strip() if pd.notna(row.get('customer site code')) else ''
     
@@ -1272,6 +1222,7 @@ for idx in range(len(candidates)):
     contract_number = contract_info['contract_number']
     
     matched_items = []
+    review_required = False
     remarks = ''
     unmatched_reason = None
     review_base = {
@@ -1360,6 +1311,8 @@ for idx in range(len(candidates)):
                         )
                     )
 
+                    if migration_decision_id:
+                        failed_migration_decisions.add(migration_decision_id)
                     continue
 
             matched_items, review_required = match_ti_models(
@@ -1403,7 +1356,30 @@ for idx in range(len(candidates)):
                             technical_detail='No matching TI PR model item'
                         )
 
+    if scope_name == 'TI' and migration_decision_id and review_required:
+        failed_migration_decisions.add(migration_decision_id)
+        matched_items = []
+        if unmatched_reason is None:
+            unmatched_reason = make_review_reason(
+                'JENDELA_PR_MODEL_ITEM_NOT_FOUND',
+                technical_detail=f'Non-unique PR model selection for migration work item: {migration_work_item}'
+            )
+
+    if matched_items and required_pbom_codes:
+        valid_pboms, pbom_reason = validate_required_pbom_selection(matched_items, required_pbom_codes)
+        if not valid_pboms:
+            failed_migration_decisions.add(migration_decision_id)
+            matched_items = []
+            unmatched_reason = make_review_reason(
+                pbom_reason or 'JENDELA_PR_MODEL_ITEM_NOT_FOUND',
+                technical_detail=(
+                    f'work_item={migration_work_item}; required_pboms={required_pbom_codes}'
+                )
+            )
+
     if not matched_items:
+        if migration_decision_id:
+            failed_migration_decisions.add(migration_decision_id)
         if scope_name == 'TI' and unmatched_reason:
             # Phase 2B-1: Add to review-required instead of silently dropping
             unmatched_ti_items.append(add_route_context_fields(
@@ -1435,9 +1411,12 @@ for idx in range(len(candidates)):
             'Delivery_Unit_Code': delivery_unit,
             'Logical_Site_Name': logical_site,
             'Remarks': remarks
-        }        
+        }
+        if migration_decision_id:
+            ecc_row['Migration_Decision_ID'] = migration_decision_id
         ecc_rows.append(ecc_row)
 
+ecc_rows = filter_failed_migration_decisions(ecc_rows, failed_migration_decisions)
 print(f"[OK] Built {len(ecc_rows)} ECC output rows")
 
 # ===== STEP 4: GROUP BY REGION-SUBCON AND CREATE EXCEL FILES =====

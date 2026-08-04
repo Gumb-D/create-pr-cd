@@ -11,6 +11,7 @@ from typing import Any, Dict, Mapping
 from canonical_site_validator import FIELD_PATHS, apply_validation_result, empty_canonical_site_record, validate_canonical_site_record
 from profile_du_export import fingerprint_key
 from sow_normalization import normalize_tx_sow
+from jendela_migration_decision import derive_jendela_migration_decision
 
 
 PR_STATUS_EXISTS = "PR_EXISTS"
@@ -62,6 +63,25 @@ def _select_first_non_empty_match(matches: list[Mapping[str, Any]], raw_values_b
         elif raw_value not in (None, ""):
             return source
     return None
+
+
+def _apply_geography_correction(record: Dict[str, Any]) -> None:
+    """Apply the one approved global Region/State correction with audit evidence."""
+    context = record.get("pr_context", {})
+    normalized_region = " ".join(str(context.get("region") or "").strip().split()).casefold()
+    original_state = " ".join(str(context.get("state") or "").strip().split())
+    normalized_state = original_state.casefold()
+    if normalized_region != "northern" or normalized_state != "pahang":
+        return
+    context["state"] = "Perak"
+    record.setdefault("source_evidence", {}).setdefault("geography_corrections", []).append(
+        {
+            "reason_code": "NORTHERN_PAHANG_CORRECTED_TO_PERAK",
+            "field": "state",
+            "original_value": original_state,
+            "corrected_value": "Perak",
+        }
+    )
 
 
 def resolve_profile_field_mappings(header_inventory: Mapping[str, Any], profile: Mapping[str, Any]) -> Dict[str, Any]:
@@ -176,6 +196,15 @@ def build_canonical_site_record(
                     "transformation": "trim",
                     "normalization_status": "UNVERIFIED",
                 }
+
+    _apply_geography_correction(record)
+    migration_decision = derive_jendela_migration_decision(
+        profile_id=str(profile.get("profile_id", "")),
+        scope=scope,
+        pr_context=record["pr_context"],
+    )
+    if migration_decision is not None:
+        record["pr_context"]["migration_decision"] = migration_decision
 
     result = validate_canonical_site_record(record, scope)
     return apply_validation_result(record, result)
