@@ -328,6 +328,8 @@ def _partition_records(
             and isinstance(migration_decision, Mapping)
             and migration_decision.get("classification") == "APPROVED"
         )
+        # Business hard stop: the approved Cancel / Drop SOW (and every other
+        # APPROVED_NO_OUTPUT value) outranks Jendela migration eligibility.
         if normalization == "APPROVED_NO_OUTPUT":
             set_generation_decision(
                 record,

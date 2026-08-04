@@ -262,6 +262,48 @@ class TestJendelaMigrationDecision(unittest.TestCase):
                 self.assertEqual([item["work_item"] for item in decision["work_items"]], expected)
                 self.assertEqual(record["validation"]["pr_input_classification"], "PR_INPUT_READY")
 
+    def test_cancel_drop_hard_stop_overrides_all_approved_ti_migration_combinations(self):
+        cases = (
+            ("Starlink", "Fiber Own Build"),
+            ("Microwave", "Fiber Own Build"),
+            ("Starlink", "Microwave"),
+            ("Microwave", "Microwave"),
+        )
+        for before, final in cases:
+            with self.subTest(before=before, final=final):
+                record = self.factory.build(
+                    {
+                        "tx_before_migration": before,
+                        "final_backhaul": final,
+                        "tx_sow_raw": "Cancel / Drop",
+                    },
+                    scope="TI",
+                    sow_registry=self.sow_registry,
+                )
+                self.assertEqual(
+                    record["pr_context"]["migration_decision"]["classification"],
+                    "APPROVED",
+                )
+
+                partitions = create_pr._partition_records([record], "TI")
+
+                self.assertEqual(partitions["ignored"], [record])
+                self.assertEqual(partitions["candidates"], [])
+                self.assertEqual(partitions["duplicates"], [])
+                self.assertEqual(partitions["review_required"], [])
+                self.assertEqual(
+                    record["pr_generation_decision"]["reason_code"],
+                    "APPROVED_NO_OUTPUT",
+                )
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    renderer_input = Path(temp_dir) / "renderer-input.xlsx"
+                    create_pr._write_renderer_input(renderer_input, partitions["candidates"])
+                    workbook = load_workbook(renderer_input, read_only=True, data_only=True)
+                    worksheet = workbook["data"]
+                    output_rows = list(worksheet.iter_rows(min_row=5, values_only=True))
+                    workbook.close()
+                self.assertEqual(output_rows, [])
+
     def test_blank_or_unknown_combination_fails_closed_without_partial_work(self):
         cases = [("", "Fiber Own Build"), ("Starlink", ""), ("Satellite", "Fiber Own Build"), ("Starlink", "5G")]
         for before, final in cases:
