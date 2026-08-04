@@ -123,8 +123,8 @@
     },
     {
       "profile_id": "jendela_tx_migration_pr_v1",
-      "profile_version": "0.2.0",
-      "mapping_version": "approved-2026-07-13-jendela-tx-migration-v1",
+      "profile_version": "0.3.0",
+      "mapping_version": "approved-2026-08-04-jendela-tx-migration-v2",
       "profile_status": "PR_INPUT_READY",
       "du_model_name": "Jendela TX Migration",
       "readiness_status": "DISCOVERY_ONLY_BLOCKED",

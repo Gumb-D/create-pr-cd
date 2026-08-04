@@ -64,7 +64,7 @@ Discovery-only coverage review across the 10 profiled DU exports.
 
 - Source file: `A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260703160246.xlsx`
 - Coverage status: `TRACKED_DRAFT_PROFILE`
-- Profile: `jendela_tx_migration_pr_v1` `0.2.0` (mapping `approved-2026-07-13-jendela-tx-migration-v1`)
+- Profile: `jendela_tx_migration_pr_v1` `0.3.0` (mapping `approved-2026-08-04-jendela-tx-migration-v2`)
 - Observed header hash: `904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3`
 - Next action: Continue tracked profile review through the existing DRAFT discovery packet.
 

@@ -181,8 +181,8 @@ class TestDuProfileLoader(unittest.TestCase):
     def test_pr_input_ready_jendela_profile_loads_with_human_approved_pr_critical_mappings(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "jendela_tx_migration_pr_v1.yaml")
         self.assertEqual(profile["status"], "PR_INPUT_READY")
-        self.assertEqual(profile["profile_version"], "0.2.0")
-        self.assertEqual(profile["mapping_version"], "approved-2026-07-13-jendela-tx-migration-v1")
+        self.assertEqual(profile["profile_version"], "0.3.0")
+        self.assertEqual(profile["mapping_version"], "approved-2026-08-04-jendela-tx-migration-v2")
         self.assertEqual(profile["identity"]["accepted_du_models"], ["Jendela TX Migration"])
         self.assertEqual(profile["identity"]["accepted_du_model_ids"], ["4972593269368006257"])
         self.assertEqual(profile["identity"]["accepted_view_ids"], ["4026888666764910245"])
@@ -200,6 +200,8 @@ class TestDuProfileLoader(unittest.TestCase):
             {
                 "site_code",
                 "tx_sow_raw",
+                "tx_before_migration",
+                "final_backhaul",
                 "region",
                 "subcontractor_tss",
                 "subcontractor_ti",

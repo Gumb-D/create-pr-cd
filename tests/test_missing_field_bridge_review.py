@@ -73,8 +73,8 @@ class TestMissingFieldBridgeReview(unittest.TestCase):
         bridge_entry = build_bridge_entry(unresolved_entry, grouping, discovery)
 
         self.assertEqual(bridge_entry["profile_id"], "jendela_tx_migration_pr_v1")
-        self.assertEqual(bridge_entry["profile_version"], "0.2.0")
-        self.assertEqual(bridge_entry["mapping_version"], "approved-2026-07-13-jendela-tx-migration-v1")
+        self.assertEqual(bridge_entry["profile_version"], "0.3.0")
+        self.assertEqual(bridge_entry["mapping_version"], "approved-2026-08-04-jendela-tx-migration-v2")
         self.assertEqual(bridge_entry["field_bridges"], {})
 
     def test_zte_bridge_is_empty_after_local_pr_shortlist_candidates_are_detected(self):

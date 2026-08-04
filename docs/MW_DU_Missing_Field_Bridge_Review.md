@@ -25,8 +25,8 @@ Discovery-only bridge guidance for required fields that are still missing in pri
 
 ## jendela_tx_migration_pr_v1 (Jendela TX Migration)
 
-- Profile version: `0.2.0`
-- Mapping version: `approved-2026-07-13-jendela-tx-migration-v1`
+- Profile version: `0.3.0`
+- Mapping version: `approved-2026-08-04-jendela-tx-migration-v2`
 - Observed header hash: `904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3`
 
 

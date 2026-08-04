@@ -88,8 +88,8 @@ class TestDuDiscoveryRegistry(unittest.TestCase):
         self.assertEqual(entry["du_model_name"], "Jendela TX Migration")
         self.assertEqual(entry["profile_id"], "jendela_tx_migration_pr_v1")
         self.assertEqual(entry["profile_status"], "PR_INPUT_READY")
-        self.assertEqual(entry["profile_version"], "0.2.0")
-        self.assertEqual(entry["mapping_version"], "approved-2026-07-13-jendela-tx-migration-v1")
+        self.assertEqual(entry["profile_version"], "0.3.0")
+        self.assertEqual(entry["mapping_version"], "approved-2026-08-04-jendela-tx-migration-v2")
 
     def test_build_discovery_entry_for_2023_celcomdigi_bau_uses_existing_profile_file(self):
         profile_dir = self.profiler_root / "A-P202202168750_D002-2023_Celcomdigi_BAU-2023_Celcomdigi_BAU__TX_-20260703160239"

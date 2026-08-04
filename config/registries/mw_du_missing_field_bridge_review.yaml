@@ -43,8 +43,8 @@
     },
     {
       "profile_id": "jendela_tx_migration_pr_v1",
-      "profile_version": "0.2.0",
-      "mapping_version": "approved-2026-07-13-jendela-tx-migration-v1",
+      "profile_version": "0.3.0",
+      "mapping_version": "approved-2026-08-04-jendela-tx-migration-v2",
       "observed_header_hash": "904f30b6c4278c0d4c20d7898f4ad3d805e9d2ca2167499ea4e9418b1a16ffe3",
       "du_model_name": "Jendela TX Migration",
       "source_file_name": "A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260703160246.xlsx",

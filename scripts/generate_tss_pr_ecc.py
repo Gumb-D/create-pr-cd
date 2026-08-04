@@ -49,7 +49,10 @@ from pr_helpers import (
     parse_mw_new_link_reroute,
     filter_tss_mw_new_link_reroute_items,
     select_tss_items_for_site,
-    has_duplicate_pbom
+    has_duplicate_pbom,
+    validate_required_pbom_selection,
+    filter_failed_migration_decisions,
+    optional_cell_text,
 )
 
 
@@ -1237,6 +1240,7 @@ print("\n[STEP 3] Building ECC Output Rows...")
 ecc_rows = []
 fuzzy_matches = {}
 unmatched_ti_items = []  # Phase 2B-1: capture unmatched TI candidates
+failed_migration_decisions = set()
 
 for idx in range(len(candidates)):
     row = candidates.iloc[idx]
@@ -1248,6 +1252,13 @@ for idx in range(len(candidates)):
     region = str(row['region']).strip()
     subcon = str(row[subcon_column]).strip()
     sow = str(row['Tx SOW']).strip()
+    migration_decision_id = optional_cell_text(row.get('Migration Decision ID', ''))
+    migration_work_item = optional_cell_text(row.get('Migration Work Item', ''))
+    required_pbom_codes = [
+        code.strip()
+        for code in optional_cell_text(row.get('Required PBOM Codes', '')).split('|')
+        if code.strip()
+    ]
     delivery_unit = str(row.get('du code', '')).strip() if pd.notna(row.get('du code')) else ''
     logical_site = str(row.get('customer site code', '')).strip() if pd.notna(row.get('customer site code')) else ''
     
@@ -1272,6 +1283,7 @@ for idx in range(len(candidates)):
     contract_number = contract_info['contract_number']
     
     matched_items = []
+    review_required = False
     remarks = ''
     unmatched_reason = None
     review_base = {
@@ -1403,7 +1415,30 @@ for idx in range(len(candidates)):
                             technical_detail='No matching TI PR model item'
                         )
 
+    if scope_name == 'TI' and migration_decision_id and review_required:
+        failed_migration_decisions.add(migration_decision_id)
+        matched_items = []
+        if unmatched_reason is None:
+            unmatched_reason = make_review_reason(
+                'JENDELA_PR_MODEL_ITEM_NOT_FOUND',
+                technical_detail=f'Non-unique PR model selection for migration work item: {migration_work_item}'
+            )
+
+    if matched_items and required_pbom_codes:
+        valid_pboms, pbom_reason = validate_required_pbom_selection(matched_items, required_pbom_codes)
+        if not valid_pboms:
+            failed_migration_decisions.add(migration_decision_id)
+            matched_items = []
+            unmatched_reason = make_review_reason(
+                pbom_reason or 'JENDELA_PR_MODEL_ITEM_NOT_FOUND',
+                technical_detail=(
+                    f'work_item={migration_work_item}; required_pboms={required_pbom_codes}'
+                )
+            )
+
     if not matched_items:
+        if migration_decision_id:
+            failed_migration_decisions.add(migration_decision_id)
         if scope_name == 'TI' and unmatched_reason:
             # Phase 2B-1: Add to review-required instead of silently dropping
             unmatched_ti_items.append(add_route_context_fields(
@@ -1435,9 +1470,12 @@ for idx in range(len(candidates)):
             'Delivery_Unit_Code': delivery_unit,
             'Logical_Site_Name': logical_site,
             'Remarks': remarks
-        }        
+        }
+        if migration_decision_id:
+            ecc_row['Migration_Decision_ID'] = migration_decision_id
         ecc_rows.append(ecc_row)
 
+ecc_rows = filter_failed_migration_decisions(ecc_rows, failed_migration_decisions)
 print(f"[OK] Built {len(ecc_rows)} ECC output rows")
 
 # ===== STEP 4: GROUP BY REGION-SUBCON AND CREATE EXCEL FILES =====

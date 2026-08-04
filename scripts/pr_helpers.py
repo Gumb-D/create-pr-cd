@@ -11,6 +11,15 @@ import re
 from typing import Dict, List, Tuple, Optional, Any, Iterable
 
 
+def optional_cell_text(value: Any) -> str:
+    """Return trimmed text while treating spreadsheet numeric NaN as blank."""
+    if value is None:
+        return ""
+    if isinstance(value, numbers.Real) and math.isnan(float(value)):
+        return ""
+    return str(value).strip()
+
+
 def normalize_pbom_code(value: Any) -> str:
     """
     Normalize PBOM/material codes into a canonical string form.
@@ -96,6 +105,33 @@ def _normalize_ti_sow_alias_map(alias_map: Optional[Dict[str, Iterable[str]]]) -
             normalized[normalized_input] = aliases
 
     return normalized
+
+
+def validate_required_pbom_selection(
+    matched_items: List[Dict[str, Any]], required_codes: Iterable[Any]
+) -> tuple[bool, Optional[str]]:
+    """Require every declared PBOM exactly once and reject extra selections."""
+    required = [normalize_pbom_code(code) for code in required_codes]
+    selected = [normalize_pbom_code(item.get("PBOM_Code")) for item in matched_items]
+    if not required:
+        return True, None
+    if sorted(selected) != sorted(required) or any(selected.count(code) != 1 for code in required):
+        return False, "JENDELA_REQUIRED_PBOM_NOT_UNIQUE"
+    return True, None
+
+
+def filter_failed_migration_decisions(
+    ecc_rows: List[Dict[str, Any]], failed_decision_ids: Iterable[Any]
+) -> List[Dict[str, Any]]:
+    """Drop every line belonging to an atomic migration decision that failed."""
+    failed = {str(value).strip() for value in failed_decision_ids if str(value).strip()}
+    if not failed:
+        return list(ecc_rows)
+    return [
+        row
+        for row in ecc_rows
+        if str(row.get("Migration_Decision_ID") or "").strip() not in failed
+    ]
 
 
 TI_SOW_ALIAS_MAP: Dict[str, set[str]] = _normalize_ti_sow_alias_map({})
