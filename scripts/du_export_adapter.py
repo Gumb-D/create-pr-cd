@@ -9,7 +9,7 @@ from copy import deepcopy
 from typing import Any, Dict, Mapping
 
 from canonical_site_validator import FIELD_PATHS, apply_validation_result, empty_canonical_site_record, validate_canonical_site_record
-from profile_du_export import fingerprint_key
+from profile_du_export import fingerprint_key, structural_fingerprint_key
 from sow_normalization import normalize_tx_sow
 from jendela_migration_decision import derive_jendela_migration_decision
 
@@ -85,19 +85,25 @@ def _apply_geography_correction(record: Dict[str, Any]) -> None:
 
 
 def resolve_profile_field_mappings(header_inventory: Mapping[str, Any], profile: Mapping[str, Any]) -> Dict[str, Any]:
-    """Resolve only exact four-layer fingerprints; never by column index or aliases."""
-    available = {}
+    """Resolve approved fingerprints by structural identity, never by position.
+
+    Only the View suffix of the strict site identity field can normalize. Every
+    returned match retains the actual runtime fingerprint for row lookup and audit.
+    """
+    available: Dict[str, list[Dict[str, Any]]] = {}
     for sheet in header_inventory.get("sheets", []):
         for column in sheet.get("columns", []):
-            available.setdefault(column["fingerprint_key"], []).append(
-                {"sheet_name": sheet["sheet_name"], "fingerprint": column["fingerprint"]}
+            fingerprint = column["fingerprint"]
+            key = structural_fingerprint_key(fingerprint)
+            available.setdefault(key, []).append(
+                {"sheet_name": sheet["sheet_name"], "fingerprint": fingerprint}
             )
 
     results: Dict[str, Any] = {}
     for canonical_field, config in profile.get("field_mapping", {}).items():
         matches = []
         for candidate in config.get("source_candidates", []):
-            key = fingerprint_key(candidate["fingerprint"])
+            key = structural_fingerprint_key(candidate["fingerprint"])
             for source in available.get(key, []):
                 matches.append({**source, "mapping_status": candidate.get("mapping_status", "UNVERIFIED")})
         if len(matches) == 1:
@@ -133,6 +139,10 @@ def build_canonical_site_record(
             "source_file_name": context.get("source_file_name", ""),
             "source_file_hash": context.get("source_file_hash", ""),
             "header_hash": context.get("header_hash", ""),
+            "raw_header_hash": context.get("raw_header_hash", context.get("header_hash", "")),
+            "structural_header_hash": context.get("structural_header_hash", ""),
+            "approved_header_hash": context.get("approved_header_hash", ""),
+            "header_hash_approval_basis": context.get("header_hash_approval_basis", ""),
             "source_row_number": context.get("source_row_number"),
         }
     )
@@ -174,9 +184,6 @@ def build_canonical_site_record(
         raw_sow = record["pr_context"]["tx_sow_raw"]
         raw_evidence = record["source_evidence"]["fields"].get("tx_sow_raw")
         if sow_registry is not None:
-            # Controlled normalization through the approved canonical SOW
-            # registry: only PR_TRIGGER values normalize with APPROVED status;
-            # everything else stays fail-closed for output.
             normalized = normalize_tx_sow(raw_sow, sow_registry)
             record["pr_context"]["tx_sow_normalized"] = normalized["canonical_sow"]
             if raw_evidence:
@@ -187,8 +194,6 @@ def build_canonical_site_record(
                     "sow_classification": normalized["classification"],
                 }
         elif isinstance(raw_sow, str) and raw_sow.strip():
-            # No registry supplied: preserve the raw value as controlled
-            # evidence only; the guard blocks unverified normalization.
             record["pr_context"]["tx_sow_normalized"] = raw_sow.strip()
             if raw_evidence:
                 record["source_evidence"]["fields"]["tx_sow_normalized"] = {
