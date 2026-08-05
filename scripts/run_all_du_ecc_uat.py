@@ -287,14 +287,38 @@ def resolve_v2_manifest_sources(
 
     registry = load_identity_registry(identity_registry_path)
     discovery = discover_latest_source_exports(source_roots, registry)
+
+    registered_profile_ids: list[str] = []
+    seen_profile_ids: set[str] = set()
+    for index, raw_entry in enumerate(registry.get("profiles", [])):
+        if not isinstance(raw_entry, dict):
+            raise _impl.BatchUatError(
+                "DU_PROFILE_REGISTRY_INVALID",
+                "Every registry profile must be an object.",
+                {"index": index},
+            )
+        profile_id = str(raw_entry.get("profile_id", "")).strip()
+        if not profile_id or profile_id in seen_profile_ids:
+            raise _impl.BatchUatError(
+                "DU_PROFILE_REGISTRY_INVALID",
+                "Registry profile_id values must be non-blank and unique.",
+                {"index": index, "profile_id": profile_id},
+            )
+        seen_profile_ids.add(profile_id)
+        registered_profile_ids.append(profile_id)
+
     internal_manifest = {
         "schema_version": "1.0",
         "profiles": [
             {
                 "profile_id": profile_id,
-                "source_export": selection["source_path"],
+                "source_export": str(
+                    discovery.get("selections", {})
+                    .get(profile_id, {})
+                    .get("source_path", "")
+                ),
             }
-            for profile_id, selection in sorted(discovery["selections"].items())
+            for profile_id in sorted(registered_profile_ids)
         ],
     }
     return internal_manifest, discovery
