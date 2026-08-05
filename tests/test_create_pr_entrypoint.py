@@ -160,6 +160,11 @@ class TestCreatePrEntrypoint(unittest.TestCase):
         self.assertIsNotNone(resolver, "create_pr must expose the structured lifecycle gate")
         self.assertEqual(resolver("PR_INPUT_READY", True), "NON_PRODUCTION_UAT")
 
+    def test_explicit_uat_accepts_production(self):
+        resolver = getattr(create_pr, "_resolve_run_mode", None)
+        self.assertIsNotNone(resolver, "create_pr must expose the structured lifecycle gate")
+        self.assertEqual(resolver("PRODUCTION", True), "NON_PRODUCTION_UAT")
+
     def test_explicit_uat_rejects_draft_profile(self):
         resolver = getattr(create_pr, "_resolve_run_mode", None)
         self.assertIsNotNone(resolver, "create_pr must expose the structured lifecycle gate")
@@ -292,7 +297,7 @@ class TestCreatePrEntrypoint(unittest.TestCase):
 
         self.assertIn("\\u200b", result.stdout)
 
-    def test_official_cli_blocks_pr_input_ready_without_explicit_uat(self):
+    def test_official_cli_allows_production_tx_mini_without_explicit_uat(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             result = subprocess.run(
                 [
@@ -308,10 +313,22 @@ class TestCreatePrEntrypoint(unittest.TestCase):
                 capture_output=True,
                 check=False,
             )
-            self.assertEqual(result.returncode, 1, result.stdout)
-            payload = _last_json_object(result.stderr)
-            self.assertEqual(payload["code"], "PROFILE_NOT_PRODUCTION")
-            self.assertEqual(list(Path(temp_dir).rglob("*.xlsx")), [])
+            self.assertEqual(result.returncode, 0, result.stderr)
+            summary_path = Path(temp_dir) / "CREATE_PR_SUMMARY_TSS.json"
+            self.assertTrue(summary_path.is_file())
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+            self.assertEqual(summary["entrypoint"], "create_pr.py")
+            self.assertEqual(summary["profile_id"], "tx_mini_pr_v1")
+            self.assertEqual(summary["profile_status"], "PRODUCTION")
+            self.assertEqual(summary["run_mode"], "PRODUCTION")
+            self.assertFalse(summary["non_production_uat"])
+            self.assertTrue(summary["production_ecc_allowed"])
+            self.assertEqual(Path(summary["output_root"]), Path(temp_dir).resolve())
+            self.assertIsNone(summary["run_id"])
+            self.assertTrue(summary["created_files"])
+            self.assertTrue(
+                all("NON_PRODUCTION_UAT" not in Path(path).name for path in summary["created_files"])
+            )
 
     def test_official_cli_explicit_uat_is_visibly_isolated(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -340,7 +357,7 @@ class TestCreatePrEntrypoint(unittest.TestCase):
             summary = json.loads(summary_paths[0].read_text(encoding="utf-8"))
             self.assertEqual(summary["entrypoint"], "create_pr.py")
             self.assertEqual(summary["profile_id"], "tx_mini_pr_v1")
-            self.assertEqual(summary["profile_status"], "PR_INPUT_READY")
+            self.assertEqual(summary["profile_status"], "PRODUCTION")
             self.assertEqual(summary["run_mode"], "NON_PRODUCTION_UAT")
             self.assertTrue(summary["non_production_uat"])
             self.assertFalse(summary["production_ecc_allowed"])
