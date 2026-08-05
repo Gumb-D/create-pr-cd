@@ -1,0 +1,51 @@
+name: Issue 64 Migrate Legacy View Tests
+
+on:
+  push:
+    branches:
+      - fix/issue-64-view-independent-du-identity
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/issue-64-view-independent-du-identity
+      - name: Replace obsolete View rejection assertions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('tests/test_du_export_adapter.py')
+          text = path.read_text(encoding='utf-8')
+          old = '''    def test_unknown_view_id_fails_closed(self):
+                  production = self._production_copy()
+                  record = self._build_record(profile=production, view_id="unknown-view-id", scope="TI")
+                  gate = evaluate_record(record, production, scope="TI")
+                  self.assertFalse(gate["allow_output"])
+                  self.assertIn("UNKNOWN_DU_MODEL_OR_VIEW", gate["blocking_reasons"])
+          '''
+          new = '''    def test_new_view_id_is_audit_evidence_only(self):
+                  production = self._production_copy()
+                  record = self._build_record(profile=production, view_id="unknown-view-id", scope="TI")
+                  gate = evaluate_record(record, production, scope="TI")
+                  self.assertNotIn("UNKNOWN_DU_MODEL", gate["blocking_reasons"])
+                  self.assertNotIn("UNKNOWN_DU_MODEL_OR_VIEW", gate["blocking_reasons"])
+          '''
+          occurrences = text.count(old)
+          if occurrences != 2:
+              raise SystemExit(f'expected exactly 2 legacy View tests, found {occurrences}')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+      - name: Commit migrated tests
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add tests/test_du_export_adapter.py
+          git commit -m "test(identity): migrate legacy View rejection assertions"
+          git push origin HEAD:fix/issue-64-view-independent-du-identity
