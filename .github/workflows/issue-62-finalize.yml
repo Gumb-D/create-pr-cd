@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - feat/issue-62-tx-mini-production
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
