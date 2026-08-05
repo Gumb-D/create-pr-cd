@@ -19,6 +19,7 @@ PR_STATUS_NOT_REQUIRED = "NO_PR_REQUIRED"
 PR_STATUS_NONE = "NO_PR"
 
 _SUPPORTED_TRANSFORMS = {"trim", "uppercase", "parse_decimal", "normalize_pr_reference_status"}
+_MAPPING_STATUS_RANK = {"UNVERIFIED": 0, "VERIFIED": 1, "APPROVED": 2}
 
 
 def normalize_pr_reference_status(value: Any) -> str:
@@ -84,11 +85,20 @@ def _apply_geography_correction(record: Dict[str, Any]) -> None:
     )
 
 
+def _stronger_mapping_status(first: str, second: str) -> str:
+    return max(
+        (first, second),
+        key=lambda value: _MAPPING_STATUS_RANK.get(str(value), -1),
+    )
+
+
 def resolve_profile_field_mappings(header_inventory: Mapping[str, Any], profile: Mapping[str, Any]) -> Dict[str, Any]:
     """Resolve approved fingerprints by structural identity, never by position.
 
     Only the View suffix of the strict site identity field can normalize. Every
     returned match retains the actual runtime fingerprint for row lookup and audit.
+    Multiple profile candidates representing different Views are deduplicated when
+    they resolve to the same physical runtime column.
     """
     available: Dict[str, list[Dict[str, Any]]] = {}
     for sheet in header_inventory.get("sheets", []):
@@ -101,11 +111,27 @@ def resolve_profile_field_mappings(header_inventory: Mapping[str, Any], profile:
 
     results: Dict[str, Any] = {}
     for canonical_field, config in profile.get("field_mapping", {}).items():
-        matches = []
+        matches_by_source: Dict[tuple[str, str], Dict[str, Any]] = {}
         for candidate in config.get("source_candidates", []):
-            key = structural_fingerprint_key(candidate["fingerprint"])
-            for source in available.get(key, []):
-                matches.append({**source, "mapping_status": candidate.get("mapping_status", "UNVERIFIED")})
+            structural_key = structural_fingerprint_key(candidate["fingerprint"])
+            candidate_status = str(candidate.get("mapping_status", "UNVERIFIED"))
+            for source in available.get(structural_key, []):
+                source_key = (
+                    str(source["sheet_name"]),
+                    fingerprint_key(source["fingerprint"]),
+                )
+                existing = matches_by_source.get(source_key)
+                if existing is None:
+                    matches_by_source[source_key] = {
+                        **source,
+                        "mapping_status": candidate_status,
+                    }
+                    continue
+                existing["mapping_status"] = _stronger_mapping_status(
+                    str(existing.get("mapping_status", "UNVERIFIED")),
+                    candidate_status,
+                )
+        matches = list(matches_by_source.values())
         if len(matches) == 1:
             status = "RESOLVED"
         elif len(matches) == 0:
