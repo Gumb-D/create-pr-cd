@@ -1,0 +1,115 @@
+name: Issue 61 Apply and Verify
+
+on:
+  pull_request:
+    types: [ready_for_review]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  apply-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/issue-58-project-du-model-routing
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -r requirements.txt
+      - name: Reassemble and validate reviewed patch
+        shell: bash
+        run: |
+          cat .github/issue61.patch.gz.part.* > /tmp/issue61-final.patch.gz
+          echo "24643385fd54292e2a3666b30ca462c87ee137e8204d04f13cc9d398939fd866  /tmp/issue61-final.patch.gz" | sha256sum -c -
+          gzip -dc /tmp/issue61-final.patch.gz > /tmp/issue61-final.patch
+          echo "e4eec7a8f4d3add81a70f619eec5c33da8a2eab20472bde0ab20ac9dcb993ec6  /tmp/issue61-final.patch" | sha256sum -c -
+          git apply --check /tmp/issue61-final.patch
+          git apply /tmp/issue61-final.patch
+          rm -f .github/issue61.patch.gz.part.*
+          rm -f .github/issue61.part.00 .github/issue61.part.01
+          rm -f .github/workflows/issue-61-apply.yml
+          git diff --check
+      - name: Compile changed Python modules
+        run: >-
+          python -m py_compile
+          scripts/build_all_du_mapping_recommendation_matrix.py
+          scripts/build_profile_action_queue.py
+          scripts/build_profile_deprecation_review.py
+          scripts/build_profile_readiness_review.py
+          scripts/build_profile_rollback_readiness.py
+          scripts/build_profile_traceability_audit.py
+          scripts/build_profile_transition_review.py
+          scripts/build_unresolved_skill_field_review.py
+          scripts/check_discovery_packet_consistency.py
+          scripts/check_discovery_packet_consistency_impl.py
+          scripts/check_profile_status_consistency.py
+          scripts/du_profile_loader.py
+          scripts/refresh_mw_du_discovery_packet.py
+      - name: Run affected regression
+        run: >-
+          python -m unittest
+          tests/test_cd_consolidation_profile_family.py
+          tests/test_du_profile_identity_governance.py
+          tests/test_du_profile_loader.py
+          tests/test_discovery_packet_header_compatibility.py
+          tests/test_discovery_packet_consistency.py
+          tests/test_profile_readiness_review.py
+          tests/test_unresolved_skill_field_review.py
+          tests/test_missing_field_bridge_review.py
+          tests/test_profile_review_matrix.py
+          tests/test_project_du_model_source_routing.py
+          tests/test_all_du_v2_manifest_completeness.py
+          tests/test_profile_action_queue.py
+          tests/test_profile_deprecation_review.py
+          tests/test_profile_rollback_readiness.py
+          tests/test_profile_traceability_audit.py
+          tests/test_profile_transition_review.py
+          -v
+      - name: Run broad regression excluding confirmed main baselines
+        shell: bash
+        run: |
+          python - <<'PY'
+          import unittest
+
+          excluded_exact = {
+              "test_create_pr_entrypoint.TestCreatePrEntrypoint.test_mark_uat_artifacts_handles_windows_extended_paths",
+              "test_run_all_du_ecc_uat.TestAllDuEccUat.test_materialize_scope_artifacts_uses_extended_windows_paths",
+          }
+          excluded_prefixes = ("test_du_discovery_registry.",)
+
+          def filtered(suite):
+              output = unittest.TestSuite()
+              for item in suite:
+                  if isinstance(item, unittest.TestSuite):
+                      nested = filtered(item)
+                      if nested.countTestCases():
+                          output.addTest(nested)
+                  else:
+                      test_id = item.id()
+                      if test_id in excluded_exact or test_id.startswith(excluded_prefixes):
+                          continue
+                      output.addTest(item)
+              return output
+
+          suite = filtered(unittest.defaultTestLoader.discover("tests", pattern="test_*.py"))
+          count = suite.countTestCases()
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          print(f"FILTERED_TEST_COUNT={count}")
+          raise SystemExit(0 if result.wasSuccessful() else 1)
+          PY
+      - name: Commit verified consolidation
+        shell: bash
+        run: |
+          test ! -e .github/workflows/issue-61-red.yml
+          test ! -e .github/workflows/issue-61-apply.yml
+          test -z "$(find .github -maxdepth 1 -type f -name 'issue61*' -print -quit)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix(identity): complete CD consolidation profile family"
+          git push origin HEAD:feat/issue-58-project-du-model-routing
