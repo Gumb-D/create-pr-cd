@@ -35,11 +35,18 @@ jobs:
             scripts/canonical_generator_bridge.py \
             scripts/pr_input_guard.py \
             scripts/build_du_discovery_registry.py
+      - name: Reject obsolete runtime View errors
+        run: |
+          if grep -R -n -E 'DU_PROFILE_VIEW_NOT_APPROVED|UNKNOWN_DU_MODEL_OR_VIEW' scripts; then
+            echo 'Obsolete View identity error remains in runtime code.' >&2
+            exit 1
+          fi
       - name: Run affected regression
         run: |
           python -m pytest -q \
             tests/test_issue_64_view_independent_identity.py \
             tests/test_issue_64_pr_guard_project_identity.py \
+            tests/test_issue_64_layout_evidence.py \
             tests/test_project_du_model_source_routing.py \
             tests/test_canonical_bridge_profile_routing.py \
             tests/test_du_export_profiler.py \
