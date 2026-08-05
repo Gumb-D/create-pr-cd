@@ -13,10 +13,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Mapping
 
-from profile_du_export import (
-    calculate_structural_header_hash,
-    extract_du_identities,
-)
+from profile_du_export import extract_du_identities
+
 
 FILENAME_PATTERN = re.compile(
     r"^(?P<project_ref>A-[^-]+)-(?P<du_model_name>[^-]+)-(?P<view_label>.+)-(?P<timestamp>\d{14})\.xlsx$"
@@ -123,8 +121,14 @@ def _skill_field_presence(header_inventory: Mapping[str, Any]) -> Dict[str, bool
         "existing_ti_pr": ("pr ti status",),
     }
     direct_pr_display_headers = {
-        "existing_tss_pr": {"pr tss status", "subcon pr - tss"},
-        "existing_ti_pr": {"pr ti status", "subcon pr - ti"},
+        "existing_tss_pr": {
+            "pr tss status",
+            "subcon pr - tss",
+        },
+        "existing_ti_pr": {
+            "pr ti status",
+            "subcon pr - ti",
+        },
     }
     texts: List[str] = []
     display_headers: List[str] = []
@@ -168,7 +172,6 @@ def build_discovery_entry(profile_dir: Path) -> Dict[str, Any]:
     header_hash = (profile_dir / "header_hash.txt").read_text(
         encoding="utf-8"
     ).strip()
-    structural_header_hash = calculate_structural_header_hash(inventory)
     field_presence = _skill_field_presence(inventory)
     known_profile = _known_profiles().get(
         (project_key, parsed_name.du_model_name, identity["du_model_id"])
@@ -187,7 +190,6 @@ def build_discovery_entry(profile_dir: Path) -> Dict[str, Any]:
         "source_file_name": inventory["source"]["file_name"],
         "source_file_hash": inventory["source"]["source_file_hash"],
         "observed_header_hash": header_hash,
-        "observed_structural_header_hash": structural_header_hash,
         "sheet_names": [
             sheet.get("sheet_name", "")
             for sheet in inventory.get("sheets", [])
@@ -245,21 +247,18 @@ def discovery_inventory_markdown(registry: Mapping[str, Any]) -> str:
         "",
         "This inventory is discovery-only metadata derived from profiler artifacts. It does not approve any DU profile, field mapping, or header hash for production use.",
         "",
-        "| Project Key | DU Model | DU Model ID | View Label | View ID | Raw Header Hash | Structural Header Hash | Profile ID | PR Input Status |",
-        "|---|---|---|---|---|---|---|---|---|",
+        "| Project Key | DU Model | DU Model ID | View Label | View ID | Header Hash | Profile ID | PR Input Status |",
+        "|---|---|---|---|---|---|---|---|",
     ]
     for entry in registry.get("entries", []):
         lines.append(
-            "| {project_key} | {du_model_name} | `{du_model_id}` | {view_label} | `{view_id}` | `{observed_header_hash}` | `{observed_structural_header_hash}` | {profile_id} | {pr_input_status} |".format(
+            "| {project_key} | {du_model_name} | `{du_model_id}` | {view_label} | `{view_id}` | `{observed_header_hash}` | {profile_id} | {pr_input_status} |".format(
                 project_key=entry["project_key"],
                 du_model_name=entry["du_model_name"],
                 du_model_id=entry["du_model_id"],
                 view_label=entry["view_label"],
                 view_id=entry["view_id"],
                 observed_header_hash=entry["observed_header_hash"],
-                observed_structural_header_hash=entry[
-                    "observed_structural_header_hash"
-                ],
                 profile_id=entry["profile_id"] or "`None`",
                 pr_input_status=entry["pr_input_status"],
             )
@@ -270,8 +269,8 @@ def discovery_inventory_markdown(registry: Mapping[str, Any]) -> str:
             "## Notes",
             "",
             "- `PR_INPUT_QUARANTINED` here means discovery-only; it is not a production approval state.",
-            "- Profile matching uses Project + DU Model; View ID remains layout evidence only.",
-            "- Raw and structural hashes remain subject to sanitization and business approval.",
+            "- `Profile ID` is matched by Project + DU Model; View ID remains layout evidence only.",
+            "- The observed header hashes came from local profiler runs against external source files and remain subject to sanitization and business approval.",
         ]
     )
     return "\n".join(lines) + "\n"
