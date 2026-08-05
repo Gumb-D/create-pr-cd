@@ -37,7 +37,7 @@ Rules:
 
 ## 3. View handling
 
-An iEPMS export View is source-layout evidence. It is not normally a separate DU profile identity.
+An iEPMS export View is source-layout evidence. It is not a separate DU profile identity.
 
 The same Project + DU Model may accept multiple Views through profile metadata such as:
 
@@ -53,11 +53,21 @@ export_structure:
     - <header hash B>
 ```
 
-Each accepted layout still requires controlled evidence:
+A DRAFT profile may preserve unapproved layouts separately:
+
+```yaml
+layout_variants:
+  - variant_id: <layout A>
+    view_id: <view A>
+    observed_header_hash: <observed hash A>
+    field_mapping: <exact four-layer discovery evidence>
+```
+
+Each accepted or observed layout still requires controlled evidence:
 
 - exact four-layer Header Fingerprints;
 - strict Header Hash validation;
-- approved canonical-field mappings;
+- approved canonical-field mappings before lifecycle promotion;
 - fail-closed handling for unknown or changed layouts.
 
 Combining Views within one profile family does not weaken source validation.
@@ -72,11 +82,9 @@ Create a separate profile family only when at least one of these conditions appl
 - materially incompatible canonical-field meanings;
 - source layouts that cannot be validated safely within one profile family.
 
-A different View name, View ID, or Header Hash alone is not sufficient justification.
+A different View name, View ID, Header Hash, or WBS/Task location alone is not sufficient justification.
 
 ## 5. Registry statuses
-
-The identity registry uses three naming statuses.
 
 ### `STANDARD`
 
@@ -88,7 +96,9 @@ The current profile predates this standard or is retained to avoid migration ris
 
 ### `CONSOLIDATION_REVIEW_REQUIRED`
 
-Multiple current profiles share the same Project + DU Model identity and require business and technical review. The registry must list the exact temporarily permitted profile set. Any additional profile for that identity fails governance until the review record is deliberately updated.
+This is a temporary migration status only. It may be used while multiple existing profiles share one Project + DU Model identity and the business semantics have not yet been confirmed. The registry must list the exact temporarily permitted set. Once the business decision is made, the duplicate profiles must be consolidated or separated using a genuine business identity—not retained by View.
+
+The current registry contains no active duplicate-identity review.
 
 ## 6. Existing profile decisions
 
@@ -124,6 +134,7 @@ The registry currently treats these names as standard:
 - `celcomdigi_bau_2024_pr_v1`
 - `celcomdigi_usp_pr_v1`
 - `mw_eos_swap_pr_v1`
+- `celcomdigi_cd_consolidation_2023_pr_v1`
 
 ### Other legacy names retained
 
@@ -133,27 +144,23 @@ These existing names remain stable and are explicitly registered as legacy accep
 - `jendela_tx_migration_pr_v1`
 - `zte_tx_mini_pr_v1`
 
-### CD Consolidation review
+### CD Consolidation decision
 
-The following DRAFT profiles currently share one identity:
+Business owner decision A confirms that Decom Site and Rollout use the same Backoffice / Operation PR type and belong to one profile family:
 
 ```text
 Project: Malaysia_CelcomDigi_Project
 DU Model: CD consolidation 2023
 DU Model ID: 8359047522524182050
+Profile: celcomdigi_cd_consolidation_2023_pr_v1
 ```
 
-Profiles:
+The canonical DRAFT profile preserves both source layouts:
 
-- `cd_consolidation_2023_decom_pr_v1`
-- `cd_consolidation_2023_rollout_pr_v1`
+- Decom View ID `702960351133798763`, observed Header Hash `b86cbc349db66154324092c843593137e83908c3b4b55c09305d6cf6046c7a16`;
+- Rollout View ID `8359047522524230651`, observed Header Hash `d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1`.
 
-They remain unchanged while review determines whether they should:
-
-1. become one profile family accepting multiple Views and Header Hashes; or
-2. remain separate because the workflows have materially different PR semantics.
-
-No third profile for this identity is permitted silently.
+Both layouts remain unapproved discovery evidence. The profile remains `DRAFT`, contains no approved Header Hash, and cannot generate ECC. Backoffice / Operation PR eligibility, duplicate prevention, output contract, and template development remain under Issue #34.
 
 ## 7. Change control
 
@@ -162,7 +169,7 @@ Every new or changed DU profile identity requires:
 1. an update to `config/registries/mw_du_profile_identity_registry.yaml`;
 2. a matching Project + DU Model identity;
 3. a canonical profile ID or documented exception reason;
-4. an exact duplicate-identity review set when more than one profile shares an identity;
+4. a deliberate temporary review record only when a duplicate identity cannot yet be resolved;
 5. passing `tests/test_du_profile_identity_governance.py` and the full regression suite.
 
 Governance failures use actionable codes such as:
