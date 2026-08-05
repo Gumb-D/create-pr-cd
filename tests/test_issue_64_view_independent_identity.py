@@ -11,6 +11,7 @@ from openpyxl import load_workbook
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
+from canonical_input_pipeline import build_canonical_records
 from du_export_adapter import resolve_profile_field_mappings
 from du_profile_resolver import DuProfileResolutionError, resolve_du_profile
 from pr_input_guard import evaluate_record
@@ -25,6 +26,7 @@ from profile_du_export import (
 FIXTURE = ROOT / "tests" / "fixtures" / "tx_mini_du_export_fixture.xlsx"
 PROFILE_ROOT = ROOT / "config" / "du_profiles"
 REGISTRY_PATH = ROOT / "config" / "registries" / "mw_du_profile_identity_registry.yaml"
+SOW_REGISTRY_PATH = ROOT / "config" / "registries" / "canonical_sow_registry.yaml"
 PROFILE_PATH = PROFILE_ROOT / "tx_mini_pr_v1.yaml"
 OLD_VIEW_ID = "2477626672974883536"
 NEW_VIEW_ID = "9999999999999999999"
@@ -153,6 +155,80 @@ class TestIssue64ViewIndependentIdentity(unittest.TestCase):
 
         self.assertEqual(resolved["site_code"]["status"], "RESOLVED")
         self.assertEqual(resolved["site_code"]["matches"][0]["fingerprint"], new_fingerprint)
+
+    def test_multiple_view_candidates_deduplicate_one_runtime_column(self):
+        profile = json.loads(PROFILE_PATH.read_text(encoding="utf-8"))
+        first = profile["field_mapping"]["site_code"]["source_candidates"][0]
+        second = deepcopy(first)
+        second["fingerprint"]["field_code"] = (
+            f"site|fix00012|{MODEL_ID}|8888888888888888888"
+        )
+        second["mapping_status"] = "VERIFIED"
+        profile["field_mapping"]["site_code"]["source_candidates"] = [first, second]
+        runtime_fingerprint = {
+            **first["fingerprint"],
+            "field_code": f"site|fix00012|{MODEL_ID}|{NEW_VIEW_ID}",
+        }
+        inventory = {
+            "sheets": [
+                {
+                    "sheet_name": "data",
+                    "columns": [
+                        {
+                            "fingerprint": runtime_fingerprint,
+                            "fingerprint_key": fingerprint_key(runtime_fingerprint),
+                        }
+                    ],
+                }
+            ]
+        }
+
+        resolved = resolve_profile_field_mappings(inventory, profile)
+
+        self.assertEqual(resolved["site_code"]["status"], "RESOLVED")
+        self.assertEqual(len(resolved["site_code"]["matches"]), 1)
+        self.assertEqual(
+            resolved["site_code"]["matches"][0]["mapping_status"],
+            "APPROVED",
+        )
+        self.assertEqual(
+            resolved["site_code"]["matches"][0]["fingerprint"],
+            runtime_fingerprint,
+        )
+
+    def test_canonical_pipeline_preserves_runtime_view_and_raw_fingerprint(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            source = Path(temp_dir) / "worker-upload.xlsx"
+            _changed_view_fixture(source)
+            resolution = resolve_du_profile(
+                source,
+                profile_root=PROFILE_ROOT,
+                identity_registry_path=REGISTRY_PATH,
+            )
+
+            records, metadata = build_canonical_records(
+                input_path=source,
+                profile=resolution["profile"],
+                inventory=resolution["inventory"],
+                header_hash=resolution["raw_header_hash"],
+                scope="TSS",
+                sow_registry_path=SOW_REGISTRY_PATH,
+            )
+
+            self.assertTrue(records)
+            self.assertEqual(metadata["view_id"], NEW_VIEW_ID)
+            self.assertEqual(metadata["raw_header_hash"], resolution["raw_header_hash"])
+            self.assertEqual(
+                metadata["structural_header_hash"],
+                resolution["structural_header_hash"],
+            )
+            for record in records:
+                self.assertEqual(record["identity"]["view_id"], NEW_VIEW_ID)
+                site_evidence = record["source_evidence"]["fields"]["site_code"]
+                self.assertEqual(
+                    site_evidence["source_header_fingerprint"]["field_code"],
+                    f"site|fix00012|{MODEL_ID}|{NEW_VIEW_ID}",
+                )
 
     def test_pr_input_guard_does_not_reject_new_view_only(self):
         profile = json.loads(PROFILE_PATH.read_text(encoding="utf-8"))
