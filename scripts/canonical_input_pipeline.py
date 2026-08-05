@@ -11,7 +11,11 @@ from openpyxl import load_workbook
 
 from canonical_site_validator import SCOPE_REQUIRED_FIELDS
 from du_export_adapter import build_canonical_site_record, resolve_profile_field_mappings
-from profile_du_export import fingerprint_key
+from profile_du_export import (
+    extract_du_identities,
+    fingerprint_key,
+    resolve_approved_header_structure,
+)
 
 
 def _load_document(path: Path) -> Any:
@@ -100,6 +104,17 @@ def build_canonical_records(
     if missing:
         raise ValueError("MISSING_OR_AMBIGUOUS_REQUIRED_MAPPING:" + ",".join(missing))
 
+    identities = extract_du_identities(inventory)
+    if len(identities) != 1:
+        raise ValueError("DU_IDENTITY_NOT_UNIQUE")
+    runtime_identity = identities[0]
+
+    header_validation = resolve_approved_header_structure(inventory, profile)
+    if not header_validation["approved"]:
+        raise ValueError("HEADER_HASH_REVALIDATION_REQUIRED")
+    if header_hash and str(header_hash) != str(header_validation["raw_header_hash"]):
+        raise ValueError("HEADER_HASH_CONTEXT_MISMATCH")
+
     source_sheet = _select_source_sheet(inventory, resolved, required_fields)
     positions = {
         column["fingerprint_key"]: column["source_position"]["one_based_index"]
@@ -113,11 +128,15 @@ def build_canonical_records(
         "mapping_version": profile["mapping_version"],
         "project_key": identity["project_key"],
         "du_model_name": identity["accepted_du_models"][0],
-        "du_model_id": str(identity["accepted_du_model_ids"][0]),
-        "view_id": str(identity["accepted_view_ids"][0]),
+        "du_model_id": str(runtime_identity["du_model_id"]),
+        "view_id": str(runtime_identity["view_id"]),
         "source_file_name": input_path.name,
         "source_file_hash": inventory["source"]["source_file_hash"],
-        "header_hash": header_hash,
+        "header_hash": header_validation["raw_header_hash"],
+        "raw_header_hash": header_validation["raw_header_hash"],
+        "structural_header_hash": header_validation["structural_header_hash"],
+        "approved_header_hash": header_validation["approved_header_hash"],
+        "header_hash_approval_basis": header_validation["approval_basis"],
     }
     records = []
     for row_number, raw_values in _iter_source_rows(input_path, source_sheet["sheet_name"], positions):
