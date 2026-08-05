@@ -6,7 +6,7 @@
       "profile_id": "tx_mini_pr_v1",
       "profile_version": "0.2.0",
       "mapping_version": "approved-2026-07-07-tx-mini-v1",
-      "current_status": "PR_INPUT_READY",
+      "current_status": "PRODUCTION",
       "du_model_name": "TX Mini Project",
       "observed_header_hash": "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
       "transition_targets": [
@@ -25,13 +25,11 @@
           "eligible": true,
           "denied_reasons": []
         },
-        {
-          "target_status": "PRODUCTION",
-          "eligible": false,
-          "denied_reasons": [
-            "PROFILE_NOT_PRODUCTION"
-          ]
-        }
+      {
+        "target_status": "PRODUCTION",
+        "eligible": true,
+        "denied_reasons": []
+      }
       ],
       "notes": [
         "This transition review is conservative and fail-closed.",

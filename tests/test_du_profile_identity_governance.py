@@ -251,7 +251,7 @@ class TestDuProfileIdentityGovernance(unittest.TestCase):
 
     def test_profile_lifecycle_statuses_are_unchanged(self):
         expected = {
-            "tx_mini_pr_v1": "PR_INPUT_READY",
+            "tx_mini_pr_v1": "PRODUCTION",
             "tx_rollout_2023_pr_v1": "PR_INPUT_READY",
             "mw_eos_swap_pr_v1": "PR_INPUT_READY",
             "celcomdigi_bau_2023_pr_v1": "PR_INPUT_READY",
@@ -263,7 +263,10 @@ class TestDuProfileIdentityGovernance(unittest.TestCase):
         }
         actual = {profile_id: profile["status"] for profile_id, profile in self.profiles.items()}
         self.assertEqual(actual, expected)
-        self.assertNotIn("PRODUCTION", actual.values())
+        self.assertEqual(
+            [profile_id for profile_id, status in actual.items() if status == "PRODUCTION"],
+            ["tx_mini_pr_v1"],
+        )
 
     def test_cd_consolidation_identity_accepts_both_views(self):
         record = next(

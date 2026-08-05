@@ -77,11 +77,11 @@ def _artifact_traceability(
         str(entry.get("mapping_version", "")) == expected_mapping_version for entry in entries
     )
     entry_hashes = {str(entry.get("observed_header_hash", "")) for entry in entries}
-    observed_header_hash_matches = (
-        expected_header_hash in entry_hashes
-        and bool(entry_hashes)
-        and entry_hashes.issubset(known_hashes)
-    )
+    # Discovery artifacts preserve the exact historical export they describe.
+    # A live profile may later approve another compatible header hash without
+    # rewriting that evidence packet, so every artifact hash must be known but
+    # does not need to equal the profile's newest observed hash.
+    observed_header_hash_matches = bool(entry_hashes) and entry_hashes.issubset(known_hashes)
     artifact_status = (
         "TRACEABLE"
         if profile_version_matches and mapping_version_matches and observed_header_hash_matches
@@ -135,7 +135,7 @@ def build_traceability_registry(
         "registry_type": "discovery_profile_traceability_audit",
         "entries": entries,
         "notes": [
-            "This audit checks whether generated profile-centric artifacts carry the live profile version, mapping version, and observed header hash.",
+            "This audit checks whether generated profile-centric artifacts carry the live profile version, mapping version, and a current or approved historical header hash.",
             "A TRACEABLE result means the artifact identity fields line up with the current live profile; it does not imply production approval.",
         ],
     }

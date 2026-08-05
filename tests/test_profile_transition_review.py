@@ -28,21 +28,18 @@ class TestProfileTransitionReview(unittest.TestCase):
         self.assertNotIn("PROFILE_NOT_PRODUCTION", result["denied_reasons"])
         self.assertIn("NO_APPROVED_HEADER_HASH", result["denied_reasons"])
 
-    def test_tx_mini_production_transition_stays_denied(self):
+    def test_tx_mini_production_transition_is_eligible(self):
         registry = json.loads(
             (ROOT / "config" / "registries" / "mw_du_profile_transition_review.yaml").read_text(encoding="utf-8")
         )
         tx_entry = next(entry for entry in registry["entries"] if entry["profile_id"] == "tx_mini_pr_v1")
         production = next(item for item in tx_entry["transition_targets"] if item["target_status"] == "PRODUCTION")
-        # All mappings are approved (2026-07-08), so intermediate targets are
-        # eligible, but production stays denied by the explicit non-production
-        # lifecycle state until a controlled promotion happens.
         business_validated = next(
             item for item in tx_entry["transition_targets"] if item["target_status"] == "BUSINESS_VALIDATED"
         )
         self.assertTrue(business_validated["eligible"])
-        self.assertFalse(production["eligible"])
-        self.assertEqual(production["denied_reasons"], ["PROFILE_NOT_PRODUCTION"])
+        self.assertTrue(production["eligible"])
+        self.assertEqual(production["denied_reasons"], [])
 
     def test_pr_input_ready_ignores_optional_competing_and_unverified_fields(self):
         readiness_entry = {

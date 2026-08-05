@@ -372,6 +372,11 @@ def validate_live_discovery_packets() -> None:
     )
 
 
-if __name__ == "__main__":
+def main() -> int:
     validate_live_discovery_packets()
     print("Discovery packet consistency check passed.")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

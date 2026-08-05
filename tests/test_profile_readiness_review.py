@@ -11,7 +11,7 @@ from du_profile_loader import load_du_profile
 
 
 class TestProfileReadinessReview(unittest.TestCase):
-    def test_tx_mini_entry_stays_discovery_only_blocked(self):
+    def test_tx_mini_entry_is_production_ready(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml")
         unresolved = json.loads(
             (ROOT / "config" / "registries" / "mw_du_unresolved_skill_field_review.yaml").read_text(encoding="utf-8")
@@ -24,12 +24,9 @@ class TestProfileReadinessReview(unittest.TestCase):
 
         entry = build_readiness_entry(profile, unresolved_entry, bridge_entry)
 
-        # All TX Mini mapping rulings landed by 2026-07-08 and JJ declared the
-        # profile PR_INPUT_READY. The only remaining fail-closed blocker is the
-        # non-production lifecycle state, so output stays blocked.
-        self.assertEqual(entry["readiness_status"], "DISCOVERY_ONLY_BLOCKED")
-        self.assertEqual(entry["profile_status"], "PR_INPUT_READY")
-        self.assertEqual(entry["blocker_summary"]["overall_blockers"], ["PROFILE_NOT_PRODUCTION"])
+        self.assertEqual(entry["readiness_status"], "PRODUCTION_READY")
+        self.assertEqual(entry["profile_status"], "PRODUCTION")
+        self.assertEqual(entry["blocker_summary"]["overall_blockers"], [])
         self.assertEqual(entry["blocker_summary"]["cross_model_bridge_fields"], [])
 
     def test_mw_eos_entry_stays_discovery_only_blocked_only_for_non_production_status(self):

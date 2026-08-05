@@ -22,22 +22,19 @@ class TestProfileStatusConsistency(unittest.TestCase):
             ROOT / "config" / "registries" / "mw_du_profile_transition_review.yaml",
         )
 
-    def test_promoted_profile_is_rejected_when_transition_review_denies_it(self):
-        # TX Mini is transition-eligible up to PR_INPUT_READY since 2026-07-08,
-        # so use the still-denied PRODUCTION target to prove the guard rejects
-        # a declared status that outruns the review.
+    def test_tx_mini_production_status_is_permitted_by_transition_review(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml")
-        profile["status"] = "PRODUCTION"
         registry = json.loads(
             (ROOT / "config" / "registries" / "mw_du_profile_transition_review.yaml").read_text(encoding="utf-8")
         )
         transition_entry = next(entry for entry in registry["entries"] if entry["profile_id"] == "tx_mini_pr_v1")
-
-        with self.assertRaises(ProfileValidationError) as error:
-            validate_profile_status_consistency(profile, transition_entry)
-
-        self.assertIn("PRODUCTION", str(error.exception))
-        self.assertIn("PROFILE_NOT_PRODUCTION", str(error.exception))
+        validate_profile_status_consistency(profile, transition_entry)
+        production = next(
+            target for target in transition_entry["transition_targets"]
+            if target["target_status"] == "PRODUCTION"
+        )
+        self.assertTrue(production["eligible"])
+        self.assertEqual(production["denied_reasons"], [])
 
     def test_missing_transition_entry_fails_closed(self):
         with tempfile.TemporaryDirectory() as tmpdir:

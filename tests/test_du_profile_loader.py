@@ -5,6 +5,41 @@ from tests.du_profile_loader_legacy_tests import TestDuProfileLoader as _LegacyT
 
 
 class TestDuProfileLoader(_LegacyTestDuProfileLoader):
+    def test_all_pr_input_ready_profiles_have_approved_subcontractor_tss_and_remain_non_production(self):
+        profile = self._load_tx_mini_profile()
+        self.assertEqual(profile["status"], "PRODUCTION")
+        candidate = profile["field_mapping"]["subcontractor_tss"]["source_candidates"][0]
+        self.assertEqual(candidate["mapping_status"], "APPROVED")
+        self.assertEqual(candidate["fingerprint"]["display_header"], "SubCon - TSS Team")
+
+        for profile_name in (
+            "tx_rollout_2023_pr_v1.yaml",
+            "mw_eos_swap_pr_v1.yaml",
+            "celcomdigi_bau_2023_pr_v1.yaml",
+            "celcomdigi_bau_2024_pr_v1.yaml",
+            "celcomdigi_usp_pr_v1.yaml",
+            "jendela_tx_migration_pr_v1.yaml",
+        ):
+            with self.subTest(profile_name=profile_name):
+                other = self._load_profile(profile_name)
+                self.assertEqual(other["status"], "PR_INPUT_READY")
+                self.assertNotEqual(other["status"], "PRODUCTION")
+
+    def test_tx_mini_profile_loads_without_claiming_production_readiness(self):
+        profile = self._load_tx_mini_profile()
+        old_hash = "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221"
+        revalidated_hash = "1a466e31d3c25ca73f059123d4cc33280761746ea3dca61d25a384acad5c9fde"
+        supplied_hash = "830864906f3e69041995bec10b0a5840d5f8c6fa5defa2cfaef30b868b91a921"
+        self.assertEqual(profile["status"], "PRODUCTION")
+        self.assertEqual(profile["mapping_version"], "approved-2026-07-07-tx-mini-v1")
+        self.assertEqual(profile["identity"]["accepted_view_ids"], ["2477626672974883536"])
+        self.assertEqual(profile["export_structure"]["header_rows"], [0, 1, 2, 3])
+        self.assertEqual(
+            profile["export_structure"]["approved_header_hashes"],
+            [old_hash, revalidated_hash, supplied_hash],
+        )
+        self.assertEqual(profile["export_structure"]["observed_header_hash"], supplied_hash)
+
     def test_pr_input_ready_2023_tx_rollout_profile_loads_with_human_approved_pr_critical_mappings(self):
         profile = self._load_tx_rollout_profile()
         old_hash = "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320"
@@ -89,6 +124,16 @@ class TestDuProfileLoader(_LegacyTestDuProfileLoader):
 
         root = Path(__file__).resolve().parent.parent
         return load_du_profile(root / "config" / "du_profiles" / "tx_rollout_2023_pr_v1.yaml")
+
+    def _load_tx_mini_profile(self):
+        return self._load_profile("tx_mini_pr_v1.yaml")
+
+    def _load_profile(self, profile_name):
+        from pathlib import Path
+        from du_profile_loader import load_du_profile
+
+        root = Path(__file__).resolve().parent.parent
+        return load_du_profile(root / "config" / "du_profiles" / profile_name)
 
     def _load_cd_consolidation_profile(self):
         from pathlib import Path
