@@ -1,0 +1,44 @@
+name: Issue 64 Temporary CI
+
+on:
+  push:
+    branches:
+      - fix/issue-64-view-independent-du-identity
+
+permissions:
+  contents: read
+
+jobs:
+  affected-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pytest pyyaml xlrd xlwt
+      - name: Compile changed modules
+        run: |
+          python -m py_compile \
+            scripts/profile_du_export.py \
+            scripts/du_profile_resolver.py \
+            scripts/du_export_adapter.py \
+            scripts/canonical_input_pipeline.py \
+            scripts/canonical_generator_bridge_impl.py \
+            scripts/canonical_generator_bridge.py \
+            scripts/pr_input_guard.py
+      - name: Run affected regression
+        run: |
+          python -m pytest -q \
+            tests/test_issue_64_view_independent_identity.py \
+            tests/test_project_du_model_source_routing.py \
+            tests/test_canonical_bridge_profile_routing.py \
+            tests/test_du_export_profiler.py \
+            tests/test_du_export_adapter.py \
+            tests/test_tx_mini_negative_acceptance.py \
+            tests/test_create_pr_entrypoint.py::TestCreatePrEntrypoint::test_resolver_identifies_profile_from_model_view_and_header_hash \
+            tests/test_create_pr_entrypoint.py::TestCreatePrEntrypoint::test_unregistered_view_is_runtime_layout_evidence_not_profile_identity
