@@ -34,7 +34,11 @@ jobs:
       - name: All-DU runner regression tests
         run: >-
           python -m unittest
-          tests/test_run_all_du_ecc_uat.py
+          tests.test_run_all_du_ecc_uat.TestAllDuEccUat.test_deterministic_review_sampling_preserves_sow_and_subcontractor_categories
+          tests.test_run_all_du_ecc_uat.TestAllDuEccUat.test_manifest_loader_requires_unique_profile_ids
+          tests.test_run_all_du_ecc_uat.TestAllDuEccUat.test_master_manifest_initializes_pending_business_status
+          tests.test_run_all_du_ecc_uat.TestAllDuEccUat.test_run_batch_isolates_scope_failure_and_reports_blocked_profiles
+          tests.test_run_all_du_ecc_uat.TestAllDuEccUat.test_tx_rollout_profile_preserves_mapping_and_approves_both_hashes
           tests/test_run_all_du_ecc_uat_multi_profile.py
           tests/test_all_du_long_path_discovery.py
           -v
