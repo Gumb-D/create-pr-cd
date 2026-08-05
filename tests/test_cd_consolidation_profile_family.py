@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Regression contract for the approved CD consolidation profile-family decision."""
 from __future__ import annotations
 
 import json
