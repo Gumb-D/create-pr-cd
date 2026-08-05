@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 jobs:
-  targeted:
+  affected-regression:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,5 +14,22 @@ jobs:
           python-version: '3.11'
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -r requirements.txt
+      - name: Compile changed Python modules
+        run: >-
+          python -m py_compile
+          scripts/iepms_export_source_resolver.py
+          scripts/du_profile_resolver.py
+          scripts/run_all_du_ecc_uat.py
       - name: Project and DU model routing tests
         run: python -m unittest tests/test_project_du_model_source_routing.py -v
+      - name: Existing resolver and production entrypoint tests
+        run: python -m unittest tests/test_create_pr_entrypoint.py -v
+      - name: DU identity governance tests
+        run: python -m unittest tests/test_du_profile_identity_governance.py -v
+      - name: All-DU runner regression tests
+        run: >-
+          python -m unittest
+          tests/test_run_all_du_ecc_uat.py
+          tests/test_run_all_du_ecc_uat_multi_profile.py
+          tests/test_all_du_long_path_discovery.py
+          -v
