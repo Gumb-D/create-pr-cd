@@ -1,6 +1,9 @@
 name: Issue 64 Temporary CI
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - fix/issue-64-view-independent-du-identity
@@ -30,11 +33,13 @@ jobs:
             scripts/canonical_input_pipeline.py \
             scripts/canonical_generator_bridge_impl.py \
             scripts/canonical_generator_bridge.py \
-            scripts/pr_input_guard.py
+            scripts/pr_input_guard.py \
+            scripts/build_du_discovery_registry.py
       - name: Run affected regression
         run: |
           python -m pytest -q \
             tests/test_issue_64_view_independent_identity.py \
+            tests/test_issue_64_pr_guard_project_identity.py \
             tests/test_project_du_model_source_routing.py \
             tests/test_canonical_bridge_profile_routing.py \
             tests/test_du_export_profiler.py \
