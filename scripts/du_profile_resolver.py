@@ -12,7 +12,11 @@ from iepms_export_source_resolver import (
     parse_iepms_export_filename,
     resolve_profile_route,
 )
-from profile_du_export import build_header_inventory, calculate_header_hash
+from profile_du_export import (
+    build_header_inventory,
+    extract_du_identities,
+    resolve_approved_header_structure,
+)
 
 
 RUNNABLE_PROFILE_STATUSES = {"PR_INPUT_READY", "PRODUCTION"}
@@ -25,63 +29,33 @@ class DuProfileResolutionError(ValueError):
         self.details = dict(details or {})
 
 
-def _extract_du_identities(inventory: Mapping[str, Any]) -> list[dict[str, str]]:
-    identities: dict[tuple[str, str], dict[str, str]] = {}
-    for sheet in inventory.get("sheets", []):
-        for column in sheet.get("columns", []):
-            fingerprint = column.get("fingerprint", {})
-            parts = str(fingerprint.get("field_code", "")).split("|")
-            if len(parts) < 4 or parts[0:2] != ["site", "fix00012"]:
-                continue
-            du_model_id, view_id = parts[-2], parts[-1]
-            identities[(du_model_id, view_id)] = {
-                "du_model_id": du_model_id,
-                "view_id": view_id,
-                "sheet_name": str(sheet.get("sheet_name", "")),
-            }
-    return list(identities.values())
-
-
-def _legacy_model_view_route(
+def _model_id_fallback_route(
     registry: Mapping[str, Any],
     detected: Mapping[str, str],
 ) -> dict[str, Any]:
-    model_entries = [
-        entry
-        for entry in registry.get("profiles", [])
-        if str(entry.get("du_model_id", "")) == detected["du_model_id"]
-    ]
     matches = [
-        entry
-        for entry in model_entries
-        if detected["view_id"] in {str(value) for value in entry.get("accepted_view_ids", [])}
+        dict(entry)
+        for entry in registry.get("profiles", [])
+        if isinstance(entry, Mapping)
+        and str(entry.get("du_model_id", "")) == detected["du_model_id"]
     ]
     if not matches:
-        code = "DU_PROFILE_VIEW_NOT_APPROVED" if model_entries else "DU_PROFILE_NOT_FOUND"
         raise DuProfileResolutionError(
-            code,
-            (
-                f"No approved DU Profile matches model {detected['du_model_id']} "
-                f"and view {detected['view_id']}."
-            ),
-            {
-                **detected,
-                "registered_view_ids": sorted(
-                    {
-                        str(view_id)
-                        for entry in model_entries
-                        for view_id in entry.get("accepted_view_ids", [])
-                    }
-                ),
-            },
+            "DU_PROFILE_NOT_FOUND",
+            f"No DU Profile is registered for DU Model ID {detected['du_model_id']}.",
+            dict(detected),
         )
     if len(matches) != 1:
         raise DuProfileResolutionError(
-            "DU_PROFILE_AMBIGUOUS",
-            "More than one DU Profile matches the detected model/view identity.",
-            {"profile_ids": [entry.get("profile_id") for entry in matches], **detected},
+            "DU_PROFILE_IDENTITY_AMBIGUOUS",
+            "More than one DU Profile is registered for the detected DU Model ID and Project identity is unavailable.",
+            {
+                **detected,
+                "profile_ids": sorted(str(entry.get("profile_id", "")) for entry in matches),
+                "project_keys": sorted(str(entry.get("project_key", "")) for entry in matches),
+            },
         )
-    return dict(matches[0])
+    return matches[0]
 
 
 def resolve_du_profile(
@@ -92,7 +66,7 @@ def resolve_du_profile(
 ) -> dict[str, Any]:
     input_path = Path(input_path)
     inventory = build_header_inventory(input_path)
-    identities = _extract_du_identities(inventory)
+    identities = extract_du_identities(inventory)
     if len(identities) != 1:
         raise DuProfileResolutionError(
             "DU_IDENTITY_NOT_UNIQUE",
@@ -132,8 +106,8 @@ def resolve_du_profile(
             )
         selection_basis = "PROJECT_AND_DU_MODEL"
     else:
-        registry_entry = _legacy_model_view_route(registry, detected)
-        selection_basis = "DU_MODEL_AND_VIEW_LEGACY_FALLBACK"
+        registry_entry = _model_id_fallback_route(registry, detected)
+        selection_basis = "DU_MODEL_ID_FALLBACK"
 
     profile_id = str(registry_entry["profile_id"])
     profile_path = Path(profile_root) / f"{profile_id}.yaml"
@@ -161,30 +135,24 @@ def resolve_du_profile(
             "DU Profile model ID does not match the export.",
             {"profile_id": profile_id, **detected},
         )
-    if filename_identity is not None:
-        if str(identity.get("project_key", "")) != filename_identity["project_key"]:
-            raise DuProfileResolutionError(
-                "DU_PROFILE_IDENTITY_MISMATCH",
-                "DU Profile Project Key does not match the source filename identity.",
-                {"profile_id": profile_id, **filename_identity},
-            )
-    else:
-        accepted_view_ids = {str(value) for value in identity.get("accepted_view_ids", [])}
-        if detected["view_id"] not in accepted_view_ids:
-            raise DuProfileResolutionError(
-                "DU_PROFILE_IDENTITY_MISMATCH",
-                "DU Profile view ID does not match the legacy export identity.",
-            )
+    if filename_identity is not None and str(identity.get("project_key", "")) != filename_identity["project_key"]:
+        raise DuProfileResolutionError(
+            "DU_PROFILE_IDENTITY_MISMATCH",
+            "DU Profile Project Key does not match the source filename identity.",
+            {"profile_id": profile_id, **filename_identity},
+        )
 
-    header_hash = calculate_header_hash(inventory)
-    approved_hashes = {
-        str(value) for value in profile.get("export_structure", {}).get("approved_header_hashes", [])
-    }
-    if header_hash not in approved_hashes:
+    header_validation = resolve_approved_header_structure(inventory, profile)
+    if not header_validation["approved"]:
         raise DuProfileResolutionError(
             "HEADER_HASH_REVALIDATION_REQUIRED",
-            f"The export structure does not match the approved header hash for {profile_id}.",
-            {"profile_id": profile_id, "actual_header_hash": header_hash},
+            f"The export structure does not match an approved header layout for {profile_id}.",
+            {
+                "profile_id": profile_id,
+                "actual_header_hash": header_validation["raw_header_hash"],
+                "structural_header_hash": header_validation["structural_header_hash"],
+                "approval_basis": header_validation["approval_basis"],
+            },
         )
 
     result = {
@@ -192,7 +160,11 @@ def resolve_du_profile(
         "profile_path": profile_path,
         "registry_entry": registry_entry,
         "inventory": inventory,
-        "header_hash": header_hash,
+        "header_hash": header_validation["raw_header_hash"],
+        "raw_header_hash": header_validation["raw_header_hash"],
+        "structural_header_hash": header_validation["structural_header_hash"],
+        "approved_header_hash": header_validation["approved_header_hash"],
+        "header_hash_approval_basis": header_validation["approval_basis"],
         "profile_selection_basis": selection_basis,
         **detected,
     }
