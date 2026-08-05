@@ -12,7 +12,7 @@ from du_profile_loader import ProfileValidationError, load_du_profile
 
 
 class TestProfileStatusConsistency(unittest.TestCase):
-    def test_current_draft_profiles_pass_consistency_check(self):
+    def test_current_profiles_pass_consistency_check(self):
         validate_profiles_against_transition_registry(
             [
                 ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml",
@@ -22,16 +22,30 @@ class TestProfileStatusConsistency(unittest.TestCase):
             ROOT / "config" / "registries" / "mw_du_profile_transition_review.yaml",
         )
 
-    def test_promoted_profile_is_rejected_when_transition_review_denies_it(self):
-        # TX Mini is transition-eligible up to PR_INPUT_READY since 2026-07-08,
-        # so use the still-denied PRODUCTION target to prove the guard rejects
-        # a declared status that outruns the review.
+    def test_tx_mini_production_transition_is_recorded(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml")
-        profile["status"] = "PRODUCTION"
         registry = json.loads(
             (ROOT / "config" / "registries" / "mw_du_profile_transition_review.yaml").read_text(encoding="utf-8")
         )
         transition_entry = next(entry for entry in registry["entries"] if entry["profile_id"] == "tx_mini_pr_v1")
+        production_target = next(
+            target for target in transition_entry["transition_targets"]
+            if target["target_status"] == "PRODUCTION"
+        )
+
+        self.assertEqual(profile["status"], "PRODUCTION")
+        self.assertEqual(transition_entry["current_status"], "PRODUCTION")
+        self.assertTrue(production_target["eligible"])
+        self.assertEqual(production_target["denied_reasons"], [])
+        validate_profile_status_consistency(profile, transition_entry)
+
+    def test_synthetic_promoted_profile_is_rejected_when_transition_review_denies_it(self):
+        profile = load_du_profile(ROOT / "config" / "du_profiles" / "mw_eos_swap_pr_v1.yaml")
+        profile["status"] = "PRODUCTION"
+        registry = json.loads(
+            (ROOT / "config" / "registries" / "mw_du_profile_transition_review.yaml").read_text(encoding="utf-8")
+        )
+        transition_entry = next(entry for entry in registry["entries"] if entry["profile_id"] == "mw_eos_swap_pr_v1")
 
         with self.assertRaises(ProfileValidationError) as error:
             validate_profile_status_consistency(profile, transition_entry)
