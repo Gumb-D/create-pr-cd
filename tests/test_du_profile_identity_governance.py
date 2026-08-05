@@ -192,31 +192,32 @@ class TestDuProfileIdentityGovernance(unittest.TestCase):
             validate_identity_governance(profiles, registry),
         )
 
-    def test_third_cd_consolidation_profile_fails(self):
+    def test_second_cd_consolidation_profile_fails(self):
         profiles = deepcopy(self.profiles)
-        third = deepcopy(profiles["cd_consolidation_2023_decom_pr_v1"])
-        third["profile_id"] = "cd_consolidation_2023_third_view_pr_v1"
-        profiles[third["profile_id"]] = third
+        duplicate = deepcopy(profiles["celcomdigi_cd_consolidation_2023_pr_v1"])
+        duplicate["profile_id"] = "cd_consolidation_2023_view_specific_pr_v1"
+        duplicate["identity"]["accepted_view_ids"] = ["9999999999999999999"]
+        profiles[duplicate["profile_id"]] = duplicate
 
         registry = deepcopy(self.registry)
         source_record = next(
             record
             for record in registry["profiles"]
-            if record["profile_id"] == "cd_consolidation_2023_decom_pr_v1"
+            if record["profile_id"] == "celcomdigi_cd_consolidation_2023_pr_v1"
         )
-        third_record = deepcopy(source_record)
-        third_record.update(
+        duplicate_record = deepcopy(source_record)
+        duplicate_record.update(
             {
-                "profile_id": third["profile_id"],
-                "accepted_view_ids": third["identity"]["accepted_view_ids"],
-                "reason": "Negative-test third view.",
+                "profile_id": duplicate["profile_id"],
+                "canonical_profile_id": duplicate["profile_id"],
+                "accepted_view_ids": duplicate["identity"]["accepted_view_ids"],
             }
         )
-        registry["profiles"].append(third_record)
+        registry["profiles"].append(duplicate_record)
 
-        key = identity_key(third)
+        key = identity_key(duplicate)
         self.assertIn(
-            f"DUPLICATE_IDENTITY_SET_MISMATCH:{key}",
+            f"DUPLICATE_PROFILE_IDENTITY:{key}",
             validate_identity_governance(profiles, registry),
         )
 
@@ -258,12 +259,25 @@ class TestDuProfileIdentityGovernance(unittest.TestCase):
             "celcomdigi_usp_pr_v1": "PR_INPUT_READY",
             "jendela_tx_migration_pr_v1": "PR_INPUT_READY",
             "zte_tx_mini_pr_v1": "PR_INPUT_READY",
-            "cd_consolidation_2023_decom_pr_v1": "DRAFT",
-            "cd_consolidation_2023_rollout_pr_v1": "DRAFT",
+            "celcomdigi_cd_consolidation_2023_pr_v1": "DRAFT",
         }
         actual = {profile_id: profile["status"] for profile_id, profile in self.profiles.items()}
         self.assertEqual(actual, expected)
         self.assertNotIn("PRODUCTION", actual.values())
+
+    def test_cd_consolidation_identity_accepts_both_views(self):
+        record = next(
+            item
+            for item in self.registry["profiles"]
+            if item["profile_id"] == "celcomdigi_cd_consolidation_2023_pr_v1"
+        )
+        self.assertEqual(record["profile_status"], "DRAFT")
+        self.assertEqual(record["name_status"], "STANDARD")
+        self.assertEqual(
+            record["accepted_view_ids"],
+            ["702960351133798763", "8359047522524230651"],
+        )
+        self.assertEqual(self.registry.get("identity_reviews"), [])
 
     def test_2023_celcomdigi_bau_identity_uses_corrected_tx_prpo_view(self):
         record = next(
