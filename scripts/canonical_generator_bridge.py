@@ -1,490 +1,100 @@
 #!/usr/bin/env python3
-"""Build local-only generator-compatible UAT packets from approved DU exports.
+"""Auto-routing entry point for canonical generator-compatible UAT packets.
 
-This module never imports or invokes the ECC generator. Every output row is
-permanently marked ECC Allowed = False.
+The implementation remains in ``canonical_generator_bridge_impl``. This public
+entry point resolves the authoritative DU Profile from Project + DU Model before
+building any records. An optional ``--profile`` is an assertion only and cannot
+override the automatically resolved profile.
 """
 from __future__ import annotations
 
 import argparse
-import csv
 import json
-import datetime
-import re
-from collections import Counter
+import sys
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Mapping
 
-from openpyxl import Workbook, load_workbook
-
-from du_export_adapter import (
-    PR_STATUS_EXISTS,
-    PR_STATUS_NONE,
-    PR_STATUS_NOT_REQUIRED,
-    build_canonical_site_record,
-    resolve_profile_field_mappings,
-)
+import canonical_generator_bridge_impl as _impl
+from canonical_generator_bridge_impl import *  # noqa: F401,F403 - preserve public API
 from du_profile_loader import load_du_profile
-from profile_du_export import build_header_inventory, calculate_header_hash, fingerprint_key
+from du_profile_resolver import resolve_du_profile
 
-ALLOWED_UAT_PROFILE_STATUSES = {"PR_INPUT_READY", "PRODUCTION"}
-UAT_CLASSIFICATIONS = ("UAT_CANDIDATE", "DUPLICATE_BLOCKED", "NO_PR_OR_IGNORED", "REVIEW_REQUIRED")
 
-GENERATOR_COLUMNS = (
-    "customer site code",
-    "customer site name",
-    "du code",
-    "Tx SOW",
-    "region",
-    "Province/State",
-    "SubCon - TSS Team",
-    "SubCon - TI Team",
-    "Subcon PR - TSS",
-    "Subcon PR - TI",
-    "TX Upgrade Scope",
-    "Latitude (North Plus South Minus)",
-    "Longitude (East Plus West Minus)",
-    "MW Config Antenna Size NE",
-    "MW Config Antenna Size FE",
-    "BOQ Configuration",
-    "TX SOW Details",
-    "NE SOW Details",
-    "FE SOW Details",
-    "Scope Actual End Date",
-    "Source Row Number",
-    "DU Profile ID",
-    "DU Profile Version",
-    "Mapping Version",
-    "Header Hash",
-    "UAT Classification",
-    "UAT Blocking Reasons",
-    "ECC Allowed",
+REPO_ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_PROFILE_ROOT = REPO_ROOT / "config" / "du_profiles"
+DEFAULT_IDENTITY_REGISTRY = (
+    REPO_ROOT / "config" / "registries" / "mw_du_profile_identity_registry.yaml"
 )
 
 
-def _load_json_or_yaml(path: Path) -> Any:
-    text = Path(path).read_text(encoding="utf-8")
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        try:
-            import yaml  # type: ignore
-        except ModuleNotFoundError as error:
-            raise ValueError(f"{path} requires PyYAML or JSON-compatible YAML.") from error
-        return yaml.safe_load(text)
+def __getattr__(name: str):
+    """Preserve access to implementation helpers used by existing callers/tests."""
 
-
-def _is_blank(value: Any) -> bool:
-    return value is None or (isinstance(value, str) and not value.strip())
-
-
-def _scope_date_field(scope: str) -> str:
-    return f"{scope.lower()}_actual_end_date"
-
-
-def _is_valid_date(val: Any) -> bool:
-    if isinstance(val, (datetime.datetime, datetime.date)):
-        return True
-    if not isinstance(val, str):
-        return False
-    val_str = val.strip()
-    if not val_str:
-        return False
-    try:
-        datetime.datetime.fromisoformat(val_str.replace("Z", "+00:00"))
-        return True
-    except ValueError:
-        pass
-    if re.match(r"^\d{1,4}[-/]\d{1,2}[-/]\d{1,4}( \d{1,2}:\d{1,2}(:\d{1,2})?)?$", val_str):
-        try:
-            parts = re.split(r"[-/]", val_str.split(" ")[0])
-            if len(parts) == 3:
-                y, m, d = (int(parts[0]), int(parts[1]), int(parts[2])) if len(parts[0]) == 4 else (int(parts[2]), int(parts[1]), int(parts[0]))
-                datetime.date(y, m, d)
-                return True
-        except ValueError:
-            pass
-    return False
-
-
-def classify_uat_record(record: Mapping[str, Any], scope: str) -> tuple[str, list[str]]:
-    """Classify one canonical record for non-production UAT.
-
-    1. invalid/ambiguous scope configuration -> fail closed before row classification (handled externally)
-    2. canonical required evidence unresolved -> REVIEW_REQUIRED
-    3. existing corresponding PR -> DUPLICATE_BLOCKED
-    4. corresponding Actual End blank -> NO_PR_OR_IGNORED
-    5. malformed Actual End -> REVIEW_REQUIRED
-    6. SOW NO_PR_TRIGGER -> NO_PR_OR_IGNORED
-    7. SOW/mapping review state -> REVIEW_REQUIRED
-    8. otherwise -> UAT_CANDIDATE
-    """
-    scope = str(scope).upper()
-    if scope not in {"TSS", "TI"}:
-        raise ValueError("scope must be TSS or TI")
-
-    validation = record.get("validation", {})
-    reasons = [str(value) for value in validation.get("blocking_reasons", []) if str(value).strip()]
-
-    # 1. Scope config invalid is handled externally (fail closed)
-
-    # 2. Scope-specific existing PR exists
-    status_field = "existing_tss_pr_status" if scope == "TSS" else "existing_ti_pr_status"
-    status = record.get("pr_context", {}).get(status_field, PR_STATUS_NONE)
-
-    if status == PR_STATUS_EXISTS:
-        return "DUPLICATE_BLOCKED", reasons + [f"{status_field}:PR_EXISTS"]
-    if status == PR_STATUS_NOT_REQUIRED:
-        return "NO_PR_OR_IGNORED", reasons + [f"{status_field}:NO_PR_REQUIRED"]
-
-    date_field = _scope_date_field(scope)
-    date_evidence = record.get("source_evidence", {}).get("fields", {}).get(date_field)
-    
-    # 3. Scope Actual End blank
-    if isinstance(date_evidence, Mapping):
-        source_val = date_evidence.get("source_value")
-        if _is_blank(source_val):
-            return "NO_PR_OR_IGNORED", reasons + [f"{date_field}:ACTUAL_END_MISSING"]
-        # 4. Scope Actual End malformed
-        if not _is_valid_date(source_val):
-            return "REVIEW_REQUIRED", reasons + [f"{date_field}:MALFORMED_DATE"]
-
-    sow_evidence = record.get("source_evidence", {}).get("fields", {}).get("tx_sow_normalized", {})
-    normalization_status = sow_evidence.get("normalization_status")
-    
-    # 5. SOW is approved no-output
-    if normalization_status == "APPROVED_NO_OUTPUT":
-        return "NO_PR_OR_IGNORED", reasons + ["SOW_CLASSIFICATION:NO_PR_TRIGGER"]
-
-    # 6. canonical candidate-required evidence incomplete
-    if validation.get("pr_input_classification") not in {"PR_INPUT_READY", "PR_INPUT_READY_WITH_REVIEW"}:
-        return "REVIEW_REQUIRED", reasons or ["CANONICAL_RECORD_NOT_READY"]
-
-    # 7. SOW/mapping requires review
-    if normalization_status not in {"APPROVED", "APPROVED_NO_OUTPUT"}:
-        return "REVIEW_REQUIRED", reasons + [f"SOW_NORMALIZATION:{normalization_status or 'MISSING'}"]
-
-    # 8. Otherwise
-    return "UAT_CANDIDATE", reasons
-
-
-def _legacy_pr_reference_value(value: Any) -> str:
-    if value in (None, "", PR_STATUS_NONE):
-        return ""
-    return str(value)
-
-
-def canonical_record_to_generator_row(record: Mapping[str, Any], scope: str) -> dict[str, Any]:
-    classification, reasons = classify_uat_record(record, scope)
-    identity = record.get("identity", {})
-    site = record.get("site", {})
-    context = record.get("pr_context", {})
-    technical = record.get("technical_context", {})
-    validation = record.get("validation", {})
-    date_evidence = record.get("source_evidence", {}).get("fields", {}).get(_scope_date_field(str(scope).upper()), {})
-    return {
-        "customer site code": site.get("site_code", ""),
-        "customer site name": site.get("site_name", ""),
-        "du code": site.get("du_key", ""),
-        "Tx SOW": context.get("tx_sow_normalized") or context.get("tx_sow_raw", ""),
-        "region": context.get("region", ""),
-        "Province/State": context.get("state", ""),
-        "SubCon - TSS Team": context.get("subcontractor_tss", ""),
-        "SubCon - TI Team": context.get("subcontractor_ti", ""),
-        "Subcon PR - TSS": _legacy_pr_reference_value(context.get("existing_tss_pr_status")),
-        "Subcon PR - TI": _legacy_pr_reference_value(context.get("existing_ti_pr_status")),
-        "TX Upgrade Scope": context.get("tx_upgrade_scope_raw", ""),
-        "Latitude (North Plus South Minus)": technical.get("latitude"),
-        "Longitude (East Plus West Minus)": technical.get("longitude"),
-        "MW Config Antenna Size NE": technical.get("antenna_size_ne", ""),
-        "MW Config Antenna Size FE": technical.get("antenna_size_fe", ""),
-        "BOQ Configuration": technical.get("boq_configuration", ""),
-        "TX SOW Details": technical.get("tx_sow_details", ""),
-        "NE SOW Details": technical.get("ne_sow_details", ""),
-        "FE SOW Details": technical.get("fe_sow_details", ""),
-        "Scope Actual End Date": date_evidence.get("source_value") if isinstance(date_evidence, Mapping) else "",
-        "Source Row Number": identity.get("source_row_number"),
-        "DU Profile ID": validation.get("profile_id", ""),
-        "DU Profile Version": validation.get("profile_version", ""),
-        "Mapping Version": validation.get("mapping_version", ""),
-        "Header Hash": identity.get("header_hash", ""),
-        "UAT Classification": classification,
-        "UAT Blocking Reasons": " | ".join(reasons),
-        "ECC Allowed": False,
-    }
-
-
-def _append_rows(worksheet, rows: Iterable[Mapping[str, Any]], columns: Iterable[str]) -> None:
-    columns = list(columns)
-    worksheet.append(columns)
-    for row in rows:
-        worksheet.append([row.get(column) for column in columns])
-
-
-def _append_generator_data_sheet(worksheet, rows: list[Mapping[str, Any]]) -> None:
-    worksheet.append(["NON-PRODUCTION UAT BRIDGE OUTPUT"])
-    worksheet.append(["This sheet contains UAT_CANDIDATE rows only."])
-    worksheet.append(["ECC Allowed is permanently false; use explicit generator CLI arguments for any later local UAT."])
-    _append_rows(worksheet, rows, GENERATOR_COLUMNS)
-
-
-def write_uat_packet(
-    records: list[Mapping[str, Any]],
-    metadata: Mapping[str, Any],
-    output_dir: Path,
-    scope: str,
-) -> dict[str, Path]:
-    output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-    scope = str(scope).upper()
-    rows = [canonical_record_to_generator_row(record, scope) for record in records]
-    counts = Counter(row["UAT Classification"] for row in rows)
-
-    summary = {
-        "scope": scope,
-        "profile_id": metadata.get("profile_id", ""),
-        "profile_version": metadata.get("profile_version", ""),
-        "mapping_version": metadata.get("mapping_version", ""),
-        "source_file_name": metadata.get("source_file_name", ""),
-        "source_file_hash": metadata.get("source_file_hash", ""),
-        "header_hash": metadata.get("header_hash", ""),
-        "record_count": len(rows),
-        "counts": {name: counts.get(name, 0) for name in UAT_CLASSIFICATIONS},
-        "generator_data_row_count": counts.get("UAT_CANDIDATE", 0),
-        "ecc_allowed": False,
-    }
-
-    workbook_path = output_dir / f"canonical_generator_uat_{scope.lower()}.xlsx"
-    summary_path = output_dir / f"canonical_generator_uat_{scope.lower()}_summary.json"
-    workbook = Workbook()
-    workbook.remove(workbook.active)
-
-    candidate_rows = [row for row in rows if row["UAT Classification"] == "UAT_CANDIDATE"]
-    _append_generator_data_sheet(workbook.create_sheet("data"), candidate_rows)
-
-    summary_sheet = workbook.create_sheet("summary")
-    summary_sheet.append(["Key", "Value"])
-    for key, value in summary.items():
-        summary_sheet.append([key, json.dumps(value, ensure_ascii=False) if isinstance(value, dict) else value])
-
-    partitions = {
-        "uat_candidates": candidate_rows,
-        "duplicate_blocked": [row for row in rows if row["UAT Classification"] == "DUPLICATE_BLOCKED"],
-        "no_pr_or_ignored": [row for row in rows if row["UAT Classification"] == "NO_PR_OR_IGNORED"],
-        "review_required": [row for row in rows if row["UAT Classification"] == "REVIEW_REQUIRED"],
-    }
-    for sheet_name, partition_rows in partitions.items():
-        _append_rows(workbook.create_sheet(sheet_name), partition_rows, GENERATOR_COLUMNS)
-
-    traceability_columns = (
-        "customer site code",
-        "Scope Actual End Date",
-        "Source Row Number",
-        "DU Profile ID",
-        "DU Profile Version",
-        "Mapping Version",
-        "Header Hash",
-        "UAT Classification",
-        "UAT Blocking Reasons",
-        "ECC Allowed",
-    )
-    _append_rows(workbook.create_sheet("traceability"), rows, traceability_columns)
-    workbook.save(workbook_path)
-    summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
-    return {"workbook": workbook_path, "summary_json": summary_path}
-
-
-def _iter_source_rows(input_path: Path, sheet_name: str, positions: Mapping[str, int]):
-    suffix = input_path.suffix.lower()
-    if suffix in {".xlsx", ".xlsm"}:
-        workbook = load_workbook(input_path, read_only=True, data_only=False)
-        worksheet = workbook[sheet_name]
-        try:
-            for row_number, values in enumerate(worksheet.iter_rows(min_row=5, values_only=True), start=5):
-                yield row_number, {
-                    key: values[index - 1] if index <= len(values) else None
-                    for key, index in positions.items()
-                }
-        finally:
-            workbook.close()
-        return
-    if suffix == ".csv":
-        with input_path.open("r", encoding="utf-8-sig", newline="") as handle:
-            reader = csv.reader(handle)
-            for _ in range(4):
-                next(reader, None)
-            for row_number, values in enumerate(reader, start=5):
-                yield row_number, {
-                    key: values[index - 1] if index <= len(values) else None
-                    for key, index in positions.items()
-                }
-        return
-    raise ValueError("Only .xlsx, .xlsm, and .csv exports are supported.")
-
-
-def _select_source_sheet(
-    inventory: Mapping[str, Any],
-    resolved: Mapping[str, Any],
-    profile: Mapping[str, Any],
-) -> Mapping[str, Any]:
-    required_fields = [name for name, config in profile.get("field_mapping", {}).items() if config.get("required")]
-    required_sheets = {
-        match["sheet_name"]
-        for name in required_fields
-        for match in resolved.get(name, {}).get("matches", [])
-    }
-    if len(required_sheets) != 1:
-        raise ValueError("REQUIRED_MAPPINGS_SPAN_MULTIPLE_OR_NO_SHEETS")
-    selected_name = next(iter(required_sheets))
-    for sheet in inventory.get("sheets", []):
-        if sheet.get("sheet_name") == selected_name:
-            return sheet
-    raise ValueError("RESOLVED_SOURCE_SHEET_NOT_FOUND")
-
-
-def _attach_scope_eligibility(
-    record: dict[str, Any],
-    raw_values: Mapping[str, Any],
-    scope: str,
-    scope_config: Mapping[str, Any],
-) -> dict[str, Any]:
-    config = scope_config.get(scope, {}) if isinstance(scope_config, Mapping) else {}
-    if not config:
-        return record
-    if config.get("rule") != "actual_end_required":
-        raise ValueError("UNSUPPORTED_SCOPE_ELIGIBILITY_RULE")
-    fingerprint = config.get("actual_end_fingerprint")
-    if not isinstance(fingerprint, Mapping):
-        raise ValueError("MISSING_SCOPE_ACTUAL_END_FINGERPRINT")
-    key = fingerprint_key(fingerprint)
-    if key not in raw_values:
-        raise ValueError("SCOPE_ACTUAL_END_HEADER_NOT_FOUND")
-    record["source_evidence"]["fields"][_scope_date_field(scope)] = {
-        "source_header_fingerprint": dict(fingerprint),
-        "source_value": raw_values.get(key),
-        "transformation": "none",
-        "mapping_status": "APPROVED",
-    }
-    return record
-
-
-def build_records_from_export(
-    input_path: Path,
-    profile_path: Path,
-    scope: str,
-    sow_registry_path: Path,
-    scope_config: Mapping[str, Any] = None,
-) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    input_path = Path(input_path)
-    profile_path = Path(profile_path)
-    scope = str(scope).upper()
-    profile = load_du_profile(profile_path)
-    if profile.get("status") not in ALLOWED_UAT_PROFILE_STATUSES:
-        raise ValueError("DU profile must be PR_INPUT_READY or PRODUCTION for non-production UAT bridging.")
-
-    inventory = build_header_inventory(input_path)
-    header_hash = calculate_header_hash(inventory)
-    approved_hashes = profile.get("export_structure", {}).get("approved_header_hashes", [])
-    if header_hash not in approved_hashes:
-        raise ValueError("HEADER_HASH_REVALIDATION_REQUIRED")
-
-    resolved = resolve_profile_field_mappings(inventory, profile)
-    required_missing = [
-        name
-        for name, config in profile.get("field_mapping", {}).items()
-        if config.get("required") and resolved.get(name, {}).get("status") != "RESOLVED"
-    ]
-    if required_missing:
-        raise ValueError("MISSING_OR_AMBIGUOUS_REQUIRED_MAPPING:" + ",".join(sorted(required_missing)))
-
-    source_sheet = _select_source_sheet(inventory, resolved, profile)
-    positions = {
-        column["fingerprint_key"]: column["source_position"]["one_based_index"]
-        for column in source_sheet.get("columns", [])
-    }
-    
-    if scope_config is None:
-        profile_id = profile.get("profile_id", "")
-        base_dir = profile_path.resolve().parent.parent
-        candidates = [
-            base_dir / "scope_eligibility" / f"{profile_id}.json",
-            Path(__file__).resolve().parent.parent / "config" / "scope_eligibility" / f"{profile_id}.json",
-        ]
-        resolved_cfg_path = None
-        for candidate_path in candidates:
-            if candidate_path.exists():
-                resolved_cfg_path = candidate_path
-                break
-
-        if resolved_cfg_path is None:
-            raise ValueError(f"MISSING_REGISTERED_SCOPE_CONFIG:{profile_id}")
-
-        loaded_cfg = _load_json_or_yaml(resolved_cfg_path)
-        if isinstance(loaded_cfg, Mapping):
-            scope_config = loaded_cfg.get("scopes", loaded_cfg)
-        else:
-            raise ValueError(f"MALFORMED_SCOPE_CONFIG:{resolved_cfg_path.name}")
-
-    if not isinstance(scope_config, Mapping):
-        raise ValueError("MALFORMED_SCOPE_CONFIG:scope_config_must_be_mapping")
-
-    configured = scope_config.get(scope, {})
-    if not isinstance(configured, Mapping) or not configured:
-        raise ValueError(f"MISSING_SCOPE_CONFIG_FOR_SCOPE:{scope}")
-
-    actual_end_fp = configured.get("actual_end_fingerprint")
-    if not isinstance(actual_end_fp, Mapping) or not actual_end_fp:
-        raise ValueError(f"MALFORMED_SCOPE_CONFIG:actual_end_fingerprint_missing_for_{scope}")
-
-    expected_key = fingerprint_key(actual_end_fp)
-    if expected_key not in positions:
-        raise ValueError("SCOPE_ACTUAL_END_HEADER_NOT_FOUND")
-
-    sow_registry = _load_json_or_yaml(Path(sow_registry_path))
-    identity = profile["identity"]
-    metadata = {
-        "profile_id": profile["profile_id"],
-        "profile_version": profile["profile_version"],
-        "mapping_version": profile["mapping_version"],
-        "source_file_name": input_path.name,
-        "source_file_hash": inventory["source"]["source_file_hash"],
-        "header_hash": header_hash,
-    }
-    context_base = {
-        "project_key": identity["project_key"],
-        "du_model_name": identity["accepted_du_models"][0],
-        "du_model_id": identity["accepted_du_model_ids"][0],
-        "view_id": identity["accepted_view_ids"][0],
-        **metadata,
-    }
-
-    records = []
-    for row_number, raw_values in _iter_source_rows(input_path, source_sheet["sheet_name"], positions):
-        if not any(value not in (None, "") for value in raw_values.values()):
-            continue
-        record = build_canonical_site_record(
-            raw_values,
-            profile,
-            {**context_base, "source_row_number": row_number},
-            scope=scope,
-            resolved_mappings=resolved,
-            sow_registry=sow_registry,
-        )
-        records.append(_attach_scope_eligibility(record, raw_values, scope, scope_config))
-    return records, metadata
+    return getattr(_impl, name)
 
 
 def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Build generator-compatible UAT packets from approved DU exports."
+        description=(
+            "Build generator-compatible UAT packets and automatically resolve "
+            "the DU Profile from Project + DU Model."
+        )
     )
     parser.add_argument("--input", required=True, type=Path, help="Path to DU export file")
-    parser.add_argument("--profile", required=True, type=Path, help="Path to DU profile YAML file")
-    parser.add_argument("--scope", required=True, choices=["TSS", "TI", "tss", "ti"], help="Scope (TSS or TI)")
-    parser.add_argument("--sow-registry", required=True, type=Path, help="Path to canonical SOW registry file")
-    parser.add_argument("--scope-config", type=Path, default=None, help="Path to scope eligibility config JSON file")
+    parser.add_argument(
+        "--profile",
+        type=Path,
+        default=None,
+        help="Optional expected DU Profile path; assertion only, never a routing override",
+    )
+    parser.add_argument(
+        "--profile-root",
+        type=Path,
+        default=DEFAULT_PROFILE_ROOT,
+        help="Directory containing registered DU Profile YAML files",
+    )
+    parser.add_argument(
+        "--identity-registry",
+        type=Path,
+        default=DEFAULT_IDENTITY_REGISTRY,
+        help="Project + DU Model identity registry",
+    )
+    parser.add_argument(
+        "--scope",
+        required=True,
+        choices=["TSS", "TI", "tss", "ti"],
+        help="Scope (TSS or TI)",
+    )
+    parser.add_argument(
+        "--sow-registry",
+        required=True,
+        type=Path,
+        help="Path to canonical SOW registry file",
+    )
+    parser.add_argument(
+        "--scope-config",
+        type=Path,
+        default=None,
+        help="Path to scope eligibility config JSON file",
+    )
     parser.add_argument("--output", required=True, type=Path, help="Output directory")
     return parser.parse_args(args)
+
+
+def _assert_expected_profile(
+    expected_profile_path: Path | None,
+    resolved_profile: Mapping[str, object],
+) -> None:
+    if expected_profile_path is None:
+        return
+    expected_profile_path = Path(expected_profile_path)
+    if not expected_profile_path.exists():
+        raise FileNotFoundError(f"Profile file not found: {expected_profile_path}")
+    expected_profile = load_du_profile(expected_profile_path)
+    expected_profile_id = str(expected_profile.get("profile_id", ""))
+    resolved_profile_id = str(resolved_profile.get("profile_id", ""))
+    if expected_profile_id != resolved_profile_id:
+        raise ValueError("DU_PROFILE_IDENTITY_MISMATCH")
 
 
 def main(args: list[str] | None = None) -> int:
@@ -492,38 +102,50 @@ def main(args: list[str] | None = None) -> int:
 
     if not parsed.input.exists():
         raise FileNotFoundError(f"Input file not found: {parsed.input}")
-    if not parsed.profile.exists():
-        raise FileNotFoundError(f"Profile file not found: {parsed.profile}")
+    if not parsed.profile_root.is_dir():
+        raise FileNotFoundError(f"DU Profile directory not found: {parsed.profile_root}")
+    if not parsed.identity_registry.is_file():
+        raise FileNotFoundError(
+            f"DU Profile identity registry not found: {parsed.identity_registry}"
+        )
     if not parsed.sow_registry.exists():
         raise FileNotFoundError(f"SOW registry file not found: {parsed.sow_registry}")
+
+    resolution = resolve_du_profile(
+        parsed.input,
+        profile_root=parsed.profile_root,
+        identity_registry_path=parsed.identity_registry,
+    )
+    resolved_profile = resolution["profile"]
+    resolved_profile_path = Path(resolution["profile_path"])
+    _assert_expected_profile(parsed.profile, resolved_profile)
 
     scope_config = None
     if parsed.scope_config:
         if not parsed.scope_config.exists():
             raise FileNotFoundError(f"Scope config file not found: {parsed.scope_config}")
-        scope_config = _load_json_or_yaml(parsed.scope_config)
+        scope_config = _impl._load_json_or_yaml(parsed.scope_config)
         if isinstance(scope_config, Mapping) and "scopes" in scope_config:
             scope_config = scope_config["scopes"]
 
-    records, metadata = build_records_from_export(
+    records, metadata = _impl.build_records_from_export(
         input_path=parsed.input,
-        profile_path=parsed.profile,
+        profile_path=resolved_profile_path,
         scope=parsed.scope.upper(),
         sow_registry_path=parsed.sow_registry,
         scope_config=scope_config,
     )
 
-    outputs = write_uat_packet(
+    outputs = _impl.write_uat_packet(
         records=records,
         metadata=metadata,
         output_dir=parsed.output,
         scope=parsed.scope.upper(),
     )
 
-    wb_path = outputs["workbook"]
+    workbook_path = outputs["workbook"]
     summary_path = outputs["summary_json"]
-
-    if not wb_path.exists() or not summary_path.exists():
+    if not workbook_path.exists() or not summary_path.exists():
         raise RuntimeError("Expected UAT packet outputs were not generated successfully.")
 
     result_summary = {
@@ -531,19 +153,31 @@ def main(args: list[str] | None = None) -> int:
         "records": len(records),
         "scope": parsed.scope.upper(),
         "ecc_allowed": False,
+        "resolved_profile_id": resolved_profile["profile_id"],
+        "resolved_profile_path": str(resolved_profile_path.resolve()),
+        "profile_selection_basis": resolution["profile_selection_basis"],
+        "project_key": resolution.get("project_key", ""),
+        "du_model_name": resolution.get("du_model_name", ""),
+        "view_name": resolution.get("view_name", ""),
         "generated_output_paths": {
-            "workbook": str(wb_path.resolve()),
+            "workbook": str(workbook_path.resolve()),
             "summary_json": str(summary_path.resolve()),
         },
     }
-    print(json.dumps(result_summary, indent=2))
+    print(json.dumps(result_summary, ensure_ascii=False, indent=2))
     return 0
 
 
 if __name__ == "__main__":
-    import sys
     try:
         sys.exit(main())
-    except Exception as err:
-        print(json.dumps({"status": "ERROR", "error": str(err)}, indent=2), file=sys.stderr)
+    except Exception as error:
+        print(
+            json.dumps(
+                {"status": "ERROR", "error": str(error)},
+                ensure_ascii=False,
+                indent=2,
+            ),
+            file=sys.stderr,
+        )
         sys.exit(1)
