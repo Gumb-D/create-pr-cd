@@ -160,6 +160,11 @@ class TestCreatePrEntrypoint(unittest.TestCase):
         self.assertIsNotNone(resolver, "create_pr must expose the structured lifecycle gate")
         self.assertEqual(resolver("PR_INPUT_READY", True), "NON_PRODUCTION_UAT")
 
+    def test_explicit_uat_accepts_production(self):
+        resolver = getattr(create_pr, "_resolve_run_mode", None)
+        self.assertIsNotNone(resolver, "create_pr must expose the structured lifecycle gate")
+        self.assertEqual(resolver("PRODUCTION", True), "NON_PRODUCTION_UAT")
+
     def test_explicit_uat_rejects_draft_profile(self):
         resolver = getattr(create_pr, "_resolve_run_mode", None)
         self.assertIsNotNone(resolver, "create_pr must expose the structured lifecycle gate")
@@ -312,12 +317,18 @@ class TestCreatePrEntrypoint(unittest.TestCase):
             summary_path = Path(temp_dir) / "CREATE_PR_SUMMARY_TSS.json"
             self.assertTrue(summary_path.is_file())
             summary = json.loads(summary_path.read_text(encoding="utf-8"))
+            self.assertEqual(summary["entrypoint"], "create_pr.py")
             self.assertEqual(summary["profile_id"], "tx_mini_pr_v1")
             self.assertEqual(summary["profile_status"], "PRODUCTION")
             self.assertEqual(summary["run_mode"], "PRODUCTION")
             self.assertTrue(summary["production_ecc_allowed"])
             self.assertFalse(summary["non_production_uat"])
-            self.assertNotIn("NON_PRODUCTION_UAT", summary["output_root"])
+            self.assertEqual(Path(summary["output_root"]), Path(temp_dir).resolve())
+            self.assertIsNone(summary["run_id"])
+            self.assertTrue(summary["created_files"])
+            self.assertTrue(
+                all("NON_PRODUCTION_UAT" not in Path(path).name for path in summary["created_files"])
+            )
 
     def test_official_cli_explicit_uat_is_visibly_isolated(self):
         with tempfile.TemporaryDirectory() as temp_dir:

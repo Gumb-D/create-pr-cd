@@ -36,6 +36,20 @@ class TestProfileStatusConsistency(unittest.TestCase):
         self.assertTrue(production["eligible"])
         self.assertEqual(production["denied_reasons"], [])
 
+    def test_synthetic_promoted_profile_is_rejected_when_transition_review_denies_it(self):
+        profile = load_du_profile(ROOT / "config" / "du_profiles" / "mw_eos_swap_pr_v1.yaml")
+        profile["status"] = "PRODUCTION"
+        registry = json.loads(
+            (ROOT / "config" / "registries" / "mw_du_profile_transition_review.yaml").read_text(encoding="utf-8")
+        )
+        transition_entry = next(entry for entry in registry["entries"] if entry["profile_id"] == "mw_eos_swap_pr_v1")
+
+        with self.assertRaises(ProfileValidationError) as error:
+            validate_profile_status_consistency(profile, transition_entry)
+
+        self.assertIn("PRODUCTION", str(error.exception))
+        self.assertIn("PROFILE_NOT_PRODUCTION", str(error.exception))
+
     def test_missing_transition_entry_fails_closed(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             registry_path = Path(tmpdir) / "registry.json"
