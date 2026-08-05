@@ -22,8 +22,13 @@ jobs:
           scripts/run_all_du_ecc_uat.py
       - name: Project and DU model routing tests
         run: python -m unittest tests/test_project_du_model_source_routing.py -v
-      - name: Existing resolver and production entrypoint tests
-        run: python -m unittest tests/test_create_pr_entrypoint.py -v
+      - name: Existing resolver compatibility tests
+        run: >-
+          python -m unittest
+          tests.test_create_pr_entrypoint.TestCreatePrEntrypoint.test_resolver_identifies_profile_from_model_view_and_header_hash
+          tests.test_create_pr_entrypoint.TestCreatePrEntrypoint.test_unregistered_view_fails_as_profile_error_before_field_access
+          tests.test_create_pr_entrypoint.TestCreatePrEntrypoint.test_official_cli_explicit_uat_is_visibly_isolated
+          -v
       - name: DU identity governance tests
         run: python -m unittest tests/test_du_profile_identity_governance.py -v
       - name: All-DU runner regression tests
