@@ -23,7 +23,11 @@ jobs:
           scripts/canonical_generator_bridge.py
           scripts/canonical_generator_bridge_impl.py
       - name: Project and DU model routing tests
-        run: python -m unittest tests/test_project_du_model_source_routing.py -v
+        run: >-
+          python -m unittest
+          tests/test_project_du_model_source_routing.py
+          tests/test_all_du_v2_manifest_completeness.py
+          -v
       - name: Canonical bridge profile routing tests
         run: python -m unittest tests/test_canonical_bridge_profile_routing.py -v
       - name: Canonical bridge compatibility tests
