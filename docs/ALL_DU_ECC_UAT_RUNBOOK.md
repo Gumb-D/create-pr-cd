@@ -138,7 +138,7 @@ Run ID
 - `SM` TSS and TI records are classified `IGNORED` with reason code `PR_NOT_REQUIRED_OUTSOURCED_TO_OTHER_VENDOR`.
 - Missing, blank, placeholder, or `UNKNOWN` contract mappings are moved to `REVIEW_REQUIRED` with reason code `CONTRACT_MAPPING_NOT_FOUND`.
 - An existing Run ID is never overwritten.
-- The two CD consolidation DRAFT profiles remain an explicitly reviewed duplicate identity and are not automatically routed until their business mappings are consolidated.
+- `celcomdigi_cd_consolidation_2023_pr_v1` is routed deterministically as one DRAFT profile family, preserves both Decom and Rollout layouts, and remains blocked because it has no approved Header Hash and no implemented Backoffice / Operation PR workflow.
 
 ## Legacy schema 1.0 replay mode
 
