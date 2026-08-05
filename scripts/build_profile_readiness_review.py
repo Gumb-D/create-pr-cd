@@ -86,7 +86,7 @@ def build_readiness_entry(
         "source_file_name": unresolved_entry.get("source_file_name", ""),
         "observed_header_hash": export_structure.get("observed_header_hash", ""),
         "approved_header_hashes": approved_header_hashes,
-        "readiness_status": "DISCOVERY_ONLY_BLOCKED",
+        "readiness_status": "PRODUCTION_READY" if not overall_blockers else "DISCOVERY_ONLY_BLOCKED",
         "blocker_summary": {
             "overall_blockers": overall_blockers,
             "lifecycle_blockers": lifecycle_blockers,

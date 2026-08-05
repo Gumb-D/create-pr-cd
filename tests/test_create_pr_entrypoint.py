@@ -292,7 +292,7 @@ class TestCreatePrEntrypoint(unittest.TestCase):
 
         self.assertIn("\\u200b", result.stdout)
 
-    def test_official_cli_blocks_pr_input_ready_without_explicit_uat(self):
+    def test_official_cli_allows_production_tx_mini_without_uat_marker(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             result = subprocess.run(
                 [
@@ -308,10 +308,16 @@ class TestCreatePrEntrypoint(unittest.TestCase):
                 capture_output=True,
                 check=False,
             )
-            self.assertEqual(result.returncode, 1, result.stdout)
-            payload = _last_json_object(result.stderr)
-            self.assertEqual(payload["code"], "PROFILE_NOT_PRODUCTION")
-            self.assertEqual(list(Path(temp_dir).rglob("*.xlsx")), [])
+            self.assertEqual(result.returncode, 0, result.stderr)
+            summary_path = Path(temp_dir) / "CREATE_PR_SUMMARY_TSS.json"
+            self.assertTrue(summary_path.is_file())
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+            self.assertEqual(summary["profile_id"], "tx_mini_pr_v1")
+            self.assertEqual(summary["profile_status"], "PRODUCTION")
+            self.assertEqual(summary["run_mode"], "PRODUCTION")
+            self.assertTrue(summary["production_ecc_allowed"])
+            self.assertFalse(summary["non_production_uat"])
+            self.assertNotIn("NON_PRODUCTION_UAT", summary["output_root"])
 
     def test_official_cli_explicit_uat_is_visibly_isolated(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -340,7 +346,7 @@ class TestCreatePrEntrypoint(unittest.TestCase):
             summary = json.loads(summary_paths[0].read_text(encoding="utf-8"))
             self.assertEqual(summary["entrypoint"], "create_pr.py")
             self.assertEqual(summary["profile_id"], "tx_mini_pr_v1")
-            self.assertEqual(summary["profile_status"], "PR_INPUT_READY")
+            self.assertEqual(summary["profile_status"], "PRODUCTION")
             self.assertEqual(summary["run_mode"], "NON_PRODUCTION_UAT")
             self.assertTrue(summary["non_production_uat"])
             self.assertFalse(summary["production_ecc_allowed"])

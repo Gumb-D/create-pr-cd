@@ -126,10 +126,12 @@ class TestTxMiniNegativeAcceptance(unittest.TestCase):
     def setUpClass(cls):
         cls.profile = _load_profile()
 
-    def test_complete_record_is_ready_but_draft_profile_blocks_output(self):
-        record = _build_record(self.profile)
+    def test_complete_record_is_ready_but_nonproduction_profile_blocks_output(self):
+        nonproduction = json.loads(json.dumps(self.profile))
+        nonproduction["status"] = "PR_INPUT_READY"
+        record = _build_record(nonproduction)
         self.assertEqual(record["validation"]["pr_input_classification"], "PR_INPUT_READY")
-        gate = evaluate_record(record, self.profile, scope="TSS")
+        gate = evaluate_record(record, nonproduction, scope="TSS")
         self.assertFalse(gate["allow_output"])
         self.assertIn("DU_PROFILE_NOT_PRODUCTION", gate["blocking_reasons"])
         self.assertEqual(gate["output_decision"], QUARANTINE_NO_ECC)

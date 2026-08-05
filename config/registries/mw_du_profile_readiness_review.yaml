@@ -6,21 +6,19 @@
       "profile_id": "tx_mini_pr_v1",
       "profile_version": "0.2.0",
       "mapping_version": "approved-2026-07-07-tx-mini-v1",
-      "profile_status": "PR_INPUT_READY",
+      "profile_status": "PRODUCTION",
       "du_model_name": "TX Mini Project",
       "source_file_name": "A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx",
       "observed_header_hash": "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
       "approved_header_hashes": [
-        "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221"
+        "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
+        "1a466e31d3c25ca73f059123d4cc33280761746ea3dca61d25a384acad5c9fde",
+        "830864906f3e69041995bec10b0a5840d5f8c6fa5defa2cfaef30b868b91a921"
       ],
-      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
+      "readiness_status": "PRODUCTION_READY",
       "blocker_summary": {
-        "overall_blockers": [
-          "PROFILE_NOT_PRODUCTION"
-        ],
-        "lifecycle_blockers": [
-          "PROFILE_NOT_PRODUCTION"
-        ],
+        "overall_blockers": [],
+        "lifecycle_blockers": [],
         "missing_required_fields": [],
         "unapproved_required_fields": [],
         "competing_candidate_fields": [],

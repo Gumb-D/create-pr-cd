@@ -4,13 +4,13 @@ Discovery-only lifecycle promotion review for the current priority DU profiles.
 
 ## tx_mini_pr_v1 (TX Mini Project)
 
-- Current status: `PR_INPUT_READY`
+- Current status: `PRODUCTION`
 - Mapping version: `approved-2026-07-07-tx-mini-v1`
 - Observed header hash: `167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221`
 - `PROFILED`: `ELIGIBLE`
 - `BUSINESS_VALIDATED`: `ELIGIBLE`
 - `PR_INPUT_READY`: `ELIGIBLE`
-- `PRODUCTION`: `DENIED` because `PROFILE_NOT_PRODUCTION`
+- `PRODUCTION`: `ELIGIBLE`
 
 ## mw_eos_swap_pr_v1 (MW EOS Swap)
 
