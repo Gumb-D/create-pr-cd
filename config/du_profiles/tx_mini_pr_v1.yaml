@@ -2,7 +2,7 @@
   "profile_id": "tx_mini_pr_v1",
   "profile_version": "0.2.0",
   "mapping_version": "approved-2026-07-07-tx-mini-v1",
-  "status": "PR_INPUT_READY",
+  "status": "PRODUCTION",
   "identity": {
     "project_key": "Malaysia_CelcomDigi_Project",
     "accepted_du_models": ["TX Mini Project"],
@@ -51,7 +51,8 @@
       "Tx SOW normalization is controlled by config/registries/canonical_sow_registry.yaml; values outside the registry classify REVIEW_REQUIRED.",
       "existing_*_pr_status use the approved normalize_pr_reference_status transform over the Subcon PR reference columns.",
       "TX SOW Details is an approved evidence/decision-support field (JJ 2026-07-08): a short description that future item-code selection logic will interpret, combined with other approved columns. It is explicitly not the PR trigger source; any automated (LLM-assisted) item-code inference over it requires human approval before driving output.",
-      "Lifecycle promoted DRAFT -> BUSINESS_VALIDATED -> PR_INPUT_READY by JJ on 2026-07-08 after the completed field-by-field validation, golden-parity PASS, negative-test acceptance sweep, and a transition review that permits the declaration. This is a non-production readiness state: ECC output remains blocked until PRODUCTION status plus release governance and UAT."
+      "Lifecycle promoted DRAFT -> BUSINESS_VALIDATED -> PR_INPUT_READY by JJ on 2026-07-08 after the completed field-by-field validation, golden-parity PASS, negative-test acceptance sweep, and a transition review that permits the declaration.",
+      "Lifecycle promoted PR_INPUT_READY -> PRODUCTION by JJ on 2026-08-05 under issue #62 after the latest Header Hash revalidation in PR #60 and successful controlled TSS UAT; SM, missing-contract, duplicate, ignored, and review-required records remain fail-closed and excluded from formal ECC output."
     ]
   }
 }
