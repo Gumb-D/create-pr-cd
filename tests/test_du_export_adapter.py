@@ -1177,12 +1177,12 @@ class TestZteTxMiniApprovedProfileAdapter(unittest.TestCase):
         self.assertFalse(gate["allow_output"])
         self.assertIn("HEADER_HASH_REVALIDATION_REQUIRED", gate["blocking_reasons"])
 
-    def test_unknown_view_id_fails_closed(self):
+    def test_new_view_id_is_audit_evidence_only(self):
         production = self._production_copy()
         record = self._build_record(profile=production, view_id="unknown-view-id", scope="TI")
         gate = evaluate_record(record, production, scope="TI")
-        self.assertFalse(gate["allow_output"])
-        self.assertIn("UNKNOWN_DU_MODEL_OR_VIEW", gate["blocking_reasons"])
+        self.assertNotIn("UNKNOWN_DU_MODEL", gate["blocking_reasons"])
+        self.assertNotIn("UNKNOWN_DU_MODEL_OR_VIEW", gate["blocking_reasons"])
 
     def test_missing_approved_pr_critical_column_fails_closed(self):
         resolved = self._resolved(missing_fields={"existing_ti_pr_status"})
@@ -1481,12 +1481,12 @@ class TestCelcomdigiBau2023ApprovedProfileAdapter(unittest.TestCase):
         self.assertFalse(gate["allow_output"])
         self.assertIn("HEADER_HASH_REVALIDATION_REQUIRED", gate["blocking_reasons"])
 
-    def test_unknown_view_id_fails_closed(self):
+    def test_new_view_id_is_audit_evidence_only(self):
         production = self._production_copy()
         record = self._build_record(profile=production, view_id="unknown-view-id", scope="TI")
         gate = evaluate_record(record, production, scope="TI")
-        self.assertFalse(gate["allow_output"])
-        self.assertIn("UNKNOWN_DU_MODEL_OR_VIEW", gate["blocking_reasons"])
+        self.assertNotIn("UNKNOWN_DU_MODEL", gate["blocking_reasons"])
+        self.assertNotIn("UNKNOWN_DU_MODEL_OR_VIEW", gate["blocking_reasons"])
 
     def test_missing_approved_pr_critical_column_fails_closed(self):
         resolved = self._resolved(missing_fields={"existing_ti_pr_status"})
