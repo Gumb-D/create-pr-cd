@@ -98,32 +98,35 @@ def resolve_profile_field_mappings(header_inventory: Mapping[str, Any], profile:
     Only the View suffix of the strict site identity field can normalize. Every
     returned match retains the actual runtime fingerprint for row lookup and audit.
     Multiple profile candidates representing different Views are deduplicated when
-    they resolve to the same physical runtime column.
+    they resolve to the same physical runtime column. Distinct physical columns
+    remain distinct even when their raw fingerprints are identical.
     """
     available: Dict[str, list[Dict[str, Any]]] = {}
-    for sheet in header_inventory.get("sheets", []):
-        for column in sheet.get("columns", []):
+    for sheet_index, sheet in enumerate(header_inventory.get("sheets", [])):
+        for column_index, column in enumerate(sheet.get("columns", [])):
             fingerprint = column["fingerprint"]
             key = structural_fingerprint_key(fingerprint)
             available.setdefault(key, []).append(
-                {"sheet_name": sheet["sheet_name"], "fingerprint": fingerprint}
+                {
+                    "sheet_name": sheet["sheet_name"],
+                    "fingerprint": fingerprint,
+                    "_source_identity": (sheet_index, column_index),
+                }
             )
 
     results: Dict[str, Any] = {}
     for canonical_field, config in profile.get("field_mapping", {}).items():
-        matches_by_source: Dict[tuple[str, str], Dict[str, Any]] = {}
+        matches_by_source: Dict[tuple[int, int], Dict[str, Any]] = {}
         for candidate in config.get("source_candidates", []):
             structural_key = structural_fingerprint_key(candidate["fingerprint"])
             candidate_status = str(candidate.get("mapping_status", "UNVERIFIED"))
             for source in available.get(structural_key, []):
-                source_key = (
-                    str(source["sheet_name"]),
-                    fingerprint_key(source["fingerprint"]),
-                )
+                source_key = source["_source_identity"]
                 existing = matches_by_source.get(source_key)
                 if existing is None:
                     matches_by_source[source_key] = {
-                        **source,
+                        "sheet_name": source["sheet_name"],
+                        "fingerprint": source["fingerprint"],
                         "mapping_status": candidate_status,
                     }
                     continue
