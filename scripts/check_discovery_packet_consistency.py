@@ -11,45 +11,66 @@ _ORIGINAL_VALIDATE = _impl.validate_discovery_packet_consistency
 
 
 def _packet_compatible_profiles(profiles, discovery_registry):
-    """Validate historical packet identity, then align copies for strict checks.
+    """Validate historical packet layouts, then align profile copies for strict checks.
 
-    Discovery artifacts describe the exact export from which they were built. A
-    profile may later approve another compatible header hash without rewriting
-    that historical packet. An unchanged current packet remains valid even for
-    DRAFT profiles whose approved hash list is intentionally empty. A differing
-    historical hash remains valid only when it is explicitly approved.
+    Discovery artifacts may contain multiple source layouts for one Project + DU
+    Model profile family. Every packet hash must be explicitly recorded as an
+    observed layout or approved historical layout. Profile-centric governance
+    remains aligned to the configured primary observed layout.
     """
 
-    discovery_by_profile = _impl._index_by_profile(discovery_registry)
+    entries_by_profile = _impl._group_by_profile(discovery_registry)
     compatible = []
     for raw_profile in profiles:
         profile = copy.deepcopy(raw_profile)
         profile_id = str(profile.get("profile_id", ""))
-        discovery_entry = discovery_by_profile.get(profile_id)
-        if discovery_entry is None:
+        discovery_entries = entries_by_profile.get(profile_id, [])
+        if not discovery_entries:
             compatible.append(profile)
             continue
 
-        current_hash = str(profile.get("export_structure", {}).get("observed_header_hash", ""))
-        packet_hash = str(discovery_entry.get("observed_header_hash", ""))
-        if not packet_hash:
+        structure = profile.setdefault("export_structure", {})
+        current_hash = str(structure.get("observed_header_hash", "")).strip()
+        observed_hashes = {
+            str(value).strip()
+            for value in structure.get("observed_header_hashes", []) or []
+            if str(value).strip()
+        }
+        approved_hashes = {
+            str(value).strip()
+            for value in structure.get("approved_header_hashes", []) or []
+            if str(value).strip()
+        }
+        known_hashes = observed_hashes | approved_hashes | ({current_hash} if current_hash else set())
+        packet_hashes = {
+            str(entry.get("observed_header_hash", "")).strip()
+            for entry in discovery_entries
+        }
+        if "" in packet_hashes:
             raise _impl.ProfileValidationError(
                 f"Discovery registry header-hash mismatch for {profile_id}: packet hash is blank"
             )
+        unknown_hashes = sorted(packet_hashes - known_hashes)
+        if unknown_hashes:
+            raise _impl.ProfileValidationError(
+                f"Discovery registry header-hash mismatch for {profile_id}: "
+                f"{unknown_hashes} are not registered as observed or approved"
+            )
 
-        if packet_hash != current_hash:
-            approved_hashes = {
-                str(value)
-                for value in profile.get("export_structure", {}).get("approved_header_hashes", [])
-                if str(value)
-            }
-            if packet_hash not in approved_hashes:
+        if current_hash not in packet_hashes:
+            historical_candidates = [
+                entry
+                for entry in discovery_entries
+                if str(entry.get("observed_header_hash", "")).strip() in approved_hashes
+            ]
+            if len(historical_candidates) != 1:
                 raise _impl.ProfileValidationError(
-                    f"Discovery registry header-hash mismatch for {profile_id}: "
-                    f"{packet_hash} is not in approved_header_hashes"
+                    f"Discovery registry primary-layout mismatch for {profile_id}: "
+                    f"current hash {current_hash} is absent"
                 )
-            profile.setdefault("export_structure", {})["observed_header_hash"] = packet_hash
-            historical_version = str(discovery_entry.get("profile_version", "")).strip()
+            historical = historical_candidates[0]
+            structure["observed_header_hash"] = str(historical["observed_header_hash"])
+            historical_version = str(historical.get("profile_version", "")).strip()
             if not historical_version:
                 raise _impl.ProfileValidationError(
                     f"Discovery registry profile-version mismatch for {profile_id}: historical version is blank"

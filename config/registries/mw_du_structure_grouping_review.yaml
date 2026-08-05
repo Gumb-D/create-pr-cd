@@ -127,7 +127,7 @@
           "shared_fingerprint_count": 2225,
           "union_fingerprint_count": 2644,
           "view_label": "CD consolidation 2023 Rollout",
-          "profile_id": "cd_consolidation_2023_rollout_pr_v1"
+          "profile_id": "celcomdigi_cd_consolidation_2023_pr_v1"
         }
       ],
       "project_key": "Malaysia_CelcomDigi_Project",
@@ -152,7 +152,7 @@
           "shared_fingerprint_count": 2267,
           "union_fingerprint_count": 2605,
           "view_label": "CD consolidation 2023 Rollout",
-          "profile_id": "cd_consolidation_2023_rollout_pr_v1"
+          "profile_id": "celcomdigi_cd_consolidation_2023_pr_v1"
         },
         {
           "source_file_name": "A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx",
@@ -180,7 +180,10 @@
       "du_model_id": "8359047522524182050",
       "view_label": "CD 2023 Decom Site",
       "view_id": "702960351133798763",
-      "profile_id": "cd_consolidation_2023_decom_pr_v1"
+      "profile_id": "celcomdigi_cd_consolidation_2023_pr_v1",
+      "profile_status": "DRAFT",
+      "profile_version": "0.1.0",
+      "mapping_version": "discovery-2026-08-05-cd-consolidation-2023-family-v1"
     },
     {
       "source_file_name": "A-P202202168750_D002-CD consolidation 2023-CD consolidation 2023 Rollout-20260703160351.xlsx",
@@ -197,7 +200,7 @@
           "shared_fingerprint_count": 2267,
           "union_fingerprint_count": 2605,
           "view_label": "CD 2023 Decom Site",
-          "profile_id": "cd_consolidation_2023_decom_pr_v1"
+          "profile_id": "celcomdigi_cd_consolidation_2023_pr_v1"
         },
         {
           "source_file_name": "A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx",
@@ -225,7 +228,10 @@
       "du_model_id": "8359047522524182050",
       "view_label": "CD consolidation 2023 Rollout",
       "view_id": "8359047522524230651",
-      "profile_id": "cd_consolidation_2023_rollout_pr_v1"
+      "profile_id": "celcomdigi_cd_consolidation_2023_pr_v1",
+      "profile_status": "DRAFT",
+      "profile_version": "0.1.0",
+      "mapping_version": "discovery-2026-08-05-cd-consolidation-2023-family-v1"
     },
     {
       "source_file_name": "A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx",
@@ -262,7 +268,7 @@
           "shared_fingerprint_count": 2249,
           "union_fingerprint_count": 2647,
           "view_label": "CD consolidation 2023 Rollout",
-          "profile_id": "cd_consolidation_2023_rollout_pr_v1"
+          "profile_id": "celcomdigi_cd_consolidation_2023_pr_v1"
         }
       ],
       "project_key": "Malaysia_CelcomDigi_Project",

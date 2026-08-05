@@ -29,13 +29,10 @@ class TestProfileReviewMatrix(unittest.TestCase):
         # confirmed both existing PR status fields; zte_tx_mini_pr_v1 also
         # left it once local shortlist evidence was recognized and the work
         # moved from missing-field remediation to profile-selection review.
-        self.assertEqual(existing_ti["profile_count"], 2)
+        self.assertEqual(existing_ti["profile_count"], 1)
         self.assertEqual(
             existing_ti["profiles"],
-            [
-                "cd_consolidation_2023_decom_pr_v1",
-                "cd_consolidation_2023_rollout_pr_v1",
-            ],
+            ["celcomdigi_cd_consolidation_2023_pr_v1"],
         )
         self.assertEqual(existing_ti["batch_priority"], 1)
 
@@ -80,11 +77,10 @@ class TestProfileReviewMatrix(unittest.TestCase):
             for item in registry["batch_review_queue"]
             if item["action_type"] == "VERIFY_SINGLE_CANDIDATE" and item["field_name"] == "site_name"
         )
-        self.assertEqual(tx_site_name["profile_count"], 4)
+        self.assertEqual(tx_site_name["profile_count"], 3)
         self.assertEqual(
             tx_site_name["profiles"],
             [
-                "cd_consolidation_2023_rollout_pr_v1",
                 "celcomdigi_bau_2023_pr_v1",
                 "celcomdigi_bau_2024_pr_v1",
                 "tx_rollout_2023_pr_v1",

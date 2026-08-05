@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
-from du_profile_loader import ProfileValidationError, load_du_profile
+from du_profile_loader import ProfileValidationError, load_du_profile, load_du_profiles
 
 EXPECTED_TRACEABILITY_ARTIFACT_IDS = (
     "discovery",
@@ -26,11 +26,48 @@ def _load_json(path: Path) -> Mapping[str, Any]:
 
 
 def _index_by_profile(registry: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
-    return {
-        str(entry["profile_id"]): entry
-        for entry in registry.get("entries", [])
-        if isinstance(entry, Mapping) and entry.get("profile_id") is not None
-    }
+    index: dict[str, Mapping[str, Any]] = {}
+    for entry in registry.get("entries", []):
+        if not isinstance(entry, Mapping) or entry.get("profile_id") is None:
+            continue
+        profile_id = str(entry["profile_id"])
+        if profile_id in index:
+            raise ProfileValidationError(
+                f"Profile-centric registry contains duplicate entries for {profile_id}."
+            )
+        index[profile_id] = entry
+    return index
+
+
+def _group_by_profile(registry: Mapping[str, Any]) -> dict[str, list[Mapping[str, Any]]]:
+    grouped: dict[str, list[Mapping[str, Any]]] = {}
+    for entry in registry.get("entries", []):
+        if not isinstance(entry, Mapping) or entry.get("profile_id") is None:
+            continue
+        grouped.setdefault(str(entry["profile_id"]), []).append(entry)
+    return grouped
+
+
+def _known_header_hashes(profile: Mapping[str, Any]) -> set[str]:
+    structure = profile.get("export_structure", {})
+    values = {str(structure.get("observed_header_hash", "")).strip()}
+    for field in ("observed_header_hashes", "approved_header_hashes"):
+        values.update(str(value).strip() for value in structure.get(field, []) or [])
+    return {value for value in values if value}
+
+
+def _primary_discovery_entry(
+    profile: Mapping[str, Any],
+    entries: list[Mapping[str, Any]],
+) -> Mapping[str, Any]:
+    primary_hash = str(profile.get("export_structure", {}).get("observed_header_hash", "")).strip()
+    matches = [entry for entry in entries if str(entry.get("observed_header_hash", "")).strip() == primary_hash]
+    if len(matches) != 1:
+        raise ProfileValidationError(
+            f"Discovery registry primary-layout mismatch for {profile.get('profile_id')}: "
+            f"expected exactly one entry for {primary_hash}, found {len(matches)}"
+        )
+    return matches[0]
 
 
 def _expected_untracked_coverage_status(discovery_entry: Mapping[str, Any]) -> str:
@@ -59,7 +96,7 @@ def validate_discovery_packet_consistency(
     rollback_registry: Mapping[str, Any],
     coverage_registry: Mapping[str, Any],
 ) -> None:
-    discovery_by_profile = _index_by_profile(discovery_registry)
+    discovery_entries_by_profile = _group_by_profile(discovery_registry)
     unresolved_by_profile = _index_by_profile(unresolved_registry)
     readiness_by_profile = _index_by_profile(readiness_registry)
     transition_by_profile = _index_by_profile(transition_registry)
@@ -84,7 +121,6 @@ def validate_discovery_packet_consistency(
         observed_header_hash = str(profile.get("export_structure", {}).get("observed_header_hash", ""))
 
         for name, index in (
-            ("discovery", discovery_by_profile),
             ("unresolved", unresolved_by_profile),
             ("readiness", readiness_by_profile),
             ("transition", transition_by_profile),
@@ -96,15 +132,23 @@ def validate_discovery_packet_consistency(
             if profile_id not in index:
                 raise ProfileValidationError(f"Profile {profile_id} is missing from the {name} registry.")
 
-        discovery_entry = discovery_by_profile[profile_id]
-        if str(discovery_entry.get("profile_status")) != status:
-            raise ProfileValidationError(
-                f"Discovery registry status mismatch for {profile_id}: {discovery_entry.get('profile_status')} != {status}"
-            )
-        if str(discovery_entry.get("observed_header_hash")) != observed_header_hash:
-            raise ProfileValidationError(
-                f"Discovery registry header-hash mismatch for {profile_id}: {discovery_entry.get('observed_header_hash')} != {observed_header_hash}"
-            )
+        discovery_entries = discovery_entries_by_profile.get(profile_id, [])
+        if not discovery_entries:
+            raise ProfileValidationError(f"Profile {profile_id} is missing from the discovery registry.")
+        known_hashes = _known_header_hashes(profile)
+        for discovery_candidate in discovery_entries:
+            if str(discovery_candidate.get("profile_status")) != status:
+                raise ProfileValidationError(
+                    f"Discovery registry status mismatch for {profile_id}: "
+                    f"{discovery_candidate.get('profile_status')} != {status}"
+                )
+            packet_hash = str(discovery_candidate.get("observed_header_hash", "")).strip()
+            if packet_hash not in known_hashes:
+                raise ProfileValidationError(
+                    f"Discovery registry header-hash mismatch for {profile_id}: "
+                    f"{packet_hash} is not registered as observed or approved"
+                )
+        discovery_entry = _primary_discovery_entry(profile, discovery_entries)
 
         unresolved_entry = unresolved_by_profile[profile_id]
         if str(unresolved_entry.get("profile_status")) != status:
@@ -229,30 +273,39 @@ def validate_discovery_packet_consistency(
                 f"Rollback review header-hash mismatch for {profile_id}: {rollback_entry.get('observed_header_hash')} != {observed_header_hash}"
             )
 
-        source_file_name = str(discovery_entry.get("source_file_name", ""))
-        coverage_entry = coverage_by_source.get(source_file_name)
-        if coverage_entry is None:
-            raise ProfileValidationError(f"Coverage review is missing source file {source_file_name} for profile {profile_id}.")
-        if str(coverage_entry.get("coverage_status")) != "TRACKED_DRAFT_PROFILE":
-            raise ProfileValidationError(
-                f"Coverage review tracked-profile mismatch for {profile_id}: {coverage_entry.get('coverage_status')} != TRACKED_DRAFT_PROFILE"
-            )
-        if str(coverage_entry.get("profile_id")) != profile_id:
-            raise ProfileValidationError(
-                f"Coverage review tracked-profile mismatch for {profile_id}: {coverage_entry.get('profile_id')} != {profile_id}"
-            )
-        if str(coverage_entry.get("profile_version")) != str(profile.get("profile_version", "")):
-            raise ProfileValidationError(
-                f"Coverage review profile-version mismatch for {profile_id}: {coverage_entry.get('profile_version')} != {profile.get('profile_version', '')}"
-            )
-        if str(coverage_entry.get("mapping_version")) != mapping_version:
-            raise ProfileValidationError(
-                f"Coverage review mapping-version mismatch for {profile_id}: {coverage_entry.get('mapping_version')} != {mapping_version}"
-            )
-        if str(coverage_entry.get("observed_header_hash")) != observed_header_hash:
-            raise ProfileValidationError(
-                f"Coverage review header-hash mismatch for {profile_id}: {coverage_entry.get('observed_header_hash')} != {observed_header_hash}"
-            )
+        for discovery_candidate in discovery_entries:
+            source_file_name = str(discovery_candidate.get("source_file_name", ""))
+            coverage_entry = coverage_by_source.get(source_file_name)
+            if coverage_entry is None:
+                raise ProfileValidationError(
+                    f"Coverage review is missing source file {source_file_name} for profile {profile_id}."
+                )
+            if str(coverage_entry.get("coverage_status")) != "TRACKED_DRAFT_PROFILE":
+                raise ProfileValidationError(
+                    f"Coverage review tracked-profile mismatch for {profile_id}: "
+                    f"{coverage_entry.get('coverage_status')} != TRACKED_DRAFT_PROFILE"
+                )
+            if str(coverage_entry.get("profile_id")) != profile_id:
+                raise ProfileValidationError(
+                    f"Coverage review tracked-profile mismatch for {profile_id}: "
+                    f"{coverage_entry.get('profile_id')} != {profile_id}"
+                )
+            if str(coverage_entry.get("profile_version")) != str(profile.get("profile_version", "")):
+                raise ProfileValidationError(
+                    f"Coverage review profile-version mismatch for {profile_id}: "
+                    f"{coverage_entry.get('profile_version')} != {profile.get('profile_version', '')}"
+                )
+            if str(coverage_entry.get("mapping_version")) != mapping_version:
+                raise ProfileValidationError(
+                    f"Coverage review mapping-version mismatch for {profile_id}: "
+                    f"{coverage_entry.get('mapping_version')} != {mapping_version}"
+                )
+            expected_hash = str(discovery_candidate.get("observed_header_hash", ""))
+            if str(coverage_entry.get("observed_header_hash")) != expected_hash:
+                raise ProfileValidationError(
+                    f"Coverage review header-hash mismatch for {profile_id}: "
+                    f"{coverage_entry.get('observed_header_hash')} != {expected_hash}"
+                )
 
     for discovery_entry in discovery_registry.get("entries", []):
         if not isinstance(discovery_entry, Mapping):
@@ -304,18 +357,7 @@ def validate_discovery_packet_consistency(
 
 
 def validate_live_discovery_packets() -> None:
-    profiles = [
-        load_du_profile(Path("config/du_profiles/tx_mini_pr_v1.yaml")),
-        load_du_profile(Path("config/du_profiles/mw_eos_swap_pr_v1.yaml")),
-        load_du_profile(Path("config/du_profiles/tx_rollout_2023_pr_v1.yaml")),
-        load_du_profile(Path("config/du_profiles/jendela_tx_migration_pr_v1.yaml")),
-        load_du_profile(Path("config/du_profiles/zte_tx_mini_pr_v1.yaml")),
-        load_du_profile(Path("config/du_profiles/celcomdigi_bau_2023_pr_v1.yaml")),
-        load_du_profile(Path("config/du_profiles/celcomdigi_bau_2024_pr_v1.yaml")),
-        load_du_profile(Path("config/du_profiles/celcomdigi_usp_pr_v1.yaml")),
-        load_du_profile(Path("config/du_profiles/cd_consolidation_2023_decom_pr_v1.yaml")),
-        load_du_profile(Path("config/du_profiles/cd_consolidation_2023_rollout_pr_v1.yaml")),
-    ]
+    profiles = load_du_profiles()
     validate_discovery_packet_consistency(
         profiles,
         _load_json(Path("config/registries/mw_du_model_discovery_registry.yaml")),

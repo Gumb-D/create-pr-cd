@@ -148,58 +148,30 @@ Discovery-only prioritized manual action queue for the current DRAFT profiles.
   - `celcomdigi_usp_pr_v1:06` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
     hint: Use the transition review as the final stop/go check before any status change.
 
-## cd_consolidation_2023_decom_pr_v1 (CD consolidation 2023)
+## celcomdigi_cd_consolidation_2023_pr_v1 (CD consolidation 2023)
 
 - Readiness status: `DISCOVERY_ONLY_BLOCKED`
 - Profile status: `DRAFT`
-- Mapping version: `discovery-2026-07-07-cd-consolidation-2023-decom-v1`
+- Mapping version: `discovery-2026-08-05-cd-consolidation-2023-family-v1`
 - Observed header hash: `b86cbc349db66154324092c843593137e83908c3b4b55c09305d6cf6046c7a16`
 - Action queue:
-  - `cd_consolidation_2023_decom_pr_v1:01` `RESOLVE_MISSING_REQUIRED_FIELD` `existing_ti_pr_status`: Resolve required field `existing_ti_pr_status` before any lifecycle promotion.
+  - `celcomdigi_cd_consolidation_2023_pr_v1:01` `RESOLVE_MISSING_REQUIRED_FIELD` `existing_ti_pr_status`: Resolve required field `existing_ti_pr_status` before any lifecycle promotion.
     hint: Review donor export TX Mini Project with similarity 0.850 before deciding derived, manual, or blocking treatment.
-  - `cd_consolidation_2023_decom_pr_v1:02` `RESOLVE_MISSING_REQUIRED_FIELD` `existing_tss_pr_status`: Resolve required field `existing_tss_pr_status` before any lifecycle promotion.
+  - `celcomdigi_cd_consolidation_2023_pr_v1:02` `RESOLVE_MISSING_REQUIRED_FIELD` `existing_tss_pr_status`: Resolve required field `existing_tss_pr_status` before any lifecycle promotion.
     hint: Review donor export TX Mini Project with similarity 0.850 before deciding derived, manual, or blocking treatment.
-  - `cd_consolidation_2023_decom_pr_v1:03` `CONFIRM_COMPETING_CANDIDATE` `region`: Choose one exact four-layer source for `region` from the competing shortlist candidates.
+  - `celcomdigi_cd_consolidation_2023_pr_v1:03` `CONFIRM_COMPETING_CANDIDATE` `region`: Choose one exact four-layer source for `region` from the competing shortlist candidates.
     hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `cd_consolidation_2023_decom_pr_v1:04` `CONFIRM_COMPETING_CANDIDATE` `site_code`: Choose one exact four-layer source for `site_code` from the competing shortlist candidates.
+  - `celcomdigi_cd_consolidation_2023_pr_v1:04` `CONFIRM_COMPETING_CANDIDATE` `site_code`: Choose one exact four-layer source for `site_code` from the competing shortlist candidates.
     hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `cd_consolidation_2023_decom_pr_v1:05` `CONFIRM_COMPETING_CANDIDATE` `site_name`: Choose one exact four-layer source for `site_name` from the competing shortlist candidates.
+  - `celcomdigi_cd_consolidation_2023_pr_v1:05` `CONFIRM_COMPETING_CANDIDATE` `site_name`: Choose one exact four-layer source for `site_name` from the competing shortlist candidates.
     hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `cd_consolidation_2023_decom_pr_v1:06` `CONFIRM_COMPETING_CANDIDATE` `tx_sow_raw`: Choose one exact four-layer source for `tx_sow_raw` from the competing shortlist candidates.
+  - `celcomdigi_cd_consolidation_2023_pr_v1:06` `CONFIRM_COMPETING_CANDIDATE` `tx_sow_raw`: Choose one exact four-layer source for `tx_sow_raw` from the competing shortlist candidates.
     hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `cd_consolidation_2023_decom_pr_v1:07` `VERIFY_SINGLE_CANDIDATE` `du_key`: Verify the current single shortlist-aligned source for `du_key`.
+  - `celcomdigi_cd_consolidation_2023_pr_v1:07` `VERIFY_SINGLE_CANDIDATE` `du_key`: Verify the current single shortlist-aligned source for `du_key`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `cd_consolidation_2023_decom_pr_v1:08` `VERIFY_SINGLE_CANDIDATE` `subcontractor_ti`: Verify the current single shortlist-aligned source for `subcontractor_ti`.
+  - `celcomdigi_cd_consolidation_2023_pr_v1:08` `VERIFY_SINGLE_CANDIDATE` `subcontractor_ti`: Verify the current single shortlist-aligned source for `subcontractor_ti`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `cd_consolidation_2023_decom_pr_v1:09` `APPROVE_HEADER_HASH`: Approve at least one header hash for this profile version after the field review is complete.
+  - `celcomdigi_cd_consolidation_2023_pr_v1:09` `APPROVE_HEADER_HASH`: Approve at least one header hash for this profile version after the field review is complete.
     hint: Current observed header hash: b86cbc349db66154324092c843593137e83908c3b4b55c09305d6cf6046c7a16
-  - `cd_consolidation_2023_decom_pr_v1:10` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
-    hint: Use the transition review as the final stop/go check before any status change.
-
-## cd_consolidation_2023_rollout_pr_v1 (CD consolidation 2023)
-
-- Readiness status: `DISCOVERY_ONLY_BLOCKED`
-- Profile status: `DRAFT`
-- Mapping version: `discovery-2026-07-07-cd-consolidation-2023-rollout-v1`
-- Observed header hash: `d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1`
-- Action queue:
-  - `cd_consolidation_2023_rollout_pr_v1:01` `RESOLVE_MISSING_REQUIRED_FIELD` `existing_ti_pr_status`: Resolve required field `existing_ti_pr_status` before any lifecycle promotion.
-    hint: Review donor export Celcomdigi USP with similarity 0.850 before deciding derived, manual, or blocking treatment.
-  - `cd_consolidation_2023_rollout_pr_v1:02` `RESOLVE_MISSING_REQUIRED_FIELD` `existing_tss_pr_status`: Resolve required field `existing_tss_pr_status` before any lifecycle promotion.
-    hint: Review donor export Celcomdigi USP with similarity 0.850 before deciding derived, manual, or blocking treatment.
-  - `cd_consolidation_2023_rollout_pr_v1:03` `CONFIRM_COMPETING_CANDIDATE` `region`: Choose one exact four-layer source for `region` from the competing shortlist candidates.
-    hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `cd_consolidation_2023_rollout_pr_v1:04` `CONFIRM_COMPETING_CANDIDATE` `site_code`: Choose one exact four-layer source for `site_code` from the competing shortlist candidates.
-    hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `cd_consolidation_2023_rollout_pr_v1:05` `CONFIRM_COMPETING_CANDIDATE` `tx_sow_raw`: Choose one exact four-layer source for `tx_sow_raw` from the competing shortlist candidates.
-    hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `cd_consolidation_2023_rollout_pr_v1:06` `VERIFY_SINGLE_CANDIDATE` `du_key`: Verify the current single shortlist-aligned source for `du_key`.
-    hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `cd_consolidation_2023_rollout_pr_v1:07` `VERIFY_SINGLE_CANDIDATE` `site_name`: Verify the current single shortlist-aligned source for `site_name`.
-    hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `cd_consolidation_2023_rollout_pr_v1:08` `VERIFY_SINGLE_CANDIDATE` `subcontractor_ti`: Verify the current single shortlist-aligned source for `subcontractor_ti`.
-    hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `cd_consolidation_2023_rollout_pr_v1:09` `APPROVE_HEADER_HASH`: Approve at least one header hash for this profile version after the field review is complete.
-    hint: Current observed header hash: d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1
-  - `cd_consolidation_2023_rollout_pr_v1:10` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
+  - `celcomdigi_cd_consolidation_2023_pr_v1:10` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
     hint: Use the transition review as the final stop/go check before any status change.

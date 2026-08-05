@@ -5,17 +5,17 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Iterable, Mapping
 
-from du_profile_loader import load_du_profile
+from du_profile_loader import discover_du_profile_paths, load_du_profile
 
 
 ARTIFACT_SPECS = {
-    "discovery": {"entry_key": "entries", "type": "profile_entry"},
+    "discovery": {"entry_key": "entries", "type": "layout_entries"},
     "unresolved": {"entry_key": "entries", "type": "profile_entry"},
     "bridge": {"entry_key": "entries", "type": "profile_entry"},
     "readiness": {"entry_key": "entries", "type": "profile_entry"},
     "action_queue": {"entry_key": "entries", "type": "profile_entry"},
     "review_matrix": {"entry_key": "profile_summaries", "type": "profile_summary"},
-    "coverage": {"entry_key": "entries", "type": "profile_entry"},
+    "coverage": {"entry_key": "entries", "type": "layout_entries"},
     "transition": {"entry_key": "entries", "type": "profile_entry"},
     "deprecation": {"entry_key": "entries", "type": "profile_entry"},
     "rollback": {"entry_key": "entries", "type": "profile_entry"},
@@ -26,24 +26,41 @@ def _load_json(path: Path) -> Mapping[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _index_entries(registry: Mapping[str, Any], entry_key: str) -> Dict[str, Mapping[str, Any]]:
-    return {
-        str(entry["profile_id"]): entry
-        for entry in registry.get(entry_key, [])
-        if isinstance(entry, Mapping) and entry.get("profile_id") is not None
-    }
+def _index_entries(
+    registry: Mapping[str, Any],
+    entry_key: str,
+    artifact_type: str,
+) -> Dict[str, Any]:
+    grouped: Dict[str, list[Mapping[str, Any]]] = {}
+    for entry in registry.get(entry_key, []):
+        if not isinstance(entry, Mapping) or entry.get("profile_id") is None:
+            continue
+        grouped.setdefault(str(entry["profile_id"]), []).append(entry)
+    if artifact_type == "layout_entries":
+        return grouped
+    index: Dict[str, Mapping[str, Any]] = {}
+    for profile_id, entries in grouped.items():
+        if len(entries) != 1:
+            raise ValueError(f"Profile-centric artifact contains duplicate entries for {profile_id}")
+        index[profile_id] = entries[0]
+    return index
 
 
 def _artifact_traceability(
     artifact_id: str,
-    artifact_entry: Mapping[str, Any] | None,
+    artifact_entry: Mapping[str, Any] | list[Mapping[str, Any]] | None,
     profile: Mapping[str, Any],
 ) -> Dict[str, Any]:
     expected_profile_version = str(profile["profile_version"])
     expected_mapping_version = str(profile["mapping_version"])
-    expected_header_hash = str(profile.get("export_structure", {}).get("observed_header_hash", ""))
+    structure = profile.get("export_structure", {})
+    expected_header_hash = str(structure.get("observed_header_hash", ""))
+    known_hashes = {expected_header_hash}
+    known_hashes.update(str(value) for value in structure.get("observed_header_hashes", []) or [])
+    known_hashes.update(str(value) for value in structure.get("approved_header_hashes", []) or [])
+    known_hashes.discard("")
 
-    if artifact_entry is None:
+    if artifact_entry is None or artifact_entry == []:
         return {
             "artifact_id": artifact_id,
             "artifact_status": "MISSING_PROFILE_ENTRY",
@@ -52,9 +69,19 @@ def _artifact_traceability(
             "observed_header_hash_matches": False,
         }
 
-    profile_version_matches = str(artifact_entry.get("profile_version", "")) == expected_profile_version
-    mapping_version_matches = str(artifact_entry.get("mapping_version", "")) == expected_mapping_version
-    observed_header_hash_matches = str(artifact_entry.get("observed_header_hash", "")) == expected_header_hash
+    entries = artifact_entry if isinstance(artifact_entry, list) else [artifact_entry]
+    profile_version_matches = all(
+        str(entry.get("profile_version", "")) == expected_profile_version for entry in entries
+    )
+    mapping_version_matches = all(
+        str(entry.get("mapping_version", "")) == expected_mapping_version for entry in entries
+    )
+    entry_hashes = {str(entry.get("observed_header_hash", "")) for entry in entries}
+    observed_header_hash_matches = (
+        expected_header_hash in entry_hashes
+        and bool(entry_hashes)
+        and entry_hashes.issubset(known_hashes)
+    )
     artifact_status = (
         "TRACEABLE"
         if profile_version_matches and mapping_version_matches and observed_header_hash_matches
@@ -74,7 +101,11 @@ def build_traceability_registry(
     registries: Mapping[str, Mapping[str, Any]],
 ) -> Dict[str, Any]:
     indexed = {
-        artifact_id: _index_entries(registry, ARTIFACT_SPECS[artifact_id]["entry_key"])
+        artifact_id: _index_entries(
+            registry,
+            ARTIFACT_SPECS[artifact_id]["entry_key"],
+            ARTIFACT_SPECS[artifact_id]["type"],
+        )
         for artifact_id, registry in registries.items()
     }
 
@@ -159,18 +190,7 @@ def write_traceability_outputs(
 
 def main() -> int:
     write_traceability_outputs(
-        [
-            Path("config/du_profiles/tx_mini_pr_v1.yaml"),
-            Path("config/du_profiles/mw_eos_swap_pr_v1.yaml"),
-            Path("config/du_profiles/tx_rollout_2023_pr_v1.yaml"),
-            Path("config/du_profiles/jendela_tx_migration_pr_v1.yaml"),
-            Path("config/du_profiles/zte_tx_mini_pr_v1.yaml"),
-            Path("config/du_profiles/celcomdigi_bau_2023_pr_v1.yaml"),
-            Path("config/du_profiles/celcomdigi_bau_2024_pr_v1.yaml"),
-            Path("config/du_profiles/celcomdigi_usp_pr_v1.yaml"),
-            Path("config/du_profiles/cd_consolidation_2023_decom_pr_v1.yaml"),
-            Path("config/du_profiles/cd_consolidation_2023_rollout_pr_v1.yaml"),
-        ],
+        discover_du_profile_paths(),
         {
             "discovery": Path("config/registries/mw_du_model_discovery_registry.yaml"),
             "unresolved": Path("config/registries/mw_du_unresolved_skill_field_review.yaml"),

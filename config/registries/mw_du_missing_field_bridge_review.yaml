@@ -107,9 +107,9 @@
       ]
     },
     {
-      "profile_id": "cd_consolidation_2023_decom_pr_v1",
+      "profile_id": "celcomdigi_cd_consolidation_2023_pr_v1",
       "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-07-cd-consolidation-2023-decom-v1",
+      "mapping_version": "discovery-2026-08-05-cd-consolidation-2023-family-v1",
       "observed_header_hash": "b86cbc349db66154324092c843593137e83908c3b4b55c09305d6cf6046c7a16",
       "du_model_name": "CD consolidation 2023",
       "source_file_name": "A-P202202168750_D002-CD consolidation 2023-CD 2023 Decom Site-20260703160415.xlsx",
@@ -134,42 +134,6 @@
             "observed_header_hash": "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
             "source_similarity_to_target": 0.8496355964710395,
             "profile_id": "tx_mini_pr_v1"
-          }
-        }
-      },
-      "notes": [
-        "This bridge review is discovery-only and does not approve borrowing mappings or business rules across DU models.",
-        "A bridge candidate is a review lead, not a reusable production mapping."
-      ]
-    },
-    {
-      "profile_id": "cd_consolidation_2023_rollout_pr_v1",
-      "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-07-cd-consolidation-2023-rollout-v1",
-      "observed_header_hash": "d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1",
-      "du_model_name": "CD consolidation 2023",
-      "source_file_name": "A-P202202168750_D002-CD consolidation 2023-CD consolidation 2023 Rollout-20260703160351.xlsx",
-      "field_bridges": {
-        "existing_ti_pr_status": {
-          "bridge_status": "CROSS_MODEL_REVIEW_REQUIRED",
-          "review_reason": "Another profiled export carries the missing field, but cross-model reuse is discovery-only and still requires manual four-layer review.",
-          "best_source_export": {
-            "du_model_name": "Celcomdigi USP",
-            "source_file_name": "A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx",
-            "observed_header_hash": "79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf",
-            "source_similarity_to_target": 0.8496411031356252,
-            "profile_id": "celcomdigi_usp_pr_v1"
-          }
-        },
-        "existing_tss_pr_status": {
-          "bridge_status": "CROSS_MODEL_REVIEW_REQUIRED",
-          "review_reason": "Another profiled export carries the missing field, but cross-model reuse is discovery-only and still requires manual four-layer review.",
-          "best_source_export": {
-            "du_model_name": "Celcomdigi USP",
-            "source_file_name": "A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx",
-            "observed_header_hash": "79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf",
-            "source_similarity_to_target": 0.8496411031356252,
-            "profile_id": "celcomdigi_usp_pr_v1"
           }
         }
       },

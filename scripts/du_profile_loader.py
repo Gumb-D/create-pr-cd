@@ -134,3 +134,19 @@ def load_du_profile(path: Path) -> Dict[str, Any]:
         raise ProfileValidationError(f"{path} must contain one mapping at the top level.")
     validate_du_profile(profile)
     return profile
+
+
+def discover_du_profile_paths(profile_dir: Path = Path("config/du_profiles")) -> list[Path]:
+    """Return every tracked DU profile path in deterministic profile-id order."""
+
+    directory = Path(profile_dir)
+    paths = sorted(directory.glob("*.yaml"), key=lambda path: path.name.casefold())
+    if not paths:
+        raise ProfileValidationError(f"No DU profile files found under {directory}.")
+    return paths
+
+
+def load_du_profiles(profile_dir: Path = Path("config/du_profiles")) -> list[Dict[str, Any]]:
+    """Load and validate every tracked DU profile exactly once."""
+
+    return [load_du_profile(path) for path in discover_du_profile_paths(profile_dir)]

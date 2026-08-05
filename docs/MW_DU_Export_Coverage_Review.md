@@ -38,7 +38,7 @@ Discovery-only coverage review across the 10 profiled DU exports.
 
 - Source file: `A-P202202168750_D002-CD consolidation 2023-CD 2023 Decom Site-20260703160415.xlsx`
 - Coverage status: `TRACKED_DRAFT_PROFILE`
-- Profile: `cd_consolidation_2023_decom_pr_v1` `0.1.0` (mapping `discovery-2026-07-07-cd-consolidation-2023-decom-v1`)
+- Profile: `celcomdigi_cd_consolidation_2023_pr_v1` `0.1.0` (mapping `discovery-2026-08-05-cd-consolidation-2023-family-v1`)
 - Observed header hash: `b86cbc349db66154324092c843593137e83908c3b4b55c09305d6cf6046c7a16`
 - Missing skill fields: `antenna_size_ne, antenna_size_fe, subcon_planning, existing_tss_pr, existing_ti_pr`
 - Next action: Continue tracked profile review through the existing DRAFT discovery packet.
@@ -47,7 +47,7 @@ Discovery-only coverage review across the 10 profiled DU exports.
 
 - Source file: `A-P202202168750_D002-CD consolidation 2023-CD consolidation 2023 Rollout-20260703160351.xlsx`
 - Coverage status: `TRACKED_DRAFT_PROFILE`
-- Profile: `cd_consolidation_2023_rollout_pr_v1` `0.1.0` (mapping `discovery-2026-07-07-cd-consolidation-2023-rollout-v1`)
+- Profile: `celcomdigi_cd_consolidation_2023_pr_v1` `0.1.0` (mapping `discovery-2026-08-05-cd-consolidation-2023-family-v1`)
 - Observed header hash: `d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1`
 - Missing skill fields: `antenna_size_ne, antenna_size_fe, subcon_planning, existing_tss_pr, existing_ti_pr`
 - Next action: Continue tracked profile review through the existing DRAFT discovery packet.

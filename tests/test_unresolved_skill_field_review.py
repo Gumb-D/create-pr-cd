@@ -379,50 +379,40 @@ class TestUnresolvedSkillFieldReview(unittest.TestCase):
             "Antenna Size NE",
         )
 
-    def test_cd_consolidation_2023_decom_entry_captures_missing_pr_status_fields_and_competing_core_fields(self):
+    def test_cd_consolidation_profile_family_captures_primary_review_and_both_layouts(self):
         shortlist_registry = json.loads(
             (ROOT / "config" / "registries" / "mw_du_priority_skill_field_shortlists.yaml").read_text(encoding="utf-8")
         )
-        profile = json.loads((ROOT / "config" / "du_profiles" / "cd_consolidation_2023_decom_pr_v1.yaml").read_text(encoding="utf-8"))
+        profile = json.loads(
+            (ROOT / "config" / "du_profiles" / "celcomdigi_cd_consolidation_2023_pr_v1.yaml").read_text(encoding="utf-8")
+        )
         shortlist_entry = next(
             entry for entry in shortlist_registry["entries"] if "CD 2023 Decom Site" in entry["source_file_name"]
         )
 
         review_entry = build_review_entry(profile, shortlist_entry)
 
-        self.assertEqual(review_entry["profile_id"], "cd_consolidation_2023_decom_pr_v1")
+        self.assertEqual(review_entry["profile_id"], "celcomdigi_cd_consolidation_2023_pr_v1")
         self.assertEqual(
             review_entry["source_file_name"],
             "A-P202202168750_D002-CD consolidation 2023-CD 2023 Decom Site-20260703160415.xlsx",
         )
-        self.assertEqual(review_entry["summary"]["missing_required_fields"], ["existing_ti_pr_status", "existing_tss_pr_status"])
+        self.assertEqual(
+            review_entry["summary"]["missing_required_fields"],
+            ["existing_ti_pr_status", "existing_tss_pr_status"],
+        )
         self.assertIn("site_code", review_entry["summary"]["competing_candidate_fields"])
         self.assertIn("region", review_entry["summary"]["competing_candidate_fields"])
         self.assertIn("tx_sow_raw", review_entry["summary"]["competing_candidate_fields"])
+        variants = {entry["variant_id"]: entry for entry in profile["layout_variants"]}
+        self.assertEqual(set(variants), {"decom", "rollout"})
         self.assertEqual(
-            review_entry["field_reviews"]["subcontractor_ti"]["recommended_source"]["fingerprint"]["display_header"],
-            "SubCon - TI",
+            variants["decom"]["field_mapping"]["tx_sow_raw"]["source_candidates"][0]["fingerprint"]["task_name"],
+            "TX Final SOW (LLD)",
         )
-
-    def test_cd_consolidation_2023_rollout_entry_captures_missing_pr_status_fields_and_competing_core_fields(self):
-        shortlist_registry = json.loads(
-            (ROOT / "config" / "registries" / "mw_du_priority_skill_field_shortlists.yaml").read_text(encoding="utf-8")
-        )
-        profile = json.loads((ROOT / "config" / "du_profiles" / "cd_consolidation_2023_rollout_pr_v1.yaml").read_text(encoding="utf-8"))
-        shortlist_entry = next(
-            entry for entry in shortlist_registry["entries"] if "CD consolidation 2023 Rollout" in entry["source_file_name"]
-        )
-
-        review_entry = build_review_entry(profile, shortlist_entry)
-
-        self.assertEqual(review_entry["profile_id"], "cd_consolidation_2023_rollout_pr_v1")
-        self.assertEqual(review_entry["summary"]["missing_required_fields"], ["existing_ti_pr_status", "existing_tss_pr_status"])
-        self.assertIn("site_code", review_entry["summary"]["competing_candidate_fields"])
-        self.assertIn("tx_sow_raw", review_entry["summary"]["competing_candidate_fields"])
-        self.assertIn("subcontractor_ti", review_entry["summary"]["single_candidate_unverified_fields"])
         self.assertEqual(
-            review_entry["field_reviews"]["site_name"]["recommended_source"]["fingerprint"]["display_header"],
-            "customer site name",
+            variants["rollout"]["field_mapping"]["tx_sow_raw"]["source_candidates"][0]["fingerprint"]["task_name"],
+            "Wireless RAN",
         )
 
     def test_markdown_mentions_review_reasons(self):
@@ -477,25 +467,24 @@ class TestUnresolvedSkillFieldReview(unittest.TestCase):
         self.assertIn("existing_ti_pr_status", markdown)
         self.assertIn("TX SOW Details", markdown)
 
-    def test_registry_distinguishes_same_du_model_profiles_by_header_hash(self):
+    def test_registry_uses_one_profile_entry_while_profile_preserves_two_layout_hashes(self):
         shortlist_registry = json.loads(
             (ROOT / "config" / "registries" / "mw_du_priority_skill_field_shortlists.yaml").read_text(encoding="utf-8")
         )
-        profiles = [
-            json.loads((ROOT / "config" / "du_profiles" / "cd_consolidation_2023_decom_pr_v1.yaml").read_text(encoding="utf-8")),
-            json.loads((ROOT / "config" / "du_profiles" / "cd_consolidation_2023_rollout_pr_v1.yaml").read_text(encoding="utf-8")),
-        ]
-
-        registry = build_review_registry(profiles, shortlist_registry)
-        by_profile = {entry["profile_id"]: entry for entry in registry["entries"]}
-
-        self.assertEqual(
-            by_profile["cd_consolidation_2023_decom_pr_v1"]["source_file_name"],
-            "A-P202202168750_D002-CD consolidation 2023-CD 2023 Decom Site-20260703160415.xlsx",
+        profile = json.loads(
+            (ROOT / "config" / "du_profiles" / "celcomdigi_cd_consolidation_2023_pr_v1.yaml").read_text(encoding="utf-8")
         )
+
+        registry = build_review_registry([profile], shortlist_registry)
+
+        self.assertEqual(len(registry["entries"]), 1)
+        self.assertEqual(registry["entries"][0]["profile_id"], "celcomdigi_cd_consolidation_2023_pr_v1")
         self.assertEqual(
-            by_profile["cd_consolidation_2023_rollout_pr_v1"]["source_file_name"],
-            "A-P202202168750_D002-CD consolidation 2023-CD consolidation 2023 Rollout-20260703160351.xlsx",
+            set(profile["export_structure"]["observed_header_hashes"]),
+            {
+                "b86cbc349db66154324092c843593137e83908c3b4b55c09305d6cf6046c7a16",
+                "d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1",
+            },
         )
 
 

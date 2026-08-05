@@ -139,29 +139,11 @@
       ]
     },
     {
-      "profile_id": "cd_consolidation_2023_decom_pr_v1",
+      "profile_id": "celcomdigi_cd_consolidation_2023_pr_v1",
       "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-07-cd-consolidation-2023-decom-v1",
+      "mapping_version": "discovery-2026-08-05-cd-consolidation-2023-family-v1",
       "current_status": "DRAFT",
       "observed_header_hash": "b86cbc349db66154324092c843593137e83908c3b4b55c09305d6cf6046c7a16",
-      "rollback_readiness_status": "ROLLBACK_BLOCKED",
-      "rollback_target_profile_id": null,
-      "rollback_target_profile_version": null,
-      "rollback_target_header_hashes": [],
-      "blockers": [
-        "NO_APPROVED_HEADER_HASH_BASELINE",
-        "PROFILE_NOT_RELEASED"
-      ],
-      "notes": [
-        "Rollback remains blocked until an approved profile/header-hash baseline exists."
-      ]
-    },
-    {
-      "profile_id": "cd_consolidation_2023_rollout_pr_v1",
-      "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-07-cd-consolidation-2023-rollout-v1",
-      "current_status": "DRAFT",
-      "observed_header_hash": "d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1",
       "rollback_readiness_status": "ROLLBACK_BLOCKED",
       "rollback_target_profile_id": null,
       "rollback_target_profile_version": null,

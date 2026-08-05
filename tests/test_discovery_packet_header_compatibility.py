@@ -43,16 +43,26 @@ class TestDiscoveryPacketHeaderCompatibility(unittest.TestCase):
         entry["observed_header_hash"] = "unapproved-hash"
         with self.assertRaises(ProfileValidationError) as context:
             _packet_compatible_profiles([profile], registry)
-        self.assertIn("not in approved_header_hashes", str(context.exception))
+        self.assertIn("not registered as observed or approved", str(context.exception))
 
     def test_unchanged_draft_hash_does_not_require_approval(self):
         profile = load_du_profile(
-            ROOT / "config" / "du_profiles" / "cd_consolidation_2023_decom_pr_v1.yaml"
+            ROOT / "config" / "du_profiles" / "celcomdigi_cd_consolidation_2023_pr_v1.yaml"
         )
         self.assertEqual(profile["export_structure"]["approved_header_hashes"], [])
         compatible = _packet_compatible_profiles([profile], self._registry())
-        self.assertEqual(compatible[0]["export_structure"]["observed_header_hash"], profile["export_structure"]["observed_header_hash"])
+        self.assertEqual(
+            compatible[0]["export_structure"]["observed_header_hash"],
+            profile["export_structure"]["observed_header_hash"],
+        )
         self.assertEqual(compatible[0]["profile_version"], profile["profile_version"])
+        self.assertEqual(
+            set(compatible[0]["export_structure"]["observed_header_hashes"]),
+            {
+                "b86cbc349db66154324092c843593137e83908c3b4b55c09305d6cf6046c7a16",
+                "d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1",
+            },
+        )
 
 
 if __name__ == "__main__":

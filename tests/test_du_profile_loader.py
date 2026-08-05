@@ -1,4 +1,4 @@
-"""DU Profile loader tests with current TX Rollout compatible-header expectations."""
+"""DU Profile loader tests with current compatible-layout expectations."""
 from __future__ import annotations
 
 from tests.du_profile_loader_legacy_tests import TestDuProfileLoader as _LegacyTestDuProfileLoader
@@ -34,12 +34,70 @@ class TestDuProfileLoader(_LegacyTestDuProfileLoader):
             "Post MOCN TX SOW (LLD)",
         )
 
+    def test_draft_cd_consolidation_2023_decom_profile_loads_with_discovery_only_cd_fields(self):
+        profile = self._load_cd_consolidation_profile()
+        self.assertEqual(profile["status"], "DRAFT")
+        self.assertEqual(
+            profile["mapping_version"],
+            "discovery-2026-08-05-cd-consolidation-2023-family-v1",
+        )
+        self.assertEqual(profile["identity"]["accepted_du_models"], ["CD consolidation 2023"])
+        self.assertEqual(profile["identity"]["accepted_du_model_ids"], ["8359047522524182050"])
+        self.assertEqual(
+            profile["identity"]["accepted_view_ids"],
+            ["702960351133798763", "8359047522524230651"],
+        )
+        variants = {row["variant_id"]: row for row in profile["layout_variants"]}
+        decom = variants["decom"]
+        self.assertEqual(decom["view_id"], "702960351133798763")
+        self.assertEqual(
+            decom["observed_header_hash"],
+            "b86cbc349db66154324092c843593137e83908c3b4b55c09305d6cf6046c7a16",
+        )
+        self.assertEqual(
+            decom["field_mapping"]["tx_sow_raw"]["source_candidates"][0]["fingerprint"]["task_name"],
+            "TX Final SOW (LLD)",
+        )
+        self.assertEqual(
+            decom["field_mapping"]["subcontractor_ti"]["source_candidates"][0]["fingerprint"]["display_header"],
+            "SubCon - TI",
+        )
+
+    def test_draft_cd_consolidation_2023_rollout_profile_loads_with_discovery_only_cd_fields(self):
+        profile = self._load_cd_consolidation_profile()
+        self.assertEqual(profile["status"], "DRAFT")
+        self.assertEqual(profile["export_structure"]["approved_header_hashes"], [])
+        variants = {row["variant_id"]: row for row in profile["layout_variants"]}
+        rollout = variants["rollout"]
+        self.assertEqual(rollout["view_id"], "8359047522524230651")
+        self.assertEqual(
+            rollout["observed_header_hash"],
+            "d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1",
+        )
+        self.assertEqual(
+            rollout["field_mapping"]["tx_sow_raw"]["source_candidates"][0]["fingerprint"]["task_name"],
+            "Wireless RAN",
+        )
+        self.assertEqual(
+            rollout["field_mapping"]["subcontractor_ti"]["source_candidates"][0]["fingerprint"]["display_header"],
+            "SubCon - TI",
+        )
+
     def _load_tx_rollout_profile(self):
         from pathlib import Path
         from du_profile_loader import load_du_profile
 
         root = Path(__file__).resolve().parent.parent
         return load_du_profile(root / "config" / "du_profiles" / "tx_rollout_2023_pr_v1.yaml")
+
+    def _load_cd_consolidation_profile(self):
+        from pathlib import Path
+        from du_profile_loader import load_du_profile
+
+        root = Path(__file__).resolve().parent.parent
+        return load_du_profile(
+            root / "config" / "du_profiles" / "celcomdigi_cd_consolidation_2023_pr_v1.yaml"
+        )
 
 
 del _LegacyTestDuProfileLoader

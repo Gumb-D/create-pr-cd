@@ -795,7 +795,7 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 - Selected source: `docata|ZDCSZ641765 | Installation | Wireless RAN | Subcon PR - TI`
 
 
-## cd_consolidation_2023_decom_pr_v1 (CD consolidation 2023)
+## celcomdigi_cd_consolidation_2023_pr_v1 (CD consolidation 2023)
 
 - Source file: `A-P202202168750_D002-CD consolidation 2023-CD 2023 Decom Site-20260703160415.xlsx`
 - Observed header hash: `b86cbc349db66154324092c843593137e83908c3b4b55c09305d6cf6046c7a16`
@@ -855,108 +855,26 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
   - score 45: `docata|ZDCSZ642123 | TX | TX SOW Details | TX SOW Details`
     reason: SOW details field; likely evidence, not primary trigger.
 
+### `tx_before_migration`
+
+- Skill field: `tx_before_migration`
+- Review status: `NO_REVIEW_REQUIRED`
+- Reason: Profile field is outside the current unresolved-skill review scope.
+- Selected source: `None`
+
+### `final_backhaul`
+
+- Skill field: `final_backhaul`
+- Review status: `NO_REVIEW_REQUIRED`
+- Reason: Profile field is outside the current unresolved-skill review scope.
+- Selected source: `None`
+
 ### `subcontractor_ti`
 
 - Skill field: `subcon_ti_team`
 - Review status: `REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE`
 - Reason: Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile.
 - Selected source: `docata|ZDCSZ640242 | Subcon | SubCon - TI | SubCon - TI`
-
-### `subcontractor_planning`
-
-- Skill field: `subcon_planning`
-- Review status: `NO_REVIEW_REQUIRED`
-- Reason: Profile field is outside the current unresolved-skill review scope.
-- Selected source: `None`
-
-### `antenna_size_ne`
-
-- Skill field: `antenna_size_ne`
-- Review status: `NO_REVIEW_REQUIRED`
-- Reason: Profile field is outside the current unresolved-skill review scope.
-- Selected source: `None`
-
-### `antenna_size_fe`
-
-- Skill field: `antenna_size_fe`
-- Review status: `NO_REVIEW_REQUIRED`
-- Reason: Profile field is outside the current unresolved-skill review scope.
-- Selected source: `None`
-
-### `existing_tss_pr_status`
-
-- Skill field: `existing_tss_pr`
-- Review status: `REVIEW_REQUIRED_MISSING_CANDIDATE`
-- Reason: Required profile field has no selected source candidate and no shortlist candidate.
-- Selected source: `None`
-
-### `existing_ti_pr_status`
-
-- Skill field: `existing_ti_pr`
-- Review status: `REVIEW_REQUIRED_MISSING_CANDIDATE`
-- Reason: Required profile field has no selected source candidate and no shortlist candidate.
-- Selected source: `None`
-
-
-## cd_consolidation_2023_rollout_pr_v1 (CD consolidation 2023)
-
-- Source file: `A-P202202168750_D002-CD consolidation 2023-CD consolidation 2023 Rollout-20260703160351.xlsx`
-- Observed header hash: `d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1`
-- Missing required fields: existing_ti_pr_status, existing_tss_pr_status
-- Competing candidate fields: region, site_code, tx_sow_raw
-- Single-candidate but unverified fields: du_key, site_name, subcontractor_ti
-- Resolved by approved mapping (alternates rejected): None
-
-### `site_code`
-
-- Skill field: `site_id`
-- Review status: `REVIEW_REQUIRED_COMPETING_CANDIDATES`
-- Reason: Profile-selected source has alternate shortlist candidates that still require four-layer confirmation.
-- Selected source: `site|fix00012|8359047522524182050|8359047522524230651 | Site Basic Info | Site Basic Info | customer site code`
-- Alternate shortlist candidates:
-  - score 70: `docata|ZDCSZ0654995 | Installation | Wireless RAN | DiGi Site ID`
-    reason: Alternate site ID style field.
-
-### `site_name`
-
-- Skill field: `site_name`
-- Review status: `REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE`
-- Reason: Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile.
-- Selected source: `site|fix00015 | Site Basic Info | Site Basic Info | customer site name`
-
-### `du_key`
-
-- Skill field: `du_code`
-- Review status: `REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE`
-- Reason: Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile.
-- Selected source: `du|du_code | Du | Du | du code`
-
-### `region`
-
-- Skill field: `region`
-- Review status: `REVIEW_REQUIRED_COMPETING_CANDIDATES`
-- Reason: Profile-selected source has alternate shortlist candidates that still require four-layer confirmation.
-- Selected source: `site|region_name | Site Basic Info | Site Basic Info | region`
-- Alternate shortlist candidates:
-  - score 40: `docata|ZDCSZ00895041 | Installation | Wireless RAN | Sub Region`
-    reason: Sub-region field; likely secondary.
-
-### `tx_sow_raw`
-
-- Skill field: `tx_sow`
-- Review status: `REVIEW_REQUIRED_COMPETING_CANDIDATES`
-- Reason: Profile-selected source has alternate shortlist candidates that still require four-layer confirmation.
-- Selected source: `docata|ZDCSZ640870 | Installation | Wireless RAN | TX SOW`
-- Alternate shortlist candidates:
-  - score 45: `docata|ZDCSZ642123 | Installation | Wireless RAN | TX SOW Details`
-    reason: SOW details field; likely evidence, not primary trigger.
-
-### `subcontractor_ti`
-
-- Skill field: `subcon_ti_team`
-- Review status: `REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE`
-- Reason: Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile.
-- Selected source: `docata|ZDCSZ640242 | Installation | Wireless RAN | SubCon - TI`
 
 ### `subcontractor_planning`
 

@@ -2201,9 +2201,9 @@
       ]
     },
     {
-      "profile_id": "cd_consolidation_2023_decom_pr_v1",
+      "profile_id": "celcomdigi_cd_consolidation_2023_pr_v1",
       "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-07-cd-consolidation-2023-decom-v1",
+      "mapping_version": "discovery-2026-08-05-cd-consolidation-2023-family-v1",
       "profile_status": "DRAFT",
       "du_model_name": "CD consolidation 2023",
       "source_file_name": "A-P202202168750_D002-CD consolidation 2023-CD 2023 Decom Site-20260703160415.xlsx",
@@ -2401,6 +2401,24 @@
           "review_status": "REVIEW_REQUIRED_COMPETING_CANDIDATES",
           "review_reason": "Profile-selected source has alternate shortlist candidates that still require four-layer confirmation."
         },
+        "tx_before_migration": {
+          "skill_field": "tx_before_migration",
+          "required": false,
+          "selected_status": "MISSING",
+          "recommended_source": null,
+          "alternate_candidates": [],
+          "review_status": "NO_REVIEW_REQUIRED",
+          "review_reason": "Profile field is outside the current unresolved-skill review scope."
+        },
+        "final_backhaul": {
+          "skill_field": "final_backhaul",
+          "required": false,
+          "selected_status": "MISSING",
+          "recommended_source": null,
+          "alternate_candidates": [],
+          "review_status": "NO_REVIEW_REQUIRED",
+          "review_reason": "Profile field is outside the current unresolved-skill review scope."
+        },
         "subcontractor_ti": {
           "skill_field": "subcon_ti_team",
           "required": true,
@@ -2410,232 +2428,6 @@
               "field_code": "docata|ZDCSZ640242",
               "wbs_stage": "Subcon",
               "task_name": "SubCon - TI",
-              "display_header": "SubCon - TI"
-            },
-            "mapping_status": "UNVERIFIED"
-          },
-          "alternate_candidates": [],
-          "review_status": "REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE",
-          "review_reason": "Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile."
-        },
-        "subcontractor_planning": {
-          "skill_field": "subcon_planning",
-          "required": false,
-          "selected_status": "MISSING",
-          "recommended_source": null,
-          "alternate_candidates": [],
-          "review_status": "NO_REVIEW_REQUIRED",
-          "review_reason": "Profile field is outside the current unresolved-skill review scope."
-        },
-        "antenna_size_ne": {
-          "skill_field": "antenna_size_ne",
-          "required": false,
-          "selected_status": "MISSING",
-          "recommended_source": null,
-          "alternate_candidates": [],
-          "review_status": "NO_REVIEW_REQUIRED",
-          "review_reason": "Profile field is outside the current unresolved-skill review scope."
-        },
-        "antenna_size_fe": {
-          "skill_field": "antenna_size_fe",
-          "required": false,
-          "selected_status": "MISSING",
-          "recommended_source": null,
-          "alternate_candidates": [],
-          "review_status": "NO_REVIEW_REQUIRED",
-          "review_reason": "Profile field is outside the current unresolved-skill review scope."
-        },
-        "existing_tss_pr_status": {
-          "skill_field": "existing_tss_pr",
-          "required": true,
-          "selected_status": "MISSING",
-          "recommended_source": null,
-          "alternate_candidates": [],
-          "review_status": "REVIEW_REQUIRED_MISSING_CANDIDATE",
-          "review_reason": "Required profile field has no selected source candidate and no shortlist candidate."
-        },
-        "existing_ti_pr_status": {
-          "skill_field": "existing_ti_pr",
-          "required": true,
-          "selected_status": "MISSING",
-          "recommended_source": null,
-          "alternate_candidates": [],
-          "review_status": "REVIEW_REQUIRED_MISSING_CANDIDATE",
-          "review_reason": "Required profile field has no selected source candidate and no shortlist candidate."
-        }
-      },
-      "notes": [
-        "This review packet is discovery-only and does not approve any mapping or header hash for production use.",
-        "Fields are flagged when the DRAFT profile still has missing candidates, competing shortlist candidates, or only unverified evidence."
-      ]
-    },
-    {
-      "profile_id": "cd_consolidation_2023_rollout_pr_v1",
-      "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-07-cd-consolidation-2023-rollout-v1",
-      "profile_status": "DRAFT",
-      "du_model_name": "CD consolidation 2023",
-      "source_file_name": "A-P202202168750_D002-CD consolidation 2023-CD consolidation 2023 Rollout-20260703160351.xlsx",
-      "observed_header_hash": "d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1",
-      "summary": {
-        "missing_required_fields": [
-          "existing_ti_pr_status",
-          "existing_tss_pr_status"
-        ],
-        "competing_candidate_fields": [
-          "region",
-          "site_code",
-          "tx_sow_raw"
-        ],
-        "single_candidate_unverified_fields": [
-          "du_key",
-          "site_name",
-          "subcontractor_ti"
-        ],
-        "no_profile_selection_fields": [],
-        "shortlist_mismatch_fields": [],
-        "resolved_by_approval_fields": []
-      },
-      "field_reviews": {
-        "site_code": {
-          "skill_field": "site_id",
-          "required": true,
-          "selected_status": "UNVERIFIED",
-          "recommended_source": {
-            "fingerprint": {
-              "field_code": "site|fix00012|8359047522524182050|8359047522524230651",
-              "wbs_stage": "Site Basic Info",
-              "task_name": "Site Basic Info",
-              "display_header": "customer site code"
-            },
-            "mapping_status": "UNVERIFIED"
-          },
-          "alternate_candidates": [
-            {
-              "score": 70,
-              "reason": "Alternate site ID style field.",
-              "fingerprint": {
-                "field_code": "docata|ZDCSZ0654995",
-                "wbs_stage": "Installation",
-                "task_name": "Wireless RAN",
-                "display_header": "DiGi Site ID"
-              },
-              "source_position": {
-                "excel_column": "H",
-                "one_based_index": 8
-              }
-            }
-          ],
-          "review_status": "REVIEW_REQUIRED_COMPETING_CANDIDATES",
-          "review_reason": "Profile-selected source has alternate shortlist candidates that still require four-layer confirmation."
-        },
-        "site_name": {
-          "skill_field": "site_name",
-          "required": false,
-          "selected_status": "UNVERIFIED",
-          "recommended_source": {
-            "fingerprint": {
-              "field_code": "site|fix00015",
-              "wbs_stage": "Site Basic Info",
-              "task_name": "Site Basic Info",
-              "display_header": "customer site name"
-            },
-            "mapping_status": "UNVERIFIED"
-          },
-          "alternate_candidates": [],
-          "review_status": "REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE",
-          "review_reason": "Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile."
-        },
-        "du_key": {
-          "skill_field": "du_code",
-          "required": false,
-          "selected_status": "UNVERIFIED",
-          "recommended_source": {
-            "fingerprint": {
-              "field_code": "du|du_code",
-              "wbs_stage": "Du",
-              "task_name": "Du",
-              "display_header": "du code"
-            },
-            "mapping_status": "UNVERIFIED"
-          },
-          "alternate_candidates": [],
-          "review_status": "REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE",
-          "review_reason": "Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile."
-        },
-        "region": {
-          "skill_field": "region",
-          "required": true,
-          "selected_status": "UNVERIFIED",
-          "recommended_source": {
-            "fingerprint": {
-              "field_code": "site|region_name",
-              "wbs_stage": "Site Basic Info",
-              "task_name": "Site Basic Info",
-              "display_header": "region"
-            },
-            "mapping_status": "UNVERIFIED"
-          },
-          "alternate_candidates": [
-            {
-              "score": 40,
-              "reason": "Sub-region field; likely secondary.",
-              "fingerprint": {
-                "field_code": "docata|ZDCSZ00895041",
-                "wbs_stage": "Installation",
-                "task_name": "Wireless RAN",
-                "display_header": "Sub Region"
-              },
-              "source_position": {
-                "excel_column": "GL",
-                "one_based_index": 194
-              }
-            }
-          ],
-          "review_status": "REVIEW_REQUIRED_COMPETING_CANDIDATES",
-          "review_reason": "Profile-selected source has alternate shortlist candidates that still require four-layer confirmation."
-        },
-        "tx_sow_raw": {
-          "skill_field": "tx_sow",
-          "required": true,
-          "selected_status": "UNVERIFIED",
-          "recommended_source": {
-            "fingerprint": {
-              "field_code": "docata|ZDCSZ640870",
-              "wbs_stage": "Installation",
-              "task_name": "Wireless RAN",
-              "display_header": "TX SOW"
-            },
-            "mapping_status": "UNVERIFIED"
-          },
-          "alternate_candidates": [
-            {
-              "score": 45,
-              "reason": "SOW details field; likely evidence, not primary trigger.",
-              "fingerprint": {
-                "field_code": "docata|ZDCSZ642123",
-                "wbs_stage": "Installation",
-                "task_name": "Wireless RAN",
-                "display_header": "TX SOW Details"
-              },
-              "source_position": {
-                "excel_column": "EH",
-                "one_based_index": 138
-              }
-            }
-          ],
-          "review_status": "REVIEW_REQUIRED_COMPETING_CANDIDATES",
-          "review_reason": "Profile-selected source has alternate shortlist candidates that still require four-layer confirmation."
-        },
-        "subcontractor_ti": {
-          "skill_field": "subcon_ti_team",
-          "required": true,
-          "selected_status": "UNVERIFIED",
-          "recommended_source": {
-            "fingerprint": {
-              "field_code": "docata|ZDCSZ640242",
-              "wbs_stage": "Installation",
-              "task_name": "Wireless RAN",
               "display_header": "SubCon - TI"
             },
             "mapping_status": "UNVERIFIED"

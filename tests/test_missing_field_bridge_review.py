@@ -88,7 +88,9 @@ class TestMissingFieldBridgeReview(unittest.TestCase):
             (ROOT / "config" / "registries" / "mw_du_model_discovery_registry.yaml").read_text(encoding="utf-8")
         )
 
-        mw_entry = unresolved["entries"][1]
+        mw_entry = next(
+            entry for entry in unresolved["entries"] if entry["profile_id"] == "mw_eos_swap_pr_v1"
+        )
         bridge_entry = build_bridge_entry(mw_entry, grouping, discovery)
 
         self.assertEqual(bridge_entry["profile_id"], "mw_eos_swap_pr_v1")
@@ -157,7 +159,7 @@ class TestMissingFieldBridgeReview(unittest.TestCase):
         self.assertEqual(bridge_entry["mapping_version"], "approved-2026-07-14-2023-celcomdigi-bau-tx-prpo-v1")
         self.assertEqual(bridge_entry["field_bridges"], {})
 
-    def test_bridge_registry_carries_all_ten_tracked_draft_profiles(self):
+    def test_bridge_registry_carries_all_nine_profile_families(self):
         unresolved = json.loads(
             (ROOT / "config" / "registries" / "mw_du_unresolved_skill_field_review.yaml").read_text(encoding="utf-8")
         )
@@ -170,20 +172,21 @@ class TestMissingFieldBridgeReview(unittest.TestCase):
 
         registry = build_bridge_registry(unresolved, grouping, discovery)
 
+        profile_ids = [entry["profile_id"] for entry in registry["entries"]]
+        self.assertEqual(len(profile_ids), 9)
         self.assertEqual(
-            [entry["profile_id"] for entry in registry["entries"]],
-            [
-                "tx_mini_pr_v1",
-                "mw_eos_swap_pr_v1",
-                "tx_rollout_2023_pr_v1",
-                "jendela_tx_migration_pr_v1",
-                "zte_tx_mini_pr_v1",
+            set(profile_ids),
+            {
                 "celcomdigi_bau_2023_pr_v1",
                 "celcomdigi_bau_2024_pr_v1",
+                "celcomdigi_cd_consolidation_2023_pr_v1",
                 "celcomdigi_usp_pr_v1",
-                "cd_consolidation_2023_decom_pr_v1",
-                "cd_consolidation_2023_rollout_pr_v1",
-            ],
+                "jendela_tx_migration_pr_v1",
+                "mw_eos_swap_pr_v1",
+                "tx_mini_pr_v1",
+                "tx_rollout_2023_pr_v1",
+                "zte_tx_mini_pr_v1",
+            },
         )
 
     def test_markdown_mentions_bridge_caution(self):
