@@ -2,6 +2,8 @@
 """Public wrapper for the consolidated all-DU UAT implementation."""
 from __future__ import annotations
 
+import argparse
+import csv
 import json
 import os
 import shutil
@@ -11,6 +13,11 @@ from pathlib import Path
 
 import all_du_uat_impl as _impl
 from all_du_uat_impl import *  # noqa: F401,F403 - preserve the tested public module surface
+from iepms_export_source_resolver import (
+    LATEST_FILENAME_TIMESTAMP,
+    discover_latest_source_exports,
+    load_identity_registry,
+)
 
 
 _TESTABLE_DEPENDENCIES = (
@@ -23,6 +30,21 @@ _TESTABLE_DEPENDENCIES = (
     "write_master_manifest",
     "write_blocked_profiles",
     "materialize_scope_artifacts",
+)
+
+SOURCE_RESOLUTION_COLUMNS = (
+    "Status",
+    "Project Code",
+    "Project Key",
+    "Project Name",
+    "DU Model",
+    "Profile ID",
+    "Profile Status",
+    "View Name",
+    "Export Timestamp",
+    "Source Path",
+    "Error Code",
+    "Message",
 )
 
 
@@ -202,11 +224,143 @@ def _sync_testable_dependencies() -> None:
             setattr(_impl, name, public_value)
 
 
+def _load_manifest_payload(manifest_path: Path) -> dict:
+    try:
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise _impl.BatchUatError(
+            "UAT_INPUT_MANIFEST_INVALID",
+            f"UAT input manifest is invalid: {manifest_path}",
+            {"path": str(manifest_path), "error": str(error)},
+        ) from error
+    if not isinstance(payload, dict):
+        raise _impl.BatchUatError(
+            "UAT_INPUT_MANIFEST_INVALID",
+            "UAT input manifest must contain a JSON object.",
+            {"path": str(manifest_path)},
+        )
+    return payload
+
+
+def resolve_v2_manifest_sources(
+    manifest_path: Path,
+    *,
+    identity_registry_path: Path = _impl.IDENTITY_REGISTRY,
+) -> tuple[dict, dict]:
+    """Resolve schema 2.0 source roots into the existing schema 1.0 batch input."""
+
+    manifest_path = Path(manifest_path).resolve()
+    payload = _load_manifest_payload(manifest_path)
+    if str(payload.get("schema_version", "")).strip() != "2.0":
+        raise _impl.BatchUatError(
+            "UAT_INPUT_MANIFEST_INVALID",
+            "Source-root discovery requires UAT manifest schema_version 2.0.",
+            {"path": str(manifest_path)},
+        )
+    if str(payload.get("selection_policy", "")).strip() != LATEST_FILENAME_TIMESTAMP:
+        raise _impl.BatchUatError(
+            "UAT_INPUT_MANIFEST_INVALID",
+            f"schema 2.0 selection_policy must be {LATEST_FILENAME_TIMESTAMP}.",
+            {"path": str(manifest_path)},
+        )
+    raw_roots = payload.get("source_roots")
+    if not isinstance(raw_roots, list) or not raw_roots:
+        raise _impl.BatchUatError(
+            "UAT_INPUT_MANIFEST_INVALID",
+            "schema 2.0 source_roots must be a non-empty list.",
+            {"path": str(manifest_path)},
+        )
+
+    source_roots: list[Path] = []
+    for raw_root in raw_roots:
+        value = os.path.expandvars(str(raw_root or "").strip())
+        if not value:
+            raise _impl.BatchUatError(
+                "UAT_INPUT_MANIFEST_INVALID",
+                "schema 2.0 source root values must not be blank.",
+                {"path": str(manifest_path)},
+            )
+        candidate = Path(value).expanduser()
+        if not candidate.is_absolute():
+            candidate = manifest_path.parent / candidate
+        source_roots.append(candidate.resolve())
+
+    registry = load_identity_registry(identity_registry_path)
+    discovery = discover_latest_source_exports(source_roots, registry)
+    internal_manifest = {
+        "schema_version": "1.0",
+        "profiles": [
+            {
+                "profile_id": profile_id,
+                "source_export": selection["source_path"],
+            }
+            for profile_id, selection in sorted(discovery["selections"].items())
+        ],
+    }
+    return internal_manifest, discovery
+
+
+def _write_source_resolution_csv(path: Path, discovery: dict) -> None:
+    with path.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=SOURCE_RESOLUTION_COLUMNS)
+        writer.writeheader()
+        for row in discovery.get("rows", []):
+            source_path = row.get("source_path", "")
+            if not source_path and row.get("source_paths"):
+                source_path = json.dumps(row.get("source_paths"), ensure_ascii=False)
+            writer.writerow(
+                {
+                    "Status": row.get("status", ""),
+                    "Project Code": row.get("project_code", ""),
+                    "Project Key": row.get("project_key", ""),
+                    "Project Name": row.get("project_name", ""),
+                    "DU Model": row.get("du_model_name", ""),
+                    "Profile ID": row.get("profile_id", ""),
+                    "Profile Status": row.get("profile_status", ""),
+                    "View Name": row.get("view_name", ""),
+                    "Export Timestamp": row.get("export_timestamp", ""),
+                    "Source Path": source_path,
+                    "Error Code": row.get("code", ""),
+                    "Message": row.get("message", ""),
+                }
+            )
+
+
+def _run_v2_batch(args, manifest_path: Path) -> dict:
+    internal_manifest, discovery = resolve_v2_manifest_sources(manifest_path)
+    with tempfile.TemporaryDirectory(prefix="create-pr-uat-manifest-") as temp_dir:
+        internal_path = Path(temp_dir) / "resolved_manifest_v1.json"
+        internal_path.write_text(
+            json.dumps(internal_manifest, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        child_args = argparse.Namespace(**vars(args))
+        child_args.manifest = internal_path
+        summary = _impl.run_batch(child_args)
+
+    output_root = Path(summary["output_root"])
+    report_path = output_root / "UAT_SOURCE_RESOLUTION.csv"
+    _write_source_resolution_csv(report_path, discovery)
+    summary["input_manifest"] = str(manifest_path)
+    summary["source_selection_policy"] = discovery["selection_policy"]
+    summary["source_resolution_report"] = str(report_path.resolve())
+    summary["source_resolution"] = discovery
+    summary_path = output_root / "UAT_MASTER_SUMMARY.json"
+    summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    return summary
+
+
 def run_batch(args):
-    """Run the batch and classify any blocked profile as a controlled block."""
+    """Run schema 1.0 explicit paths or schema 2.0 automatic source discovery."""
 
     _sync_testable_dependencies()
-    summary = _impl.run_batch(args)
+    manifest_path = Path(args.manifest).resolve()
+    payload = _load_manifest_payload(manifest_path)
+    if str(payload.get("schema_version", "")).strip() == "2.0":
+        summary = _run_v2_batch(args, manifest_path)
+    else:
+        summary = _impl.run_batch(args)
+
     has_blocks = bool(summary.get("blocked_profile_count", 0))
     has_failures = bool(summary.get("failed_scope_runs", 0))
     reconciled = bool(summary.get("manifest_reconciliation_ok", False))
