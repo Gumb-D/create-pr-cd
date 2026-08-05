@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Iterable, Mapping
 
-from du_profile_loader import PROFILE_STATUSES, load_du_profile
+from du_profile_loader import discover_du_profile_paths, PROFILE_STATUSES, load_du_profile
 
 TRANSITION_TARGETS = ("PROFILED", "BUSINESS_VALIDATED", "PR_INPUT_READY", "PRODUCTION")
 
@@ -182,18 +182,7 @@ def write_transition_outputs(
 
 if __name__ == "__main__":
     write_transition_outputs(
-        [
-            Path("config/du_profiles/tx_mini_pr_v1.yaml"),
-            Path("config/du_profiles/mw_eos_swap_pr_v1.yaml"),
-            Path("config/du_profiles/tx_rollout_2023_pr_v1.yaml"),
-            Path("config/du_profiles/jendela_tx_migration_pr_v1.yaml"),
-            Path("config/du_profiles/zte_tx_mini_pr_v1.yaml"),
-            Path("config/du_profiles/celcomdigi_bau_2023_pr_v1.yaml"),
-            Path("config/du_profiles/celcomdigi_bau_2024_pr_v1.yaml"),
-            Path("config/du_profiles/celcomdigi_usp_pr_v1.yaml"),
-            Path("config/du_profiles/cd_consolidation_2023_decom_pr_v1.yaml"),
-            Path("config/du_profiles/cd_consolidation_2023_rollout_pr_v1.yaml"),
-        ],
+        discover_du_profile_paths(),
         Path("config/registries/mw_du_profile_readiness_review.yaml"),
         Path("config/registries/mw_du_profile_transition_review.yaml"),
         Path("docs/MW_DU_Profile_Transition_Review.md"),

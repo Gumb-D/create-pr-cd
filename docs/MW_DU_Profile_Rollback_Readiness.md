@@ -90,22 +90,12 @@ Discovery-only rollback-readiness review for tracked DU profiles.
 - Rollback target header hashes: `79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf`
 - Note: Rollback baseline is documented from the current approved profile identity and header-hash set.
 
-## cd_consolidation_2023_decom_pr_v1
+## celcomdigi_cd_consolidation_2023_pr_v1
 
 - Rollback readiness status: `ROLLBACK_BLOCKED`
 - Current status: `DRAFT`
 - Profile version: `0.1.0`
-- Mapping version: `discovery-2026-07-07-cd-consolidation-2023-decom-v1`
+- Mapping version: `discovery-2026-08-05-cd-consolidation-2023-family-v1`
 - Observed header hash: `b86cbc349db66154324092c843593137e83908c3b4b55c09305d6cf6046c7a16`
-- Blockers: `NO_APPROVED_HEADER_HASH_BASELINE, PROFILE_NOT_RELEASED`
-- Note: Rollback remains blocked until an approved profile/header-hash baseline exists.
-
-## cd_consolidation_2023_rollout_pr_v1
-
-- Rollback readiness status: `ROLLBACK_BLOCKED`
-- Current status: `DRAFT`
-- Profile version: `0.1.0`
-- Mapping version: `discovery-2026-07-07-cd-consolidation-2023-rollout-v1`
-- Observed header hash: `d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1`
 - Blockers: `NO_APPROVED_HEADER_HASH_BASELINE, PROFILE_NOT_RELEASED`
 - Note: Rollback remains blocked until an approved profile/header-hash baseline exists.

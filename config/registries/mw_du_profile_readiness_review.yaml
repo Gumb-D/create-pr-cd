@@ -408,9 +408,9 @@
       ]
     },
     {
-      "profile_id": "cd_consolidation_2023_decom_pr_v1",
+      "profile_id": "celcomdigi_cd_consolidation_2023_pr_v1",
       "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-07-cd-consolidation-2023-decom-v1",
+      "mapping_version": "discovery-2026-08-05-cd-consolidation-2023-family-v1",
       "profile_status": "DRAFT",
       "du_model_name": "CD consolidation 2023",
       "source_file_name": "A-P202202168750_D002-CD consolidation 2023-CD 2023 Decom Site-20260703160415.xlsx",
@@ -454,79 +454,6 @@
         ],
         "single_candidate_unverified_fields": [
           "du_key",
-          "subcontractor_ti"
-        ],
-        "required_single_candidate_unverified_fields": [
-          "subcontractor_ti"
-        ],
-        "no_profile_selection_fields": [],
-        "required_no_profile_selection_fields": [],
-        "shortlist_mismatch_fields": [],
-        "required_shortlist_mismatch_fields": [],
-        "cross_model_bridge_fields": [
-          "existing_ti_pr_status",
-          "existing_tss_pr_status"
-        ]
-      },
-      "release_prerequisites": [
-        "Approve the DU model identity and four-layer source mappings.",
-        "Approve at least one header hash for the profile version.",
-        "Resolve missing required fields or keep the profile blocked.",
-        "Remove DRAFT-only and UNVERIFIED mapping conditions before runtime enablement.",
-        "Complete regression verification and UAT before any lifecycle promotion."
-      ],
-      "notes": [
-        "This readiness review is discovery-only and does not approve any mapping, header hash, lifecycle transition, or cross-model reuse.",
-        "A profile can remain structurally informative while still being blocked from any production path."
-      ]
-    },
-    {
-      "profile_id": "cd_consolidation_2023_rollout_pr_v1",
-      "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-07-cd-consolidation-2023-rollout-v1",
-      "profile_status": "DRAFT",
-      "du_model_name": "CD consolidation 2023",
-      "source_file_name": "A-P202202168750_D002-CD consolidation 2023-CD consolidation 2023 Rollout-20260703160351.xlsx",
-      "observed_header_hash": "d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1",
-      "approved_header_hashes": [],
-      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
-      "blocker_summary": {
-        "overall_blockers": [
-          "PROFILE_NOT_PRODUCTION",
-          "NO_APPROVED_HEADER_HASH",
-          "REQUIRED_FIELDS_NOT_APPROVED",
-          "MISSING_REQUIRED_FIELDS",
-          "COMPETING_SHORTLIST_CANDIDATES",
-          "UNVERIFIED_SINGLE_CANDIDATE_FIELDS",
-          "CROSS_MODEL_BRIDGE_ONLY_FIELDS"
-        ],
-        "lifecycle_blockers": [
-          "PROFILE_NOT_PRODUCTION",
-          "NO_APPROVED_HEADER_HASH"
-        ],
-        "missing_required_fields": [
-          "existing_ti_pr_status",
-          "existing_tss_pr_status"
-        ],
-        "unapproved_required_fields": [
-          "region",
-          "site_code",
-          "subcontractor_ti",
-          "tx_sow_raw"
-        ],
-        "competing_candidate_fields": [
-          "region",
-          "site_code",
-          "tx_sow_raw"
-        ],
-        "required_competing_candidate_fields": [
-          "region",
-          "site_code",
-          "tx_sow_raw"
-        ],
-        "single_candidate_unverified_fields": [
-          "du_key",
-          "site_name",
           "subcontractor_ti"
         ],
         "required_single_candidate_unverified_fields": [

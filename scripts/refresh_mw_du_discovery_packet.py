@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from du_profile_loader import discover_du_profile_paths
+
 from build_du_discovery_registry import write_registry_outputs
 from build_skill_field_shortlists import priority_profiler_dirs, write_shortlist_outputs
 from build_unresolved_skill_field_review import write_review_outputs
@@ -57,18 +59,7 @@ def _write_all_du_matrix_if_inventory_present(
 
 def refresh_discovery_packet() -> None:
     profile_root = _find_profiler_root()
-    profile_paths = [
-        Path("config/du_profiles/tx_mini_pr_v1.yaml"),
-        Path("config/du_profiles/mw_eos_swap_pr_v1.yaml"),
-        Path("config/du_profiles/tx_rollout_2023_pr_v1.yaml"),
-        Path("config/du_profiles/jendela_tx_migration_pr_v1.yaml"),
-        Path("config/du_profiles/zte_tx_mini_pr_v1.yaml"),
-        Path("config/du_profiles/celcomdigi_bau_2023_pr_v1.yaml"),
-        Path("config/du_profiles/celcomdigi_bau_2024_pr_v1.yaml"),
-        Path("config/du_profiles/celcomdigi_usp_pr_v1.yaml"),
-        Path("config/du_profiles/cd_consolidation_2023_decom_pr_v1.yaml"),
-        Path("config/du_profiles/cd_consolidation_2023_rollout_pr_v1.yaml"),
-    ]
+    profile_paths = discover_du_profile_paths()
     priority_dirs = priority_profiler_dirs(profile_root)
 
     write_registry_outputs(

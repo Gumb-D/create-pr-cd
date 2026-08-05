@@ -14,16 +14,8 @@ from du_profile_loader import ProfileValidationError, load_du_profile
 class TestDiscoveryPacketConsistency(unittest.TestCase):
     def _profiles(self):
         return [
-            load_du_profile(ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml"),
-            load_du_profile(ROOT / "config" / "du_profiles" / "mw_eos_swap_pr_v1.yaml"),
-            load_du_profile(ROOT / "config" / "du_profiles" / "tx_rollout_2023_pr_v1.yaml"),
-            load_du_profile(ROOT / "config" / "du_profiles" / "jendela_tx_migration_pr_v1.yaml"),
-            load_du_profile(ROOT / "config" / "du_profiles" / "zte_tx_mini_pr_v1.yaml"),
-            load_du_profile(ROOT / "config" / "du_profiles" / "celcomdigi_bau_2023_pr_v1.yaml"),
-            load_du_profile(ROOT / "config" / "du_profiles" / "celcomdigi_bau_2024_pr_v1.yaml"),
-            load_du_profile(ROOT / "config" / "du_profiles" / "celcomdigi_usp_pr_v1.yaml"),
-            load_du_profile(ROOT / "config" / "du_profiles" / "cd_consolidation_2023_decom_pr_v1.yaml"),
-            load_du_profile(ROOT / "config" / "du_profiles" / "cd_consolidation_2023_rollout_pr_v1.yaml"),
+            load_du_profile(path)
+            for path in sorted((ROOT / "config" / "du_profiles").glob("*.yaml"))
         ]
 
     def _registry(self, name):
@@ -33,7 +25,7 @@ class TestDiscoveryPacketConsistency(unittest.TestCase):
         validate_live_discovery_packets()
 
     def test_readiness_mapping_version_mismatch_fails_closed(self):
-        profiles = [profile for profile in self._profiles() if profile["profile_id"] != "cd_consolidation_2023_decom_pr_v1"]
+        profiles = self._profiles()
         discovery = self._registry("mw_du_model_discovery_registry.yaml")
         unresolved = self._registry("mw_du_unresolved_skill_field_review.yaml")
         readiness = self._registry("mw_du_profile_readiness_review.yaml")
@@ -63,7 +55,7 @@ class TestDiscoveryPacketConsistency(unittest.TestCase):
         self.assertIn("mapping-version mismatch", str(error.exception))
 
     def test_bridge_fields_must_match_unresolved_missing_fields(self):
-        profiles = [profile for profile in self._profiles() if profile["profile_id"] != "cd_consolidation_2023_rollout_pr_v1"]
+        profiles = self._profiles()
         discovery = self._registry("mw_du_model_discovery_registry.yaml")
         unresolved = self._registry("mw_du_unresolved_skill_field_review.yaml")
         readiness = self._registry("mw_du_profile_readiness_review.yaml")
@@ -263,7 +255,10 @@ class TestDiscoveryPacketConsistency(unittest.TestCase):
         rollback = self._registry("mw_du_profile_rollback_readiness.yaml")
         coverage = self._registry("mw_du_export_coverage_review.yaml")
         broken = copy.deepcopy(coverage)
-        broken["entries"][7]["profile_id"] = None
+        tracked_entry = next(
+            entry for entry in broken["entries"] if entry.get("profile_id") == "tx_mini_pr_v1"
+        )
+        tracked_entry["profile_id"] = None
 
         with self.assertRaises(ProfileValidationError) as error:
             validate_discovery_packet_consistency(
@@ -282,7 +277,10 @@ class TestDiscoveryPacketConsistency(unittest.TestCase):
         self.assertIn("Coverage review tracked-profile mismatch", str(error.exception))
 
     def test_coverage_review_donor_status_must_match_discovery_registry(self):
-        profiles = [profile for profile in self._profiles() if profile["profile_id"] != "cd_consolidation_2023_decom_pr_v1"]
+        profiles = [
+            profile for profile in self._profiles()
+            if profile["profile_id"] != "celcomdigi_cd_consolidation_2023_pr_v1"
+        ]
         discovery = self._registry("mw_du_model_discovery_registry.yaml")
         unresolved = self._registry("mw_du_unresolved_skill_field_review.yaml")
         readiness = self._registry("mw_du_profile_readiness_review.yaml")
@@ -291,33 +289,32 @@ class TestDiscoveryPacketConsistency(unittest.TestCase):
         deprecation = self._registry("mw_du_profile_deprecation_review.yaml")
         traceability = self._registry("mw_du_profile_traceability_audit.yaml")
         rollback = self._registry("mw_du_profile_rollback_readiness.yaml")
-        coverage = self._registry("mw_du_export_coverage_review.yaml")
         discovery_broken = copy.deepcopy(discovery)
-        broken = copy.deepcopy(coverage)
-        tracked_entry = next(entry for entry in broken["entries"] if entry["profile_id"] == "cd_consolidation_2023_decom_pr_v1")
-        discovery_entry = next(entry for entry in discovery_broken["entries"] if entry["profile_id"] == "cd_consolidation_2023_decom_pr_v1")
-        discovery_entry["profile_id"] = None
-        discovery_entry["profile_status"] = None
-        discovery_entry["profile_version"] = None
-        discovery_entry["mapping_version"] = None
-        tracked_entry["profile_id"] = None
-        tracked_entry["profile_status"] = None
-        tracked_entry["profile_version"] = None
-        tracked_entry["mapping_version"] = None
-        tracked_entry["coverage_status"] = "DONOR_REVIEW_CANDIDATE"
+        broken = copy.deepcopy(self._registry("mw_du_export_coverage_review.yaml"))
+
+        source_names = []
+        for entry in discovery_broken["entries"]:
+            if entry.get("profile_id") != "celcomdigi_cd_consolidation_2023_pr_v1":
+                continue
+            source_names.append(entry["source_file_name"])
+            entry["profile_id"] = None
+            entry["profile_status"] = None
+            entry["profile_version"] = None
+            entry["mapping_version"] = None
+        for entry in broken["entries"]:
+            if entry.get("source_file_name") not in source_names:
+                continue
+            entry["profile_id"] = None
+            entry["profile_status"] = None
+            entry["profile_version"] = None
+            entry["mapping_version"] = None
+            entry["coverage_status"] = "BACKLOG_DISCOVERY_ONLY"
+        next(entry for entry in broken["entries"] if entry.get("source_file_name") == source_names[0])["coverage_status"] = "DONOR_REVIEW_CANDIDATE"
 
         with self.assertRaises(ProfileValidationError) as error:
             validate_discovery_packet_consistency(
-                profiles,
-                discovery_broken,
-                unresolved,
-                readiness,
-                transition,
-                bridge,
-                deprecation,
-                traceability,
-                rollback,
-                broken,
+                profiles, discovery_broken, unresolved, readiness, transition,
+                bridge, deprecation, traceability, rollback, broken,
             )
 
         self.assertIn("Coverage review donor/backlog mismatch", str(error.exception))
@@ -353,7 +350,10 @@ class TestDiscoveryPacketConsistency(unittest.TestCase):
         self.assertIn("Coverage review summary mismatch", str(error.exception))
 
     def test_coverage_review_missing_skill_fields_must_match_discovery_registry(self):
-        profiles = [profile for profile in self._profiles() if profile["profile_id"] != "cd_consolidation_2023_rollout_pr_v1"]
+        profiles = [
+            profile for profile in self._profiles()
+            if profile["profile_id"] != "celcomdigi_cd_consolidation_2023_pr_v1"
+        ]
         discovery = self._registry("mw_du_model_discovery_registry.yaml")
         unresolved = self._registry("mw_du_unresolved_skill_field_review.yaml")
         readiness = self._registry("mw_du_profile_readiness_review.yaml")
@@ -362,34 +362,32 @@ class TestDiscoveryPacketConsistency(unittest.TestCase):
         deprecation = self._registry("mw_du_profile_deprecation_review.yaml")
         traceability = self._registry("mw_du_profile_traceability_audit.yaml")
         rollback = self._registry("mw_du_profile_rollback_readiness.yaml")
-        coverage = self._registry("mw_du_export_coverage_review.yaml")
         discovery_broken = copy.deepcopy(discovery)
-        broken = copy.deepcopy(coverage)
-        tracked_entry = next(entry for entry in broken["entries"] if entry["profile_id"] == "cd_consolidation_2023_rollout_pr_v1")
-        discovery_entry = next(entry for entry in discovery_broken["entries"] if entry["profile_id"] == "cd_consolidation_2023_rollout_pr_v1")
-        discovery_entry["profile_id"] = None
-        discovery_entry["profile_status"] = None
-        discovery_entry["profile_version"] = None
-        discovery_entry["mapping_version"] = None
-        tracked_entry["profile_id"] = None
-        tracked_entry["profile_status"] = None
-        tracked_entry["profile_version"] = None
-        tracked_entry["mapping_version"] = None
-        tracked_entry["coverage_status"] = "BACKLOG_DISCOVERY_ONLY"
-        tracked_entry["missing_skill_fields"] = []
+        broken = copy.deepcopy(self._registry("mw_du_export_coverage_review.yaml"))
+
+        source_names = []
+        for entry in discovery_broken["entries"]:
+            if entry.get("profile_id") != "celcomdigi_cd_consolidation_2023_pr_v1":
+                continue
+            source_names.append(entry["source_file_name"])
+            entry["profile_id"] = None
+            entry["profile_status"] = None
+            entry["profile_version"] = None
+            entry["mapping_version"] = None
+        for entry in broken["entries"]:
+            if entry.get("source_file_name") not in source_names:
+                continue
+            entry["profile_id"] = None
+            entry["profile_status"] = None
+            entry["profile_version"] = None
+            entry["mapping_version"] = None
+            entry["coverage_status"] = "BACKLOG_DISCOVERY_ONLY"
+        next(entry for entry in broken["entries"] if entry.get("source_file_name") == source_names[0])["missing_skill_fields"] = []
 
         with self.assertRaises(ProfileValidationError) as error:
             validate_discovery_packet_consistency(
-                profiles,
-                discovery_broken,
-                unresolved,
-                readiness,
-                transition,
-                bridge,
-                deprecation,
-                traceability,
-                rollback,
-                broken,
+                profiles, discovery_broken, unresolved, readiness, transition,
+                bridge, deprecation, traceability, rollback, broken,
             )
 
         self.assertIn("Coverage review missing-skill-fields mismatch", str(error.exception))

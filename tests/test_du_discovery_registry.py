@@ -354,19 +354,19 @@ class TestDuDiscoveryRegistry(unittest.TestCase):
         profile_dir = self.profiler_root / "A-P202202168750_D002-CD_consolidation_2023-CD_2023_Decom_Site-20260703160415"
         entry = build_discovery_entry(profile_dir)
         self.assertEqual(entry["du_model_name"], "CD consolidation 2023")
-        self.assertEqual(entry["profile_id"], "cd_consolidation_2023_decom_pr_v1")
+        self.assertEqual(entry["profile_id"], "celcomdigi_cd_consolidation_2023_pr_v1")
         self.assertEqual(entry["profile_status"], "DRAFT")
         self.assertEqual(entry["profile_version"], "0.1.0")
-        self.assertEqual(entry["mapping_version"], "discovery-2026-07-07-cd-consolidation-2023-decom-v1")
+        self.assertEqual(entry["mapping_version"], "discovery-2026-08-05-cd-consolidation-2023-family-v1")
 
     def test_build_discovery_entry_for_cd_consolidation_2023_rollout_uses_existing_profile_file(self):
         profile_dir = self.profiler_root / "A-P202202168750_D002-CD_consolidation_2023-CD_consolidation_2023_Rollout-20260703160351"
         entry = build_discovery_entry(profile_dir)
         self.assertEqual(entry["du_model_name"], "CD consolidation 2023")
-        self.assertEqual(entry["profile_id"], "cd_consolidation_2023_rollout_pr_v1")
+        self.assertEqual(entry["profile_id"], "celcomdigi_cd_consolidation_2023_pr_v1")
         self.assertEqual(entry["profile_status"], "DRAFT")
         self.assertEqual(entry["profile_version"], "0.1.0")
-        self.assertEqual(entry["mapping_version"], "discovery-2026-07-07-cd-consolidation-2023-rollout-v1")
+        self.assertEqual(entry["mapping_version"], "discovery-2026-08-05-cd-consolidation-2023-family-v1")
 
     def test_inventory_markdown_mentions_du(self):
         registry = {

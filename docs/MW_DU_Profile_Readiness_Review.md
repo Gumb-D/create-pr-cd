@@ -137,36 +137,17 @@ Discovery-only summary of why the current priority DU profiles remain blocked fr
   - Remove DRAFT-only and UNVERIFIED mapping conditions before runtime enablement.
   - Complete regression verification and UAT before any lifecycle promotion.
 
-## cd_consolidation_2023_decom_pr_v1 (CD consolidation 2023)
+## celcomdigi_cd_consolidation_2023_pr_v1 (CD consolidation 2023)
 
 - Readiness status: `DISCOVERY_ONLY_BLOCKED`
 - Profile status: `DRAFT`
 - Profile version: `0.1.0`
-- Mapping version: `discovery-2026-07-07-cd-consolidation-2023-decom-v1`
+- Mapping version: `discovery-2026-08-05-cd-consolidation-2023-family-v1`
 - Observed header hash: `b86cbc349db66154324092c843593137e83908c3b4b55c09305d6cf6046c7a16`
 - Approved header hashes: `0`
 - Overall blockers: `PROFILE_NOT_PRODUCTION, NO_APPROVED_HEADER_HASH, REQUIRED_FIELDS_NOT_APPROVED, MISSING_REQUIRED_FIELDS, COMPETING_SHORTLIST_CANDIDATES, UNVERIFIED_SINGLE_CANDIDATE_FIELDS, CROSS_MODEL_BRIDGE_ONLY_FIELDS`
 - Missing required fields: `existing_ti_pr_status, existing_tss_pr_status`
 - Competing candidate fields: `region, site_code, site_name, tx_sow_raw`
-- Cross-model bridge-only fields: `existing_ti_pr_status, existing_tss_pr_status`
-- Release prerequisites:
-  - Approve the DU model identity and four-layer source mappings.
-  - Approve at least one header hash for the profile version.
-  - Resolve missing required fields or keep the profile blocked.
-  - Remove DRAFT-only and UNVERIFIED mapping conditions before runtime enablement.
-  - Complete regression verification and UAT before any lifecycle promotion.
-
-## cd_consolidation_2023_rollout_pr_v1 (CD consolidation 2023)
-
-- Readiness status: `DISCOVERY_ONLY_BLOCKED`
-- Profile status: `DRAFT`
-- Profile version: `0.1.0`
-- Mapping version: `discovery-2026-07-07-cd-consolidation-2023-rollout-v1`
-- Observed header hash: `d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1`
-- Approved header hashes: `0`
-- Overall blockers: `PROFILE_NOT_PRODUCTION, NO_APPROVED_HEADER_HASH, REQUIRED_FIELDS_NOT_APPROVED, MISSING_REQUIRED_FIELDS, COMPETING_SHORTLIST_CANDIDATES, UNVERIFIED_SINGLE_CANDIDATE_FIELDS, CROSS_MODEL_BRIDGE_ONLY_FIELDS`
-- Missing required fields: `existing_ti_pr_status, existing_tss_pr_status`
-- Competing candidate fields: `region, site_code, tx_sow_raw`
 - Cross-model bridge-only fields: `existing_ti_pr_status, existing_tss_pr_status`
 - Release prerequisites:
   - Approve the DU model identity and four-layer source mappings.

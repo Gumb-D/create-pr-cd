@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+
+from du_profile_loader import discover_du_profile_paths
 from typing import Any, Dict, Iterable, List, Mapping
 
 PROFILE_TO_SKILL_FIELD = {
@@ -258,18 +260,7 @@ def write_review_outputs(profile_paths: Iterable[Path], shortlist_path: Path, re
 
 def main() -> int:
     write_review_outputs(
-        [
-            Path("config/du_profiles/tx_mini_pr_v1.yaml"),
-            Path("config/du_profiles/mw_eos_swap_pr_v1.yaml"),
-            Path("config/du_profiles/tx_rollout_2023_pr_v1.yaml"),
-            Path("config/du_profiles/jendela_tx_migration_pr_v1.yaml"),
-            Path("config/du_profiles/zte_tx_mini_pr_v1.yaml"),
-            Path("config/du_profiles/celcomdigi_bau_2023_pr_v1.yaml"),
-            Path("config/du_profiles/celcomdigi_bau_2024_pr_v1.yaml"),
-            Path("config/du_profiles/celcomdigi_usp_pr_v1.yaml"),
-            Path("config/du_profiles/cd_consolidation_2023_decom_pr_v1.yaml"),
-            Path("config/du_profiles/cd_consolidation_2023_rollout_pr_v1.yaml"),
-        ],
+        discover_du_profile_paths(),
         Path("config/registries/mw_du_priority_skill_field_shortlists.yaml"),
         Path("config/registries/mw_du_unresolved_skill_field_review.yaml"),
         Path("docs/MW_DU_Unresolved_Skill_Field_Review.md"),

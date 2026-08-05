@@ -36,7 +36,7 @@ Discovery-only structural overlap review based on exact four-layer fingerprint s
 - Closest neighbors:
   - `A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx` (Celcomdigi USP) similarity=`0.872` shared=`2275` union=`2608` profile=`celcomdigi_usp_pr_v1`
   - `A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx` (TX Mini Project) similarity=`0.862` shared=`2231` union=`2588` profile=`tx_mini_pr_v1`
-  - `A-P202202168750_D002-CD consolidation 2023-CD consolidation 2023 Rollout-20260703160351.xlsx` (CD consolidation 2023) similarity=`0.842` shared=`2225` union=`2644` profile=`cd_consolidation_2023_rollout_pr_v1`
+  - `A-P202202168750_D002-CD consolidation 2023-CD consolidation 2023 Rollout-20260703160351.xlsx` (CD consolidation 2023) similarity=`0.842` shared=`2225` union=`2644` profile=`celcomdigi_cd_consolidation_2023_pr_v1`
 
 ## CD consolidation 2023
 
@@ -46,7 +46,7 @@ Discovery-only structural overlap review based on exact four-layer fingerprint s
 - Grouping signal: `POSSIBLE_REUSE_REVIEW`
 - Reason: Closest neighbor shares a strong majority of exact four-layer fingerprints.
 - Closest neighbors:
-  - `A-P202202168750_D002-CD consolidation 2023-CD consolidation 2023 Rollout-20260703160351.xlsx` (CD consolidation 2023) similarity=`0.870` shared=`2267` union=`2605` profile=`cd_consolidation_2023_rollout_pr_v1`
+  - `A-P202202168750_D002-CD consolidation 2023-CD consolidation 2023 Rollout-20260703160351.xlsx` (CD consolidation 2023) similarity=`0.870` shared=`2267` union=`2605` profile=`celcomdigi_cd_consolidation_2023_pr_v1`
   - `A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx` (TX Mini Project) similarity=`0.850` shared=`2215` union=`2607` profile=`tx_mini_pr_v1`
   - `A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx` (Celcomdigi USP) similarity=`0.842` shared=`2234` union=`2652` profile=`celcomdigi_usp_pr_v1`
 
@@ -58,7 +58,7 @@ Discovery-only structural overlap review based on exact four-layer fingerprint s
 - Grouping signal: `POSSIBLE_REUSE_REVIEW`
 - Reason: Closest neighbor shares a strong majority of exact four-layer fingerprints.
 - Closest neighbors:
-  - `A-P202202168750_D002-CD consolidation 2023-CD 2023 Decom Site-20260703160415.xlsx` (CD consolidation 2023) similarity=`0.870` shared=`2267` union=`2605` profile=`cd_consolidation_2023_decom_pr_v1`
+  - `A-P202202168750_D002-CD consolidation 2023-CD 2023 Decom Site-20260703160415.xlsx` (CD consolidation 2023) similarity=`0.870` shared=`2267` union=`2605` profile=`celcomdigi_cd_consolidation_2023_pr_v1`
   - `A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx` (Celcomdigi USP) similarity=`0.850` shared=`2249` union=`2647` profile=`celcomdigi_usp_pr_v1`
   - `A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx` (TX Mini Project) similarity=`0.848` shared=`2217` union=`2615` profile=`tx_mini_pr_v1`
 
@@ -72,7 +72,7 @@ Discovery-only structural overlap review based on exact four-layer fingerprint s
 - Closest neighbors:
   - `A-P202202168750_D002-2024 Celcomdigi BAU-2024 BAU Rollout (TX)-20260703160253.xlsx` (2024 Celcomdigi BAU) similarity=`0.872` shared=`2275` union=`2608` profile=`celcomdigi_bau_2024_pr_v1`
   - `A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx` (TX Mini Project) similarity=`0.852` shared=`2230` union=`2616` profile=`tx_mini_pr_v1`
-  - `A-P202202168750_D002-CD consolidation 2023-CD consolidation 2023 Rollout-20260703160351.xlsx` (CD consolidation 2023) similarity=`0.850` shared=`2249` union=`2647` profile=`cd_consolidation_2023_rollout_pr_v1`
+  - `A-P202202168750_D002-CD consolidation 2023-CD consolidation 2023 Rollout-20260703160351.xlsx` (CD consolidation 2023) similarity=`0.850` shared=`2249` union=`2647` profile=`celcomdigi_cd_consolidation_2023_pr_v1`
 
 ## Jendela TX Migration
 

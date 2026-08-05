@@ -63,7 +63,9 @@ class TestProfileTraceabilityAudit(unittest.TestCase):
             "rollback": self._registry("mw_du_profile_rollback_readiness.yaml"),
         }
         registries["bridge"] = json.loads(json.dumps(registries["bridge"]))
-        registries["bridge"]["entries"][0]["observed_header_hash"] = "wrong-hash"
+        next(
+            entry for entry in registries["bridge"]["entries"] if entry["profile_id"] == "tx_mini_pr_v1"
+        )["observed_header_hash"] = "wrong-hash"
 
         registry = build_traceability_registry(profiles, registries)
 

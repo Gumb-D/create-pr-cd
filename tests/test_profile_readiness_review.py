@@ -232,47 +232,37 @@ class TestProfileReadinessReview(unittest.TestCase):
         )
         self.assertEqual(entry["blocker_summary"]["cross_model_bridge_fields"], [])
 
-    def test_cd_consolidation_2023_decom_entry_stays_discovery_only_blocked_with_competing_core_fields(self):
-        profile = load_du_profile(ROOT / "config" / "du_profiles" / "cd_consolidation_2023_decom_pr_v1.yaml")
+    def test_cd_consolidation_profile_family_stays_discovery_only_blocked(self):
+        profile = load_du_profile(
+            ROOT / "config" / "du_profiles" / "celcomdigi_cd_consolidation_2023_pr_v1.yaml"
+        )
         unresolved = json.loads(
             (ROOT / "config" / "registries" / "mw_du_unresolved_skill_field_review.yaml").read_text(encoding="utf-8")
         )
         bridge = json.loads(
             (ROOT / "config" / "registries" / "mw_du_missing_field_bridge_review.yaml").read_text(encoding="utf-8")
         )
-        unresolved_entry = next(entry for entry in unresolved["entries"] if entry["profile_id"] == "cd_consolidation_2023_decom_pr_v1")
-        bridge_entry = next(entry for entry in bridge["entries"] if entry["profile_id"] == "cd_consolidation_2023_decom_pr_v1")
+        unresolved_entry = next(
+            entry for entry in unresolved["entries"]
+            if entry["profile_id"] == "celcomdigi_cd_consolidation_2023_pr_v1"
+        )
+        bridge_entry = next(
+            entry for entry in bridge["entries"]
+            if entry["profile_id"] == "celcomdigi_cd_consolidation_2023_pr_v1"
+        )
 
         entry = build_readiness_entry(profile, unresolved_entry, bridge_entry)
 
         self.assertEqual(entry["readiness_status"], "DISCOVERY_ONLY_BLOCKED")
+        self.assertEqual(entry["profile_status"], "DRAFT")
+        self.assertEqual(entry["approved_header_hashes"], [])
         self.assertIn("MISSING_REQUIRED_FIELDS", entry["blocker_summary"]["overall_blockers"])
         self.assertIn("COMPETING_SHORTLIST_CANDIDATES", entry["blocker_summary"]["overall_blockers"])
         self.assertEqual(
             entry["blocker_summary"]["cross_model_bridge_fields"],
             ["existing_ti_pr_status", "existing_tss_pr_status"],
         )
-
-    def test_cd_consolidation_2023_rollout_entry_stays_discovery_only_blocked_with_competing_core_fields(self):
-        profile = load_du_profile(ROOT / "config" / "du_profiles" / "cd_consolidation_2023_rollout_pr_v1.yaml")
-        unresolved = json.loads(
-            (ROOT / "config" / "registries" / "mw_du_unresolved_skill_field_review.yaml").read_text(encoding="utf-8")
-        )
-        bridge = json.loads(
-            (ROOT / "config" / "registries" / "mw_du_missing_field_bridge_review.yaml").read_text(encoding="utf-8")
-        )
-        unresolved_entry = next(entry for entry in unresolved["entries"] if entry["profile_id"] == "cd_consolidation_2023_rollout_pr_v1")
-        bridge_entry = next(entry for entry in bridge["entries"] if entry["profile_id"] == "cd_consolidation_2023_rollout_pr_v1")
-
-        entry = build_readiness_entry(profile, unresolved_entry, bridge_entry)
-
-        self.assertEqual(entry["readiness_status"], "DISCOVERY_ONLY_BLOCKED")
-        self.assertIn("MISSING_REQUIRED_FIELDS", entry["blocker_summary"]["overall_blockers"])
-        self.assertIn("COMPETING_SHORTLIST_CANDIDATES", entry["blocker_summary"]["overall_blockers"])
-        self.assertEqual(
-            entry["blocker_summary"]["cross_model_bridge_fields"],
-            ["existing_ti_pr_status", "existing_tss_pr_status"],
-        )
+        self.assertEqual(set(row["variant_id"] for row in profile["layout_variants"]), {"decom", "rollout"})
 
     def test_markdown_mentions_mapping_version_and_blockers(self):
         registry = json.loads(

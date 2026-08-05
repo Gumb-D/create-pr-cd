@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Iterable, Mapping
 
-from du_profile_loader import ProfileValidationError, load_du_profile
+from du_profile_loader import discover_du_profile_paths, ProfileValidationError, load_du_profile
 
 STATUS_REQUIREMENTS = {
     "DRAFT": (),
@@ -103,18 +103,7 @@ def validate_profiles_against_transition_registry(
 
 if __name__ == "__main__":
     validate_profiles_against_transition_registry(
-        [
-            Path("config/du_profiles/tx_mini_pr_v1.yaml"),
-            Path("config/du_profiles/mw_eos_swap_pr_v1.yaml"),
-            Path("config/du_profiles/tx_rollout_2023_pr_v1.yaml"),
-            Path("config/du_profiles/jendela_tx_migration_pr_v1.yaml"),
-            Path("config/du_profiles/zte_tx_mini_pr_v1.yaml"),
-            Path("config/du_profiles/celcomdigi_bau_2023_pr_v1.yaml"),
-            Path("config/du_profiles/celcomdigi_bau_2024_pr_v1.yaml"),
-            Path("config/du_profiles/celcomdigi_usp_pr_v1.yaml"),
-            Path("config/du_profiles/cd_consolidation_2023_decom_pr_v1.yaml"),
-            Path("config/du_profiles/cd_consolidation_2023_rollout_pr_v1.yaml"),
-        ],
+        discover_du_profile_paths(),
         Path("config/registries/mw_du_profile_transition_review.yaml"),
         Path("config/registries/mw_du_profile_deprecation_review.yaml"),
     )

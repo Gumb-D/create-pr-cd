@@ -134,10 +134,10 @@
         "data",
         "drop_down"
       ],
-      "profile_id": "cd_consolidation_2023_decom_pr_v1",
+      "profile_id": "celcomdigi_cd_consolidation_2023_pr_v1",
       "profile_status": "DRAFT",
       "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-07-cd-consolidation-2023-decom-v1",
+      "mapping_version": "discovery-2026-08-05-cd-consolidation-2023-family-v1",
       "pr_input_status": "PR_INPUT_QUARANTINED",
       "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
       "skill_field_presence": {
@@ -157,7 +157,8 @@
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
         "No header hash, field mapping, or profile in this entry is approved for production use."
-      ]
+      ],
+      "layout_variant": "decom"
     },
     {
       "project_key": "Malaysia_CelcomDigi_Project",
@@ -173,10 +174,10 @@
         "data",
         "drop_down"
       ],
-      "profile_id": "cd_consolidation_2023_rollout_pr_v1",
+      "profile_id": "celcomdigi_cd_consolidation_2023_pr_v1",
       "profile_status": "DRAFT",
       "profile_version": "0.1.0",
-      "mapping_version": "discovery-2026-07-07-cd-consolidation-2023-rollout-v1",
+      "mapping_version": "discovery-2026-08-05-cd-consolidation-2023-family-v1",
       "pr_input_status": "PR_INPUT_QUARANTINED",
       "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
       "skill_field_presence": {
@@ -196,7 +197,8 @@
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
         "No header hash, field mapping, or profile in this entry is approved for production use."
-      ]
+      ],
+      "layout_variant": "rollout"
     },
     {
       "project_key": "Malaysia_CelcomDigi_Project",
