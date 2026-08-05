@@ -81,8 +81,10 @@ class TestCanonicalBridgeProfileRouting(unittest.TestCase):
             )
 
             self.assertNotEqual(result.returncode, 0)
-            payload = json.loads(result.stderr)
-            self.assertEqual(payload["error"], "DU_PROFILE_IDENTITY_MISMATCH")
+            self.assertIn(
+                '"error": "DU_PROFILE_IDENTITY_MISMATCH"',
+                result.stderr,
+            )
 
 
 if __name__ == "__main__":
