@@ -1,10 +1,8 @@
 """Phase 1 negative-test acceptance sweep for the live TX Mini profile.
 
-Covers the plan's Section 8 minimum test matrix against `tx_mini_pr_v1`:
-changed header hash, unknown model/view, missing required fields, ambiguous
+Covers changed header hash, unknown DU model, missing required fields, ambiguous
 fingerprints, unverified mappings, unverified normalization, invalid required
-values, and the raw-source block. The positive golden-parity scenario is
-evidenced separately by scripts/run_tx_mini_golden_parity.py.
+values, and the raw-source block. View ID is runtime audit evidence only.
 """
 import json
 import sys
@@ -104,10 +102,7 @@ def _build_record(profile, overrides=None, header_hash=None, inventory=None, sow
 
 
 def _production_copy(profile):
-    """A promoted-profile simulation: PRODUCTION status and no UNVERIFIED
-    candidates left (a real promotion must resolve or drop them, because the
-    guard blocks output on any unverified evidence field — see the dedicated
-    unverified-mapping test)."""
+    """Simulate a promoted profile with only APPROVED mapping candidates."""
     clone = json.loads(json.dumps(profile))
     clone["status"] = "PRODUCTION"
     for config in clone["field_mapping"].values():
@@ -117,8 +112,6 @@ def _production_copy(profile):
             if candidate.get("mapping_status") == "APPROVED"
         ]
     return clone
-
-
 
 
 class TestTxMiniNegativeAcceptance(unittest.TestCase):
@@ -137,7 +130,6 @@ class TestTxMiniNegativeAcceptance(unittest.TestCase):
     def test_positive_control_requires_production_and_approved_normalization(self):
         production = _production_copy(self.profile)
         record = _build_record(production)
-        # The registry normalizes the PR_TRIGGER value with APPROVED status.
         self.assertEqual(record["pr_context"]["tx_sow_normalized"], "MW SWAP")
         gate = evaluate_record(record, production, scope="TSS")
         self.assertTrue(gate["allow_output"])
@@ -150,13 +142,21 @@ class TestTxMiniNegativeAcceptance(unittest.TestCase):
         self.assertFalse(gate["allow_output"])
         self.assertIn("HEADER_HASH_REVALIDATION_REQUIRED", gate["blocking_reasons"])
 
-    def test_unknown_du_model_or_view_quarantines(self):
+    def test_new_view_id_is_audit_evidence_and_does_not_block_output(self):
         production = _production_copy(self.profile)
         record = _build_record(production)
         record["identity"]["view_id"] = "9999999999999999999"
         gate = evaluate_record(record, production, scope="TSS")
+        self.assertTrue(gate["allow_output"])
+        self.assertNotIn("UNKNOWN_DU_MODEL", gate["blocking_reasons"])
+
+    def test_unknown_du_model_quarantines(self):
+        production = _production_copy(self.profile)
+        record = _build_record(production)
+        record["identity"]["du_model_id"] = "9999999999999999999"
+        gate = evaluate_record(record, production, scope="TSS")
         self.assertFalse(gate["allow_output"])
-        self.assertIn("UNKNOWN_DU_MODEL_OR_VIEW", gate["blocking_reasons"])
+        self.assertIn("UNKNOWN_DU_MODEL", gate["blocking_reasons"])
 
     def test_unknown_profile_quarantines(self):
         record = _build_record(self.profile)
@@ -199,7 +199,6 @@ class TestTxMiniNegativeAcceptance(unittest.TestCase):
 
     def test_unverified_normalization_blocks_output_for_production(self):
         production = _production_copy(self.profile)
-        # No registry supplied: the adapter fallback leaves normalization UNVERIFIED.
         record = _build_record(production, sow_registry=None)
         self.assertEqual(
             record["source_evidence"]["fields"]["tx_sow_normalized"]["normalization_status"], "UNVERIFIED"
