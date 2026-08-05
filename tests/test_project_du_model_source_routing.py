@@ -16,6 +16,7 @@ from iepms_export_source_resolver import (
     parse_iepms_export_filename,
     resolve_profile_route,
 )
+from run_all_du_ecc_uat import resolve_v2_manifest_sources
 
 
 REGISTRY_PATH = ROOT / "config" / "registries" / "mw_du_profile_identity_registry.yaml"
@@ -147,6 +148,49 @@ class TestProjectDuModelSourceRouting(unittest.TestCase):
                 du_model_name="2023 TX Rollout",
             )
         self.assertEqual(context.exception.code, "DU_PROFILE_IDENTITY_AMBIGUOUS")
+
+    def test_v2_manifest_resolves_relative_source_root_and_builds_v1_entries(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            config_dir = workspace / "config"
+            export_dir = workspace / "Info" / "reference" / "du_exports"
+            config_dir.mkdir(parents=True)
+            export_dir.mkdir(parents=True)
+            selected = export_dir / (
+                "A-P202202168750_D002-TX Mini Project-Any View-"
+                "20260805090102.xlsx"
+            )
+            selected.touch()
+            manifest = config_dir / "all_du_ecc_uat_manifest.local.json"
+            manifest.write_text(
+                json.dumps(
+                    {
+                        "schema_version": "2.0",
+                        "source_roots": ["../Info/reference/du_exports"],
+                        "selection_policy": "LATEST_FILENAME_TIMESTAMP",
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            internal_manifest, discovery = resolve_v2_manifest_sources(
+                manifest,
+                identity_registry_path=REGISTRY_PATH,
+            )
+
+            self.assertEqual(internal_manifest["schema_version"], "1.0")
+            entries = {
+                entry["profile_id"]: entry
+                for entry in internal_manifest["profiles"]
+            }
+            self.assertEqual(
+                Path(entries["tx_mini_pr_v1"]["source_export"]),
+                selected.resolve(),
+            )
+            self.assertEqual(
+                discovery["selections"]["tx_mini_pr_v1"]["view_name"],
+                "Any View",
+            )
 
 
 if __name__ == "__main__":
