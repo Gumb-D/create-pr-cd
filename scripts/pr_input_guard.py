@@ -34,7 +34,7 @@ def _same_model(record: Mapping[str, Any], profile: Mapping[str, Any]) -> bool:
             return False
     project_key = str(allowed.get("project_key", ""))
     record_project_key = str(identity.get("project_key", ""))
-    if project_key and record_project_key and record_project_key != project_key:
+    if project_key and record_project_key != project_key:
         return False
     return True
 
