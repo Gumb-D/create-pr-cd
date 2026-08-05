@@ -20,8 +20,11 @@ jobs:
           scripts/iepms_export_source_resolver.py
           scripts/du_profile_resolver.py
           scripts/run_all_du_ecc_uat.py
+          scripts/canonical_generator_bridge.py
       - name: Project and DU model routing tests
         run: python -m unittest tests/test_project_du_model_source_routing.py -v
+      - name: Canonical bridge profile routing tests
+        run: python -m unittest tests/test_canonical_bridge_profile_routing.py -v
       - name: Existing resolver compatibility tests
         run: >-
           python -m unittest
