@@ -308,6 +308,21 @@ def calculate_structural_header_hash(inventory: Mapping[str, Any]) -> str:
     return _header_hash(inventory, structural=True)
 
 
+def _approved_site_layout_view_ids(profile: Mapping[str, Any]) -> set[str]:
+    """Return layout references from APPROVED site-code mapping evidence."""
+    view_ids: set[str] = set()
+    site_mapping = profile.get("field_mapping", {}).get("site_code", {})
+    for candidate in site_mapping.get("source_candidates", []):
+        if str(candidate.get("mapping_status", "")) != "APPROVED":
+            continue
+        parsed = parse_site_identity_field_code(
+            candidate.get("fingerprint", {}).get("field_code", "")
+        )
+        if parsed is not None:
+            view_ids.add(parsed["view_id"])
+    return view_ids
+
+
 def resolve_approved_header_structure(
     inventory: Mapping[str, Any],
     profile: Mapping[str, Any],
@@ -315,9 +330,9 @@ def resolve_approved_header_structure(
     """Validate exact or View-normalized structure against approved raw hashes.
 
     Existing approved hashes remain authoritative. For an unseen runtime View,
-    the inventory is rebound only at the site identity View suffix to each
-    profile-recorded layout View. A match proves the complete layout is otherwise
-    byte-for-byte equivalent at the normalized four-header level.
+    the inventory is rebound only at the site identity View suffix represented
+    by an APPROVED site-code mapping fingerprint. Identity accepted_view_ids is
+    never consulted. A match proves the complete layout is otherwise identical.
     """
     raw_hash = calculate_header_hash(inventory)
     structural_hash = calculate_structural_header_hash(inventory)
@@ -334,11 +349,7 @@ def resolve_approved_header_structure(
             "approval_basis": "RAW_HEADER_HASH",
         }
 
-    layout_view_ids = {
-        str(value)
-        for value in profile.get("identity", {}).get("accepted_view_ids", [])
-        if str(value).strip()
-    }
+    layout_view_ids = _approved_site_layout_view_ids(profile)
     for view_id in sorted(layout_view_ids):
         candidate_hash = _header_hash(inventory, reference_view_id=view_id)
         if candidate_hash in approved_hashes:
