@@ -18,6 +18,7 @@ import canonical_generator_bridge_impl as _impl
 from canonical_generator_bridge_impl import *  # noqa: F401,F403 - preserve public API
 from du_profile_loader import load_du_profile
 from du_profile_resolver import resolve_du_profile
+from profile_du_export import build_header_inventory, calculate_header_hash
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
