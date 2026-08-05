@@ -24,6 +24,11 @@ jobs:
       - name: Reassemble and validate reviewed patch
         shell: bash
         run: |
+          sha256sum .github/issue61.patch.gz.part.*
+          echo "7829af6574056e7d50afee0f70f7c54faeae84ed84cfd25cae65d6dcc761c6c3  .github/issue61.patch.gz.part.00" | sha256sum -c -
+          echo "a891e921a3d2746c310b62eda2b3a3fa862f25a65731f0c7d4679e0d296e21a5  .github/issue61.patch.gz.part.01" | sha256sum -c -
+          echo "e745418a12cbd5496b20ba5605ab321d65b3099f3f15579269a40cd0c0bb9740  .github/issue61.patch.gz.part.02" | sha256sum -c -
+          echo "c7f533cc4bf0042334280a3ad51122bab83edf580c9f95d373ba4bc9fa9012bb  .github/issue61.patch.gz.part.03" | sha256sum -c -
           cat .github/issue61.patch.gz.part.* > /tmp/issue61-final.patch.gz
           echo "24643385fd54292e2a3666b30ca462c87ee137e8204d04f13cc9d398939fd866  /tmp/issue61-final.patch.gz" | sha256sum -c -
           gzip -dc /tmp/issue61-final.patch.gz > /tmp/issue61-final.patch
