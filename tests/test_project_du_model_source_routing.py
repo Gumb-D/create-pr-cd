@@ -5,10 +5,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from openpyxl import load_workbook
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from du_profile_resolver import resolve_du_profile
+from du_profile_resolver import DuProfileResolutionError, resolve_du_profile
 from iepms_export_source_resolver import (
     SourceResolutionError,
     discover_latest_source_exports,
@@ -63,6 +65,17 @@ class TestProjectDuModelSourceRouting(unittest.TestCase):
                 self.registry,
             )
         self.assertEqual(context.exception.code, "PROJECT_CODE_UNREGISTERED")
+
+    def test_unknown_du_model_fails_closed(self):
+        with self.assertRaises(SourceResolutionError) as context:
+            parse_iepms_export_filename(
+                Path(
+                    "A-P202202168750_D002-Unknown DU Model-View-"
+                    "20260805090102.xlsx"
+                ),
+                self.registry,
+            )
+        self.assertEqual(context.exception.code, "DU_MODEL_UNREGISTERED")
 
     def test_latest_filename_timestamp_is_selected(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -128,6 +141,63 @@ class TestProjectDuModelSourceRouting(unittest.TestCase):
             self.assertEqual(resolution["du_model_name"], "TX Mini Project")
             self.assertEqual(resolution["view_name"], "Completely Different View Name")
             self.assertEqual(resolution["profile_selection_basis"], "PROJECT_AND_DU_MODEL")
+
+    def test_filename_project_du_model_must_match_workbook_du_model_id(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            source = Path(temp_dir) / (
+                "A-P202202168750_D002-2023 TX Rollout-Any View-"
+                "20260805090102.xlsx"
+            )
+            shutil.copy2(FIXTURE, source)
+
+            with self.assertRaises(DuProfileResolutionError) as context:
+                resolve_du_profile(
+                    source,
+                    profile_root=PROFILE_ROOT,
+                    identity_registry_path=REGISTRY_PATH,
+                )
+
+            self.assertEqual(
+                context.exception.code,
+                "SOURCE_FILENAME_WORKBOOK_IDENTITY_MISMATCH",
+            )
+
+    def test_latest_invalid_export_blocks_without_falling_back_to_older_export(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            older = root / (
+                "A-P202202168750_D002-TX Mini Project-Old View-"
+                "20260804090102.xlsx"
+            )
+            latest = root / (
+                "A-P202202168750_D002-TX Mini Project-New View-"
+                "20260805090102.xlsx"
+            )
+            shutil.copy2(FIXTURE, older)
+            shutil.copy2(FIXTURE, latest)
+            workbook = load_workbook(latest)
+            workbook["data"]["B4"] = "Unapproved Changed Display Header"
+            workbook.save(latest)
+            workbook.close()
+
+            discovery = discover_latest_source_exports([root], self.registry)
+            selected = Path(
+                discovery["selections"]["tx_mini_pr_v1"]["source_path"]
+            )
+            self.assertEqual(selected, latest.resolve())
+
+            with self.assertRaises(DuProfileResolutionError) as context:
+                resolve_du_profile(
+                    selected,
+                    profile_root=PROFILE_ROOT,
+                    identity_registry_path=REGISTRY_PATH,
+                )
+
+            self.assertEqual(
+                context.exception.code,
+                "HEADER_HASH_REVALIDATION_REQUIRED",
+            )
+            self.assertNotEqual(selected, older.resolve())
 
     def test_duplicate_project_du_model_route_fails_closed(self):
         registry = json.loads(json.dumps(self.registry))
