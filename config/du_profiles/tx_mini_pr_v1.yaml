@@ -13,8 +13,8 @@
     "sheet_selector": null,
     "header_rows": [0, 1, 2, 3],
     "header_hash_policy": "strict",
-    "observed_header_hash": "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
-    "approved_header_hashes": ["167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221"]
+    "observed_header_hash": "1a466e31d3c25ca73f059123d4cc33280761746ea3dca61d25a384acad5c9fde",
+    "approved_header_hashes": ["167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221", "1a466e31d3c25ca73f059123d4cc33280761746ea3dca61d25a384acad5c9fde"]
   },
   "field_mapping": {
     "site_code": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|fix00012|4188808420049567786|2477626672974883536", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "customer site code"}, "mapping_status": "APPROVED"}], "transforms": ["trim", "uppercase"]},
