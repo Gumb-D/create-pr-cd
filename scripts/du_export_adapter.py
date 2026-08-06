@@ -9,7 +9,7 @@ from copy import deepcopy
 from typing import Any, Dict, Mapping
 
 from canonical_site_validator import FIELD_PATHS, apply_validation_result, empty_canonical_site_record, validate_canonical_site_record
-from profile_du_export import fingerprint_key
+from profile_du_export import fingerprint_key, structural_fingerprint, structural_fingerprint_key
 from sow_normalization import normalize_tx_sow
 from jendela_migration_decision import derive_jendela_migration_decision
 
@@ -19,6 +19,7 @@ PR_STATUS_NOT_REQUIRED = "NO_PR_REQUIRED"
 PR_STATUS_NONE = "NO_PR"
 
 _SUPPORTED_TRANSFORMS = {"trim", "uppercase", "parse_decimal", "normalize_pr_reference_status"}
+_MAPPING_STATUS_RANK = {"UNVERIFIED": 0, "VERIFIED": 1, "APPROVED": 2}
 
 
 def normalize_pr_reference_status(value: Any) -> str:
@@ -84,22 +85,76 @@ def _apply_geography_correction(record: Dict[str, Any]) -> None:
     )
 
 
-def resolve_profile_field_mappings(header_inventory: Mapping[str, Any], profile: Mapping[str, Any]) -> Dict[str, Any]:
-    """Resolve only exact four-layer fingerprints; never by column index or aliases."""
-    available = {}
-    for sheet in header_inventory.get("sheets", []):
-        for column in sheet.get("columns", []):
-            available.setdefault(column["fingerprint_key"], []).append(
-                {"sheet_name": sheet["sheet_name"], "fingerprint": column["fingerprint"]}
-            )
+def _stronger_mapping_status(first: str, second: str) -> str:
+    return max(
+        (first, second),
+        key=lambda value: _MAPPING_STATUS_RANK.get(str(value), -1),
+    )
+
+
+def resolve_profile_field_mappings(
+    header_inventory: Mapping[str, Any],
+    profile: Mapping[str, Any],
+    *,
+    semantic_fallback_fields: set[str] | None = None,
+) -> Dict[str, Any]:
+    """Resolve approved source columns without relying on column position.
+
+    Exact four-layer matching remains the default. Runtime-required fields may
+    fall back to stable field code plus display header when a View changes only
+    WBS/task placement. Matches retain the actual runtime fingerprint for row
+    lookup and audit, and duplicate physical columns remain ambiguous.
+    """
+    if semantic_fallback_fields is None:
+        semantic_fallback_fields = {
+            name
+            for name, config in profile.get("field_mapping", {}).items()
+            if config.get("required")
+        }
+    available: Dict[str, list[Dict[str, Any]]] = {}
+    semantic_available: Dict[tuple[str, str], list[Dict[str, Any]]] = {}
+    for sheet_index, sheet in enumerate(header_inventory.get("sheets", [])):
+        for column_index, column in enumerate(sheet.get("columns", [])):
+            fingerprint = column["fingerprint"]
+            source = {
+                "sheet_name": sheet["sheet_name"],
+                "fingerprint": fingerprint,
+                "_source_identity": (sheet_index, column_index),
+            }
+            key = structural_fingerprint_key(fingerprint)
+            available.setdefault(key, []).append(source)
+            stable = structural_fingerprint(fingerprint)
+            semantic_available.setdefault(
+                (stable["field_code"], stable["display_header"]), []
+            ).append(source)
 
     results: Dict[str, Any] = {}
     for canonical_field, config in profile.get("field_mapping", {}).items():
-        matches = []
+        matches_by_source: Dict[tuple[int, int], Dict[str, Any]] = {}
         for candidate in config.get("source_candidates", []):
-            key = fingerprint_key(candidate["fingerprint"])
-            for source in available.get(key, []):
-                matches.append({**source, "mapping_status": candidate.get("mapping_status", "UNVERIFIED")})
+            structural_key = structural_fingerprint_key(candidate["fingerprint"])
+            candidate_status = str(candidate.get("mapping_status", "UNVERIFIED"))
+            sources = available.get(structural_key, [])
+            if not sources and canonical_field in semantic_fallback_fields and candidate_status == "APPROVED":
+                stable = structural_fingerprint(candidate["fingerprint"])
+                sources = semantic_available.get(
+                    (stable["field_code"], stable["display_header"]), []
+                )
+            for source in sources:
+                source_key = source["_source_identity"]
+                existing = matches_by_source.get(source_key)
+                if existing is None:
+                    matches_by_source[source_key] = {
+                        "sheet_name": source["sheet_name"],
+                        "fingerprint": source["fingerprint"],
+                        "mapping_status": candidate_status,
+                    }
+                    continue
+                existing["mapping_status"] = _stronger_mapping_status(
+                    str(existing.get("mapping_status", "UNVERIFIED")),
+                    candidate_status,
+                )
+        matches = list(matches_by_source.values())
         if len(matches) == 1:
             status = "RESOLVED"
         elif len(matches) == 0:
@@ -133,6 +188,10 @@ def build_canonical_site_record(
             "source_file_name": context.get("source_file_name", ""),
             "source_file_hash": context.get("source_file_hash", ""),
             "header_hash": context.get("header_hash", ""),
+            "raw_header_hash": context.get("raw_header_hash", context.get("header_hash", "")),
+            "structural_header_hash": context.get("structural_header_hash", ""),
+            "approved_header_hash": context.get("approved_header_hash", ""),
+            "header_hash_approval_basis": context.get("header_hash_approval_basis", ""),
             "source_row_number": context.get("source_row_number"),
         }
     )
@@ -174,9 +233,6 @@ def build_canonical_site_record(
         raw_sow = record["pr_context"]["tx_sow_raw"]
         raw_evidence = record["source_evidence"]["fields"].get("tx_sow_raw")
         if sow_registry is not None:
-            # Controlled normalization through the approved canonical SOW
-            # registry: only PR_TRIGGER values normalize with APPROVED status;
-            # everything else stays fail-closed for output.
             normalized = normalize_tx_sow(raw_sow, sow_registry)
             record["pr_context"]["tx_sow_normalized"] = normalized["canonical_sow"]
             if raw_evidence:
@@ -187,8 +243,6 @@ def build_canonical_site_record(
                     "sow_classification": normalized["classification"],
                 }
         elif isinstance(raw_sow, str) and raw_sow.strip():
-            # No registry supplied: preserve the raw value as controlled
-            # evidence only; the guard blocks unverified normalization.
             record["pr_context"]["tx_sow_normalized"] = raw_sow.strip()
             if raw_evidence:
                 record["source_evidence"]["fields"]["tx_sow_normalized"] = {

@@ -37,21 +37,41 @@ Rules:
 
 ## 3. View handling
 
-An iEPMS export View is source-layout evidence. It is not a separate DU profile identity.
+An iEPMS export View is source-layout and runtime audit evidence. It is not a separate DU Profile identity and must not select, disambiguate, approve, or reject a Profile.
 
-The same Project + DU Model may accept multiple Views through profile metadata such as:
+Runtime routing follows:
 
-```yaml
-identity:
-  accepted_view_ids:
-    - <view A>
-    - <view B>
-
-export_structure:
-  approved_header_hashes:
-    - <header hash A>
-    - <header hash B>
+```text
+Primary route: Project Key + DU Model
+Worker fallback: unique DU Model ID
+View ID: audit evidence only
 ```
+
+Legacy `identity.accepted_view_ids` values may remain in tracked Profile and registry records for historical traceability, but runtime resolver, canonical pipeline, and PR input guard must not use them as allowlists.
+
+Structural validation preserves two representations:
+
+```text
+Raw fingerprint/hash:
+  exact runtime four-header evidence, including the actual View ID
+
+Structural fingerprint/hash:
+  only site|fix00012|<du_model_id>|<view_id>
+  normalizes its final View ID segment
+```
+
+The historical View reference needed to compare an unseen View against an approved raw Header Hash comes from the APPROVED `site_code` mapping fingerprint, not from Profile identity metadata. This keeps the full approved layout evidence while removing View ID from Profile identity.
+
+All other structure remains exact and fail-closed:
+
+- DU Model ID;
+- field code for every non-site-identity field;
+- WBS Stage;
+- Task Name;
+- Display Header;
+- sheet name;
+- column count and order;
+- required-field uniqueness.
 
 A DRAFT profile may preserve unapproved layouts separately:
 
@@ -59,18 +79,12 @@ A DRAFT profile may preserve unapproved layouts separately:
 layout_variants:
   - variant_id: <layout A>
     view_id: <view A>
-    observed_header_hash: <observed hash A>
+    observed_header_hash: <observed raw hash A>
+    observed_structural_header_hash: <observed structural hash A>
     field_mapping: <exact four-layer discovery evidence>
 ```
 
-Each accepted or observed layout still requires controlled evidence:
-
-- exact four-layer Header Fingerprints;
-- strict Header Hash validation;
-- approved canonical-field mappings before lifecycle promotion;
-- fail-closed handling for unknown or changed layouts.
-
-Combining Views within one profile family does not weaken source validation.
+Combining Views within one profile family does not weaken source validation. A View-only suffix change may reuse an approved structure; any genuine four-layer or workbook-structure change still requires revalidation.
 
 ## 4. When a separate profile is allowed
 
@@ -171,6 +185,8 @@ Every new or changed DU profile identity requires:
 3. a canonical profile ID or documented exception reason;
 4. a deliberate temporary review record only when a duplicate identity cannot yet be resolved;
 5. passing `tests/test_du_profile_identity_governance.py` and the full regression suite.
+
+Genuine layout changes also require controlled four-layer fingerprint and Header Hash revalidation. A new View ID alone does not constitute a new identity or automatically approve a changed layout.
 
 Governance failures use actionable codes such as:
 

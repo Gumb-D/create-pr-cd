@@ -18,6 +18,7 @@ import canonical_generator_bridge_impl as _impl
 from canonical_generator_bridge_impl import *  # noqa: F401,F403 - preserve public API
 from du_profile_loader import load_du_profile
 from du_profile_resolver import resolve_du_profile
+from profile_du_export import build_header_inventory, calculate_header_hash
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -29,7 +30,6 @@ DEFAULT_IDENTITY_REGISTRY = (
 
 def __getattr__(name: str):
     """Preserve access to implementation helpers used by existing callers/tests."""
-
     return getattr(_impl, name)
 
 
@@ -99,7 +99,6 @@ def _assert_expected_profile(
 
 def main(args: list[str] | None = None) -> int:
     parsed = parse_args(args)
-
     if not parsed.input.exists():
         raise FileNotFoundError(f"Input file not found: {parsed.input}")
     if not parsed.profile_root.is_dir():
@@ -135,7 +134,6 @@ def main(args: list[str] | None = None) -> int:
         sow_registry_path=parsed.sow_registry,
         scope_config=scope_config,
     )
-
     outputs = _impl.write_uat_packet(
         records=records,
         metadata=metadata,
@@ -156,9 +154,24 @@ def main(args: list[str] | None = None) -> int:
         "resolved_profile_id": resolved_profile["profile_id"],
         "resolved_profile_path": str(resolved_profile_path.resolve()),
         "profile_selection_basis": resolution["profile_selection_basis"],
-        "project_key": resolution.get("project_key", ""),
-        "du_model_name": resolution.get("du_model_name", ""),
+        "project_key": resolution.get("project_key", metadata.get("project_key", "")),
+        "du_model_name": resolution.get("du_model_name", metadata.get("du_model_name", "")),
+        "du_model_id": resolution.get("du_model_id", metadata.get("du_model_id", "")),
         "view_name": resolution.get("view_name", ""),
+        "view_id": resolution.get("view_id", metadata.get("view_id", "")),
+        "raw_header_hash": resolution.get("raw_header_hash", metadata.get("raw_header_hash", "")),
+        "structural_header_hash": resolution.get(
+            "structural_header_hash",
+            metadata.get("structural_header_hash", ""),
+        ),
+        "approved_header_hash": resolution.get(
+            "approved_header_hash",
+            metadata.get("approved_header_hash", ""),
+        ),
+        "header_hash_approval_basis": resolution.get(
+            "header_hash_approval_basis",
+            metadata.get("header_hash_approval_basis", ""),
+        ),
         "generated_output_paths": {
             "workbook": str(workbook_path.resolve()),
             "summary_json": str(summary_path.resolve()),

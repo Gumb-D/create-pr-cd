@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import argparse
 import csv
-import json
 import datetime
+import json
 import re
 from collections import Counter
 from pathlib import Path
@@ -25,10 +25,20 @@ from du_export_adapter import (
     resolve_profile_field_mappings,
 )
 from du_profile_loader import load_du_profile
-from profile_du_export import build_header_inventory, calculate_header_hash, fingerprint_key
+from profile_du_export import (
+    build_header_inventory,
+    extract_du_identities,
+    fingerprint_key,
+    resolve_approved_header_structure,
+)
 
 ALLOWED_UAT_PROFILE_STATUSES = {"PR_INPUT_READY", "PRODUCTION"}
-UAT_CLASSIFICATIONS = ("UAT_CANDIDATE", "DUPLICATE_BLOCKED", "NO_PR_OR_IGNORED", "REVIEW_REQUIRED")
+UAT_CLASSIFICATIONS = (
+    "UAT_CANDIDATE",
+    "DUPLICATE_BLOCKED",
+    "NO_PR_OR_IGNORED",
+    "REVIEW_REQUIRED",
+)
 
 GENERATOR_COLUMNS = (
     "customer site code",
@@ -82,25 +92,28 @@ def _scope_date_field(scope: str) -> str:
     return f"{scope.lower()}_actual_end_date"
 
 
-def _is_valid_date(val: Any) -> bool:
-    if isinstance(val, (datetime.datetime, datetime.date)):
+def _is_valid_date(value: Any) -> bool:
+    if isinstance(value, (datetime.datetime, datetime.date)):
         return True
-    if not isinstance(val, str):
+    if not isinstance(value, str):
         return False
-    val_str = val.strip()
-    if not val_str:
+    text = value.strip()
+    if not text:
         return False
     try:
-        datetime.datetime.fromisoformat(val_str.replace("Z", "+00:00"))
+        datetime.datetime.fromisoformat(text.replace("Z", "+00:00"))
         return True
     except ValueError:
         pass
-    if re.match(r"^\d{1,4}[-/]\d{1,2}[-/]\d{1,4}( \d{1,2}:\d{1,2}(:\d{1,2})?)?$", val_str):
+    if re.match(r"^\d{1,4}[-/]\d{1,2}[-/]\d{1,4}( \d{1,2}:\d{1,2}(:\d{1,2})?)?$", text):
         try:
-            parts = re.split(r"[-/]", val_str.split(" ")[0])
+            parts = re.split(r"[-/]", text.split(" ")[0])
             if len(parts) == 3:
-                y, m, d = (int(parts[0]), int(parts[1]), int(parts[2])) if len(parts[0]) == 4 else (int(parts[2]), int(parts[1]), int(parts[0]))
-                datetime.date(y, m, d)
+                if len(parts[0]) == 4:
+                    year, month, day = int(parts[0]), int(parts[1]), int(parts[2])
+                else:
+                    year, month, day = int(parts[2]), int(parts[1]), int(parts[0])
+                datetime.date(year, month, day)
                 return True
         except ValueError:
             pass
@@ -108,63 +121,54 @@ def _is_valid_date(val: Any) -> bool:
 
 
 def classify_uat_record(record: Mapping[str, Any], scope: str) -> tuple[str, list[str]]:
-    """Classify one canonical record for non-production UAT.
-
-    1. invalid/ambiguous scope configuration -> fail closed before row classification (handled externally)
-    2. canonical required evidence unresolved -> REVIEW_REQUIRED
-    3. existing corresponding PR -> DUPLICATE_BLOCKED
-    4. corresponding Actual End blank -> NO_PR_OR_IGNORED
-    5. malformed Actual End -> REVIEW_REQUIRED
-    6. SOW NO_PR_TRIGGER -> NO_PR_OR_IGNORED
-    7. SOW/mapping review state -> REVIEW_REQUIRED
-    8. otherwise -> UAT_CANDIDATE
-    """
+    """Classify one canonical record for non-production UAT."""
     scope = str(scope).upper()
     if scope not in {"TSS", "TI"}:
         raise ValueError("scope must be TSS or TI")
 
     validation = record.get("validation", {})
-    reasons = [str(value) for value in validation.get("blocking_reasons", []) if str(value).strip()]
-
-    # 1. Scope config invalid is handled externally (fail closed)
-
-    # 2. Scope-specific existing PR exists
-    status_field = "existing_tss_pr_status" if scope == "TSS" else "existing_ti_pr_status"
+    reasons = [
+        str(value)
+        for value in validation.get("blocking_reasons", [])
+        if str(value).strip()
+    ]
+    status_field = (
+        "existing_tss_pr_status" if scope == "TSS" else "existing_ti_pr_status"
+    )
     status = record.get("pr_context", {}).get(status_field, PR_STATUS_NONE)
-
     if status == PR_STATUS_EXISTS:
         return "DUPLICATE_BLOCKED", reasons + [f"{status_field}:PR_EXISTS"]
     if status == PR_STATUS_NOT_REQUIRED:
         return "NO_PR_OR_IGNORED", reasons + [f"{status_field}:NO_PR_REQUIRED"]
 
     date_field = _scope_date_field(scope)
-    date_evidence = record.get("source_evidence", {}).get("fields", {}).get(date_field)
-    
-    # 3. Scope Actual End blank
+    date_evidence = (
+        record.get("source_evidence", {}).get("fields", {}).get(date_field)
+    )
     if isinstance(date_evidence, Mapping):
-        source_val = date_evidence.get("source_value")
-        if _is_blank(source_val):
+        source_value = date_evidence.get("source_value")
+        if _is_blank(source_value):
             return "NO_PR_OR_IGNORED", reasons + [f"{date_field}:ACTUAL_END_MISSING"]
-        # 4. Scope Actual End malformed
-        if not _is_valid_date(source_val):
+        if not _is_valid_date(source_value):
             return "REVIEW_REQUIRED", reasons + [f"{date_field}:MALFORMED_DATE"]
 
-    sow_evidence = record.get("source_evidence", {}).get("fields", {}).get("tx_sow_normalized", {})
+    sow_evidence = (
+        record.get("source_evidence", {})
+        .get("fields", {})
+        .get("tx_sow_normalized", {})
+    )
     normalization_status = sow_evidence.get("normalization_status")
-    
-    # 5. SOW is approved no-output
     if normalization_status == "APPROVED_NO_OUTPUT":
         return "NO_PR_OR_IGNORED", reasons + ["SOW_CLASSIFICATION:NO_PR_TRIGGER"]
-
-    # 6. canonical candidate-required evidence incomplete
-    if validation.get("pr_input_classification") not in {"PR_INPUT_READY", "PR_INPUT_READY_WITH_REVIEW"}:
+    if validation.get("pr_input_classification") not in {
+        "PR_INPUT_READY",
+        "PR_INPUT_READY_WITH_REVIEW",
+    }:
         return "REVIEW_REQUIRED", reasons or ["CANONICAL_RECORD_NOT_READY"]
-
-    # 7. SOW/mapping requires review
     if normalization_status not in {"APPROVED", "APPROVED_NO_OUTPUT"}:
-        return "REVIEW_REQUIRED", reasons + [f"SOW_NORMALIZATION:{normalization_status or 'MISSING'}"]
-
-    # 8. Otherwise
+        return "REVIEW_REQUIRED", reasons + [
+            f"SOW_NORMALIZATION:{normalization_status or 'MISSING'}"
+        ]
     return "UAT_CANDIDATE", reasons
 
 
@@ -174,14 +178,21 @@ def _legacy_pr_reference_value(value: Any) -> str:
     return str(value)
 
 
-def canonical_record_to_generator_row(record: Mapping[str, Any], scope: str) -> dict[str, Any]:
+def canonical_record_to_generator_row(
+    record: Mapping[str, Any],
+    scope: str,
+) -> dict[str, Any]:
     classification, reasons = classify_uat_record(record, scope)
     identity = record.get("identity", {})
     site = record.get("site", {})
     context = record.get("pr_context", {})
     technical = record.get("technical_context", {})
     validation = record.get("validation", {})
-    date_evidence = record.get("source_evidence", {}).get("fields", {}).get(_scope_date_field(str(scope).upper()), {})
+    date_evidence = (
+        record.get("source_evidence", {})
+        .get("fields", {})
+        .get(_scope_date_field(str(scope).upper()), {})
+    )
     return {
         "customer site code": site.get("site_code", ""),
         "customer site name": site.get("site_name", ""),
@@ -202,7 +213,11 @@ def canonical_record_to_generator_row(record: Mapping[str, Any], scope: str) -> 
         "TX SOW Details": technical.get("tx_sow_details", ""),
         "NE SOW Details": technical.get("ne_sow_details", ""),
         "FE SOW Details": technical.get("fe_sow_details", ""),
-        "Scope Actual End Date": date_evidence.get("source_value") if isinstance(date_evidence, Mapping) else "",
+        "Scope Actual End Date": (
+            date_evidence.get("source_value")
+            if isinstance(date_evidence, Mapping)
+            else ""
+        ),
         "Source Row Number": identity.get("source_row_number"),
         "DU Profile ID": validation.get("profile_id", ""),
         "DU Profile Version": validation.get("profile_version", ""),
@@ -214,17 +229,23 @@ def canonical_record_to_generator_row(record: Mapping[str, Any], scope: str) -> 
     }
 
 
-def _append_rows(worksheet, rows: Iterable[Mapping[str, Any]], columns: Iterable[str]) -> None:
-    columns = list(columns)
-    worksheet.append(columns)
+def _append_rows(
+    worksheet,
+    rows: Iterable[Mapping[str, Any]],
+    columns: Iterable[str],
+) -> None:
+    selected_columns = list(columns)
+    worksheet.append(selected_columns)
     for row in rows:
-        worksheet.append([row.get(column) for column in columns])
+        worksheet.append([row.get(column) for column in selected_columns])
 
 
 def _append_generator_data_sheet(worksheet, rows: list[Mapping[str, Any]]) -> None:
     worksheet.append(["NON-PRODUCTION UAT BRIDGE OUTPUT"])
     worksheet.append(["This sheet contains UAT_CANDIDATE rows only."])
-    worksheet.append(["ECC Allowed is permanently false; use explicit generator CLI arguments for any later local UAT."])
+    worksheet.append([
+        "ECC Allowed is permanently false; use explicit generator CLI arguments for any later local UAT."
+    ])
     _append_rows(worksheet, rows, GENERATOR_COLUMNS)
 
 
@@ -245,9 +266,15 @@ def write_uat_packet(
         "profile_id": metadata.get("profile_id", ""),
         "profile_version": metadata.get("profile_version", ""),
         "mapping_version": metadata.get("mapping_version", ""),
+        "du_model_id": metadata.get("du_model_id", ""),
+        "view_id": metadata.get("view_id", ""),
         "source_file_name": metadata.get("source_file_name", ""),
         "source_file_hash": metadata.get("source_file_hash", ""),
         "header_hash": metadata.get("header_hash", ""),
+        "raw_header_hash": metadata.get("raw_header_hash", metadata.get("header_hash", "")),
+        "structural_header_hash": metadata.get("structural_header_hash", ""),
+        "approved_header_hash": metadata.get("approved_header_hash", ""),
+        "header_hash_approval_basis": metadata.get("header_hash_approval_basis", ""),
         "record_count": len(rows),
         "counts": {name: counts.get(name, 0) for name in UAT_CLASSIFICATIONS},
         "generator_data_row_count": counts.get("UAT_CANDIDATE", 0),
@@ -259,22 +286,37 @@ def write_uat_packet(
     workbook = Workbook()
     workbook.remove(workbook.active)
 
-    candidate_rows = [row for row in rows if row["UAT Classification"] == "UAT_CANDIDATE"]
+    candidate_rows = [
+        row for row in rows if row["UAT Classification"] == "UAT_CANDIDATE"
+    ]
     _append_generator_data_sheet(workbook.create_sheet("data"), candidate_rows)
 
     summary_sheet = workbook.create_sheet("summary")
     summary_sheet.append(["Key", "Value"])
     for key, value in summary.items():
-        summary_sheet.append([key, json.dumps(value, ensure_ascii=False) if isinstance(value, dict) else value])
+        summary_sheet.append([
+            key,
+            json.dumps(value, ensure_ascii=False) if isinstance(value, dict) else value,
+        ])
 
     partitions = {
         "uat_candidates": candidate_rows,
-        "duplicate_blocked": [row for row in rows if row["UAT Classification"] == "DUPLICATE_BLOCKED"],
-        "no_pr_or_ignored": [row for row in rows if row["UAT Classification"] == "NO_PR_OR_IGNORED"],
-        "review_required": [row for row in rows if row["UAT Classification"] == "REVIEW_REQUIRED"],
+        "duplicate_blocked": [
+            row for row in rows if row["UAT Classification"] == "DUPLICATE_BLOCKED"
+        ],
+        "no_pr_or_ignored": [
+            row for row in rows if row["UAT Classification"] == "NO_PR_OR_IGNORED"
+        ],
+        "review_required": [
+            row for row in rows if row["UAT Classification"] == "REVIEW_REQUIRED"
+        ],
     }
     for sheet_name, partition_rows in partitions.items():
-        _append_rows(workbook.create_sheet(sheet_name), partition_rows, GENERATOR_COLUMNS)
+        _append_rows(
+            workbook.create_sheet(sheet_name),
+            partition_rows,
+            GENERATOR_COLUMNS,
+        )
 
     traceability_columns = (
         "customer site code",
@@ -290,17 +332,27 @@ def write_uat_packet(
     )
     _append_rows(workbook.create_sheet("traceability"), rows, traceability_columns)
     workbook.save(workbook_path)
-    summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    summary_path.write_text(
+        json.dumps(summary, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
     return {"workbook": workbook_path, "summary_json": summary_path}
 
 
-def _iter_source_rows(input_path: Path, sheet_name: str, positions: Mapping[str, int]):
+def _iter_source_rows(
+    input_path: Path,
+    sheet_name: str,
+    positions: Mapping[str, int],
+):
     suffix = input_path.suffix.lower()
     if suffix in {".xlsx", ".xlsm"}:
         workbook = load_workbook(input_path, read_only=True, data_only=False)
         worksheet = workbook[sheet_name]
         try:
-            for row_number, values in enumerate(worksheet.iter_rows(min_row=5, values_only=True), start=5):
+            for row_number, values in enumerate(
+                worksheet.iter_rows(min_row=5, values_only=True),
+                start=5,
+            ):
                 yield row_number, {
                     key: values[index - 1] if index <= len(values) else None
                     for key, index in positions.items()
@@ -327,7 +379,11 @@ def _select_source_sheet(
     resolved: Mapping[str, Any],
     profile: Mapping[str, Any],
 ) -> Mapping[str, Any]:
-    required_fields = [name for name, config in profile.get("field_mapping", {}).items() if config.get("required")]
+    required_fields = [
+        name
+        for name, config in profile.get("field_mapping", {}).items()
+        if config.get("required")
+    ]
     required_sheets = {
         match["sheet_name"]
         for name in required_fields
@@ -373,52 +429,62 @@ def build_records_from_export(
     profile_path: Path,
     scope: str,
     sow_registry_path: Path,
-    scope_config: Mapping[str, Any] = None,
+    scope_config: Mapping[str, Any] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     input_path = Path(input_path)
     profile_path = Path(profile_path)
     scope = str(scope).upper()
     profile = load_du_profile(profile_path)
     if profile.get("status") not in ALLOWED_UAT_PROFILE_STATUSES:
-        raise ValueError("DU profile must be PR_INPUT_READY or PRODUCTION for non-production UAT bridging.")
+        raise ValueError(
+            "DU profile must be PR_INPUT_READY or PRODUCTION for non-production UAT bridging."
+        )
 
     inventory = build_header_inventory(input_path)
-    header_hash = calculate_header_hash(inventory)
-    approved_hashes = profile.get("export_structure", {}).get("approved_header_hashes", [])
-    if header_hash not in approved_hashes:
+    identities = extract_du_identities(inventory)
+    if len(identities) != 1:
+        raise ValueError("DU_IDENTITY_NOT_UNIQUE")
+    runtime_identity = identities[0]
+
+    header_validation = resolve_approved_header_structure(inventory, profile)
+    if not header_validation["approved"]:
         raise ValueError("HEADER_HASH_REVALIDATION_REQUIRED")
 
     resolved = resolve_profile_field_mappings(inventory, profile)
     required_missing = [
         name
         for name, config in profile.get("field_mapping", {}).items()
-        if config.get("required") and resolved.get(name, {}).get("status") != "RESOLVED"
+        if config.get("required")
+        and resolved.get(name, {}).get("status") != "RESOLVED"
     ]
     if required_missing:
-        raise ValueError("MISSING_OR_AMBIGUOUS_REQUIRED_MAPPING:" + ",".join(sorted(required_missing)))
+        raise ValueError(
+            "MISSING_OR_AMBIGUOUS_REQUIRED_MAPPING:"
+            + ",".join(sorted(required_missing))
+        )
 
     source_sheet = _select_source_sheet(inventory, resolved, profile)
     positions = {
         column["fingerprint_key"]: column["source_position"]["one_based_index"]
         for column in source_sheet.get("columns", [])
     }
-    
+
     if scope_config is None:
         profile_id = profile.get("profile_id", "")
         base_dir = profile_path.resolve().parent.parent
         candidates = [
             base_dir / "scope_eligibility" / f"{profile_id}.json",
-            Path(__file__).resolve().parent.parent / "config" / "scope_eligibility" / f"{profile_id}.json",
+            Path(__file__).resolve().parent.parent
+            / "config"
+            / "scope_eligibility"
+            / f"{profile_id}.json",
         ]
-        resolved_cfg_path = None
-        for candidate_path in candidates:
-            if candidate_path.exists():
-                resolved_cfg_path = candidate_path
-                break
-
+        resolved_cfg_path = next(
+            (candidate for candidate in candidates if candidate.exists()),
+            None,
+        )
         if resolved_cfg_path is None:
             raise ValueError(f"MISSING_REGISTERED_SCOPE_CONFIG:{profile_id}")
-
         loaded_cfg = _load_json_or_yaml(resolved_cfg_path)
         if isinstance(loaded_cfg, Mapping):
             scope_config = loaded_cfg.get("scopes", loaded_cfg)
@@ -427,15 +493,14 @@ def build_records_from_export(
 
     if not isinstance(scope_config, Mapping):
         raise ValueError("MALFORMED_SCOPE_CONFIG:scope_config_must_be_mapping")
-
     configured = scope_config.get(scope, {})
     if not isinstance(configured, Mapping) or not configured:
         raise ValueError(f"MISSING_SCOPE_CONFIG_FOR_SCOPE:{scope}")
-
     actual_end_fp = configured.get("actual_end_fingerprint")
     if not isinstance(actual_end_fp, Mapping) or not actual_end_fp:
-        raise ValueError(f"MALFORMED_SCOPE_CONFIG:actual_end_fingerprint_missing_for_{scope}")
-
+        raise ValueError(
+            f"MALFORMED_SCOPE_CONFIG:actual_end_fingerprint_missing_for_{scope}"
+        )
     expected_key = fingerprint_key(actual_end_fp)
     if expected_key not in positions:
         raise ValueError("SCOPE_ACTUAL_END_HEADER_NOT_FOUND")
@@ -446,20 +511,26 @@ def build_records_from_export(
         "profile_id": profile["profile_id"],
         "profile_version": profile["profile_version"],
         "mapping_version": profile["mapping_version"],
-        "source_file_name": input_path.name,
-        "source_file_hash": inventory["source"]["source_file_hash"],
-        "header_hash": header_hash,
-    }
-    context_base = {
         "project_key": identity["project_key"],
         "du_model_name": identity["accepted_du_models"][0],
-        "du_model_id": identity["accepted_du_model_ids"][0],
-        "view_id": identity["accepted_view_ids"][0],
-        **metadata,
+        "du_model_id": str(runtime_identity["du_model_id"]),
+        "view_id": str(runtime_identity["view_id"]),
+        "source_file_name": input_path.name,
+        "source_file_hash": inventory["source"]["source_file_hash"],
+        "header_hash": header_validation["raw_header_hash"],
+        "raw_header_hash": header_validation["raw_header_hash"],
+        "structural_header_hash": header_validation["structural_header_hash"],
+        "approved_header_hash": header_validation["approved_header_hash"],
+        "header_hash_approval_basis": header_validation["approval_basis"],
     }
+    context_base = dict(metadata)
 
     records = []
-    for row_number, raw_values in _iter_source_rows(input_path, source_sheet["sheet_name"], positions):
+    for row_number, raw_values in _iter_source_rows(
+        input_path,
+        source_sheet["sheet_name"],
+        positions,
+    ):
         if not any(value not in (None, "") for value in raw_values.values()):
             continue
         record = build_canonical_site_record(
@@ -470,7 +541,9 @@ def build_records_from_export(
             resolved_mappings=resolved,
             sow_registry=sow_registry,
         )
-        records.append(_attach_scope_eligibility(record, raw_values, scope, scope_config))
+        records.append(
+            _attach_scope_eligibility(record, raw_values, scope, scope_config)
+        )
     return records, metadata
 
 
@@ -480,16 +553,30 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--input", required=True, type=Path, help="Path to DU export file")
     parser.add_argument("--profile", required=True, type=Path, help="Path to DU profile YAML file")
-    parser.add_argument("--scope", required=True, choices=["TSS", "TI", "tss", "ti"], help="Scope (TSS or TI)")
-    parser.add_argument("--sow-registry", required=True, type=Path, help="Path to canonical SOW registry file")
-    parser.add_argument("--scope-config", type=Path, default=None, help="Path to scope eligibility config JSON file")
+    parser.add_argument(
+        "--scope",
+        required=True,
+        choices=["TSS", "TI", "tss", "ti"],
+        help="Scope (TSS or TI)",
+    )
+    parser.add_argument(
+        "--sow-registry",
+        required=True,
+        type=Path,
+        help="Path to canonical SOW registry file",
+    )
+    parser.add_argument(
+        "--scope-config",
+        type=Path,
+        default=None,
+        help="Path to scope eligibility config JSON file",
+    )
     parser.add_argument("--output", required=True, type=Path, help="Output directory")
     return parser.parse_args(args)
 
 
 def main(args: list[str] | None = None) -> int:
     parsed = parse_args(args)
-
     if not parsed.input.exists():
         raise FileNotFoundError(f"Input file not found: {parsed.input}")
     if not parsed.profile.exists():
@@ -512,18 +599,15 @@ def main(args: list[str] | None = None) -> int:
         sow_registry_path=parsed.sow_registry,
         scope_config=scope_config,
     )
-
     outputs = write_uat_packet(
         records=records,
         metadata=metadata,
         output_dir=parsed.output,
         scope=parsed.scope.upper(),
     )
-
-    wb_path = outputs["workbook"]
+    workbook_path = outputs["workbook"]
     summary_path = outputs["summary_json"]
-
-    if not wb_path.exists() or not summary_path.exists():
+    if not workbook_path.exists() or not summary_path.exists():
         raise RuntimeError("Expected UAT packet outputs were not generated successfully.")
 
     result_summary = {
@@ -531,19 +615,28 @@ def main(args: list[str] | None = None) -> int:
         "records": len(records),
         "scope": parsed.scope.upper(),
         "ecc_allowed": False,
+        "du_model_id": metadata["du_model_id"],
+        "view_id": metadata["view_id"],
+        "raw_header_hash": metadata["raw_header_hash"],
+        "structural_header_hash": metadata["structural_header_hash"],
+        "header_hash_approval_basis": metadata["header_hash_approval_basis"],
         "generated_output_paths": {
-            "workbook": str(wb_path.resolve()),
+            "workbook": str(workbook_path.resolve()),
             "summary_json": str(summary_path.resolve()),
         },
     }
-    print(json.dumps(result_summary, indent=2))
+    print(json.dumps(result_summary, ensure_ascii=False, indent=2))
     return 0
 
 
 if __name__ == "__main__":
     import sys
+
     try:
         sys.exit(main())
-    except Exception as err:
-        print(json.dumps({"status": "ERROR", "error": str(err)}, indent=2), file=sys.stderr)
+    except Exception as error:
+        print(
+            json.dumps({"status": "ERROR", "error": str(error)}, indent=2),
+            file=sys.stderr,
+        )
         sys.exit(1)

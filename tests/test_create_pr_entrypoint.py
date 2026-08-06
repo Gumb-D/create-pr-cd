@@ -81,20 +81,27 @@ class TestCreatePrEntrypoint(unittest.TestCase):
         self.assertEqual(resolution["du_model_id"], "4188808420049567786")
         self.assertEqual(resolution["view_id"], "2477626672974883536")
 
-    def test_unregistered_view_fails_as_profile_error_before_field_access(self):
+    def test_unregistered_view_is_runtime_layout_evidence_not_profile_identity(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             changed = Path(temp_dir) / "unknown-view.xlsx"
             workbook = load_workbook(FIXTURE)
             workbook["data"]["A1"] = "site|fix00012|4188808420049567786|999999999"
             workbook.save(changed)
             workbook.close()
-            with self.assertRaises(DuProfileResolutionError) as context:
-                resolve_du_profile(
-                    changed,
-                    profile_root=PROFILE_ROOT,
-                    identity_registry_path=IDENTITY_REGISTRY,
-                )
-            self.assertEqual(context.exception.code, "DU_PROFILE_VIEW_NOT_APPROVED")
+
+            resolution = resolve_du_profile(
+                changed,
+                profile_root=PROFILE_ROOT,
+                identity_registry_path=IDENTITY_REGISTRY,
+            )
+
+            self.assertEqual(resolution["profile"]["profile_id"], "tx_mini_pr_v1")
+            self.assertEqual(resolution["view_id"], "999999999")
+            self.assertEqual(resolution["profile_selection_basis"], "DU_MODEL_ID_FALLBACK")
+            self.assertEqual(
+                resolution["header_hash_approval_basis"],
+                "VIEW_NORMALIZED_TO_APPROVED_LAYOUT",
+            )
 
     def test_partition_blocks_duplicate_and_invalid_canonical_rows(self):
         def record(site, status, classification, normalization="APPROVED"):
