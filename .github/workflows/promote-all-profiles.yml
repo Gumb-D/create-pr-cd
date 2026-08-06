@@ -1,0 +1,179 @@
+name: Promote all approved DU profiles
+
+on:
+  push:
+    branches:
+      - feat/promote-all-pr-input-ready-production
+    paths:
+      - .github/workflows/promote-all-profiles.yml
+
+permissions:
+  contents: write
+
+jobs:
+  synchronize-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/promote-all-pr-input-ready-production
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install test dependencies
+        run: python -m pip install --upgrade pip pytest openpyxl pyyaml
+
+      - name: Synchronize primary lifecycle registries and tests
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import re
+          import sys
+          from pathlib import Path
+
+          ROOT = Path.cwd()
+          sys.path.insert(0, str(ROOT / "scripts"))
+
+          TARGETS = {
+              "tx_rollout_2023_pr_v1",
+              "mw_eos_swap_pr_v1",
+              "celcomdigi_bau_2023_pr_v1",
+              "celcomdigi_bau_2024_pr_v1",
+              "celcomdigi_usp_pr_v1",
+              "jendela_tx_migration_pr_v1",
+              "zte_tx_mini_pr_v1",
+          }
+          ALL_PRODUCTION = [
+              "tx_mini_pr_v1",
+              "tx_rollout_2023_pr_v1",
+              "mw_eos_swap_pr_v1",
+              "celcomdigi_bau_2023_pr_v1",
+              "celcomdigi_bau_2024_pr_v1",
+              "celcomdigi_usp_pr_v1",
+              "jendela_tx_migration_pr_v1",
+              "zte_tx_mini_pr_v1",
+          ]
+
+          def load(path):
+              return json.loads(path.read_text(encoding="utf-8"))
+
+          def write(path, payload):
+              path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          def promote_records(value):
+              if isinstance(value, dict):
+                  if str(value.get("profile_id", "")) in TARGETS:
+                      if "profile_status" in value:
+                          value["profile_status"] = "PRODUCTION"
+                      if "current_status" in value:
+                          value["current_status"] = "PRODUCTION"
+                  for child in value.values():
+                      promote_records(child)
+              elif isinstance(value, list):
+                  for child in value:
+                      promote_records(child)
+
+          primary_registries = [
+              ROOT / "config/registries/mw_du_model_discovery_registry.yaml",
+              ROOT / "config/registries/mw_du_unresolved_skill_field_review.yaml",
+              ROOT / "config/registries/mw_du_profile_identity_registry.yaml",
+          ]
+          for path in primary_registries:
+              payload = load(path)
+              promote_records(payload)
+              write(path, payload)
+
+          from build_du_discovery_registry import discovery_inventory_markdown
+          from build_unresolved_skill_field_review import review_markdown
+
+          discovery = load(ROOT / "config/registries/mw_du_model_discovery_registry.yaml")
+          (ROOT / "docs/MW_DU_Discovery_Inventory.md").write_text(
+              discovery_inventory_markdown(discovery), encoding="utf-8"
+          )
+          unresolved = load(ROOT / "config/registries/mw_du_unresolved_skill_field_review.yaml")
+          (ROOT / "docs/MW_DU_Unresolved_Skill_Field_Review.md").write_text(
+              review_markdown(unresolved), encoding="utf-8"
+          )
+
+          test_path = ROOT / "tests/test_du_profile_identity_governance.py"
+          text = test_path.read_text(encoding="utf-8")
+          for profile_id in TARGETS:
+              text = text.replace(
+                  f'"{profile_id}": "PR_INPUT_READY"',
+                  f'"{profile_id}": "PRODUCTION"',
+              )
+          text = text.replace(
+              'self.assertEqual(record["profile_status"], "PR_INPUT_READY")',
+              'self.assertEqual(record["profile_status"], "PRODUCTION")',
+          )
+          old_block = '''        self.assertEqual(
+            [profile_id for profile_id, status in actual.items() if status == "PRODUCTION"],
+            ["tx_mini_pr_v1"],
+        )'''
+          new_block = '''        self.assertEqual(
+            [profile_id for profile_id, status in actual.items() if status == "PRODUCTION"],
+            [
+                "tx_mini_pr_v1",
+                "tx_rollout_2023_pr_v1",
+                "mw_eos_swap_pr_v1",
+                "celcomdigi_bau_2023_pr_v1",
+                "celcomdigi_bau_2024_pr_v1",
+                "celcomdigi_usp_pr_v1",
+                "jendela_tx_migration_pr_v1",
+                "zte_tx_mini_pr_v1",
+            ],
+        )'''
+          if old_block not in text:
+              raise SystemExit("Expected production-list assertion block was not found")
+          text = text.replace(old_block, new_block)
+          test_path.write_text(text, encoding="utf-8")
+
+          identity = load(ROOT / "config/registries/mw_du_profile_identity_registry.yaml")
+          actual = {
+              item["profile_id"]: item["profile_status"]
+              for item in identity["profiles"]
+          }
+          expected = {profile_id: "PRODUCTION" for profile_id in ALL_PRODUCTION}
+          expected["celcomdigi_cd_consolidation_2023_pr_v1"] = "DRAFT"
+          if actual != expected:
+              raise SystemExit(f"Unexpected identity lifecycle matrix: {actual}")
+          PY
+
+      - name: Regenerate downstream governance packet
+        run: |
+          python scripts/build_profile_readiness_review.py
+          python scripts/build_profile_action_queue.py
+          python scripts/build_profile_review_matrix.py
+          python scripts/build_profile_transition_review.py
+          python scripts/build_profile_deprecation_review.py
+          python scripts/build_profile_rollback_readiness.py
+          python scripts/build_profile_traceability_audit.py
+
+      - name: Verify lifecycle and affected regressions
+        run: |
+          python scripts/check_profile_status_consistency.py
+          python scripts/check_discovery_packet_consistency.py
+          python -m pytest \
+            tests/test_du_profile_loader.py \
+            tests/test_du_profile_identity_governance.py \
+            tests/test_profile_status_consistency.py \
+            tests/test_profile_transition_review.py \
+            tests/test_profile_readiness_review.py \
+            tests/test_create_pr_entrypoint.py \
+            -q
+          python -m compileall -q scripts tests
+          git diff --check
+
+      - name: Remove temporary workflow and commit synchronized output
+        shell: bash
+        run: |
+          rm -f .github/workflows/promote-all-profiles.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore(governance): synchronize bulk production lifecycle"
+          git push origin HEAD:feat/promote-all-pr-input-ready-production
