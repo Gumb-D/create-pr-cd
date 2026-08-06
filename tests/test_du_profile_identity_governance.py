@@ -264,8 +264,12 @@ class TestDuProfileIdentityGovernance(unittest.TestCase):
         actual = {profile_id: profile["status"] for profile_id, profile in self.profiles.items()}
         self.assertEqual(actual, expected)
         self.assertEqual(
-            [profile_id for profile_id, status in actual.items() if status == "PRODUCTION"],
-            [
+            {
+                profile_id
+                for profile_id, status in actual.items()
+                if status == "PRODUCTION"
+            },
+            {
                 "tx_mini_pr_v1",
                 "tx_rollout_2023_pr_v1",
                 "mw_eos_swap_pr_v1",
@@ -274,7 +278,7 @@ class TestDuProfileIdentityGovernance(unittest.TestCase):
                 "celcomdigi_usp_pr_v1",
                 "jendela_tx_migration_pr_v1",
                 "zte_tx_mini_pr_v1",
-            ],
+            },
         )
 
     def test_cd_consolidation_identity_accepts_both_views(self):
