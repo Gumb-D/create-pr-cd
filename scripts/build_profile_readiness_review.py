@@ -54,6 +54,14 @@ def build_readiness_entry(
     approved_header_hashes = list(export_structure.get("approved_header_hashes", []))
     bridge_fields = sorted((bridge_entry or {}).get("field_bridges", {}).keys())
 
+    required_competing_candidate_fields = _required_subset(profile, competing_candidate_fields)
+    required_single_candidate_unverified_fields = _required_subset(
+        profile, single_candidate_unverified_fields
+    )
+    required_no_profile_selection_fields = _required_subset(profile, no_profile_selection_fields)
+    required_shortlist_mismatch_fields = _required_subset(profile, shortlist_mismatch_fields)
+    unapproved_required_fields = _profile_unverified_required_fields(profile)
+
     lifecycle_blockers = []
     if profile.get("status") != "PRODUCTION":
         lifecycle_blockers.append("PROFILE_NOT_PRODUCTION")
@@ -61,13 +69,13 @@ def build_readiness_entry(
         lifecycle_blockers.append("NO_APPROVED_HEADER_HASH")
 
     review_blockers = []
-    if competing_candidate_fields:
+    if required_competing_candidate_fields:
         review_blockers.append("COMPETING_SHORTLIST_CANDIDATES")
-    if single_candidate_unverified_fields:
+    if required_single_candidate_unverified_fields:
         review_blockers.append("UNVERIFIED_SINGLE_CANDIDATE_FIELDS")
-    if no_profile_selection_fields:
+    if required_no_profile_selection_fields:
         review_blockers.append("NO_PROFILE_SELECTION_FIELDS")
-    if shortlist_mismatch_fields:
+    if required_shortlist_mismatch_fields:
         review_blockers.append("SHORTLIST_MISMATCH_FIELDS")
     if bridge_fields:
         review_blockers.append("CROSS_MODEL_BRIDGE_ONLY_FIELDS")
@@ -75,7 +83,7 @@ def build_readiness_entry(
     overall_blockers = lifecycle_blockers + review_blockers
     if missing_required_fields:
         overall_blockers.insert(len(lifecycle_blockers), "MISSING_REQUIRED_FIELDS")
-    if _profile_unverified_required_fields(profile):
+    if unapproved_required_fields:
         overall_blockers.insert(len(lifecycle_blockers), "REQUIRED_FIELDS_NOT_APPROVED")
 
     return {
@@ -92,15 +100,15 @@ def build_readiness_entry(
             "overall_blockers": overall_blockers,
             "lifecycle_blockers": lifecycle_blockers,
             "missing_required_fields": missing_required_fields,
-            "unapproved_required_fields": _profile_unverified_required_fields(profile),
+            "unapproved_required_fields": unapproved_required_fields,
             "competing_candidate_fields": competing_candidate_fields,
-            "required_competing_candidate_fields": _required_subset(profile, competing_candidate_fields),
+            "required_competing_candidate_fields": required_competing_candidate_fields,
             "single_candidate_unverified_fields": single_candidate_unverified_fields,
-            "required_single_candidate_unverified_fields": _required_subset(profile, single_candidate_unverified_fields),
+            "required_single_candidate_unverified_fields": required_single_candidate_unverified_fields,
             "no_profile_selection_fields": no_profile_selection_fields,
-            "required_no_profile_selection_fields": _required_subset(profile, no_profile_selection_fields),
+            "required_no_profile_selection_fields": required_no_profile_selection_fields,
             "shortlist_mismatch_fields": shortlist_mismatch_fields,
-            "required_shortlist_mismatch_fields": _required_subset(profile, shortlist_mismatch_fields),
+            "required_shortlist_mismatch_fields": required_shortlist_mismatch_fields,
             "cross_model_bridge_fields": bridge_fields,
         },
         "release_prerequisites": [
@@ -171,7 +179,7 @@ def readiness_markdown(registry: Mapping[str, Any]) -> str:
             )
         if blocker_summary.get("competing_candidate_fields"):
             lines.append(
-                f"- Competing candidate fields: `{', '.join(blocker_summary['competing_candidate_fields'])}`"
+                f"- Optional/required competing candidate fields: `{', '.join(blocker_summary['competing_candidate_fields'])}`"
             )
         if blocker_summary.get("cross_model_bridge_fields"):
             lines.append(
