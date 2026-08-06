@@ -1,6 +1,8 @@
 """Compatibility-aware consistency checks for historical approved DU packets."""
 from __future__ import annotations
 
+import copy
+
 import check_discovery_packet_consistency_impl as _impl
 from check_discovery_packet_consistency_impl import *  # noqa: F401,F403
 
@@ -104,6 +106,71 @@ def _compatible_primary_discovery_entry(profile, entries):
     )
 
 
+def _aligned_packet_registries(
+    profiles,
+    discovery_registry,
+    unresolved_registry,
+    bridge_registry,
+):
+    """Validate packet evidence, then align copies for the legacy strict checker.
+
+    Unresolved and bridge artifacts are packet-centric and therefore retain the
+    selected discovery packet hash. The legacy checker predates multiple
+    approved layouts and expects every profile-indexed artifact to carry the
+    live Profile hash. Validate the real packet relationship first, then rewrite
+    only in-memory copies so the remaining legacy checks can run unchanged.
+    """
+
+    aligned_unresolved = copy.deepcopy(unresolved_registry)
+    aligned_bridge = copy.deepcopy(bridge_registry)
+    unresolved_by_profile = _impl._index_by_profile(aligned_unresolved)
+    bridge_by_profile = _impl._index_by_profile(aligned_bridge)
+    discovery_by_profile = _impl._group_by_profile(discovery_registry)
+
+    for profile in profiles:
+        profile_id = str(profile.get("profile_id", ""))
+        discovery_entries = discovery_by_profile.get(profile_id, [])
+        unresolved_entry = unresolved_by_profile.get(profile_id)
+        bridge_entry = bridge_by_profile.get(profile_id)
+        if not discovery_entries or unresolved_entry is None or bridge_entry is None:
+            continue
+
+        packet_entry = _compatible_primary_discovery_entry(profile, discovery_entries)
+        packet_hash = str(packet_entry.get("observed_header_hash", "")).strip()
+        packet_source = str(packet_entry.get("source_file_name", ""))
+        unresolved_hash = str(unresolved_entry.get("observed_header_hash", "")).strip()
+        bridge_hash = str(bridge_entry.get("observed_header_hash", "")).strip()
+        unresolved_source = str(unresolved_entry.get("source_file_name", ""))
+        bridge_source = str(bridge_entry.get("source_file_name", ""))
+
+        if unresolved_hash != packet_hash:
+            raise _impl.ProfileValidationError(
+                f"Unresolved review packet header-hash mismatch for {profile_id}: "
+                f"{unresolved_hash} != {packet_hash}"
+            )
+        if unresolved_source != packet_source:
+            raise _impl.ProfileValidationError(
+                f"Unresolved review packet source mismatch for {profile_id}: "
+                f"{unresolved_source} != {packet_source}"
+            )
+        if bridge_hash != packet_hash:
+            raise _impl.ProfileValidationError(
+                f"Bridge review packet header-hash mismatch for {profile_id}: "
+                f"{bridge_hash} != {packet_hash}"
+            )
+        if bridge_source != packet_source:
+            raise _impl.ProfileValidationError(
+                f"Bridge review packet source mismatch for {profile_id}: "
+                f"{bridge_source} != {packet_source}"
+            )
+
+        live_hash = str(profile.get("export_structure", {}).get("observed_header_hash", "")).strip()
+        unresolved_entry["observed_header_hash"] = live_hash
+        bridge_entry["observed_header_hash"] = live_hash
+
+    return aligned_unresolved, aligned_bridge
+
+
 def validate_discovery_packet_consistency(
     profiles,
     discovery_registry,
@@ -117,16 +184,22 @@ def validate_discovery_packet_consistency(
     coverage_registry,
 ):
     live_profiles = _packet_compatible_profiles(profiles, discovery_registry)
+    aligned_unresolved, aligned_bridge = _aligned_packet_registries(
+        live_profiles,
+        discovery_registry,
+        unresolved_registry,
+        bridge_registry,
+    )
     previous_primary_selector = _impl._primary_discovery_entry
     _impl._primary_discovery_entry = _compatible_primary_discovery_entry
     try:
         return _ORIGINAL_VALIDATE(
             live_profiles,
             discovery_registry,
-            unresolved_registry,
+            aligned_unresolved,
             readiness_registry,
             transition_registry,
-            bridge_registry,
+            aligned_bridge,
             deprecation_registry,
             traceability_registry,
             rollback_registry,
