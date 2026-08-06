@@ -50,15 +50,16 @@ class TestProfileReadinessReview(unittest.TestCase):
             self.bridge_by_profile.get(profile_id),
         )
 
-    def test_all_promoted_profiles_have_no_lifecycle_blocker(self):
+    def test_all_promoted_profiles_are_production_ready_without_required_field_blockers(self):
         for profile_id in PRODUCTION_PROFILE_IDS:
             with self.subTest(profile_id=profile_id):
                 profile, entry = self._build_entry(profile_id)
                 blockers = entry["blocker_summary"]
                 self.assertEqual(profile["status"], "PRODUCTION")
                 self.assertEqual(entry["profile_status"], "PRODUCTION")
+                self.assertEqual(entry["readiness_status"], "PRODUCTION_READY")
+                self.assertEqual(blockers["overall_blockers"], [])
                 self.assertEqual(blockers["lifecycle_blockers"], [])
-                self.assertNotIn("PROFILE_NOT_PRODUCTION", blockers["overall_blockers"])
                 self.assertEqual(blockers["missing_required_fields"], [])
                 self.assertEqual(blockers["unapproved_required_fields"], [])
                 self.assertEqual(blockers["required_competing_candidate_fields"], [])
@@ -67,12 +68,7 @@ class TestProfileReadinessReview(unittest.TestCase):
                 self.assertEqual(blockers["required_shortlist_mismatch_fields"], [])
                 self.assertEqual(blockers["cross_model_bridge_fields"], [])
 
-    def test_tx_mini_entry_is_production_ready(self):
-        _, entry = self._build_entry("tx_mini_pr_v1")
-        self.assertEqual(entry["readiness_status"], "PRODUCTION_READY")
-        self.assertEqual(entry["blocker_summary"]["overall_blockers"], [])
-
-    def test_optional_review_work_remains_visible_after_production_promotion(self):
+    def test_optional_review_work_remains_visible_but_non_blocking(self):
         expected_optional = {
             "mw_eos_swap_pr_v1": {
                 "competing": ["site_name", "subcontractor_planning"],
@@ -97,8 +93,11 @@ class TestProfileReadinessReview(unittest.TestCase):
                 blockers = entry["blocker_summary"]
                 self.assertEqual(blockers["competing_candidate_fields"], expected["competing"])
                 self.assertEqual(blockers["single_candidate_unverified_fields"], expected["single"])
-                self.assertIn("COMPETING_SHORTLIST_CANDIDATES", blockers["overall_blockers"])
-                self.assertIn("UNVERIFIED_SINGLE_CANDIDATE_FIELDS", blockers["overall_blockers"])
+                self.assertEqual(blockers["required_competing_candidate_fields"], [])
+                self.assertEqual(blockers["required_single_candidate_unverified_fields"], [])
+                self.assertNotIn("COMPETING_SHORTLIST_CANDIDATES", blockers["overall_blockers"])
+                self.assertNotIn("UNVERIFIED_SINGLE_CANDIDATE_FIELDS", blockers["overall_blockers"])
+                self.assertEqual(entry["readiness_status"], "PRODUCTION_READY")
 
     def test_cd_consolidation_profile_family_stays_discovery_only_blocked(self):
         profile_id = "celcomdigi_cd_consolidation_2023_pr_v1"
