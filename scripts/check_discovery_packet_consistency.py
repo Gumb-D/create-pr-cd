@@ -1,8 +1,6 @@
 """Compatibility-aware consistency checks for historical approved DU packets."""
 from __future__ import annotations
 
-import copy
-
 import check_discovery_packet_consistency_impl as _impl
 from check_discovery_packet_consistency_impl import *  # noqa: F401,F403
 
@@ -11,25 +9,22 @@ _ORIGINAL_VALIDATE = _impl.validate_discovery_packet_consistency
 
 
 def _packet_compatible_profiles(profiles, discovery_registry):
-    """Validate historical packet layouts, then align profile copies for strict checks.
+    """Validate historical packet hashes without rewriting live Profile identity.
 
-    Discovery artifacts may contain multiple source layouts for one Project + DU
-    Model profile family. Every packet hash must be explicitly recorded as an
-    observed layout or approved historical layout. Profile-centric governance
-    remains aligned to the configured primary observed layout.
+    Discovery artifacts may retain an approved historical source layout while
+    profile-centric governance tracks the configured current layout. Every
+    packet hash must still be explicitly registered as observed or approved.
     """
 
+    live_profiles = list(profiles)
     entries_by_profile = _impl._group_by_profile(discovery_registry)
-    compatible = []
-    for raw_profile in profiles:
-        profile = copy.deepcopy(raw_profile)
+    for profile in live_profiles:
         profile_id = str(profile.get("profile_id", ""))
         discovery_entries = entries_by_profile.get(profile_id, [])
         if not discovery_entries:
-            compatible.append(profile)
             continue
 
-        structure = profile.setdefault("export_structure", {})
+        structure = profile.get("export_structure", {})
         current_hash = str(structure.get("observed_header_hash", "")).strip()
         observed_hashes = {
             str(value).strip()
@@ -66,18 +61,47 @@ def _packet_compatible_profiles(profiles, discovery_registry):
             if len(historical_candidates) != 1:
                 raise _impl.ProfileValidationError(
                     f"Discovery registry primary-layout mismatch for {profile_id}: "
-                    f"current hash {current_hash} is absent"
+                    f"current hash {current_hash} is absent and exactly one approved historical packet was expected"
                 )
-            historical = historical_candidates[0]
-            structure["observed_header_hash"] = str(historical["observed_header_hash"])
-            historical_version = str(historical.get("profile_version", "")).strip()
-            if not historical_version:
-                raise _impl.ProfileValidationError(
-                    f"Discovery registry profile-version mismatch for {profile_id}: historical version is blank"
-                )
-            profile["profile_version"] = historical_version
-        compatible.append(profile)
-    return compatible
+
+    return live_profiles
+
+
+def _compatible_primary_discovery_entry(profile, entries):
+    """Select the current packet, or one approved historical packet if absent."""
+
+    structure = profile.get("export_structure", {})
+    current_hash = str(structure.get("observed_header_hash", "")).strip()
+    current_matches = [
+        entry
+        for entry in entries
+        if str(entry.get("observed_header_hash", "")).strip() == current_hash
+    ]
+    if len(current_matches) == 1:
+        return current_matches[0]
+    if len(current_matches) > 1:
+        raise _impl.ProfileValidationError(
+            f"Discovery registry primary-layout mismatch for {profile.get('profile_id')}: "
+            f"expected exactly one entry for {current_hash}, found {len(current_matches)}"
+        )
+
+    approved_hashes = {
+        str(value).strip()
+        for value in structure.get("approved_header_hashes", []) or []
+        if str(value).strip()
+    }
+    historical_candidates = [
+        entry
+        for entry in entries
+        if str(entry.get("observed_header_hash", "")).strip() in approved_hashes
+    ]
+    if len(historical_candidates) == 1:
+        return historical_candidates[0]
+
+    raise _impl.ProfileValidationError(
+        f"Discovery registry primary-layout mismatch for {profile.get('profile_id')}: "
+        f"current hash {current_hash} is absent and found {len(historical_candidates)} approved historical packets"
+    )
 
 
 def validate_discovery_packet_consistency(
@@ -92,19 +116,24 @@ def validate_discovery_packet_consistency(
     rollback_registry,
     coverage_registry,
 ):
-    compatible_profiles = _packet_compatible_profiles(profiles, discovery_registry)
-    return _ORIGINAL_VALIDATE(
-        compatible_profiles,
-        discovery_registry,
-        unresolved_registry,
-        readiness_registry,
-        transition_registry,
-        bridge_registry,
-        deprecation_registry,
-        traceability_registry,
-        rollback_registry,
-        coverage_registry,
-    )
+    live_profiles = _packet_compatible_profiles(profiles, discovery_registry)
+    previous_primary_selector = _impl._primary_discovery_entry
+    _impl._primary_discovery_entry = _compatible_primary_discovery_entry
+    try:
+        return _ORIGINAL_VALIDATE(
+            live_profiles,
+            discovery_registry,
+            unresolved_registry,
+            readiness_registry,
+            transition_registry,
+            bridge_registry,
+            deprecation_registry,
+            traceability_registry,
+            rollback_registry,
+            coverage_registry,
+        )
+    finally:
+        _impl._primary_discovery_entry = previous_primary_selector
 
 
 def _with_compatible_validator(callable_, *args, **kwargs):
