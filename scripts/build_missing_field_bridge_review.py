@@ -40,7 +40,14 @@ def build_bridge_entry(
         best_source = None
 
         for neighbor in grouping_entry.get("closest_neighbors", []):
-            match = next((entry for entry in discovery_entries if entry["source_file_name"] == neighbor["source_file_name"]), None)
+            match = next(
+                (
+                    entry
+                    for entry in discovery_entries
+                    if entry["source_file_name"] == neighbor["source_file_name"]
+                ),
+                None,
+            )
             if match and match.get("skill_field_presence", {}).get(discovery_key):
                 best_source = {
                     "du_model_name": match["du_model_name"],
@@ -54,7 +61,10 @@ def build_bridge_entry(
         if best_source is None:
             for entry in sorted(
                 discovery_entries,
-                key=lambda item: (0 if item.get("skill_field_presence", {}).get(discovery_key) else 1, item["source_file_name"]),
+                key=lambda item: (
+                    0 if item.get("skill_field_presence", {}).get(discovery_key) else 1,
+                    item["source_file_name"],
+                ),
             ):
                 if entry.get("skill_field_presence", {}).get(discovery_key):
                     best_source = {
@@ -114,7 +124,7 @@ def bridge_markdown(registry: Mapping[str, Any]) -> str:
     lines = [
         "# MW DU Missing-Field Bridge Review",
         "",
-        "Discovery-only bridge guidance for required fields that are still missing in priority DRAFT profiles. This does not approve any cross-model mapping reuse.",
+        "Discovery-only bridge guidance for required fields that are still missing in governed DU profiles. This does not approve any cross-model mapping reuse.",
     ]
     for entry in registry.get("entries", []):
         lines.extend(["", f"## {entry['profile_id']} ({entry['du_model_name']})", ""])
@@ -156,7 +166,10 @@ def write_bridge_outputs(
     registry = build_bridge_registry(unresolved_registry, grouping_registry, discovery_registry)
     registry_path.parent.mkdir(parents=True, exist_ok=True)
     markdown_path.parent.mkdir(parents=True, exist_ok=True)
-    registry_path.write_text(json.dumps(registry, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    registry_path.write_text(
+        json.dumps(registry, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
     markdown_path.write_text(bridge_markdown(registry), encoding="utf-8")
 
 
