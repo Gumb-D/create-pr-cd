@@ -1,6 +1,6 @@
 # MW DU Profile Action Queue
 
-Discovery-only prioritized manual action queue for the current DRAFT profiles.
+Prioritized governance action queue for the current DU Profiles.
 
 ## celcomdigi_bau_2023_pr_v1 (2023 Celcomdigi BAU)
 
@@ -19,8 +19,6 @@ Discovery-only prioritized manual action queue for the current DRAFT profiles.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
   - `celcomdigi_bau_2023_pr_v1:05` `VERIFY_SINGLE_CANDIDATE` `site_name`: Verify the current single shortlist-aligned source for `site_name`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `celcomdigi_bau_2023_pr_v1:06` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
-    hint: Use the transition review as the final stop/go check before any status change.
 
 ## celcomdigi_bau_2024_pr_v1 (2024 Celcomdigi BAU)
 
@@ -39,8 +37,6 @@ Discovery-only prioritized manual action queue for the current DRAFT profiles.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
   - `celcomdigi_bau_2024_pr_v1:05` `VERIFY_SINGLE_CANDIDATE` `site_name`: Verify the current single shortlist-aligned source for `site_name`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `celcomdigi_bau_2024_pr_v1:06` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
-    hint: Use the transition review as the final stop/go check before any status change.
 
 ## celcomdigi_cd_consolidation_2023_pr_v1 (CD consolidation 2023)
 
@@ -67,7 +63,7 @@ Discovery-only prioritized manual action queue for the current DRAFT profiles.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
   - `celcomdigi_cd_consolidation_2023_pr_v1:09` `APPROVE_HEADER_HASH`: Approve at least one header hash for this profile version after the field review is complete.
     hint: Current observed header hash: b86cbc349db66154324092c843593137e83908c3b4b55c09305d6cf6046c7a16
-  - `celcomdigi_cd_consolidation_2023_pr_v1:10` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
+  - `celcomdigi_cd_consolidation_2023_pr_v1:10` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until required mappings, header-hash approval, and regression evidence are complete.
     hint: Use the transition review as the final stop/go check before any status change.
 
 ## celcomdigi_usp_pr_v1 (Celcomdigi USP)
@@ -87,8 +83,6 @@ Discovery-only prioritized manual action queue for the current DRAFT profiles.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
   - `celcomdigi_usp_pr_v1:05` `VERIFY_SINGLE_CANDIDATE` `du_key`: Verify the current single shortlist-aligned source for `du_key`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `celcomdigi_usp_pr_v1:06` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
-    hint: Use the transition review as the final stop/go check before any status change.
 
 ## jendela_tx_migration_pr_v1 (Jendela TX Migration)
 
@@ -107,8 +101,6 @@ Discovery-only prioritized manual action queue for the current DRAFT profiles.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
   - `jendela_tx_migration_pr_v1:05` `VERIFY_SINGLE_CANDIDATE` `du_key`: Verify the current single shortlist-aligned source for `du_key`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `jendela_tx_migration_pr_v1:06` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
-    hint: Use the transition review as the final stop/go check before any status change.
 
 ## mw_eos_swap_pr_v1 (MW EOS Swap)
 
@@ -127,8 +119,6 @@ Discovery-only prioritized manual action queue for the current DRAFT profiles.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
   - `mw_eos_swap_pr_v1:05` `VERIFY_SINGLE_CANDIDATE` `du_key`: Verify the current single shortlist-aligned source for `du_key`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `mw_eos_swap_pr_v1:06` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
-    hint: Use the transition review as the final stop/go check before any status change.
 
 ## tx_mini_pr_v1 (TX Mini Project)
 
@@ -137,8 +127,7 @@ Discovery-only prioritized manual action queue for the current DRAFT profiles.
 - Mapping version: `approved-2026-07-07-tx-mini-v1`
 - Observed header hash: `830864906f3e69041995bec10b0a5840d5f8c6fa5defa2cfaef30b868b91a921`
 - Action queue:
-  - `tx_mini_pr_v1:01` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
-    hint: Use the transition review as the final stop/go check before any status change.
+  - `NONE`: No required blocker or optional follow-up action is currently recorded.
 
 ## tx_rollout_2023_pr_v1 (2023 TX Rollout)
 
@@ -153,8 +142,6 @@ Discovery-only prioritized manual action queue for the current DRAFT profiles.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
   - `tx_rollout_2023_pr_v1:03` `VERIFY_SINGLE_CANDIDATE` `site_name`: Verify the current single shortlist-aligned source for `site_name`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `tx_rollout_2023_pr_v1:04` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
-    hint: Use the transition review as the final stop/go check before any status change.
 
 ## zte_tx_mini_pr_v1 (ZTE TX MINI)
 
@@ -173,5 +160,3 @@ Discovery-only prioritized manual action queue for the current DRAFT profiles.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
   - `zte_tx_mini_pr_v1:05` `VERIFY_SINGLE_CANDIDATE` `du_key`: Verify the current single shortlist-aligned source for `du_key`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `zte_tx_mini_pr_v1:06` `HOLD_LIFECYCLE_PROMOTION`: Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.
-    hint: Use the transition review as the final stop/go check before any status change.

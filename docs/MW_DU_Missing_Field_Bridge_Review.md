@@ -1,6 +1,6 @@
 # MW DU Missing-Field Bridge Review
 
-Discovery-only bridge guidance for required fields that are still missing in priority DRAFT profiles. This does not approve any cross-model mapping reuse.
+Discovery-only bridge guidance for required fields that are still missing in governed DU profiles. This does not approve any cross-model mapping reuse.
 
 ## tx_mini_pr_v1 (TX Mini Project)
 
@@ -18,7 +18,7 @@ Discovery-only bridge guidance for required fields that are still missing in pri
 
 ## tx_rollout_2023_pr_v1 (2023 TX Rollout)
 
-- Profile version: `0.1.0`
+- Profile version: `0.1.1`
 - Mapping version: `approved-2026-07-10-2023-tx-rollout-v2`
 - Observed header hash: `8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320`
 

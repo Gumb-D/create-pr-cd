@@ -130,14 +130,14 @@ Discovery-only audit of profile-version and header-hash traceability across gene
 
 ## tx_rollout_2023_pr_v1
 
-- Traceability status: `TRACEABILITY_REVIEW_REQUIRED`
+- Traceability status: `TRACEABLE`
 - Profile version: `0.1.1`
 - Mapping version: `approved-2026-07-10-2023-tx-rollout-v2`
 - Observed header hash: `e61b834994eeef30e7d8249f87616cb04d60598eea323feea50178fc4292c162`
 - Artifacts:
   - `discovery` `TRACEABLE` version=True mapping=True header_hash=True
   - `unresolved` `TRACEABLE` version=True mapping=True header_hash=True
-  - `bridge` `TRACEABILITY_REVIEW_REQUIRED` version=False mapping=True header_hash=True
+  - `bridge` `TRACEABLE` version=True mapping=True header_hash=True
   - `readiness` `TRACEABLE` version=True mapping=True header_hash=True
   - `action_queue` `TRACEABLE` version=True mapping=True header_hash=True
   - `review_matrix` `TRACEABLE` version=True mapping=True header_hash=True

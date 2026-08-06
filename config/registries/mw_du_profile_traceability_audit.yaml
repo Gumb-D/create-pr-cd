@@ -560,7 +560,7 @@
       "profile_version": "0.1.1",
       "mapping_version": "approved-2026-07-10-2023-tx-rollout-v2",
       "observed_header_hash": "e61b834994eeef30e7d8249f87616cb04d60598eea323feea50178fc4292c162",
-      "traceability_status": "TRACEABILITY_REVIEW_REQUIRED",
+      "traceability_status": "TRACEABLE",
       "artifacts": [
         {
           "artifact_id": "discovery",
@@ -578,8 +578,8 @@
         },
         {
           "artifact_id": "bridge",
-          "artifact_status": "TRACEABILITY_REVIEW_REQUIRED",
-          "profile_version_matches": false,
+          "artifact_status": "TRACEABLE",
+          "profile_version_matches": true,
           "mapping_version_matches": true,
           "observed_header_hash_matches": true
         },
