@@ -86,7 +86,6 @@ def build_canonical_records(
     sow_registry_path: Path,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     scope = str(scope).upper()
-    resolved = resolve_profile_field_mappings(inventory, profile)
     mapped_scope_fields = {
         field for field in SCOPE_REQUIRED_FIELDS[scope] if field != "tx_sow_normalized"
     }
@@ -96,6 +95,11 @@ def build_canonical_records(
         if config.get("required")
     }
     required_fields = mapped_scope_fields | profile_required
+    resolved = resolve_profile_field_mappings(
+        inventory,
+        profile,
+        semantic_fallback_fields=required_fields,
+    )
     missing = [
         field
         for field in sorted(required_fields)
@@ -111,7 +115,22 @@ def build_canonical_records(
 
     header_validation = resolve_approved_header_structure(inventory, profile)
     if not header_validation["approved"]:
-        raise ValueError("HEADER_HASH_REVALIDATION_REQUIRED")
+        unapproved = [
+            field
+            for field in sorted(required_fields)
+            if any(
+                match.get("mapping_status") != "APPROVED"
+                for match in resolved[field].get("matches", [])
+            )
+        ]
+        if unapproved:
+            raise ValueError("HEADER_HASH_REVALIDATION_REQUIRED")
+        header_validation = {
+            **header_validation,
+            "approved": True,
+            "approved_header_hash": None,
+            "approval_basis": "REQUIRED_APPROVED_FIELDS_RESOLVED",
+        }
     if header_hash and str(header_hash) != str(header_validation["raw_header_hash"]):
         raise ValueError("HEADER_HASH_CONTEXT_MISMATCH")
 

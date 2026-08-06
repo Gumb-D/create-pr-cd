@@ -176,7 +176,7 @@ class TestProjectDuModelSourceRouting(unittest.TestCase):
             shutil.copy2(FIXTURE, older)
             shutil.copy2(FIXTURE, latest)
             workbook = load_workbook(latest)
-            workbook["data"]["B4"] = "Unapproved Changed Display Header"
+            workbook["data"]["D4"] = "Unapproved Changed Required Header"
             workbook.save(latest)
             workbook.close()
 

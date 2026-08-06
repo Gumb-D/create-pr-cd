@@ -9,7 +9,7 @@ from copy import deepcopy
 from typing import Any, Dict, Mapping
 
 from canonical_site_validator import FIELD_PATHS, apply_validation_result, empty_canonical_site_record, validate_canonical_site_record
-from profile_du_export import fingerprint_key, structural_fingerprint_key
+from profile_du_export import fingerprint_key, structural_fingerprint, structural_fingerprint_key
 from sow_normalization import normalize_tx_sow
 from jendela_migration_decision import derive_jendela_migration_decision
 
@@ -92,27 +92,41 @@ def _stronger_mapping_status(first: str, second: str) -> str:
     )
 
 
-def resolve_profile_field_mappings(header_inventory: Mapping[str, Any], profile: Mapping[str, Any]) -> Dict[str, Any]:
-    """Resolve approved fingerprints by structural identity, never by position.
+def resolve_profile_field_mappings(
+    header_inventory: Mapping[str, Any],
+    profile: Mapping[str, Any],
+    *,
+    semantic_fallback_fields: set[str] | None = None,
+) -> Dict[str, Any]:
+    """Resolve approved source columns without relying on column position.
 
-    Only the View suffix of the strict site identity field can normalize. Every
-    returned match retains the actual runtime fingerprint for row lookup and audit.
-    Multiple profile candidates representing different Views are deduplicated when
-    they resolve to the same physical runtime column. Distinct physical columns
-    remain distinct even when their raw fingerprints are identical.
+    Exact four-layer matching remains the default. Runtime-required fields may
+    fall back to stable field code plus display header when a View changes only
+    WBS/task placement. Matches retain the actual runtime fingerprint for row
+    lookup and audit, and duplicate physical columns remain ambiguous.
     """
+    if semantic_fallback_fields is None:
+        semantic_fallback_fields = {
+            name
+            for name, config in profile.get("field_mapping", {}).items()
+            if config.get("required")
+        }
     available: Dict[str, list[Dict[str, Any]]] = {}
+    semantic_available: Dict[tuple[str, str], list[Dict[str, Any]]] = {}
     for sheet_index, sheet in enumerate(header_inventory.get("sheets", [])):
         for column_index, column in enumerate(sheet.get("columns", [])):
             fingerprint = column["fingerprint"]
+            source = {
+                "sheet_name": sheet["sheet_name"],
+                "fingerprint": fingerprint,
+                "_source_identity": (sheet_index, column_index),
+            }
             key = structural_fingerprint_key(fingerprint)
-            available.setdefault(key, []).append(
-                {
-                    "sheet_name": sheet["sheet_name"],
-                    "fingerprint": fingerprint,
-                    "_source_identity": (sheet_index, column_index),
-                }
-            )
+            available.setdefault(key, []).append(source)
+            stable = structural_fingerprint(fingerprint)
+            semantic_available.setdefault(
+                (stable["field_code"], stable["display_header"]), []
+            ).append(source)
 
     results: Dict[str, Any] = {}
     for canonical_field, config in profile.get("field_mapping", {}).items():
@@ -120,7 +134,13 @@ def resolve_profile_field_mappings(header_inventory: Mapping[str, Any], profile:
         for candidate in config.get("source_candidates", []):
             structural_key = structural_fingerprint_key(candidate["fingerprint"])
             candidate_status = str(candidate.get("mapping_status", "UNVERIFIED"))
-            for source in available.get(structural_key, []):
+            sources = available.get(structural_key, [])
+            if not sources and canonical_field in semantic_fallback_fields and candidate_status == "APPROVED":
+                stable = structural_fingerprint(candidate["fingerprint"])
+                sources = semantic_available.get(
+                    (stable["field_code"], stable["display_header"]), []
+                )
+            for source in sources:
                 source_key = source["_source_identity"]
                 existing = matches_by_source.get(source_key)
                 if existing is None:

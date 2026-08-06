@@ -6,7 +6,7 @@ import unittest
 from copy import deepcopy
 from pathlib import Path
 
-from openpyxl import load_workbook
+from openpyxl import Workbook, load_workbook
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -265,6 +265,111 @@ class TestIssue64ViewIndependentIdentity(unittest.TestCase):
 
         self.assertNotIn("UNKNOWN_DU_MODEL_OR_VIEW", gate["blocking_reasons"])
         self.assertNotIn("UNKNOWN_DU_MODEL", gate["blocking_reasons"])
+
+
+    def test_project_and_model_accepts_different_view_layout_when_required_approved_fields_resolve(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            source = Path(temp_dir) / (
+                "A-P202202168750_D002-2023 TX Rollout-Any View-20260806000100.xlsx"
+            )
+            workbook = Workbook()
+            sheet = workbook.active
+            sheet.title = "data"
+            fingerprints = [
+                ("site|fix00012|1027190858144623081|8557250483163816918", "Site Basic Info", "Site Basic Info", "customer site code"),
+                ("docata|ZDCSZ0690241", "Network Planning", "Microwave", "Post MOCN TX SOW (LLD)"),
+                ("site|region_name", "Site Basic Info", "Site Basic Info", "region"),
+                ("docata|ZDCSZ640242", "Installation", "Wireless RAN", "SubCon - TI"),
+                ("docata|ZDCSZ641766", "Installation", "Wireless RAN", "Subcon PR - TSS"),
+                ("docata|ZDCSZ641765", "Installation", "Wireless RAN", "Subcon PR - TI"),
+            ]
+            for column, fingerprint in enumerate(fingerprints, start=1):
+                for row, value in enumerate(fingerprint, start=1):
+                    sheet.cell(row=row, column=column, value=value)
+            workbook.save(source)
+            workbook.close()
+
+            resolution = resolve_du_profile(
+                source,
+                profile_root=PROFILE_ROOT,
+                identity_registry_path=REGISTRY_PATH,
+            )
+
+            self.assertEqual(resolution["profile"]["profile_id"], "tx_rollout_2023_pr_v1")
+            self.assertEqual(resolution["profile_selection_basis"], "PROJECT_AND_DU_MODEL")
+            self.assertEqual(resolution["view_id"], "8557250483163816918")
+            self.assertEqual(
+                resolution["header_hash_approval_basis"],
+                "REQUIRED_APPROVED_FIELDS_RESOLVED",
+            )
+
+
+    def test_required_semantic_fallback_blocks_duplicate_runtime_columns(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            source = Path(temp_dir) / (
+                "A-P202202168750_D002-2023 TX Rollout-Duplicate View-20260806000200.xlsx"
+            )
+            workbook = Workbook()
+            sheet = workbook.active
+            sheet.title = "data"
+            fingerprints = [
+                ("site|fix00012|1027190858144623081|8557250483163816918", "Site Basic Info", "Site Basic Info", "customer site code"),
+                ("docata|ZDCSZ0690241", "Network Planning", "Microwave", "Post MOCN TX SOW (LLD)"),
+                ("site|region_name", "Site Basic Info", "Site Basic Info", "region"),
+                ("docata|ZDCSZ640242", "Installation", "Wireless RAN", "SubCon - TI"),
+                ("docata|ZDCSZ640242", "Other Stage", "Other Task", "SubCon - TI"),
+                ("docata|ZDCSZ641766", "Installation", "Wireless RAN", "Subcon PR - TSS"),
+                ("docata|ZDCSZ641765", "Installation", "Wireless RAN", "Subcon PR - TI"),
+            ]
+            for column, fingerprint in enumerate(fingerprints, start=1):
+                for row, value in enumerate(fingerprint, start=1):
+                    sheet.cell(row=row, column=column, value=value)
+            workbook.save(source)
+            workbook.close()
+
+            with self.assertRaises(DuProfileResolutionError) as context:
+                resolve_du_profile(
+                    source,
+                    profile_root=PROFILE_ROOT,
+                    identity_registry_path=REGISTRY_PATH,
+                )
+
+            self.assertEqual(context.exception.code, "HEADER_HASH_REVALIDATION_REQUIRED")
+
+
+    def test_canonical_pipeline_accepts_scope_required_fields_from_different_view_layout(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            source = Path(temp_dir) / "A-P202202168750_D002-2023 TX Rollout-TSS View-20260806000300.xlsx"
+            workbook = Workbook()
+            sheet = workbook.active
+            sheet.title = "data"
+            fingerprints = [
+                ("site|fix00012|1027190858144623081|8557250483163816918", "Site Basic Info", "Site Basic Info", "customer site code"),
+                ("docata|ZDCSZ0690241", "Network Planning", "Microwave", "Post MOCN TX SOW (LLD)"),
+                ("site|region_name", "Site Basic Info", "Site Basic Info", "region"),
+                ("docata|ZDCSZ640307", "Installation", "Wireless RAN", "SubCon - TSS"),
+                ("docata|ZDCSZ640242", "Installation", "Wireless RAN", "SubCon - TI"),
+                ("docata|ZDCSZ641766", "Installation", "Wireless RAN", "Subcon PR - TSS"),
+                ("docata|ZDCSZ641765", "Installation", "Wireless RAN", "Subcon PR - TI"),
+            ]
+            for column, fingerprint in enumerate(fingerprints, start=1):
+                for row, value in enumerate(fingerprint, start=1):
+                    sheet.cell(row=row, column=column, value=value)
+            workbook.save(source)
+            workbook.close()
+
+            resolution = resolve_du_profile(source, profile_root=PROFILE_ROOT, identity_registry_path=REGISTRY_PATH)
+            records, metadata = build_canonical_records(
+                input_path=source,
+                profile=resolution["profile"],
+                inventory=resolution["inventory"],
+                header_hash=resolution["raw_header_hash"],
+                scope="TSS",
+                sow_registry_path=SOW_REGISTRY_PATH,
+            )
+
+            self.assertEqual(records, [])
+            self.assertEqual(metadata["view_id"], "8557250483163816918")
 
 
 if __name__ == "__main__":

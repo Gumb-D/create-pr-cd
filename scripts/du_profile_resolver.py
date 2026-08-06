@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Mapping
 
+from du_export_adapter import resolve_profile_field_mappings
 from du_profile_loader import load_du_profile
 from iepms_export_source_resolver import (
     SourceResolutionError,
@@ -143,6 +144,37 @@ def resolve_du_profile(
         )
 
     header_validation = resolve_approved_header_structure(inventory, profile)
+    required_field_approval = None
+    if not header_validation["approved"]:
+        mappings = resolve_profile_field_mappings(inventory, profile)
+        required_fields = {
+            name: config
+            for name, config in profile.get("field_mapping", {}).items()
+            if config.get("required")
+        }
+        failures = {}
+        for name in required_fields:
+            resolution = mappings.get(name, {"status": "MISSING", "matches": []})
+            matches = resolution.get("matches", [])
+            if (
+                resolution.get("status") != "RESOLVED"
+                or not matches
+                or any(match.get("mapping_status") != "APPROVED" for match in matches)
+            ):
+                failures[name] = resolution.get("status", "MISSING")
+        if not failures:
+            required_field_approval = {
+                name: [match["fingerprint"] for match in mappings[name]["matches"]]
+                for name in required_fields
+            }
+            header_validation = {
+                **header_validation,
+                "approved": True,
+                "approved_header_hash": None,
+                "approval_basis": "REQUIRED_APPROVED_FIELDS_RESOLVED",
+            }
+        else:
+            header_validation = {**header_validation, "required_field_failures": failures}
     if not header_validation["approved"]:
         raise DuProfileResolutionError(
             "HEADER_HASH_REVALIDATION_REQUIRED",
@@ -166,6 +198,7 @@ def resolve_du_profile(
         "approved_header_hash": header_validation["approved_header_hash"],
         "header_hash_approval_basis": header_validation["approval_basis"],
         "profile_selection_basis": selection_basis,
+        "required_field_approval": required_field_approval,
         **detected,
     }
     if filename_identity is not None:
