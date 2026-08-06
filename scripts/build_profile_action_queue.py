@@ -1,4 +1,4 @@
-"""Build a prioritized discovery-only manual action queue for DU profiles."""
+"""Build a prioritized governance action queue for DU profiles."""
 from __future__ import annotations
 
 import json
@@ -16,7 +16,15 @@ def _priority(profile_id: str, rank: int) -> str:
     return f"{profile_id}:{rank:02d}"
 
 
-def _queue_item(rank: int, profile_id: str, action_type: str, summary: str, *, field_name: str | None = None, evidence_hint: str | None = None) -> Dict[str, Any]:
+def _queue_item(
+    rank: int,
+    profile_id: str,
+    action_type: str,
+    summary: str,
+    *,
+    field_name: str | None = None,
+    evidence_hint: str | None = None,
+) -> Dict[str, Any]:
     item = {
         "priority_id": _priority(profile_id, rank),
         "action_type": action_type,
@@ -97,15 +105,16 @@ def build_action_queue_entry(
         )
         rank += 1
 
-    queue.append(
-        _queue_item(
-            rank,
-            profile_id,
-            "HOLD_LIFECYCLE_PROMOTION",
-            "Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.",
-            evidence_hint="Use the transition review as the final stop/go check before any status change.",
+    if readiness_entry.get("readiness_status") != "PRODUCTION_READY":
+        queue.append(
+            _queue_item(
+                rank,
+                profile_id,
+                "HOLD_LIFECYCLE_PROMOTION",
+                "Keep the profile blocked from lifecycle promotion until required mappings, header-hash approval, and regression evidence are complete.",
+                evidence_hint="Use the transition review as the final stop/go check before any status change.",
+            )
         )
-    )
 
     return {
         "profile_id": profile_id,
@@ -117,8 +126,8 @@ def build_action_queue_entry(
         "observed_header_hash": readiness_entry.get("observed_header_hash", ""),
         "action_queue": queue,
         "notes": [
-            "This action queue is discovery-only and does not approve any field mapping, header hash, or lifecycle transition.",
-            "Priority order is intended to reduce review ambiguity, not to bypass approval gates.",
+            "This governance queue records required blockers and optional follow-up review work; it does not grant production permission.",
+            "Optional discovery actions remain visible for production Profiles but do not create a lifecycle hold.",
         ],
     }
 
@@ -129,9 +138,15 @@ def build_action_queue_registry(
     unresolved_registry: Mapping[str, Any],
     bridge_registry: Mapping[str, Any],
 ) -> Dict[str, Any]:
-    readiness_by_profile = {str(entry["profile_id"]): entry for entry in readiness_registry.get("entries", [])}
-    unresolved_by_profile = {str(entry["profile_id"]): entry for entry in unresolved_registry.get("entries", [])}
-    bridge_by_profile = {str(entry["profile_id"]): entry for entry in bridge_registry.get("entries", [])}
+    readiness_by_profile = {
+        str(entry["profile_id"]): entry for entry in readiness_registry.get("entries", [])
+    }
+    unresolved_by_profile = {
+        str(entry["profile_id"]): entry for entry in unresolved_registry.get("entries", [])
+    }
+    bridge_by_profile = {
+        str(entry["profile_id"]): entry for entry in bridge_registry.get("entries", [])
+    }
 
     entries = []
     for profile in profiles:
@@ -141,14 +156,16 @@ def build_action_queue_registry(
         bridge_entry = bridge_by_profile.get(profile_id)
         if readiness_entry is None or unresolved_entry is None or bridge_entry is None:
             raise ValueError(f"Missing review packet dependency for profile {profile_id}")
-        entries.append(build_action_queue_entry(profile, readiness_entry, unresolved_entry, bridge_entry))
+        entries.append(
+            build_action_queue_entry(profile, readiness_entry, unresolved_entry, bridge_entry)
+        )
     return {
         "schema_version": "1.0",
         "registry_type": "discovery_profile_action_queue",
         "entries": entries,
         "notes": [
-            "Discovery-only prioritized action queue for current DRAFT profiles.",
-            "Actions are sequencing guidance only and do not imply approval.",
+            "Prioritized governance action queue for current DU Profiles.",
+            "Required blockers and optional discovery follow-up are kept distinct.",
         ],
     }
 
@@ -157,7 +174,7 @@ def action_queue_markdown(registry: Mapping[str, Any]) -> str:
     lines = [
         "# MW DU Profile Action Queue",
         "",
-        "Discovery-only prioritized manual action queue for the current DRAFT profiles.",
+        "Prioritized governance action queue for the current DU Profiles.",
         "",
     ]
     for entry in registry.get("entries", []):
@@ -168,9 +185,13 @@ def action_queue_markdown(registry: Mapping[str, Any]) -> str:
         lines.append(f"- Mapping version: `{entry['mapping_version']}`")
         lines.append(f"- Observed header hash: `{entry.get('observed_header_hash', '')}`")
         lines.append("- Action queue:")
+        if not entry.get("action_queue"):
+            lines.append("  - `NONE`: No required blocker or optional follow-up action is currently recorded.")
         for item in entry.get("action_queue", []):
             field_suffix = f" `{item['field_name']}`" if item.get("field_name") else ""
-            lines.append(f"  - `{item['priority_id']}` `{item['action_type']}`{field_suffix}: {item['summary']}")
+            lines.append(
+                f"  - `{item['priority_id']}` `{item['action_type']}`{field_suffix}: {item['summary']}"
+            )
             if item.get("evidence_hint"):
                 lines.append(f"    hint: {item['evidence_hint']}")
         lines.append("")
@@ -189,10 +210,18 @@ def write_action_queue_outputs(
     readiness_registry = _load_json(readiness_path)
     unresolved_registry = _load_json(unresolved_path)
     bridge_registry = _load_json(bridge_path)
-    registry = build_action_queue_registry(profiles, readiness_registry, unresolved_registry, bridge_registry)
+    registry = build_action_queue_registry(
+        profiles,
+        readiness_registry,
+        unresolved_registry,
+        bridge_registry,
+    )
     registry_path.parent.mkdir(parents=True, exist_ok=True)
     markdown_path.parent.mkdir(parents=True, exist_ok=True)
-    registry_path.write_text(json.dumps(registry, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    registry_path.write_text(
+        json.dumps(registry, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
     markdown_path.write_text(action_queue_markdown(registry), encoding="utf-8")
 
 
