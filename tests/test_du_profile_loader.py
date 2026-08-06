@@ -5,7 +5,7 @@ from tests.du_profile_loader_legacy_tests import TestDuProfileLoader as _LegacyT
 
 
 class TestDuProfileLoader(_LegacyTestDuProfileLoader):
-    def test_all_pr_input_ready_profiles_have_approved_subcontractor_tss_and_remain_non_production(self):
+    def test_all_approved_profiles_have_approved_subcontractor_tss_and_are_production(self):
         profile = self._load_tx_mini_profile()
         self.assertEqual(profile["status"], "PRODUCTION")
         candidate = profile["field_mapping"]["subcontractor_tss"]["source_candidates"][0]
@@ -19,13 +19,13 @@ class TestDuProfileLoader(_LegacyTestDuProfileLoader):
             "celcomdigi_bau_2024_pr_v1.yaml",
             "celcomdigi_usp_pr_v1.yaml",
             "jendela_tx_migration_pr_v1.yaml",
+            "zte_tx_mini_pr_v1.yaml",
         ):
             with self.subTest(profile_name=profile_name):
                 other = self._load_profile(profile_name)
-                self.assertEqual(other["status"], "PR_INPUT_READY")
-                self.assertNotEqual(other["status"], "PRODUCTION")
+                self.assertEqual(other["status"], "PRODUCTION")
 
-    def test_tx_mini_profile_loads_without_claiming_production_readiness(self):
+    def test_tx_mini_profile_loads_with_production_readiness(self):
         profile = self._load_tx_mini_profile()
         old_hash = "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221"
         revalidated_hash = "1a466e31d3c25ca73f059123d4cc33280761746ea3dca61d25a384acad5c9fde"
@@ -40,11 +40,11 @@ class TestDuProfileLoader(_LegacyTestDuProfileLoader):
         )
         self.assertEqual(profile["export_structure"]["observed_header_hash"], supplied_hash)
 
-    def test_pr_input_ready_2023_tx_rollout_profile_loads_with_human_approved_pr_critical_mappings(self):
+    def test_production_2023_tx_rollout_profile_loads_with_human_approved_pr_critical_mappings(self):
         profile = self._load_tx_rollout_profile()
         old_hash = "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320"
         new_hash = "e61b834994eeef30e7d8249f87616cb04d60598eea323feea50178fc4292c162"
-        self.assertEqual(profile["status"], "PR_INPUT_READY")
+        self.assertEqual(profile["status"], "PRODUCTION")
         self.assertEqual(profile["profile_version"], "0.1.1")
         self.assertEqual(profile["mapping_version"], "approved-2026-07-10-2023-tx-rollout-v2")
         self.assertEqual(profile["identity"]["accepted_du_models"], ["2023 TX Rollout"])
