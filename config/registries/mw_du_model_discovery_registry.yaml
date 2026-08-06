@@ -13,7 +13,10 @@
       "source_file_name": "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx",
       "source_file_hash": "059f06bbe52a35b49203397d8b1c6a40406476475340a293c8efd2f3dde7af87",
       "observed_header_hash": "b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454",
-      "sheet_names": ["data", "drop_down"],
+      "sheet_names": [
+        "data",
+        "drop_down"
+      ],
       "profile_id": "celcomdigi_bau_2023_pr_v1",
       "profile_status": "PRODUCTION",
       "profile_version": "0.2.0",
@@ -21,10 +24,18 @@
       "pr_input_status": "PR_INPUT_QUARANTINED",
       "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
       "skill_field_presence": {
-        "site_id": true, "site_name": true, "du_code": true, "region": true,
-        "tx_sow": true, "antenna_size_ne": true, "antenna_size_fe": true,
-        "subcon_tss_team": true, "subcon_ti_team": true, "subcon_planning": true,
-        "existing_tss_pr": true, "existing_ti_pr": true
+        "site_id": true,
+        "site_name": true,
+        "du_code": true,
+        "region": true,
+        "tx_sow": true,
+        "antenna_size_ne": true,
+        "antenna_size_fe": true,
+        "subcon_tss_team": true,
+        "subcon_ti_team": true,
+        "subcon_planning": true,
+        "existing_tss_pr": true,
+        "existing_ti_pr": true
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
@@ -41,7 +52,10 @@
       "source_file_name": "A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx",
       "source_file_hash": "be54f219b0ff9eead10ceaa666269d51ecab2385b133c46f374300b6c9391ff3",
       "observed_header_hash": "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320",
-      "sheet_names": ["data", "drop_down"],
+      "sheet_names": [
+        "data",
+        "drop_down"
+      ],
       "profile_id": "tx_rollout_2023_pr_v1",
       "profile_status": "PRODUCTION",
       "profile_version": "0.1.1",
@@ -49,10 +63,18 @@
       "pr_input_status": "PR_INPUT_QUARANTINED",
       "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
       "skill_field_presence": {
-        "site_id": true, "site_name": true, "du_code": true, "region": true,
-        "tx_sow": true, "antenna_size_ne": false, "antenna_size_fe": false,
-        "subcon_tss_team": true, "subcon_ti_team": true, "subcon_planning": true,
-        "existing_tss_pr": true, "existing_ti_pr": true
+        "site_id": true,
+        "site_name": true,
+        "du_code": true,
+        "region": true,
+        "tx_sow": true,
+        "antenna_size_ne": false,
+        "antenna_size_fe": false,
+        "subcon_tss_team": true,
+        "subcon_ti_team": true,
+        "subcon_planning": true,
+        "existing_tss_pr": true,
+        "existing_ti_pr": true
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
@@ -69,7 +91,10 @@
       "source_file_name": "A-P202202168750_D002-2024 Celcomdigi BAU-2024 BAU Rollout (TX)-20260703160253.xlsx",
       "source_file_hash": "337f53fe63554aa1909af20522dc14f2c9a2d8eec0f7819f6210a40c7988c7d9",
       "observed_header_hash": "b3677457da49e5de484976c3fdb7ad6f5dc19055f5339ec616407f5cbde89a86",
-      "sheet_names": ["data", "drop_down"],
+      "sheet_names": [
+        "data",
+        "drop_down"
+      ],
       "profile_id": "celcomdigi_bau_2024_pr_v1",
       "profile_status": "PRODUCTION",
       "profile_version": "0.1.0",
@@ -77,10 +102,18 @@
       "pr_input_status": "PR_INPUT_QUARANTINED",
       "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
       "skill_field_presence": {
-        "site_id": true, "site_name": true, "du_code": true, "region": true,
-        "tx_sow": true, "antenna_size_ne": true, "antenna_size_fe": true,
-        "subcon_tss_team": true, "subcon_ti_team": true, "subcon_planning": true,
-        "existing_tss_pr": true, "existing_ti_pr": true
+        "site_id": true,
+        "site_name": true,
+        "du_code": true,
+        "region": true,
+        "tx_sow": true,
+        "antenna_size_ne": true,
+        "antenna_size_fe": true,
+        "subcon_tss_team": true,
+        "subcon_ti_team": true,
+        "subcon_planning": true,
+        "existing_tss_pr": true,
+        "existing_ti_pr": true
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
@@ -97,7 +130,10 @@
       "source_file_name": "A-P202202168750_D002-CD consolidation 2023-CD 2023 Decom Site-20260703160415.xlsx",
       "source_file_hash": "8b08b98aa2cb9b827c5c89947b1f641d72499e5694ddda45b33303115d9e1ff0",
       "observed_header_hash": "b86cbc349db66154324092c843593137e83908c3b4b55c09305d6cf6046c7a16",
-      "sheet_names": ["data", "drop_down"],
+      "sheet_names": [
+        "data",
+        "drop_down"
+      ],
       "profile_id": "celcomdigi_cd_consolidation_2023_pr_v1",
       "profile_status": "DRAFT",
       "profile_version": "0.1.0",
@@ -105,10 +141,18 @@
       "pr_input_status": "PR_INPUT_QUARANTINED",
       "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
       "skill_field_presence": {
-        "site_id": true, "site_name": true, "du_code": true, "region": true,
-        "tx_sow": true, "antenna_size_ne": false, "antenna_size_fe": false,
-        "subcon_tss_team": true, "subcon_ti_team": true, "subcon_planning": false,
-        "existing_tss_pr": false, "existing_ti_pr": false
+        "site_id": true,
+        "site_name": true,
+        "du_code": true,
+        "region": true,
+        "tx_sow": true,
+        "antenna_size_ne": false,
+        "antenna_size_fe": false,
+        "subcon_tss_team": true,
+        "subcon_ti_team": true,
+        "subcon_planning": false,
+        "existing_tss_pr": false,
+        "existing_ti_pr": false
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
@@ -126,7 +170,10 @@
       "source_file_name": "A-P202202168750_D002-CD consolidation 2023-CD consolidation 2023 Rollout-20260703160351.xlsx",
       "source_file_hash": "340ae76862990096ee1659ef9d238906d8e305d3e1f859444797caebd7cb99fd",
       "observed_header_hash": "d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1",
-      "sheet_names": ["data", "drop_down"],
+      "sheet_names": [
+        "data",
+        "drop_down"
+      ],
       "profile_id": "celcomdigi_cd_consolidation_2023_pr_v1",
       "profile_status": "DRAFT",
       "profile_version": "0.1.0",
@@ -134,10 +181,18 @@
       "pr_input_status": "PR_INPUT_QUARANTINED",
       "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
       "skill_field_presence": {
-        "site_id": true, "site_name": true, "du_code": true, "region": true,
-        "tx_sow": true, "antenna_size_ne": false, "antenna_size_fe": false,
-        "subcon_tss_team": true, "subcon_ti_team": true, "subcon_planning": false,
-        "existing_tss_pr": false, "existing_ti_pr": false
+        "site_id": true,
+        "site_name": true,
+        "du_code": true,
+        "region": true,
+        "tx_sow": true,
+        "antenna_size_ne": false,
+        "antenna_size_fe": false,
+        "subcon_tss_team": true,
+        "subcon_ti_team": true,
+        "subcon_planning": false,
+        "existing_tss_pr": false,
+        "existing_ti_pr": false
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
@@ -155,7 +210,10 @@
       "source_file_name": "A-P202202168750_D002-Celcomdigi USP-Celcomdigi USP (TX)-20260703160234.xlsx",
       "source_file_hash": "09f488207242cbb45030d447eb3490c3a6d8433ec0eb91729186340c8761871e",
       "observed_header_hash": "79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf",
-      "sheet_names": ["data", "drop_down"],
+      "sheet_names": [
+        "data",
+        "drop_down"
+      ],
       "profile_id": "celcomdigi_usp_pr_v1",
       "profile_status": "PRODUCTION",
       "profile_version": "0.1.0",
@@ -163,10 +221,18 @@
       "pr_input_status": "PR_INPUT_QUARANTINED",
       "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
       "skill_field_presence": {
-        "site_id": true, "site_name": true, "du_code": true, "region": true,
-        "tx_sow": true, "antenna_size_ne": true, "antenna_size_fe": true,
-        "subcon_tss_team": true, "subcon_ti_team": true, "subcon_planning": true,
-        "existing_tss_pr": true, "existing_ti_pr": true
+        "site_id": true,
+        "site_name": true,
+        "du_code": true,
+        "region": true,
+        "tx_sow": true,
+        "antenna_size_ne": true,
+        "antenna_size_fe": true,
+        "subcon_tss_team": true,
+        "subcon_ti_team": true,
+        "subcon_planning": true,
+        "existing_tss_pr": true,
+        "existing_ti_pr": true
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
@@ -183,7 +249,10 @@
       "source_file_name": "A-P202202168750_D002-Jendela TX Migration-Migration Rollout (TX)-20260804195447.xlsx",
       "source_file_hash": "6e8f8959dcf2564a914c0039ae6aa4aee9d53d7880360f0639084547e1fb946b",
       "observed_header_hash": "f45c209df5ca75b333f9b590ebc01c05c097e44231d22433290f8078e57c9056",
-      "sheet_names": ["data", "drop_down"],
+      "sheet_names": [
+        "data",
+        "drop_down"
+      ],
       "profile_id": "jendela_tx_migration_pr_v1",
       "profile_status": "PRODUCTION",
       "profile_version": "0.4.0",
@@ -191,11 +260,20 @@
       "pr_input_status": "PR_INPUT_QUARANTINED",
       "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
       "skill_field_presence": {
-        "site_id": true, "site_name": true, "du_code": true, "region": true,
-        "tx_sow": true, "tx_before_migration": true, "final_backhaul": true,
-        "antenna_size_ne": true, "antenna_size_fe": true,
-        "subcon_tss_team": true, "subcon_ti_team": true, "subcon_planning": true,
-        "existing_tss_pr": true, "existing_ti_pr": true
+        "site_id": true,
+        "site_name": true,
+        "du_code": true,
+        "region": true,
+        "tx_sow": true,
+        "tx_before_migration": true,
+        "final_backhaul": true,
+        "antenna_size_ne": true,
+        "antenna_size_fe": true,
+        "subcon_tss_team": true,
+        "subcon_ti_team": true,
+        "subcon_planning": true,
+        "existing_tss_pr": true,
+        "existing_ti_pr": true
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
@@ -212,7 +290,10 @@
       "source_file_name": "A-P202202168750_D002-TX Mini Project-TX Mini PR_PO View-20260703160246.xlsx",
       "source_file_hash": "81de6ba3673dad406e7824727c5c8492dd06b3ef60d088a6e9d680af6c35f8ab",
       "observed_header_hash": "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
-      "sheet_names": ["data", "drop_down"],
+      "sheet_names": [
+        "data",
+        "drop_down"
+      ],
       "profile_id": "tx_mini_pr_v1",
       "profile_status": "PRODUCTION",
       "profile_version": "0.2.0",
@@ -220,10 +301,18 @@
       "pr_input_status": "PR_INPUT_QUARANTINED",
       "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
       "skill_field_presence": {
-        "site_id": true, "site_name": true, "du_code": true, "region": true,
-        "tx_sow": true, "antenna_size_ne": true, "antenna_size_fe": true,
-        "subcon_tss_team": true, "subcon_ti_team": true, "subcon_planning": true,
-        "existing_tss_pr": true, "existing_ti_pr": true
+        "site_id": true,
+        "site_name": true,
+        "du_code": true,
+        "region": true,
+        "tx_sow": true,
+        "antenna_size_ne": true,
+        "antenna_size_fe": true,
+        "subcon_tss_team": true,
+        "subcon_ti_team": true,
+        "subcon_planning": true,
+        "existing_tss_pr": true,
+        "existing_ti_pr": true
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
@@ -240,7 +329,10 @@
       "source_file_name": "A-P202211283695_D002-MW EOS Swap-MW EOS Swap Rollout-20260703160307.xlsx",
       "source_file_hash": "22fa6f6dcf04eb3e1f7f37dbb24ac2e52db9f0fbb884efde8aedc17f56e626a8",
       "observed_header_hash": "46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a",
-      "sheet_names": ["data", "drop_down"],
+      "sheet_names": [
+        "data",
+        "drop_down"
+      ],
       "profile_id": "mw_eos_swap_pr_v1",
       "profile_status": "PRODUCTION",
       "profile_version": "0.1.0",
@@ -248,10 +340,18 @@
       "pr_input_status": "PR_INPUT_QUARANTINED",
       "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
       "skill_field_presence": {
-        "site_id": true, "site_name": true, "du_code": true, "region": true,
-        "tx_sow": true, "antenna_size_ne": true, "antenna_size_fe": true,
-        "subcon_tss_team": true, "subcon_ti_team": true, "subcon_planning": true,
-        "existing_tss_pr": true, "existing_ti_pr": true
+        "site_id": true,
+        "site_name": true,
+        "du_code": true,
+        "region": true,
+        "tx_sow": true,
+        "antenna_size_ne": true,
+        "antenna_size_fe": true,
+        "subcon_tss_team": true,
+        "subcon_ti_team": true,
+        "subcon_planning": true,
+        "existing_tss_pr": true,
+        "existing_ti_pr": true
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
@@ -268,7 +368,10 @@
       "source_file_name": "A-P202211283695_D002-ZTE TX MINI-ZTE TX MINI v1-20260703160312.xlsx",
       "source_file_hash": "1091a2fcf9ac2e7d67552778d2902edafc025810c4a3f1e0ecfc94974787cd24",
       "observed_header_hash": "a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810",
-      "sheet_names": ["data", "drop_down"],
+      "sheet_names": [
+        "data",
+        "drop_down"
+      ],
       "profile_id": "zte_tx_mini_pr_v1",
       "profile_status": "PRODUCTION",
       "profile_version": "0.2.0",
@@ -276,10 +379,18 @@
       "pr_input_status": "PR_INPUT_QUARANTINED",
       "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
       "skill_field_presence": {
-        "site_id": true, "site_name": true, "du_code": true, "region": true,
-        "tx_sow": true, "antenna_size_ne": true, "antenna_size_fe": true,
-        "subcon_tss_team": true, "subcon_ti_team": true, "subcon_planning": true,
-        "existing_tss_pr": true, "existing_ti_pr": true
+        "site_id": true,
+        "site_name": true,
+        "du_code": true,
+        "region": true,
+        "tx_sow": true,
+        "antenna_size_ne": true,
+        "antenna_size_fe": true,
+        "subcon_tss_team": true,
+        "subcon_ti_team": true,
+        "subcon_planning": true,
+        "existing_tss_pr": true,
+        "existing_ti_pr": true
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",

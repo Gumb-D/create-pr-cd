@@ -18,5 +18,5 @@ This inventory is discovery-only metadata derived from profiler artifacts. It do
 ## Notes
 
 - `PR_INPUT_QUARANTINED` here means discovery-only; it is not a production approval state.
-- `Profile ID` is populated only where the repository already contains a corresponding profile file.
+- `Profile ID` is matched by Project + DU Model; View ID remains layout evidence only.
 - The observed header hashes came from local profiler runs against external source files and remain subject to sanitization and business approval.
