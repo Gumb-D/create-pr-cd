@@ -249,23 +249,32 @@ class TestDuProfileIdentityGovernance(unittest.TestCase):
             identity_key(self.profiles["zte_tx_mini_pr_v1"]),
         )
 
-    def test_profile_lifecycle_statuses_are_unchanged(self):
+    def test_profile_lifecycle_statuses_match_bulk_production_decision(self):
         expected = {
             "tx_mini_pr_v1": "PRODUCTION",
-            "tx_rollout_2023_pr_v1": "PR_INPUT_READY",
-            "mw_eos_swap_pr_v1": "PR_INPUT_READY",
-            "celcomdigi_bau_2023_pr_v1": "PR_INPUT_READY",
-            "celcomdigi_bau_2024_pr_v1": "PR_INPUT_READY",
-            "celcomdigi_usp_pr_v1": "PR_INPUT_READY",
-            "jendela_tx_migration_pr_v1": "PR_INPUT_READY",
-            "zte_tx_mini_pr_v1": "PR_INPUT_READY",
+            "tx_rollout_2023_pr_v1": "PRODUCTION",
+            "mw_eos_swap_pr_v1": "PRODUCTION",
+            "celcomdigi_bau_2023_pr_v1": "PRODUCTION",
+            "celcomdigi_bau_2024_pr_v1": "PRODUCTION",
+            "celcomdigi_usp_pr_v1": "PRODUCTION",
+            "jendela_tx_migration_pr_v1": "PRODUCTION",
+            "zte_tx_mini_pr_v1": "PRODUCTION",
             "celcomdigi_cd_consolidation_2023_pr_v1": "DRAFT",
         }
         actual = {profile_id: profile["status"] for profile_id, profile in self.profiles.items()}
         self.assertEqual(actual, expected)
         self.assertEqual(
             [profile_id for profile_id, status in actual.items() if status == "PRODUCTION"],
-            ["tx_mini_pr_v1"],
+            [
+                "tx_mini_pr_v1",
+                "tx_rollout_2023_pr_v1",
+                "mw_eos_swap_pr_v1",
+                "celcomdigi_bau_2023_pr_v1",
+                "celcomdigi_bau_2024_pr_v1",
+                "celcomdigi_usp_pr_v1",
+                "jendela_tx_migration_pr_v1",
+                "zte_tx_mini_pr_v1",
+            ],
         )
 
     def test_cd_consolidation_identity_accepts_both_views(self):
@@ -286,7 +295,7 @@ class TestDuProfileIdentityGovernance(unittest.TestCase):
         record = next(
             item for item in self.registry["profiles"] if item["profile_id"] == "celcomdigi_bau_2023_pr_v1"
         )
-        self.assertEqual(record["profile_status"], "PR_INPUT_READY")
+        self.assertEqual(record["profile_status"], "PRODUCTION")
         self.assertEqual(record["accepted_view_ids"], ["3882899459299681347"])
         self.assertNotIn("6611960521271999255", record["accepted_view_ids"])
 
