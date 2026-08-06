@@ -2,7 +2,7 @@
   "profile_id": "celcomdigi_bau_2023_pr_v1",
   "profile_version": "0.2.0",
   "mapping_version": "approved-2026-07-14-2023-celcomdigi-bau-tx-prpo-v1",
-  "status": "PR_INPUT_READY",
+  "status": "PRODUCTION",
   "identity": {
     "project_key": "Malaysia_CelcomDigi_Project",
     "accepted_du_models": ["2023 Celcomdigi BAU"],
@@ -49,8 +49,8 @@
       "Only the seven approved PR-critical mappings are enabled for PR-input validation.",
       "Tx SOW Details is not the primary Tx SOW mapping.",
       "Subcon PR - Planning is not a TSS or TI duplicate-prevention source.",
-      "The profile is PR_INPUT_READY for non-production validation only.",
-      "ECC and production output remain blocked."
+      "Header-hash and required approved-field validation remain mandatory for formal production output.",
+      "Production enabled by JJ on 2026-08-06; formal production jobs are the validation surface and non-production UAT is not a release prerequisite."
     ]
   }
 }
