@@ -21,7 +21,7 @@ Discovery-only coverage review across the 10 profiled DU exports.
 
 - Source file: `A-P202202168750_D002-2023 TX Rollout-TX Rollout PR_PO View-20260703160446.xlsx`
 - Coverage status: `TRACKED_DRAFT_PROFILE`
-- Profile: `tx_rollout_2023_pr_v1` `0.1.0` (mapping `approved-2026-07-10-2023-tx-rollout-v2`)
+- Profile: `tx_rollout_2023_pr_v1` `0.1.1` (mapping `approved-2026-07-10-2023-tx-rollout-v2`)
 - Observed header hash: `8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320`
 - Missing skill fields: `antenna_size_ne, antenna_size_fe`
 - Next action: Continue tracked profile review through the existing DRAFT discovery packet.

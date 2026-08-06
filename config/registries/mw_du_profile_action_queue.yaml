@@ -3,243 +3,12 @@
   "registry_type": "discovery_profile_action_queue",
   "entries": [
     {
-      "profile_id": "tx_mini_pr_v1",
-      "profile_version": "0.2.0",
-      "mapping_version": "approved-2026-07-07-tx-mini-v1",
-      "profile_status": "PR_INPUT_READY",
-      "du_model_name": "TX Mini Project",
-      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
-      "observed_header_hash": "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
-      "action_queue": [
-        {
-          "priority_id": "tx_mini_pr_v1:01",
-          "action_type": "HOLD_LIFECYCLE_PROMOTION",
-          "summary": "Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.",
-          "evidence_hint": "Use the transition review as the final stop/go check before any status change."
-        }
-      ],
-      "notes": [
-        "This action queue is discovery-only and does not approve any field mapping, header hash, or lifecycle transition.",
-        "Priority order is intended to reduce review ambiguity, not to bypass approval gates."
-      ]
-    },
-    {
-      "profile_id": "mw_eos_swap_pr_v1",
-      "profile_version": "0.1.0",
-      "mapping_version": "approved-2026-07-10-mw-eos-swap-v2",
-      "profile_status": "PR_INPUT_READY",
-      "du_model_name": "MW EOS Swap",
-      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
-      "observed_header_hash": "46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a",
-      "action_queue": [
-        {
-          "priority_id": "mw_eos_swap_pr_v1:01",
-          "action_type": "CONFIRM_COMPETING_CANDIDATE",
-          "summary": "Choose one exact four-layer source for `site_name` from the competing shortlist candidates.",
-          "field_name": "site_name",
-          "evidence_hint": "Use the unresolved review packet to compare the currently selected source against alternates."
-        },
-        {
-          "priority_id": "mw_eos_swap_pr_v1:02",
-          "action_type": "CONFIRM_COMPETING_CANDIDATE",
-          "summary": "Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.",
-          "field_name": "subcontractor_planning",
-          "evidence_hint": "Use the unresolved review packet to compare the currently selected source against alternates."
-        },
-        {
-          "priority_id": "mw_eos_swap_pr_v1:03",
-          "action_type": "VERIFY_SINGLE_CANDIDATE",
-          "summary": "Verify the current single shortlist-aligned source for `antenna_size_fe`.",
-          "field_name": "antenna_size_fe",
-          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
-        },
-        {
-          "priority_id": "mw_eos_swap_pr_v1:04",
-          "action_type": "VERIFY_SINGLE_CANDIDATE",
-          "summary": "Verify the current single shortlist-aligned source for `antenna_size_ne`.",
-          "field_name": "antenna_size_ne",
-          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
-        },
-        {
-          "priority_id": "mw_eos_swap_pr_v1:05",
-          "action_type": "VERIFY_SINGLE_CANDIDATE",
-          "summary": "Verify the current single shortlist-aligned source for `du_key`.",
-          "field_name": "du_key",
-          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
-        },
-        {
-          "priority_id": "mw_eos_swap_pr_v1:06",
-          "action_type": "HOLD_LIFECYCLE_PROMOTION",
-          "summary": "Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.",
-          "evidence_hint": "Use the transition review as the final stop/go check before any status change."
-        }
-      ],
-      "notes": [
-        "This action queue is discovery-only and does not approve any field mapping, header hash, or lifecycle transition.",
-        "Priority order is intended to reduce review ambiguity, not to bypass approval gates."
-      ]
-    },
-    {
-      "profile_id": "tx_rollout_2023_pr_v1",
-      "profile_version": "0.1.0",
-      "mapping_version": "approved-2026-07-10-2023-tx-rollout-v2",
-      "profile_status": "PR_INPUT_READY",
-      "du_model_name": "2023 TX Rollout",
-      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
-      "observed_header_hash": "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320",
-      "action_queue": [
-        {
-          "priority_id": "tx_rollout_2023_pr_v1:01",
-          "action_type": "CONFIRM_COMPETING_CANDIDATE",
-          "summary": "Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.",
-          "field_name": "subcontractor_planning",
-          "evidence_hint": "Use the unresolved review packet to compare the currently selected source against alternates."
-        },
-        {
-          "priority_id": "tx_rollout_2023_pr_v1:02",
-          "action_type": "VERIFY_SINGLE_CANDIDATE",
-          "summary": "Verify the current single shortlist-aligned source for `du_key`.",
-          "field_name": "du_key",
-          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
-        },
-        {
-          "priority_id": "tx_rollout_2023_pr_v1:03",
-          "action_type": "VERIFY_SINGLE_CANDIDATE",
-          "summary": "Verify the current single shortlist-aligned source for `site_name`.",
-          "field_name": "site_name",
-          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
-        },
-        {
-          "priority_id": "tx_rollout_2023_pr_v1:04",
-          "action_type": "HOLD_LIFECYCLE_PROMOTION",
-          "summary": "Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.",
-          "evidence_hint": "Use the transition review as the final stop/go check before any status change."
-        }
-      ],
-      "notes": [
-        "This action queue is discovery-only and does not approve any field mapping, header hash, or lifecycle transition.",
-        "Priority order is intended to reduce review ambiguity, not to bypass approval gates."
-      ]
-    },
-    {
-      "profile_id": "jendela_tx_migration_pr_v1",
-      "profile_version": "0.4.0",
-      "mapping_version": "approved-2026-08-04-jendela-tx-migration-v3",
-      "profile_status": "PR_INPUT_READY",
-      "du_model_name": "Jendela TX Migration",
-      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
-      "observed_header_hash": "f45c209df5ca75b333f9b590ebc01c05c097e44231d22433290f8078e57c9056",
-      "action_queue": [
-        {
-          "priority_id": "jendela_tx_migration_pr_v1:01",
-          "action_type": "CONFIRM_COMPETING_CANDIDATE",
-          "summary": "Choose one exact four-layer source for `site_name` from the competing shortlist candidates.",
-          "field_name": "site_name",
-          "evidence_hint": "Use the unresolved review packet to compare the currently selected source against alternates."
-        },
-        {
-          "priority_id": "jendela_tx_migration_pr_v1:02",
-          "action_type": "CONFIRM_COMPETING_CANDIDATE",
-          "summary": "Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.",
-          "field_name": "subcontractor_planning",
-          "evidence_hint": "Use the unresolved review packet to compare the currently selected source against alternates."
-        },
-        {
-          "priority_id": "jendela_tx_migration_pr_v1:03",
-          "action_type": "VERIFY_SINGLE_CANDIDATE",
-          "summary": "Verify the current single shortlist-aligned source for `antenna_size_fe`.",
-          "field_name": "antenna_size_fe",
-          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
-        },
-        {
-          "priority_id": "jendela_tx_migration_pr_v1:04",
-          "action_type": "VERIFY_SINGLE_CANDIDATE",
-          "summary": "Verify the current single shortlist-aligned source for `antenna_size_ne`.",
-          "field_name": "antenna_size_ne",
-          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
-        },
-        {
-          "priority_id": "jendela_tx_migration_pr_v1:05",
-          "action_type": "VERIFY_SINGLE_CANDIDATE",
-          "summary": "Verify the current single shortlist-aligned source for `du_key`.",
-          "field_name": "du_key",
-          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
-        },
-        {
-          "priority_id": "jendela_tx_migration_pr_v1:06",
-          "action_type": "HOLD_LIFECYCLE_PROMOTION",
-          "summary": "Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.",
-          "evidence_hint": "Use the transition review as the final stop/go check before any status change."
-        }
-      ],
-      "notes": [
-        "This action queue is discovery-only and does not approve any field mapping, header hash, or lifecycle transition.",
-        "Priority order is intended to reduce review ambiguity, not to bypass approval gates."
-      ]
-    },
-    {
-      "profile_id": "zte_tx_mini_pr_v1",
-      "profile_version": "0.2.0",
-      "mapping_version": "approved-2026-07-15-zte-tx-mini-v1",
-      "profile_status": "PR_INPUT_READY",
-      "du_model_name": "ZTE TX MINI",
-      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
-      "observed_header_hash": "a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810",
-      "action_queue": [
-        {
-          "priority_id": "zte_tx_mini_pr_v1:01",
-          "action_type": "CONFIRM_COMPETING_CANDIDATE",
-          "summary": "Choose one exact four-layer source for `site_name` from the competing shortlist candidates.",
-          "field_name": "site_name",
-          "evidence_hint": "Use the unresolved review packet to compare the currently selected source against alternates."
-        },
-        {
-          "priority_id": "zte_tx_mini_pr_v1:02",
-          "action_type": "CONFIRM_COMPETING_CANDIDATE",
-          "summary": "Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.",
-          "field_name": "subcontractor_planning",
-          "evidence_hint": "Use the unresolved review packet to compare the currently selected source against alternates."
-        },
-        {
-          "priority_id": "zte_tx_mini_pr_v1:03",
-          "action_type": "VERIFY_SINGLE_CANDIDATE",
-          "summary": "Verify the current single shortlist-aligned source for `antenna_size_fe`.",
-          "field_name": "antenna_size_fe",
-          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
-        },
-        {
-          "priority_id": "zte_tx_mini_pr_v1:04",
-          "action_type": "VERIFY_SINGLE_CANDIDATE",
-          "summary": "Verify the current single shortlist-aligned source for `antenna_size_ne`.",
-          "field_name": "antenna_size_ne",
-          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
-        },
-        {
-          "priority_id": "zte_tx_mini_pr_v1:05",
-          "action_type": "VERIFY_SINGLE_CANDIDATE",
-          "summary": "Verify the current single shortlist-aligned source for `du_key`.",
-          "field_name": "du_key",
-          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
-        },
-        {
-          "priority_id": "zte_tx_mini_pr_v1:06",
-          "action_type": "HOLD_LIFECYCLE_PROMOTION",
-          "summary": "Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.",
-          "evidence_hint": "Use the transition review as the final stop/go check before any status change."
-        }
-      ],
-      "notes": [
-        "This action queue is discovery-only and does not approve any field mapping, header hash, or lifecycle transition.",
-        "Priority order is intended to reduce review ambiguity, not to bypass approval gates."
-      ]
-    },
-    {
       "profile_id": "celcomdigi_bau_2023_pr_v1",
       "profile_version": "0.2.0",
       "mapping_version": "approved-2026-07-14-2023-celcomdigi-bau-tx-prpo-v1",
-      "profile_status": "PR_INPUT_READY",
+      "profile_status": "PRODUCTION",
       "du_model_name": "2023 Celcomdigi BAU",
-      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
+      "readiness_status": "PRODUCTION_READY",
       "observed_header_hash": "b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454",
       "action_queue": [
         {
@@ -276,26 +45,20 @@
           "summary": "Verify the current single shortlist-aligned source for `site_name`.",
           "field_name": "site_name",
           "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
-        },
-        {
-          "priority_id": "celcomdigi_bau_2023_pr_v1:06",
-          "action_type": "HOLD_LIFECYCLE_PROMOTION",
-          "summary": "Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.",
-          "evidence_hint": "Use the transition review as the final stop/go check before any status change."
         }
       ],
       "notes": [
-        "This action queue is discovery-only and does not approve any field mapping, header hash, or lifecycle transition.",
-        "Priority order is intended to reduce review ambiguity, not to bypass approval gates."
+        "This governance queue records required blockers and optional follow-up review work; it does not grant production permission.",
+        "Optional discovery actions remain visible for production Profiles but do not create a lifecycle hold."
       ]
     },
     {
       "profile_id": "celcomdigi_bau_2024_pr_v1",
       "profile_version": "0.1.0",
       "mapping_version": "approved-2026-07-10-2024-celcomdigi-bau-v2",
-      "profile_status": "PR_INPUT_READY",
+      "profile_status": "PRODUCTION",
       "du_model_name": "2024 Celcomdigi BAU",
-      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
+      "readiness_status": "PRODUCTION_READY",
       "observed_header_hash": "b3677457da49e5de484976c3fdb7ad6f5dc19055f5339ec616407f5cbde89a86",
       "action_queue": [
         {
@@ -332,73 +95,11 @@
           "summary": "Verify the current single shortlist-aligned source for `site_name`.",
           "field_name": "site_name",
           "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
-        },
-        {
-          "priority_id": "celcomdigi_bau_2024_pr_v1:06",
-          "action_type": "HOLD_LIFECYCLE_PROMOTION",
-          "summary": "Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.",
-          "evidence_hint": "Use the transition review as the final stop/go check before any status change."
         }
       ],
       "notes": [
-        "This action queue is discovery-only and does not approve any field mapping, header hash, or lifecycle transition.",
-        "Priority order is intended to reduce review ambiguity, not to bypass approval gates."
-      ]
-    },
-    {
-      "profile_id": "celcomdigi_usp_pr_v1",
-      "profile_version": "0.1.0",
-      "mapping_version": "approved-2026-07-10-celcomdigi-usp-v2",
-      "profile_status": "PR_INPUT_READY",
-      "du_model_name": "Celcomdigi USP",
-      "readiness_status": "DISCOVERY_ONLY_BLOCKED",
-      "observed_header_hash": "79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf",
-      "action_queue": [
-        {
-          "priority_id": "celcomdigi_usp_pr_v1:01",
-          "action_type": "CONFIRM_COMPETING_CANDIDATE",
-          "summary": "Choose one exact four-layer source for `site_name` from the competing shortlist candidates.",
-          "field_name": "site_name",
-          "evidence_hint": "Use the unresolved review packet to compare the currently selected source against alternates."
-        },
-        {
-          "priority_id": "celcomdigi_usp_pr_v1:02",
-          "action_type": "CONFIRM_COMPETING_CANDIDATE",
-          "summary": "Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.",
-          "field_name": "subcontractor_planning",
-          "evidence_hint": "Use the unresolved review packet to compare the currently selected source against alternates."
-        },
-        {
-          "priority_id": "celcomdigi_usp_pr_v1:03",
-          "action_type": "VERIFY_SINGLE_CANDIDATE",
-          "summary": "Verify the current single shortlist-aligned source for `antenna_size_fe`.",
-          "field_name": "antenna_size_fe",
-          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
-        },
-        {
-          "priority_id": "celcomdigi_usp_pr_v1:04",
-          "action_type": "VERIFY_SINGLE_CANDIDATE",
-          "summary": "Verify the current single shortlist-aligned source for `antenna_size_ne`.",
-          "field_name": "antenna_size_ne",
-          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
-        },
-        {
-          "priority_id": "celcomdigi_usp_pr_v1:05",
-          "action_type": "VERIFY_SINGLE_CANDIDATE",
-          "summary": "Verify the current single shortlist-aligned source for `du_key`.",
-          "field_name": "du_key",
-          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
-        },
-        {
-          "priority_id": "celcomdigi_usp_pr_v1:06",
-          "action_type": "HOLD_LIFECYCLE_PROMOTION",
-          "summary": "Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.",
-          "evidence_hint": "Use the transition review as the final stop/go check before any status change."
-        }
-      ],
-      "notes": [
-        "This action queue is discovery-only and does not approve any field mapping, header hash, or lifecycle transition.",
-        "Priority order is intended to reduce review ambiguity, not to bypass approval gates."
+        "This governance queue records required blockers and optional follow-up review work; it does not grant production permission.",
+        "Optional discovery actions remain visible for production Profiles but do not create a lifecycle hold."
       ]
     },
     {
@@ -475,18 +176,268 @@
         {
           "priority_id": "celcomdigi_cd_consolidation_2023_pr_v1:10",
           "action_type": "HOLD_LIFECYCLE_PROMOTION",
-          "summary": "Keep the profile blocked from lifecycle promotion until mapping review, header-hash approval, regression, and UAT evidence exist.",
+          "summary": "Keep the profile blocked from lifecycle promotion until required mappings, header-hash approval, and regression evidence are complete.",
           "evidence_hint": "Use the transition review as the final stop/go check before any status change."
         }
       ],
       "notes": [
-        "This action queue is discovery-only and does not approve any field mapping, header hash, or lifecycle transition.",
-        "Priority order is intended to reduce review ambiguity, not to bypass approval gates."
+        "This governance queue records required blockers and optional follow-up review work; it does not grant production permission.",
+        "Optional discovery actions remain visible for production Profiles but do not create a lifecycle hold."
+      ]
+    },
+    {
+      "profile_id": "celcomdigi_usp_pr_v1",
+      "profile_version": "0.1.0",
+      "mapping_version": "approved-2026-07-10-celcomdigi-usp-v2",
+      "profile_status": "PRODUCTION",
+      "du_model_name": "Celcomdigi USP",
+      "readiness_status": "PRODUCTION_READY",
+      "observed_header_hash": "79084b19ff9685eb74e3cfb4c07af8c48de871328884618e63969a623fb384cf",
+      "action_queue": [
+        {
+          "priority_id": "celcomdigi_usp_pr_v1:01",
+          "action_type": "CONFIRM_COMPETING_CANDIDATE",
+          "summary": "Choose one exact four-layer source for `site_name` from the competing shortlist candidates.",
+          "field_name": "site_name",
+          "evidence_hint": "Use the unresolved review packet to compare the currently selected source against alternates."
+        },
+        {
+          "priority_id": "celcomdigi_usp_pr_v1:02",
+          "action_type": "CONFIRM_COMPETING_CANDIDATE",
+          "summary": "Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.",
+          "field_name": "subcontractor_planning",
+          "evidence_hint": "Use the unresolved review packet to compare the currently selected source against alternates."
+        },
+        {
+          "priority_id": "celcomdigi_usp_pr_v1:03",
+          "action_type": "VERIFY_SINGLE_CANDIDATE",
+          "summary": "Verify the current single shortlist-aligned source for `antenna_size_fe`.",
+          "field_name": "antenna_size_fe",
+          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+        },
+        {
+          "priority_id": "celcomdigi_usp_pr_v1:04",
+          "action_type": "VERIFY_SINGLE_CANDIDATE",
+          "summary": "Verify the current single shortlist-aligned source for `antenna_size_ne`.",
+          "field_name": "antenna_size_ne",
+          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+        },
+        {
+          "priority_id": "celcomdigi_usp_pr_v1:05",
+          "action_type": "VERIFY_SINGLE_CANDIDATE",
+          "summary": "Verify the current single shortlist-aligned source for `du_key`.",
+          "field_name": "du_key",
+          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+        }
+      ],
+      "notes": [
+        "This governance queue records required blockers and optional follow-up review work; it does not grant production permission.",
+        "Optional discovery actions remain visible for production Profiles but do not create a lifecycle hold."
+      ]
+    },
+    {
+      "profile_id": "jendela_tx_migration_pr_v1",
+      "profile_version": "0.4.0",
+      "mapping_version": "approved-2026-08-04-jendela-tx-migration-v3",
+      "profile_status": "PRODUCTION",
+      "du_model_name": "Jendela TX Migration",
+      "readiness_status": "PRODUCTION_READY",
+      "observed_header_hash": "f45c209df5ca75b333f9b590ebc01c05c097e44231d22433290f8078e57c9056",
+      "action_queue": [
+        {
+          "priority_id": "jendela_tx_migration_pr_v1:01",
+          "action_type": "CONFIRM_COMPETING_CANDIDATE",
+          "summary": "Choose one exact four-layer source for `site_name` from the competing shortlist candidates.",
+          "field_name": "site_name",
+          "evidence_hint": "Use the unresolved review packet to compare the currently selected source against alternates."
+        },
+        {
+          "priority_id": "jendela_tx_migration_pr_v1:02",
+          "action_type": "CONFIRM_COMPETING_CANDIDATE",
+          "summary": "Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.",
+          "field_name": "subcontractor_planning",
+          "evidence_hint": "Use the unresolved review packet to compare the currently selected source against alternates."
+        },
+        {
+          "priority_id": "jendela_tx_migration_pr_v1:03",
+          "action_type": "VERIFY_SINGLE_CANDIDATE",
+          "summary": "Verify the current single shortlist-aligned source for `antenna_size_fe`.",
+          "field_name": "antenna_size_fe",
+          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+        },
+        {
+          "priority_id": "jendela_tx_migration_pr_v1:04",
+          "action_type": "VERIFY_SINGLE_CANDIDATE",
+          "summary": "Verify the current single shortlist-aligned source for `antenna_size_ne`.",
+          "field_name": "antenna_size_ne",
+          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+        },
+        {
+          "priority_id": "jendela_tx_migration_pr_v1:05",
+          "action_type": "VERIFY_SINGLE_CANDIDATE",
+          "summary": "Verify the current single shortlist-aligned source for `du_key`.",
+          "field_name": "du_key",
+          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+        }
+      ],
+      "notes": [
+        "This governance queue records required blockers and optional follow-up review work; it does not grant production permission.",
+        "Optional discovery actions remain visible for production Profiles but do not create a lifecycle hold."
+      ]
+    },
+    {
+      "profile_id": "mw_eos_swap_pr_v1",
+      "profile_version": "0.1.0",
+      "mapping_version": "approved-2026-07-10-mw-eos-swap-v2",
+      "profile_status": "PRODUCTION",
+      "du_model_name": "MW EOS Swap",
+      "readiness_status": "PRODUCTION_READY",
+      "observed_header_hash": "46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a",
+      "action_queue": [
+        {
+          "priority_id": "mw_eos_swap_pr_v1:01",
+          "action_type": "CONFIRM_COMPETING_CANDIDATE",
+          "summary": "Choose one exact four-layer source for `site_name` from the competing shortlist candidates.",
+          "field_name": "site_name",
+          "evidence_hint": "Use the unresolved review packet to compare the currently selected source against alternates."
+        },
+        {
+          "priority_id": "mw_eos_swap_pr_v1:02",
+          "action_type": "CONFIRM_COMPETING_CANDIDATE",
+          "summary": "Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.",
+          "field_name": "subcontractor_planning",
+          "evidence_hint": "Use the unresolved review packet to compare the currently selected source against alternates."
+        },
+        {
+          "priority_id": "mw_eos_swap_pr_v1:03",
+          "action_type": "VERIFY_SINGLE_CANDIDATE",
+          "summary": "Verify the current single shortlist-aligned source for `antenna_size_fe`.",
+          "field_name": "antenna_size_fe",
+          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+        },
+        {
+          "priority_id": "mw_eos_swap_pr_v1:04",
+          "action_type": "VERIFY_SINGLE_CANDIDATE",
+          "summary": "Verify the current single shortlist-aligned source for `antenna_size_ne`.",
+          "field_name": "antenna_size_ne",
+          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+        },
+        {
+          "priority_id": "mw_eos_swap_pr_v1:05",
+          "action_type": "VERIFY_SINGLE_CANDIDATE",
+          "summary": "Verify the current single shortlist-aligned source for `du_key`.",
+          "field_name": "du_key",
+          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+        }
+      ],
+      "notes": [
+        "This governance queue records required blockers and optional follow-up review work; it does not grant production permission.",
+        "Optional discovery actions remain visible for production Profiles but do not create a lifecycle hold."
+      ]
+    },
+    {
+      "profile_id": "tx_mini_pr_v1",
+      "profile_version": "0.2.0",
+      "mapping_version": "approved-2026-07-07-tx-mini-v1",
+      "profile_status": "PRODUCTION",
+      "du_model_name": "TX Mini Project",
+      "readiness_status": "PRODUCTION_READY",
+      "observed_header_hash": "830864906f3e69041995bec10b0a5840d5f8c6fa5defa2cfaef30b868b91a921",
+      "action_queue": [],
+      "notes": [
+        "This governance queue records required blockers and optional follow-up review work; it does not grant production permission.",
+        "Optional discovery actions remain visible for production Profiles but do not create a lifecycle hold."
+      ]
+    },
+    {
+      "profile_id": "tx_rollout_2023_pr_v1",
+      "profile_version": "0.1.1",
+      "mapping_version": "approved-2026-07-10-2023-tx-rollout-v2",
+      "profile_status": "PRODUCTION",
+      "du_model_name": "2023 TX Rollout",
+      "readiness_status": "PRODUCTION_READY",
+      "observed_header_hash": "e61b834994eeef30e7d8249f87616cb04d60598eea323feea50178fc4292c162",
+      "action_queue": [
+        {
+          "priority_id": "tx_rollout_2023_pr_v1:01",
+          "action_type": "CONFIRM_COMPETING_CANDIDATE",
+          "summary": "Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.",
+          "field_name": "subcontractor_planning",
+          "evidence_hint": "Use the unresolved review packet to compare the currently selected source against alternates."
+        },
+        {
+          "priority_id": "tx_rollout_2023_pr_v1:02",
+          "action_type": "VERIFY_SINGLE_CANDIDATE",
+          "summary": "Verify the current single shortlist-aligned source for `du_key`.",
+          "field_name": "du_key",
+          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+        },
+        {
+          "priority_id": "tx_rollout_2023_pr_v1:03",
+          "action_type": "VERIFY_SINGLE_CANDIDATE",
+          "summary": "Verify the current single shortlist-aligned source for `site_name`.",
+          "field_name": "site_name",
+          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+        }
+      ],
+      "notes": [
+        "This governance queue records required blockers and optional follow-up review work; it does not grant production permission.",
+        "Optional discovery actions remain visible for production Profiles but do not create a lifecycle hold."
+      ]
+    },
+    {
+      "profile_id": "zte_tx_mini_pr_v1",
+      "profile_version": "0.2.0",
+      "mapping_version": "approved-2026-07-15-zte-tx-mini-v1",
+      "profile_status": "PRODUCTION",
+      "du_model_name": "ZTE TX MINI",
+      "readiness_status": "PRODUCTION_READY",
+      "observed_header_hash": "a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810",
+      "action_queue": [
+        {
+          "priority_id": "zte_tx_mini_pr_v1:01",
+          "action_type": "CONFIRM_COMPETING_CANDIDATE",
+          "summary": "Choose one exact four-layer source for `site_name` from the competing shortlist candidates.",
+          "field_name": "site_name",
+          "evidence_hint": "Use the unresolved review packet to compare the currently selected source against alternates."
+        },
+        {
+          "priority_id": "zte_tx_mini_pr_v1:02",
+          "action_type": "CONFIRM_COMPETING_CANDIDATE",
+          "summary": "Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.",
+          "field_name": "subcontractor_planning",
+          "evidence_hint": "Use the unresolved review packet to compare the currently selected source against alternates."
+        },
+        {
+          "priority_id": "zte_tx_mini_pr_v1:03",
+          "action_type": "VERIFY_SINGLE_CANDIDATE",
+          "summary": "Verify the current single shortlist-aligned source for `antenna_size_fe`.",
+          "field_name": "antenna_size_fe",
+          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+        },
+        {
+          "priority_id": "zte_tx_mini_pr_v1:04",
+          "action_type": "VERIFY_SINGLE_CANDIDATE",
+          "summary": "Verify the current single shortlist-aligned source for `antenna_size_ne`.",
+          "field_name": "antenna_size_ne",
+          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+        },
+        {
+          "priority_id": "zte_tx_mini_pr_v1:05",
+          "action_type": "VERIFY_SINGLE_CANDIDATE",
+          "summary": "Verify the current single shortlist-aligned source for `du_key`.",
+          "field_name": "du_key",
+          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
+        }
+      ],
+      "notes": [
+        "This governance queue records required blockers and optional follow-up review work; it does not grant production permission.",
+        "Optional discovery actions remain visible for production Profiles but do not create a lifecycle hold."
       ]
     }
   ],
   "notes": [
-    "Discovery-only prioritized action queue for current DRAFT profiles.",
-    "Actions are sequencing guidance only and do not imply approval."
+    "Prioritized governance action queue for current DU Profiles.",
+    "Required blockers and optional discovery follow-up are kept distinct."
   ]
 }

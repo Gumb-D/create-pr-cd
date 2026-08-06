@@ -2,7 +2,7 @@
   "profile_id": "tx_rollout_2023_pr_v1",
   "profile_version": "0.1.1",
   "mapping_version": "approved-2026-07-10-2023-tx-rollout-v2",
-  "status": "PR_INPUT_READY",
+  "status": "PRODUCTION",
   "identity": {
     "project_key": "Malaysia_CelcomDigi_Project",
     "accepted_du_models": ["2023 TX Rollout"],
@@ -53,10 +53,10 @@
     "profile_notes": [
       "Only the six human-approved PR-critical mappings are promoted for PR input review; all other fields remain discovery-only or optional.",
       "TX SOW uses the approved LLD override columns in fail-closed priority order: Post MOCN TX SOW (LLD), then TX SOW (LLD).",
-      "This profile is PR_INPUT_READY for non-production validation only; it must not enable ECC output or skip header-hash validation.",
+      "Header-hash and required approved-field validation remain mandatory for formal production output.",
       "The 2026-07-28 header hash e61b834994eeef30e7d8249f87616cb04d60598eea323feea50178fc4292c162 was revalidated with all seven TSS/TI PR-critical mappings resolved; no canonical mapping changed.",
       "Antenna fields are currently absent from the discovery shortlist and must not be inferred from unrelated columns.",
-      "This profile is not production-ready and must never enable ECC generation."
+      "Production enabled by JJ on 2026-08-06; formal production jobs are the validation surface and non-production UAT is not a release prerequisite."
     ]
   }
 }

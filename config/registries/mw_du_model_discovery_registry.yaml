@@ -18,7 +18,7 @@
         "drop_down"
       ],
       "profile_id": "celcomdigi_bau_2023_pr_v1",
-      "profile_status": "PR_INPUT_READY",
+      "profile_status": "PRODUCTION",
       "profile_version": "0.2.0",
       "mapping_version": "approved-2026-07-14-2023-celcomdigi-bau-tx-prpo-v1",
       "pr_input_status": "PR_INPUT_QUARANTINED",
@@ -39,7 +39,7 @@
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
-        "No header hash, field mapping, or profile in this entry is approved for production use."
+        "No header hash or field mapping is approved by this discovery record; production permission comes from the governed DU Profile."
       ]
     },
     {
@@ -57,8 +57,8 @@
         "drop_down"
       ],
       "profile_id": "tx_rollout_2023_pr_v1",
-      "profile_status": "PR_INPUT_READY",
-      "profile_version": "0.1.0",
+      "profile_status": "PRODUCTION",
+      "profile_version": "0.1.1",
       "mapping_version": "approved-2026-07-10-2023-tx-rollout-v2",
       "pr_input_status": "PR_INPUT_QUARANTINED",
       "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",
@@ -78,7 +78,7 @@
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
-        "No header hash, field mapping, or profile in this entry is approved for production use."
+        "No header hash or field mapping is approved by this discovery record; production permission comes from the governed DU Profile."
       ]
     },
     {
@@ -96,7 +96,7 @@
         "drop_down"
       ],
       "profile_id": "celcomdigi_bau_2024_pr_v1",
-      "profile_status": "PR_INPUT_READY",
+      "profile_status": "PRODUCTION",
       "profile_version": "0.1.0",
       "mapping_version": "approved-2026-07-10-2024-celcomdigi-bau-v2",
       "pr_input_status": "PR_INPUT_QUARANTINED",
@@ -117,7 +117,7 @@
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
-        "No header hash, field mapping, or profile in this entry is approved for production use."
+        "No header hash or field mapping is approved by this discovery record; production permission comes from the governed DU Profile."
       ]
     },
     {
@@ -215,7 +215,7 @@
         "drop_down"
       ],
       "profile_id": "celcomdigi_usp_pr_v1",
-      "profile_status": "PR_INPUT_READY",
+      "profile_status": "PRODUCTION",
       "profile_version": "0.1.0",
       "mapping_version": "approved-2026-07-10-celcomdigi-usp-v2",
       "pr_input_status": "PR_INPUT_QUARANTINED",
@@ -236,7 +236,7 @@
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
-        "No header hash, field mapping, or profile in this entry is approved for production use."
+        "No header hash or field mapping is approved by this discovery record; production permission comes from the governed DU Profile."
       ]
     },
     {
@@ -254,7 +254,7 @@
         "drop_down"
       ],
       "profile_id": "jendela_tx_migration_pr_v1",
-      "profile_status": "PR_INPUT_READY",
+      "profile_status": "PRODUCTION",
       "profile_version": "0.4.0",
       "mapping_version": "approved-2026-08-04-jendela-tx-migration-v3",
       "pr_input_status": "PR_INPUT_QUARANTINED",
@@ -277,7 +277,7 @@
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
-        "No header hash, field mapping, or profile in this entry is approved for production use."
+        "No header hash or field mapping is approved by this discovery record; production permission comes from the governed DU Profile."
       ]
     },
     {
@@ -316,7 +316,7 @@
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
-        "No header hash, field mapping, or profile in this entry is approved for production use."
+        "No header hash or field mapping is approved by this discovery record; production permission comes from the governed DU Profile."
       ]
     },
     {
@@ -334,7 +334,7 @@
         "drop_down"
       ],
       "profile_id": "mw_eos_swap_pr_v1",
-      "profile_status": "PR_INPUT_READY",
+      "profile_status": "PRODUCTION",
       "profile_version": "0.1.0",
       "mapping_version": "approved-2026-07-10-mw-eos-swap-v2",
       "pr_input_status": "PR_INPUT_QUARANTINED",
@@ -355,7 +355,7 @@
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
-        "No header hash, field mapping, or profile in this entry is approved for production use."
+        "No header hash or field mapping is approved by this discovery record; production permission comes from the governed DU Profile."
       ]
     },
     {
@@ -373,7 +373,7 @@
         "drop_down"
       ],
       "profile_id": "zte_tx_mini_pr_v1",
-      "profile_status": "PR_INPUT_READY",
+      "profile_status": "PRODUCTION",
       "profile_version": "0.2.0",
       "mapping_version": "approved-2026-07-15-zte-tx-mini-v1",
       "pr_input_status": "PR_INPUT_QUARANTINED",
@@ -394,7 +394,7 @@
       },
       "notes": [
         "Discovery-only metadata derived from local profiler artifacts.",
-        "No header hash, field mapping, or profile in this entry is approved for production use."
+        "No header hash or field mapping is approved by this discovery record; production permission comes from the governed DU Profile."
       ]
     }
   ]

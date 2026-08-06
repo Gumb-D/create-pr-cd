@@ -9,6 +9,18 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from build_profile_transition_review import evaluate_transition, transition_markdown
 
 
+PRODUCTION_PROFILE_IDS = (
+    "tx_mini_pr_v1",
+    "tx_rollout_2023_pr_v1",
+    "mw_eos_swap_pr_v1",
+    "celcomdigi_bau_2023_pr_v1",
+    "celcomdigi_bau_2024_pr_v1",
+    "celcomdigi_usp_pr_v1",
+    "jendela_tx_migration_pr_v1",
+    "zte_tx_mini_pr_v1",
+)
+
+
 class TestProfileTransitionReview(unittest.TestCase):
     def test_business_validated_ignores_current_not_production_status(self):
         readiness_entry = {
@@ -28,18 +40,26 @@ class TestProfileTransitionReview(unittest.TestCase):
         self.assertNotIn("PROFILE_NOT_PRODUCTION", result["denied_reasons"])
         self.assertIn("NO_APPROVED_HEADER_HASH", result["denied_reasons"])
 
-    def test_tx_mini_production_transition_is_eligible(self):
+    def test_all_approved_profile_production_transitions_are_eligible(self):
         registry = json.loads(
             (ROOT / "config" / "registries" / "mw_du_profile_transition_review.yaml").read_text(encoding="utf-8")
         )
-        tx_entry = next(entry for entry in registry["entries"] if entry["profile_id"] == "tx_mini_pr_v1")
-        production = next(item for item in tx_entry["transition_targets"] if item["target_status"] == "PRODUCTION")
-        business_validated = next(
-            item for item in tx_entry["transition_targets"] if item["target_status"] == "BUSINESS_VALIDATED"
-        )
-        self.assertTrue(business_validated["eligible"])
-        self.assertTrue(production["eligible"])
-        self.assertEqual(production["denied_reasons"], [])
+        by_profile = {entry["profile_id"]: entry for entry in registry["entries"]}
+
+        for profile_id in PRODUCTION_PROFILE_IDS:
+            with self.subTest(profile_id=profile_id):
+                entry = by_profile[profile_id]
+                production = next(
+                    item for item in entry["transition_targets"] if item["target_status"] == "PRODUCTION"
+                )
+                business_validated = next(
+                    item for item in entry["transition_targets"]
+                    if item["target_status"] == "BUSINESS_VALIDATED"
+                )
+                self.assertEqual(entry["current_status"], "PRODUCTION")
+                self.assertTrue(business_validated["eligible"])
+                self.assertTrue(production["eligible"])
+                self.assertEqual(production["denied_reasons"], [])
 
     def test_pr_input_ready_ignores_optional_competing_and_unverified_fields(self):
         readiness_entry = {
@@ -61,50 +81,41 @@ class TestProfileTransitionReview(unittest.TestCase):
         result = evaluate_transition(readiness_entry, "PR_INPUT_READY")
         self.assertTrue(result["eligible"])
 
-    def test_jendela_pr_input_ready_transition_is_eligible_but_production_is_denied(self):
-        registry = json.loads(
-            (ROOT / "config" / "registries" / "mw_du_profile_transition_review.yaml").read_text(encoding="utf-8")
-        )
-        entry = next(item for item in registry["entries"] if item["profile_id"] == "jendela_tx_migration_pr_v1")
-        pr_input_ready = next(
-            item for item in entry["transition_targets"] if item["target_status"] == "PR_INPUT_READY"
-        )
-        production = next(
-            item for item in entry["transition_targets"] if item["target_status"] == "PRODUCTION"
-        )
-        self.assertTrue(pr_input_ready["eligible"])
-        self.assertFalse(production["eligible"])
-        self.assertEqual(production["denied_reasons"], ["PROFILE_NOT_PRODUCTION"])
+    def test_production_ignores_optional_competing_and_unverified_fields(self):
+        readiness_entry = {
+            "blocker_summary": {
+                "lifecycle_blockers": [],
+                "missing_required_fields": [],
+                "unapproved_required_fields": [],
+                "competing_candidate_fields": ["subcontractor_planning"],
+                "required_competing_candidate_fields": [],
+                "single_candidate_unverified_fields": ["site_name"],
+                "required_single_candidate_unverified_fields": [],
+                "no_profile_selection_fields": [],
+                "required_no_profile_selection_fields": [],
+                "shortlist_mismatch_fields": [],
+                "required_shortlist_mismatch_fields": [],
+                "cross_model_bridge_fields": [],
+            }
+        }
+        result = evaluate_transition(readiness_entry, "PRODUCTION")
+        self.assertTrue(result["eligible"])
+        self.assertEqual(result["denied_reasons"], [])
 
-    def test_zte_pr_input_ready_transition_is_eligible_but_production_is_denied(self):
+    def test_cd_consolidation_production_transition_remains_denied(self):
         registry = json.loads(
             (ROOT / "config" / "registries" / "mw_du_profile_transition_review.yaml").read_text(encoding="utf-8")
         )
-        entry = next(item for item in registry["entries"] if item["profile_id"] == "zte_tx_mini_pr_v1")
-        pr_input_ready = next(
-            item for item in entry["transition_targets"] if item["target_status"] == "PR_INPUT_READY"
+        entry = next(
+            item for item in registry["entries"]
+            if item["profile_id"] == "celcomdigi_cd_consolidation_2023_pr_v1"
         )
         production = next(
             item for item in entry["transition_targets"] if item["target_status"] == "PRODUCTION"
         )
-        self.assertTrue(pr_input_ready["eligible"])
+        self.assertEqual(entry["current_status"], "DRAFT")
         self.assertFalse(production["eligible"])
-        self.assertEqual(production["denied_reasons"], ["PROFILE_NOT_PRODUCTION"])
-
-    def test_2023_celcomdigi_bau_pr_input_ready_transition_is_eligible_but_production_is_denied(self):
-        registry = json.loads(
-            (ROOT / "config" / "registries" / "mw_du_profile_transition_review.yaml").read_text(encoding="utf-8")
-        )
-        entry = next(item for item in registry["entries"] if item["profile_id"] == "celcomdigi_bau_2023_pr_v1")
-        pr_input_ready = next(
-            item for item in entry["transition_targets"] if item["target_status"] == "PR_INPUT_READY"
-        )
-        production = next(
-            item for item in entry["transition_targets"] if item["target_status"] == "PRODUCTION"
-        )
-        self.assertTrue(pr_input_ready["eligible"])
-        self.assertFalse(production["eligible"])
-        self.assertEqual(production["denied_reasons"], ["PROFILE_NOT_PRODUCTION"])
+        self.assertTrue(production["denied_reasons"])
 
     def test_markdown_mentions_denied_transition(self):
         registry = json.loads(

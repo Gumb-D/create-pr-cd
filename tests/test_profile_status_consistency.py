@@ -8,47 +8,61 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from check_profile_status_consistency import validate_profile_status_consistency, validate_profiles_against_transition_registry
-from du_profile_loader import ProfileValidationError, load_du_profile
+from du_profile_loader import ProfileValidationError, discover_du_profile_paths, load_du_profile
+
+
+PRODUCTION_PROFILE_IDS = (
+    "tx_mini_pr_v1",
+    "tx_rollout_2023_pr_v1",
+    "mw_eos_swap_pr_v1",
+    "celcomdigi_bau_2023_pr_v1",
+    "celcomdigi_bau_2024_pr_v1",
+    "celcomdigi_usp_pr_v1",
+    "jendela_tx_migration_pr_v1",
+    "zte_tx_mini_pr_v1",
+)
 
 
 class TestProfileStatusConsistency(unittest.TestCase):
-    def test_current_draft_profiles_pass_consistency_check(self):
+    def test_current_profiles_pass_consistency_check(self):
         validate_profiles_against_transition_registry(
-            [
-                ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml",
-                ROOT / "config" / "du_profiles" / "mw_eos_swap_pr_v1.yaml",
-                ROOT / "config" / "du_profiles" / "zte_tx_mini_pr_v1.yaml",
-            ],
+            discover_du_profile_paths(ROOT / "config" / "du_profiles"),
             ROOT / "config" / "registries" / "mw_du_profile_transition_review.yaml",
         )
 
-    def test_tx_mini_production_status_is_permitted_by_transition_review(self):
-        profile = load_du_profile(ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml")
+    def test_all_promoted_production_statuses_are_permitted_by_transition_review(self):
         registry = json.loads(
             (ROOT / "config" / "registries" / "mw_du_profile_transition_review.yaml").read_text(encoding="utf-8")
         )
-        transition_entry = next(entry for entry in registry["entries"] if entry["profile_id"] == "tx_mini_pr_v1")
-        validate_profile_status_consistency(profile, transition_entry)
-        production = next(
-            target for target in transition_entry["transition_targets"]
-            if target["target_status"] == "PRODUCTION"
-        )
-        self.assertTrue(production["eligible"])
-        self.assertEqual(production["denied_reasons"], [])
+        by_profile = {entry["profile_id"]: entry for entry in registry["entries"]}
 
-    def test_synthetic_promoted_profile_is_rejected_when_transition_review_denies_it(self):
-        profile = load_du_profile(ROOT / "config" / "du_profiles" / "mw_eos_swap_pr_v1.yaml")
+        for profile_id in PRODUCTION_PROFILE_IDS:
+            with self.subTest(profile_id=profile_id):
+                profile = load_du_profile(ROOT / "config" / "du_profiles" / f"{profile_id}.yaml")
+                transition_entry = by_profile[profile_id]
+                validate_profile_status_consistency(profile, transition_entry)
+                production = next(
+                    target for target in transition_entry["transition_targets"]
+                    if target["target_status"] == "PRODUCTION"
+                )
+                self.assertEqual(profile["status"], "PRODUCTION")
+                self.assertTrue(production["eligible"])
+                self.assertEqual(production["denied_reasons"], [])
+
+    def test_synthetic_draft_profile_is_rejected_when_transition_review_denies_production(self):
+        profile_id = "celcomdigi_cd_consolidation_2023_pr_v1"
+        profile = load_du_profile(ROOT / "config" / "du_profiles" / f"{profile_id}.yaml")
+        self.assertEqual(profile["status"], "DRAFT")
         profile["status"] = "PRODUCTION"
         registry = json.loads(
             (ROOT / "config" / "registries" / "mw_du_profile_transition_review.yaml").read_text(encoding="utf-8")
         )
-        transition_entry = next(entry for entry in registry["entries"] if entry["profile_id"] == "mw_eos_swap_pr_v1")
+        transition_entry = next(entry for entry in registry["entries"] if entry["profile_id"] == profile_id)
 
         with self.assertRaises(ProfileValidationError) as error:
             validate_profile_status_consistency(profile, transition_entry)
 
         self.assertIn("PRODUCTION", str(error.exception))
-        self.assertIn("PROFILE_NOT_PRODUCTION", str(error.exception))
 
     def test_missing_transition_entry_fails_closed(self):
         with tempfile.TemporaryDirectory() as tmpdir:

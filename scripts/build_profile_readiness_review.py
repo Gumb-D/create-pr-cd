@@ -1,7 +1,8 @@
-"""Build a discovery-only readiness review for priority DU profiles.
+"""Build lifecycle-readiness evidence for governed DU Profiles.
 
-This packet summarizes why each current DRAFT profile remains blocked from any
-production lifecycle transition. It is review guidance only.
+The packet records current structural and review blockers. Production permission
+comes only from the explicit Profile lifecycle status and the formal runtime gate.
+Non-production UAT is not a mandatory lifecycle prerequisite.
 """
 from __future__ import annotations
 
@@ -53,6 +54,14 @@ def build_readiness_entry(
     approved_header_hashes = list(export_structure.get("approved_header_hashes", []))
     bridge_fields = sorted((bridge_entry or {}).get("field_bridges", {}).keys())
 
+    required_competing_candidate_fields = _required_subset(profile, competing_candidate_fields)
+    required_single_candidate_unverified_fields = _required_subset(
+        profile, single_candidate_unverified_fields
+    )
+    required_no_profile_selection_fields = _required_subset(profile, no_profile_selection_fields)
+    required_shortlist_mismatch_fields = _required_subset(profile, shortlist_mismatch_fields)
+    unapproved_required_fields = _profile_unverified_required_fields(profile)
+
     lifecycle_blockers = []
     if profile.get("status") != "PRODUCTION":
         lifecycle_blockers.append("PROFILE_NOT_PRODUCTION")
@@ -60,13 +69,13 @@ def build_readiness_entry(
         lifecycle_blockers.append("NO_APPROVED_HEADER_HASH")
 
     review_blockers = []
-    if competing_candidate_fields:
+    if required_competing_candidate_fields:
         review_blockers.append("COMPETING_SHORTLIST_CANDIDATES")
-    if single_candidate_unverified_fields:
+    if required_single_candidate_unverified_fields:
         review_blockers.append("UNVERIFIED_SINGLE_CANDIDATE_FIELDS")
-    if no_profile_selection_fields:
+    if required_no_profile_selection_fields:
         review_blockers.append("NO_PROFILE_SELECTION_FIELDS")
-    if shortlist_mismatch_fields:
+    if required_shortlist_mismatch_fields:
         review_blockers.append("SHORTLIST_MISMATCH_FIELDS")
     if bridge_fields:
         review_blockers.append("CROSS_MODEL_BRIDGE_ONLY_FIELDS")
@@ -74,7 +83,7 @@ def build_readiness_entry(
     overall_blockers = lifecycle_blockers + review_blockers
     if missing_required_fields:
         overall_blockers.insert(len(lifecycle_blockers), "MISSING_REQUIRED_FIELDS")
-    if _profile_unverified_required_fields(profile):
+    if unapproved_required_fields:
         overall_blockers.insert(len(lifecycle_blockers), "REQUIRED_FIELDS_NOT_APPROVED")
 
     return {
@@ -91,27 +100,28 @@ def build_readiness_entry(
             "overall_blockers": overall_blockers,
             "lifecycle_blockers": lifecycle_blockers,
             "missing_required_fields": missing_required_fields,
-            "unapproved_required_fields": _profile_unverified_required_fields(profile),
+            "unapproved_required_fields": unapproved_required_fields,
             "competing_candidate_fields": competing_candidate_fields,
-            "required_competing_candidate_fields": _required_subset(profile, competing_candidate_fields),
+            "required_competing_candidate_fields": required_competing_candidate_fields,
             "single_candidate_unverified_fields": single_candidate_unverified_fields,
-            "required_single_candidate_unverified_fields": _required_subset(profile, single_candidate_unverified_fields),
+            "required_single_candidate_unverified_fields": required_single_candidate_unverified_fields,
             "no_profile_selection_fields": no_profile_selection_fields,
-            "required_no_profile_selection_fields": _required_subset(profile, no_profile_selection_fields),
+            "required_no_profile_selection_fields": required_no_profile_selection_fields,
             "shortlist_mismatch_fields": shortlist_mismatch_fields,
-            "required_shortlist_mismatch_fields": _required_subset(profile, shortlist_mismatch_fields),
+            "required_shortlist_mismatch_fields": required_shortlist_mismatch_fields,
             "cross_model_bridge_fields": bridge_fields,
         },
         "release_prerequisites": [
             "Approve the DU model identity and four-layer source mappings.",
             "Approve at least one header hash for the profile version.",
             "Resolve missing required fields or keep the profile blocked.",
-            "Remove DRAFT-only and UNVERIFIED mapping conditions before runtime enablement.",
-            "Complete regression verification and UAT before any lifecycle promotion.",
+            "Remove DRAFT-only and UNVERIFIED required-field conditions before runtime enablement.",
+            "Complete regression verification before lifecycle promotion.",
         ],
         "notes": [
-            "This readiness review is discovery-only and does not approve any mapping, header hash, lifecycle transition, or cross-model reuse.",
-            "A profile can remain structurally informative while still being blocked from any production path.",
+            "This readiness review records evidence and blockers; it does not itself grant production permission.",
+            "Optional discovery-review items remain visible but do not override the explicit Profile lifecycle decision.",
+            "Formal production jobs are the validation surface; non-production UAT is not a mandatory release prerequisite.",
         ],
     }
 
@@ -139,8 +149,8 @@ def build_readiness_registry(
         "registry_type": "discovery_profile_readiness_review",
         "entries": entries,
         "notes": [
-            "Discovery-only readiness summary for priority DU profiles.",
-            "Readiness here means approval-preparation visibility, not production eligibility.",
+            "Lifecycle-readiness summary for governed DU Profiles.",
+            "Production permission remains controlled by explicit Profile status and formal runtime gates.",
         ],
     }
 
@@ -149,7 +159,7 @@ def readiness_markdown(registry: Mapping[str, Any]) -> str:
     lines = [
         "# MW DU Profile Readiness Review",
         "",
-        "Discovery-only summary of why the current priority DU profiles remain blocked from release.",
+        "Lifecycle-readiness summary for the governed DU Profiles.",
         "",
     ]
     for entry in registry.get("entries", []):
@@ -169,7 +179,7 @@ def readiness_markdown(registry: Mapping[str, Any]) -> str:
             )
         if blocker_summary.get("competing_candidate_fields"):
             lines.append(
-                f"- Competing candidate fields: `{', '.join(blocker_summary['competing_candidate_fields'])}`"
+                f"- Optional/required competing candidate fields: `{', '.join(blocker_summary['competing_candidate_fields'])}`"
             )
         if blocker_summary.get("cross_model_bridge_fields"):
             lines.append(

@@ -2,7 +2,7 @@
   "profile_id": "celcomdigi_bau_2024_pr_v1",
   "profile_version": "0.1.0",
   "mapping_version": "approved-2026-07-10-2024-celcomdigi-bau-v2",
-  "status": "PR_INPUT_READY",
+  "status": "PRODUCTION",
   "identity": {
     "project_key": "Malaysia_CelcomDigi_Project",
     "accepted_du_models": ["2024 Celcomdigi BAU"],
@@ -45,10 +45,10 @@
     "profile_notes": [
       "Only the six human-approved PR-critical mappings are promoted for PR input review; all other fields remain discovery-only or optional.",
       "The approved 2024 Celcomdigi BAU header hash stays strict and fail-closed for changed, missing, ambiguous, or unapproved source evidence.",
-      "Existing PR status/reference fields normalize through the established non-production duplicate-prevention transform.",
+      "Existing PR status/reference fields normalize through the established duplicate-prevention transform.",
       "The rejected Subcon PR - Planning column must never be used for existing_ti_pr_status; the approved source is Subcon PR - TI.",
-      "This profile is PR_INPUT_READY for non-production validation only; it must not enable ECC output or skip header-hash validation.",
-      "This profile is not production-ready and must never enable ECC generation."
+      "Header-hash and required approved-field validation remain mandatory for formal production output.",
+      "Production enabled by JJ on 2026-08-06; formal production jobs are the validation surface and non-production UAT is not a release prerequisite."
     ]
   }
 }

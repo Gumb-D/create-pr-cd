@@ -2,7 +2,7 @@
   "profile_id": "zte_tx_mini_pr_v1",
   "profile_version": "0.2.0",
   "mapping_version": "approved-2026-07-15-zte-tx-mini-v1",
-  "status": "PR_INPUT_READY",
+  "status": "PRODUCTION",
   "identity": {
     "project_key": "CelcomDigi_MW",
     "accepted_du_models": ["ZTE TX MINI"],
@@ -51,8 +51,8 @@
       "Subcon - TSS and Subcon - TI are the approved team ownership sources for PR-input validation.",
       "Subcon PR - TSS and Subcon PR - TI are the approved duplicate-prevention sources and both normalize via normalize_pr_reference_status.",
       "Milestone/date fields are not approved PR-status sources.",
-      "This profile is PR_INPUT_READY for non-production validation only.",
-      "ECC and production output remain blocked."
+      "Header-hash and required approved-field validation remain mandatory for formal production output.",
+      "Production enabled by JJ on 2026-08-06; formal production jobs are the validation surface and non-production UAT is not a release prerequisite."
     ]
   }
 }
