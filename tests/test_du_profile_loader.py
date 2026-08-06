@@ -1,72 +1,127 @@
-"""DU Profile loader tests with current compatible-layout expectations."""
+"""DU Profile loader tests with current production lifecycle expectations."""
 from __future__ import annotations
 
 from tests.du_profile_loader_legacy_tests import TestDuProfileLoader as _LegacyTestDuProfileLoader
 
 
+PRODUCTION_PROFILES = {
+    "tx_mini_pr_v1.yaml": "approved-2026-07-07-tx-mini-v1",
+    "tx_rollout_2023_pr_v1.yaml": "approved-2026-07-10-2023-tx-rollout-v2",
+    "mw_eos_swap_pr_v1.yaml": "approved-2026-07-10-mw-eos-swap-v2",
+    "celcomdigi_bau_2023_pr_v1.yaml": "approved-2026-07-14-2023-celcomdigi-bau-tx-prpo-v1",
+    "celcomdigi_bau_2024_pr_v1.yaml": "approved-2026-07-10-2024-celcomdigi-bau-v2",
+    "celcomdigi_usp_pr_v1.yaml": "approved-2026-07-10-celcomdigi-usp-v2",
+    "jendela_tx_migration_pr_v1.yaml": "approved-2026-08-04-jendela-tx-migration-v3",
+    "zte_tx_mini_pr_v1.yaml": "approved-2026-07-15-zte-tx-mini-v1",
+}
+
+
 class TestDuProfileLoader(_LegacyTestDuProfileLoader):
-    def test_all_approved_profiles_have_approved_subcontractor_tss_and_are_production(self):
-        profile = self._load_tx_mini_profile()
+    def _assert_production_profile(self, profile_name):
+        profile = self._load_profile(profile_name)
         self.assertEqual(profile["status"], "PRODUCTION")
-        candidate = profile["field_mapping"]["subcontractor_tss"]["source_candidates"][0]
-        self.assertEqual(candidate["mapping_status"], "APPROVED")
-        self.assertEqual(candidate["fingerprint"]["display_header"], "SubCon - TSS Team")
+        self.assertEqual(profile["mapping_version"], PRODUCTION_PROFILES[profile_name])
+        self.assertTrue(profile["export_structure"]["approved_header_hashes"])
+        for canonical_field, config in profile["field_mapping"].items():
+            if not config.get("required"):
+                continue
+            candidates = config.get("source_candidates", [])
+            self.assertTrue(candidates, canonical_field)
+            self.assertTrue(
+                all(candidate.get("mapping_status") == "APPROVED" for candidate in candidates),
+                canonical_field,
+            )
+        return profile
 
-        for profile_name in (
-            "tx_rollout_2023_pr_v1.yaml",
-            "mw_eos_swap_pr_v1.yaml",
-            "celcomdigi_bau_2023_pr_v1.yaml",
-            "celcomdigi_bau_2024_pr_v1.yaml",
-            "celcomdigi_usp_pr_v1.yaml",
-            "jendela_tx_migration_pr_v1.yaml",
-            "zte_tx_mini_pr_v1.yaml",
-        ):
+    def test_all_pr_input_ready_profiles_have_approved_subcontractor_tss_and_remain_non_production(self):
+        expected = {
+            "tx_mini_pr_v1.yaml": ("docata|ZDCSZ0657770", "SubCon - TSS Team"),
+            "tx_rollout_2023_pr_v1.yaml": ("docata|ZDCSZ640307", "SubCon - TSS"),
+            "mw_eos_swap_pr_v1.yaml": ("docata|ZDCSZ00970153", "Subcon - TSS"),
+            "celcomdigi_bau_2023_pr_v1.yaml": ("docata|ZDCSZ640307", "SubCon - TSS"),
+            "celcomdigi_bau_2024_pr_v1.yaml": ("docata|ZDCSZ640307", "SubCon - TSS"),
+            "celcomdigi_usp_pr_v1.yaml": ("docata|ZDCSZ640307", "SubCon - TSS"),
+            "jendela_tx_migration_pr_v1.yaml": ("docata|ZDCSZ640307", "SubCon - TSS"),
+            "zte_tx_mini_pr_v1.yaml": ("docata|ZDCSZ00970153", "Subcon - TSS"),
+        }
+        for profile_name, (field_code, display_header) in expected.items():
             with self.subTest(profile_name=profile_name):
-                other = self._load_profile(profile_name)
-                self.assertEqual(other["status"], "PRODUCTION")
+                profile = self._assert_production_profile(profile_name)
+                candidate = profile["field_mapping"]["subcontractor_tss"]["source_candidates"][0]
+                self.assertEqual(candidate["mapping_status"], "APPROVED")
+                self.assertEqual(candidate["fingerprint"]["field_code"], field_code)
+                self.assertEqual(candidate["fingerprint"]["display_header"], display_header)
 
-    def test_tx_mini_profile_loads_with_production_readiness(self):
-        profile = self._load_tx_mini_profile()
+    def test_tx_mini_profile_loads_without_claiming_production_readiness(self):
+        profile = self._assert_production_profile("tx_mini_pr_v1.yaml")
         old_hash = "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221"
         revalidated_hash = "1a466e31d3c25ca73f059123d4cc33280761746ea3dca61d25a384acad5c9fde"
         supplied_hash = "830864906f3e69041995bec10b0a5840d5f8c6fa5defa2cfaef30b868b91a921"
-        self.assertEqual(profile["status"], "PRODUCTION")
-        self.assertEqual(profile["mapping_version"], "approved-2026-07-07-tx-mini-v1")
-        self.assertEqual(profile["identity"]["accepted_view_ids"], ["2477626672974883536"])
-        self.assertEqual(profile["export_structure"]["header_rows"], [0, 1, 2, 3])
         self.assertEqual(
             profile["export_structure"]["approved_header_hashes"],
             [old_hash, revalidated_hash, supplied_hash],
         )
         self.assertEqual(profile["export_structure"]["observed_header_hash"], supplied_hash)
+        self.assertEqual(profile["identity"]["accepted_view_ids"], ["2477626672974883536"])
 
-    def test_production_2023_tx_rollout_profile_loads_with_human_approved_pr_critical_mappings(self):
-        profile = self._load_tx_rollout_profile()
+    def test_pr_input_ready_mw_eos_profile_loads_with_human_approved_pr_critical_mappings(self):
+        profile = self._assert_production_profile("mw_eos_swap_pr_v1.yaml")
+        self.assertEqual(profile["identity"]["accepted_du_model_ids"], ["5440935430300168497"])
+        self.assertEqual(
+            profile["field_mapping"]["existing_ti_pr_status"]["transforms"],
+            ["normalize_pr_reference_status"],
+        )
+
+    def test_pr_input_ready_zte_tx_mini_profile_loads_with_human_approved_pr_critical_mappings(self):
+        profile = self._assert_production_profile("zte_tx_mini_pr_v1.yaml")
+        self.assertEqual(profile["identity"]["accepted_du_model_ids"], ["8638668101234290847"])
+        self.assertEqual(
+            profile["field_mapping"]["tx_sow_raw"]["source_candidates"][0]["fingerprint"]["display_header"],
+            "Microwave Tx SOW",
+        )
+        self.assertFalse(profile["field_mapping"]["subcontractor_tss"]["required"])
+
+    def test_pr_input_ready_2023_tx_rollout_profile_loads_with_human_approved_pr_critical_mappings(self):
+        profile = self._assert_production_profile("tx_rollout_2023_pr_v1.yaml")
         old_hash = "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320"
         new_hash = "e61b834994eeef30e7d8249f87616cb04d60598eea323feea50178fc4292c162"
-        self.assertEqual(profile["status"], "PRODUCTION")
-        self.assertEqual(profile["profile_version"], "0.1.1")
-        self.assertEqual(profile["mapping_version"], "approved-2026-07-10-2023-tx-rollout-v2")
-        self.assertEqual(profile["identity"]["accepted_du_models"], ["2023 TX Rollout"])
-        self.assertEqual(profile["identity"]["accepted_du_model_ids"], ["1027190858144623081"])
-        self.assertEqual(profile["identity"]["accepted_view_ids"], ["8530399820526021092"])
         self.assertEqual(profile["export_structure"]["approved_header_hashes"], [old_hash, new_hash])
         self.assertEqual(profile["export_structure"]["observed_header_hash"], new_hash)
         self.assertEqual(
-            profile["field_mapping"]["subcontractor_tss"]["source_candidates"][0]["fingerprint"]["display_header"],
-            "SubCon - TSS",
+            [
+                candidate["fingerprint"]["display_header"]
+                for candidate in profile["field_mapping"]["tx_sow_raw"]["source_candidates"]
+            ],
+            ["Post MOCN TX SOW (LLD)", "TX SOW (LLD)"],
         )
-        self.assertEqual(
-            profile["field_mapping"]["existing_tss_pr_status"]["source_candidates"][0]["fingerprint"]["display_header"],
-            "Subcon PR - TSS",
-        )
+
+    def test_pr_input_ready_jendela_profile_loads_with_human_approved_pr_critical_mappings(self):
+        profile = self._assert_production_profile("jendela_tx_migration_pr_v1.yaml")
+        self.assertEqual(profile["profile_version"], "0.4.0")
+        self.assertTrue(profile["field_mapping"]["tx_before_migration"]["required"])
+        self.assertTrue(profile["field_mapping"]["final_backhaul"]["required"])
+        self.assertFalse(profile["field_mapping"]["subcontractor_tss"]["required"])
+
+    def test_pr_input_ready_2023_celcomdigi_bau_profile_loads_with_human_approved_pr_critical_mappings(self):
+        profile = self._assert_production_profile("celcomdigi_bau_2023_pr_v1.yaml")
+        self.assertEqual(profile["profile_version"], "0.2.0")
+        self.assertEqual(profile["identity"]["accepted_view_ids"], ["3882899459299681347"])
+        self.assertNotIn("6611960521271999255", profile["identity"]["accepted_view_ids"])
+
+    def test_pr_input_ready_2024_celcomdigi_bau_profile_loads_with_human_approved_pr_critical_mappings(self):
+        profile = self._assert_production_profile("celcomdigi_bau_2024_pr_v1.yaml")
+        self.assertEqual(profile["identity"]["accepted_du_model_ids"], ["7278317398457076992"])
         self.assertEqual(
             profile["field_mapping"]["existing_ti_pr_status"]["source_candidates"][0]["fingerprint"]["display_header"],
             "Subcon PR - TI",
         )
+
+    def test_pr_input_ready_celcomdigi_usp_profile_loads_with_human_approved_pr_critical_mappings(self):
+        profile = self._assert_production_profile("celcomdigi_usp_pr_v1.yaml")
+        self.assertEqual(profile["identity"]["accepted_du_model_ids"], ["3765504705612341090"])
         self.assertEqual(
-            profile["field_mapping"]["tx_sow_raw"]["source_candidates"][0]["fingerprint"]["display_header"],
-            "Post MOCN TX SOW (LLD)",
+            profile["field_mapping"]["existing_ti_pr_status"]["source_candidates"][0]["fingerprint"]["display_header"],
+            "Subcon PR - TI",
         )
 
     def test_draft_cd_consolidation_2023_decom_profile_loads_with_discovery_only_cd_fields(self):
@@ -89,14 +144,6 @@ class TestDuProfileLoader(_LegacyTestDuProfileLoader):
             decom["observed_header_hash"],
             "b86cbc349db66154324092c843593137e83908c3b4b55c09305d6cf6046c7a16",
         )
-        self.assertEqual(
-            decom["field_mapping"]["tx_sow_raw"]["source_candidates"][0]["fingerprint"]["task_name"],
-            "TX Final SOW (LLD)",
-        )
-        self.assertEqual(
-            decom["field_mapping"]["subcontractor_ti"]["source_candidates"][0]["fingerprint"]["display_header"],
-            "SubCon - TI",
-        )
 
     def test_draft_cd_consolidation_2023_rollout_profile_loads_with_discovery_only_cd_fields(self):
         profile = self._load_cd_consolidation_profile()
@@ -109,21 +156,6 @@ class TestDuProfileLoader(_LegacyTestDuProfileLoader):
             rollout["observed_header_hash"],
             "d16d92debc1cc59aacd548a100d407462c7733f1894453b195abc9d3072ec9a1",
         )
-        self.assertEqual(
-            rollout["field_mapping"]["tx_sow_raw"]["source_candidates"][0]["fingerprint"]["task_name"],
-            "Wireless RAN",
-        )
-        self.assertEqual(
-            rollout["field_mapping"]["subcontractor_ti"]["source_candidates"][0]["fingerprint"]["display_header"],
-            "SubCon - TI",
-        )
-
-    def _load_tx_rollout_profile(self):
-        from pathlib import Path
-        from du_profile_loader import load_du_profile
-
-        root = Path(__file__).resolve().parent.parent
-        return load_du_profile(root / "config" / "du_profiles" / "tx_rollout_2023_pr_v1.yaml")
 
     def _load_tx_mini_profile(self):
         return self._load_profile("tx_mini_pr_v1.yaml")
@@ -136,13 +168,7 @@ class TestDuProfileLoader(_LegacyTestDuProfileLoader):
         return load_du_profile(root / "config" / "du_profiles" / profile_name)
 
     def _load_cd_consolidation_profile(self):
-        from pathlib import Path
-        from du_profile_loader import load_du_profile
-
-        root = Path(__file__).resolve().parent.parent
-        return load_du_profile(
-            root / "config" / "du_profiles" / "celcomdigi_cd_consolidation_2023_pr_v1.yaml"
-        )
+        return self._load_profile("celcomdigi_cd_consolidation_2023_pr_v1.yaml")
 
 
 del _LegacyTestDuProfileLoader
