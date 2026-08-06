@@ -49,7 +49,7 @@
       "du_model_name": "2023 TX Rollout",
       "du_model_id": "1027190858144623081",
       "identity_key": "Malaysia_CelcomDigi_Project::1027190858144623081",
-      "profile_status": "PR_INPUT_READY",
+      "profile_status": "PRODUCTION",
       "name_status": "LEGACY_ACCEPTED",
       "accepted_view_ids": [
         "8530399820526021092"
@@ -64,7 +64,7 @@
       "du_model_name": "MW EOS Swap",
       "du_model_id": "5440935430300168497",
       "identity_key": "CelcomDigi_MW::5440935430300168497",
-      "profile_status": "PR_INPUT_READY",
+      "profile_status": "PRODUCTION",
       "name_status": "STANDARD",
       "accepted_view_ids": [
         "7476572371505372260"
@@ -79,7 +79,7 @@
       "du_model_name": "2023 Celcomdigi BAU",
       "du_model_id": "8296022438223590261",
       "identity_key": "Malaysia_CelcomDigi_Project::8296022438223590261",
-      "profile_status": "PR_INPUT_READY",
+      "profile_status": "PRODUCTION",
       "name_status": "STANDARD",
       "accepted_view_ids": [
         "3882899459299681347"
@@ -94,7 +94,7 @@
       "du_model_name": "2024 Celcomdigi BAU",
       "du_model_id": "7278317398457076992",
       "identity_key": "Malaysia_CelcomDigi_Project::7278317398457076992",
-      "profile_status": "PR_INPUT_READY",
+      "profile_status": "PRODUCTION",
       "name_status": "STANDARD",
       "accepted_view_ids": [
         "1090541706000906451"
@@ -109,7 +109,7 @@
       "du_model_name": "Celcomdigi USP",
       "du_model_id": "3765504705612341090",
       "identity_key": "Malaysia_CelcomDigi_Project::3765504705612341090",
-      "profile_status": "PR_INPUT_READY",
+      "profile_status": "PRODUCTION",
       "name_status": "STANDARD",
       "accepted_view_ids": [
         "703232142435130905"
@@ -124,7 +124,7 @@
       "du_model_name": "Jendela TX Migration",
       "du_model_id": "4972593269368006257",
       "identity_key": "Malaysia_CelcomDigi_Project::4972593269368006257",
-      "profile_status": "PR_INPUT_READY",
+      "profile_status": "PRODUCTION",
       "name_status": "LEGACY_ACCEPTED",
       "accepted_view_ids": [
         "4026888666764910245"
@@ -139,7 +139,7 @@
       "du_model_name": "ZTE TX MINI",
       "du_model_id": "8638668101234290847",
       "identity_key": "CelcomDigi_MW::8638668101234290847",
-      "profile_status": "PR_INPUT_READY",
+      "profile_status": "PRODUCTION",
       "name_status": "LEGACY_ACCEPTED",
       "accepted_view_ids": [
         "2279585426760368522"
