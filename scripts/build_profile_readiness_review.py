@@ -1,7 +1,8 @@
-"""Build a discovery-only readiness review for priority DU profiles.
+"""Build lifecycle-readiness evidence for governed DU Profiles.
 
-This packet summarizes why each current DRAFT profile remains blocked from any
-production lifecycle transition. It is review guidance only.
+The packet records current structural and review blockers. Production permission
+comes only from the explicit Profile lifecycle status and the formal runtime gate.
+Non-production UAT is not a mandatory lifecycle prerequisite.
 """
 from __future__ import annotations
 
@@ -106,12 +107,13 @@ def build_readiness_entry(
             "Approve the DU model identity and four-layer source mappings.",
             "Approve at least one header hash for the profile version.",
             "Resolve missing required fields or keep the profile blocked.",
-            "Remove DRAFT-only and UNVERIFIED mapping conditions before runtime enablement.",
-            "Complete regression verification and UAT before any lifecycle promotion.",
+            "Remove DRAFT-only and UNVERIFIED required-field conditions before runtime enablement.",
+            "Complete regression verification before lifecycle promotion.",
         ],
         "notes": [
-            "This readiness review is discovery-only and does not approve any mapping, header hash, lifecycle transition, or cross-model reuse.",
-            "A profile can remain structurally informative while still being blocked from any production path.",
+            "This readiness review records evidence and blockers; it does not itself grant production permission.",
+            "Optional discovery-review items remain visible but do not override the explicit Profile lifecycle decision.",
+            "Formal production jobs are the validation surface; non-production UAT is not a mandatory release prerequisite.",
         ],
     }
 
@@ -139,8 +141,8 @@ def build_readiness_registry(
         "registry_type": "discovery_profile_readiness_review",
         "entries": entries,
         "notes": [
-            "Discovery-only readiness summary for priority DU profiles.",
-            "Readiness here means approval-preparation visibility, not production eligibility.",
+            "Lifecycle-readiness summary for governed DU Profiles.",
+            "Production permission remains controlled by explicit Profile status and formal runtime gates.",
         ],
     }
 
@@ -149,7 +151,7 @@ def readiness_markdown(registry: Mapping[str, Any]) -> str:
     lines = [
         "# MW DU Profile Readiness Review",
         "",
-        "Discovery-only summary of why the current priority DU profiles remain blocked from release.",
+        "Lifecycle-readiness summary for the governed DU Profiles.",
         "",
     ]
     for entry in registry.get("entries", []):
