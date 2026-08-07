@@ -1,27 +1,25 @@
 """Deterministic TI subtype selection for the MW Hardware Upgrade PR model.
 
-The PR model contains one mandatory three-way choice:
+The approved PR model contains one mandatory three-way choice:
 
-* IDU work, without bundled site survey;
-* ODU work, without bundled site survey;
-* ODU work, with bundled site survey.
+* IDU work without bundled site survey;
+* ODU work without bundled site survey;
+* ODU work with bundled site survey.
 
-Selection is driven by approved canonical evidence passed through the legacy
-bridge. Missing or contradictory evidence is never guessed.
+The source evidence determines the semantic subtype. The selected PBOM, unit,
+quantity and mandatory metadata always come from the loaded PR-model row.
+Missing or contradictory evidence is never guessed.
 """
 from __future__ import annotations
 
 import re
 from typing import Any, Mapping, Sequence
 
-
 REASON_CODE = "MW_HARDWARE_UPGRADE_TYPE_UNRESOLVED"
 
-SUBTYPE_PBOM_CODES = {
-    "IDU_WITHOUT_SITE_SURVEY": "350001095419",
-    "ODU_WITHOUT_SITE_SURVEY": "350001095418",
-    "ODU_WITH_SITE_SURVEY": "350001095417",
-}
+IDU_WITHOUT_SITE_SURVEY = "IDU_WITHOUT_SITE_SURVEY"
+ODU_WITHOUT_SITE_SURVEY = "ODU_WITHOUT_SITE_SURVEY"
+ODU_WITH_SITE_SURVEY = "ODU_WITH_SITE_SURVEY"
 
 EVIDENCE_FIELDS = (
     "BOQ Configuration",
@@ -115,12 +113,12 @@ def _survey_mode(upgrade_scope: Any) -> str | None:
 
 
 def resolve_mw_hardware_upgrade_subtype(row: Mapping[str, Any]) -> dict[str, Any]:
-    """Resolve one approved subtype or return a fail-closed review result."""
+    """Resolve one semantic subtype or return a fail-closed review result."""
     signals = _component_signals(row)
     upgrade_scope = _text(row.get("TX Upgrade Scope", ""))
 
     if signals["new_idu"] and not signals["new_odu"]:
-        subtype = "IDU_WITHOUT_SITE_SURVEY"
+        subtype = IDU_WITHOUT_SITE_SURVEY
     elif signals["new_odu"] and not signals["new_idu"]:
         survey_mode = _survey_mode(upgrade_scope)
         if survey_mode is None:
@@ -130,9 +128,9 @@ def resolve_mw_hardware_upgrade_subtype(row: Mapping[str, Any]) -> dict[str, Any
                 "ODU work is identified, but TX Upgrade Scope does not state whether TSS is included.",
             )
         subtype = (
-            "ODU_WITH_SITE_SURVEY"
+            ODU_WITH_SITE_SURVEY
             if survey_mode == "WITH_SITE_SURVEY"
-            else "ODU_WITHOUT_SITE_SURVEY"
+            else ODU_WITHOUT_SITE_SURVEY
         )
     elif signals["new_idu"] and signals["new_odu"]:
         return _unresolved(
@@ -150,7 +148,6 @@ def resolve_mw_hardware_upgrade_subtype(row: Mapping[str, Any]) -> dict[str, Any
     return {
         "status": "RESOLVED",
         "subtype": subtype,
-        "pbom_code": SUBTYPE_PBOM_CODES[subtype],
         "signals": signals,
         "tx_upgrade_scope": upgrade_scope,
     }
@@ -184,37 +181,53 @@ def _unresolved(
     }
 
 
+def _model_row_subtype(item: Mapping[str, Any]) -> str | None:
+    """Classify the approved three-way row from the loaded model description."""
+    description = _text(item.get("Description", "")).casefold()
+    is_idu = re.search(r"\bswap\s*\(\s*idu\s*\)", description) is not None
+    is_odu = re.search(r"\bswap\s*\(\s*odu\s*\)", description) is not None
+    without_survey = "without site survey" in description
+    with_survey = "with site survey" in description and not without_survey
+
+    if is_idu and without_survey and not is_odu:
+        return IDU_WITHOUT_SITE_SURVEY
+    if is_odu and without_survey and not is_idu:
+        return ODU_WITHOUT_SITE_SURVEY
+    if is_odu and with_survey and not is_idu:
+        return ODU_WITH_SITE_SURVEY
+    return None
+
+
 def select_mw_hardware_upgrade_item(
     group_items: Sequence[Mapping[str, Any]],
     row: Mapping[str, Any],
 ) -> tuple[list[Mapping[str, Any]], dict[str, Any]]:
-    """Select exactly one PR-model row from the approved three-way group."""
+    """Select exactly one loaded PR-model row from the three-way group."""
     result = resolve_mw_hardware_upgrade_subtype(row)
     if result["status"] != "RESOLVED":
         return [], result
 
-    pbom_code = result["pbom_code"]
-    matches = [
-        item
-        for item in group_items
-        if str(item.get("PBOM_Code", "")).strip() == pbom_code
-    ]
+    subtype = result["subtype"]
+    matches = [item for item in group_items if _model_row_subtype(item) == subtype]
     if len(matches) != 1:
-        result = dict(result)
-        result.update(
+        unresolved = dict(result)
+        unresolved.update(
             {
                 "status": "REVIEW_REQUIRED",
                 "reason_code": REASON_CODE,
                 "reason_description": (
                     "The resolved MW Hardware Upgrade subtype does not map to exactly one PR-model row."
                 ),
-                "required_action": "Confirm the approved PR-model three-way group and PBOM codes.",
+                "required_action": "Confirm the approved PR-model three-way group descriptions.",
                 "technical_detail": (
-                    f"subtype={result.get('subtype')}; pbom_code={pbom_code}; "
-                    f"matching_rows={len(matches)}; group_rows={len(group_items)}"
+                    f"subtype={subtype}; matching_rows={len(matches)}; "
+                    f"group_rows={len(group_items)}"
                 ),
             }
         )
-        return [], result
+        return [], unresolved
 
-    return [matches[0]], result
+    selected = matches[0]
+    resolved = dict(result)
+    resolved["pbom_code"] = str(selected.get("PBOM_Code", "")).strip()
+    return [selected], resolved
