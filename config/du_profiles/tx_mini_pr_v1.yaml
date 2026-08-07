@@ -14,7 +14,7 @@
     "header_rows": [0, 1, 2, 3],
     "header_hash_policy": "strict",
     "observed_header_hash": "830864906f3e69041995bec10b0a5840d5f8c6fa5defa2cfaef30b868b91a921",
-    "approved_header_hashes": ["167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221", "1a466e31d3c25ca73f059123d4cc33280761746ea3dca61d25a384acad5c9fde", "830864906f3e69041995bec10b0a5840d5f8c6fa5defa2cfaef30b868b91a921"]
+    "approved_header_hashes": ["167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221", "1a466e31d3c25ca73f059123d4cc33280761746ea3dca61d25a384acad5c9fde", "830864906f3e69041995bec10b0a5840d5f8c6fa5defa2cfaef30b868b91a921", "99645657ed5177bed3f0af673f141dc700fb7b486743cb830d5350a473c007ff"]
   },
   "field_mapping": {
     "site_code": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|fix00012|4188808420049567786|2477626672974883536", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "customer site code"}, "mapping_status": "APPROVED"}], "transforms": ["trim", "uppercase"]},
@@ -47,7 +47,7 @@
     "require_evidence_for_every_canonical_field": true,
     "profile_notes": [
       "Source mappings were approved field-by-field by JJ on 2026-07-07; the decision evidence lives in the local TX Mini mapping-decision package and docs/MW_DU_Extension_Implementation_Plan.md.",
-      "The approved header hash records the reviewed TX Mini export structure; any header change re-quarantines the model.",
+      "The approved header hashes preserve legacy full-workbook approvals plus the authoritative-sheet hash of the committed TX Mini regression fixture after Issue #67 changed hash scoping; no field mapping or business approval was inferred by this migration.",
       "Tx SOW normalization is controlled by config/registries/canonical_sow_registry.yaml; values outside the registry classify REVIEW_REQUIRED.",
       "existing_*_pr_status use the approved normalize_pr_reference_status transform over the Subcon PR reference columns.",
       "TX SOW Details is an approved evidence/decision-support field (JJ 2026-07-08): a short description that future item-code selection logic will interpret, combined with other approved columns. It is explicitly not the PR trigger source; any automated (LLM-assisted) item-code inference over it requires human approval before driving output.",

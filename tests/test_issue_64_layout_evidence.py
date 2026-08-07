@@ -10,7 +10,11 @@ from openpyxl import load_workbook
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from profile_du_export import build_header_inventory, resolve_approved_header_structure
+from profile_du_export import (
+    build_header_inventory,
+    calculate_header_hash,
+    resolve_approved_header_structure,
+)
 
 FIXTURE = ROOT / "tests" / "fixtures" / "tx_mini_du_export_fixture.xlsx"
 PROFILE_PATH = ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml"
@@ -18,10 +22,18 @@ MODEL_ID = "4188808420049567786"
 NEW_VIEW_ID = "9999999999999999999"
 
 
+def _seed_authoritative_approved_hash(profile):
+    baseline_inventory = build_header_inventory(FIXTURE)
+    profile["export_structure"]["approved_header_hashes"] = [
+        calculate_header_hash(baseline_inventory, profile)
+    ]
+
+
 class TestIssue64LayoutEvidence(unittest.TestCase):
     def test_structural_approval_uses_approved_site_mapping_not_identity_view_allowlist(self):
         profile = json.loads(PROFILE_PATH.read_text(encoding="utf-8"))
         profile["identity"]["accepted_view_ids"] = ["1111111111111111111"]
+        _seed_authoritative_approved_hash(profile)
 
         with tempfile.TemporaryDirectory() as temp_dir:
             source = Path(temp_dir) / "worker-upload.xlsx"
@@ -47,6 +59,7 @@ class TestIssue64LayoutEvidence(unittest.TestCase):
     def test_unapproved_site_mapping_cannot_supply_layout_reference(self):
         profile = json.loads(PROFILE_PATH.read_text(encoding="utf-8"))
         profile["identity"]["accepted_view_ids"] = ["2477626672974883536"]
+        _seed_authoritative_approved_hash(profile)
         for candidate in profile["field_mapping"]["site_code"]["source_candidates"]:
             candidate["mapping_status"] = "UNVERIFIED"
 

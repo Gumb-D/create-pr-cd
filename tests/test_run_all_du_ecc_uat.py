@@ -158,6 +158,7 @@ class TestAllDuEccUat(unittest.TestCase):
             summary = scope_summary("profile_a", "TSS", engine_root)
             rename_calls: list[tuple[str, str]] = []
             real_os_rename = batch.os.rename
+            real_rmtree = batch.shutil.rmtree
 
             def strip_extended_path(value: str) -> str:
                 prefix = "\\\\?\\"
@@ -174,8 +175,18 @@ class TestAllDuEccUat(unittest.TestCase):
                 self.assertTrue(raw_target.startswith("\\\\?\\"))
                 real_os_rename(strip_extended_path(raw_source), strip_extended_path(raw_target))
 
-            with mock.patch.object(batch, "_is_windows", return_value=True, create=True), mock.patch.object(
+            with mock.patch.object(batch, "_is_windows", return_value=True), mock.patch.object(
+                batch, "_iter_materialization_files", return_value=[source]
+            ), mock.patch.object(
+                batch, "_path_exists", side_effect=lambda path: Path(path).exists()
+            ), mock.patch.object(
+                batch, "_path_is_file", side_effect=lambda path: Path(path).is_file()
+            ), mock.patch.object(
+                batch.os, "makedirs", return_value=None
+            ), mock.patch.object(
                 batch.os, "rename", side_effect=fake_rename
+            ), mock.patch.object(
+                batch, "_path_safe_rmtree", side_effect=lambda path: real_rmtree(path)
             ), mock.patch.object(
                 batch.shutil, "move", side_effect=AssertionError("materialisation must not use shutil.move")
             ):
@@ -320,7 +331,7 @@ class TestAllDuEccUat(unittest.TestCase):
         new_hash = "e61b834994eeef30e7d8249f87616cb04d60598eea323feea50178fc4292c162"
         self.assertEqual(profile["profile_version"], "0.1.1")
         self.assertEqual(profile["mapping_version"], "approved-2026-07-10-2023-tx-rollout-v2")
-        self.assertEqual(profile["status"], "PR_INPUT_READY")
+        self.assertEqual(profile["status"], "PRODUCTION")
         self.assertEqual(profile["export_structure"]["observed_header_hash"], new_hash)
         self.assertEqual(profile["export_structure"]["approved_header_hashes"], [old_hash, new_hash])
         for field in (

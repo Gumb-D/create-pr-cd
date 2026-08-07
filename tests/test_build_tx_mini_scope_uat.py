@@ -10,12 +10,13 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 import build_tx_mini_scope_uat
 
+
 class TestBuildTxMiniScopeUat(unittest.TestCase):
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.output_dir = Path(self.temp_dir.name) / "output"
         self.config_path = Path(self.temp_dir.name) / "config.json"
-        
+
         # Base valid config
         self.config_data = {
             "profile_id": "tx_mini_pr_v1",
@@ -42,16 +43,16 @@ class TestBuildTxMiniScopeUat(unittest.TestCase):
                 }
             }
         }
-        
+
         self.input_file = ROOT / "tests" / "fixtures" / "tx_mini_du_export_fixture.xlsx"
         self.profile = ROOT / "config/du_profiles/tx_mini_pr_v1.yaml"
-        
+
     def tearDown(self):
         self.temp_dir.cleanup()
-        
+
     def write_config(self):
         self.config_path.write_text(json.dumps(self.config_data))
-        
+
     def run_main(self):
         self.write_config()
         args = [
@@ -63,7 +64,7 @@ class TestBuildTxMiniScopeUat(unittest.TestCase):
         ]
         with patch.object(sys, 'argv', args):
             build_tx_mini_scope_uat.main()
-            
+
     def test_missing_tss_config_fails(self):
         del self.config_data["scopes"]["TSS"]
         with self.assertRaisesRegex(ValueError, "Missing TSS config"):
@@ -73,12 +74,12 @@ class TestBuildTxMiniScopeUat(unittest.TestCase):
         del self.config_data["scopes"]["TI"]
         with self.assertRaisesRegex(ValueError, "Missing TI config"):
             self.run_main()
-            
+
     def test_wrong_profile_id_fails(self):
         self.config_data["profile_id"] = "wrong_profile"
         with self.assertRaisesRegex(ValueError, "PROFILE_ID_MISMATCH"):
             self.run_main()
-            
+
     def test_tss_fingerprint_changed_fails(self):
         self.config_data["scopes"]["TSS"]["actual_end_fingerprint"]["task_name"] = "Wrong Task"
         with self.assertRaisesRegex(ValueError, "FINGERPRINT_NOT_FOUND"):
@@ -111,8 +112,9 @@ class TestBuildTxMiniScopeUat(unittest.TestCase):
         self.assertIn("classification_counts", manifest)
         self.assertIn("count_reconciliation", manifest)
         self.assertFalse(manifest["ecc_allowed"])
-        self.assertEqual(manifest["production_gate"], "PROFILE_NOT_PRODUCTION")
+        self.assertEqual(manifest["production_gate"], "NON_PRODUCTION_UAT_ONLY")
         self.assertIn("generated_files", manifest)
+
 
 if __name__ == "__main__":
     unittest.main()

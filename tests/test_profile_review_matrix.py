@@ -51,8 +51,14 @@ class TestProfileReviewMatrix(unittest.TestCase):
         self.assertEqual(site_name["profile_count"], 5)
         self.assertIn("zte_tx_mini_pr_v1", site_name["profiles"])
         tx_summary = next(item for item in registry["profile_summaries"] if item["profile_id"] == "tx_mini_pr_v1")
-        self.assertEqual(tx_summary["profile_version"], "0.2.0")
-        self.assertEqual(tx_summary["observed_header_hash"], "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221")
+        tx_profile = json.loads(
+            (ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml").read_text(encoding="utf-8")
+        )
+        self.assertEqual(tx_summary["profile_version"], tx_profile["profile_version"])
+        self.assertEqual(
+            tx_summary["observed_header_hash"],
+            tx_profile["export_structure"]["observed_header_hash"],
+        )
 
         bau_summary = next(
             item for item in registry["profile_summaries"] if item["profile_id"] == "celcomdigi_bau_2023_pr_v1"

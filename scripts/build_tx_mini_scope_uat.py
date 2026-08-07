@@ -14,7 +14,7 @@ from canonical_generator_bridge import build_records_from_export, classify_uat_r
 from profile_du_export import sha256_file, calculate_header_hash, build_header_inventory, fingerprint_key
 
 EXPECTED_SOURCE_SHA256 = "81de6ba3673dad406e7824727c5c8492dd06b3ef60d088a6e9d680af6c35f8ab"
-EXPECTED_HEADER_HASH = "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221"
+EXPECTED_HEADER_HASH = "99645657ed5177bed3f0af673f141dc700fb7b486743cb830d5350a473c007ff"
 
 
 def write_csv(path: Path, rows: list[Mapping[str, Any]], fieldnames: list[str]) -> None:
@@ -61,7 +61,7 @@ def main() -> int:
     # Config Validation
     if not args.scope_config.exists():
         raise FileNotFoundError(f"Scope config not found: {args.scope_config}")
-    
+
     try:
         scope_config_data = _load_json_or_yaml(args.scope_config)
     except Exception as e:
@@ -69,11 +69,11 @@ def main() -> int:
 
     if scope_config_data.get("profile_id") != "tx_mini_pr_v1":
         raise ValueError("PROFILE_ID_MISMATCH")
-    
+
     config_version = scope_config_data.get("config_version")
     if not config_version:
         raise ValueError("Missing config_version")
-        
+
     config_status = scope_config_data.get("status")
     if config_status != "UAT_ONLY":
         raise ValueError("SCOPE_CONFIG_NOT_UAT_ONLY")
@@ -81,12 +81,12 @@ def main() -> int:
     scopes_config = scope_config_data.get("scopes")
     if not scopes_config:
         raise ValueError("Missing scopes layer")
-        
+
     for required_scope in ["TSS", "TI"]:
         if required_scope not in scopes_config:
             raise ValueError(f"Missing {required_scope} config")
-        
-    if len(scopes_config) != 2: # Strict mode check for extra scope
+
+    if len(scopes_config) != 2:  # Strict mode check for extra scope
         raise ValueError("Extra unexpected scope in config")
 
     for s, c in scopes_config.items():
@@ -116,19 +116,19 @@ def main() -> int:
         resolved_columns[scope] = resolve_fingerprint(inventory, fp)
 
     csv_columns = [
-        "Source Row", "Masked Site Code", "Tx SOW Raw", "Tx SOW Normalized", 
-        "Region", "TSS Subcontractor", "TSS Actual End Date", 
+        "Source Row", "Masked Site Code", "Tx SOW Raw", "Tx SOW Normalized",
+        "Region", "TSS Subcontractor", "TSS Actual End Date",
         "Existing TSS PR State", "Eligibility Classification", "Eligibility Reason",
-        "Profile ID", "Profile Version", "Mapping Version", 
+        "Profile ID", "Profile Version", "Mapping Version",
         "Scope Eligibility Config Path", "Scope Eligibility Config Version", "Scope Eligibility Config Status",
         "Scope Fingerprint", "Resolved Source Column",
         "Source SHA-256", "Header Hash", "ECC Allowed"
     ]
     ti_csv_columns = [col.replace("TSS", "TI") for col in csv_columns]
-    
+
     scopes = ["TSS", "TI"]
     manifest = []
-    
+
     summary = {
         "file_hash": file_hash,
         "header_hash": header_hash,
@@ -139,10 +139,10 @@ def main() -> int:
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_out = Path(temp_dir)
-        
+
         for scope in scopes:
             records, metadata = build_records_from_export(args.input, args.profile, scope, args.sow_registry, scope_config=scopes_config)
-            
+
             counts = {
                 "UAT_CANDIDATE": 0,
                 "DUPLICATE_BLOCKED": 0,
@@ -150,19 +150,19 @@ def main() -> int:
                 "REVIEW_REQUIRED": 0
             }
             partitions = {k: [] for k in counts}
-            
+
             total_canonical_rows = len(records)
-            
+
             for record in records:
                 cls, reasons = classify_uat_record(record, scope)
                 counts[cls] += 1
-                
+
                 site_code = record["site"].get("site_code", "")
                 masked = site_code[:3] + "***" + site_code[-3:] if len(site_code) > 6 else "***"
-                
+
                 end_date_val = record.get("source_evidence", {}).get("fields", {}).get(f"{scope.lower()}_actual_end_date", {}).get("source_value", "")
                 existing_pr = record.get("pr_context", {}).get(f"existing_{scope.lower()}_pr_status", "")
-                
+
                 row = {
                     "Source Row": record["identity"]["source_row_number"],
                     "Masked Site Code": masked,
@@ -187,14 +187,14 @@ def main() -> int:
                     "ECC Allowed": False
                 }
                 partitions[cls].append(row)
-            
+
             summary["scopes"][scope] = counts
             cols = csv_columns if scope == "TSS" else ti_csv_columns
-            
+
             for cls, items in partitions.items():
                 if scope == "TI" and cls == "UAT_CANDIDATE":
                     continue
-                    
+
                 if cls == "UAT_CANDIDATE":
                     write_csv(temp_out / f"TX_MINI_{scope}_{cls}S.csv", items, cols)
                     write_xlsx(temp_out / f"TX_MINI_{scope}_{cls}S.xlsx", items, cols)
@@ -203,10 +203,10 @@ def main() -> int:
                 else:
                     write_csv(temp_out / f"TX_MINI_{scope}_{cls}.csv", items, cols)
                     manifest.append(f"TX_MINI_{scope}_{cls}.csv")
-                    
+
             if sum(counts.values()) != total_canonical_rows:
                 raise ValueError(f"Count consistency violation in {scope}")
-                
+
             legacy_comparisons[scope] = {
                 "scope_selection_parity": "NOT_EXECUTED",
                 "legacy_selected": None,
@@ -238,10 +238,10 @@ def main() -> int:
             ])
         if summary['scopes']['TI']['UAT_CANDIDATE'] == 0:
             md.append("TI UAT candidates: 0\n")
-            
+
         (temp_out / "TX_MINI_SCOPE_ELIGIBILITY_SUMMARY.md").write_text("\n".join(md))
         manifest.append("TX_MINI_SCOPE_ELIGIBILITY_SUMMARY.md")
-        
+
         legacy_comp_md = [
             "# Legacy Selection Comparison",
             "",
@@ -259,18 +259,18 @@ def main() -> int:
                 f"- review required: {legacy_comparisons[scope]['review_required']}",
                 ""
             ])
-            
+
         (temp_out / "TX_MINI_LEGACY_SELECTION_COMPARISON.md").write_text("\n".join(legacy_comp_md))
         manifest.append("TX_MINI_LEGACY_SELECTION_COMPARISON.md")
         (temp_out / "TX_MINI_LEGACY_SELECTION_COMPARISON.json").write_text(json.dumps(legacy_comparisons, indent=2))
         manifest.append("TX_MINI_LEGACY_SELECTION_COMPARISON.json")
-        
+
         generated_files = {}
         for filename in manifest:
             generated_files[filename] = sha256_file(temp_out / filename)
-            
+
         manifest_data = {
-            "generated_at": str(temp_out), # placeholder 
+            "generated_at": str(temp_out),  # placeholder
             "generator_commit_sha": "TODO",
             "source_file_name": args.input.name,
             "source_sha256": file_hash,
@@ -288,10 +288,10 @@ def main() -> int:
             "classification_counts": {s: summary["scopes"][s] for s in scopes},
             "count_reconciliation": "PASS",
             "ecc_allowed": False,
-            "production_gate": "PROFILE_NOT_PRODUCTION",
+            "production_gate": "NON_PRODUCTION_UAT_ONLY",
             "generated_files": generated_files
         }
-        
+
         import datetime
         manifest_data["generated_at"] = datetime.datetime.utcnow().isoformat()
         import subprocess
@@ -300,11 +300,10 @@ def main() -> int:
             manifest_data["generator_commit_sha"] = commit_sha
         except Exception:
             manifest_data["generator_commit_sha"] = "UNKNOWN"
-            
+
         (temp_out / "TX_MINI_ELIGIBILITY_MANIFEST.json").write_text(json.dumps(manifest_data, indent=2))
-        
+
         # Atomic rename
-        import shutil
         if args.output.exists():
             shutil.rmtree(args.output)
         args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -312,6 +311,7 @@ def main() -> int:
 
     print(f"UAT packet built in {args.output}")
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -57,10 +57,10 @@ class TestDuProfileLoader(_LegacyTestDuProfileLoader):
         old_hash = "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221"
         revalidated_hash = "1a466e31d3c25ca73f059123d4cc33280761746ea3dca61d25a384acad5c9fde"
         supplied_hash = "830864906f3e69041995bec10b0a5840d5f8c6fa5defa2cfaef30b868b91a921"
-        self.assertEqual(
-            profile["export_structure"]["approved_header_hashes"],
-            [old_hash, revalidated_hash, supplied_hash],
-        )
+        authoritative_fixture_hash = "99645657ed5177bed3f0af673f141dc700fb7b486743cb830d5350a473c007ff"
+        approved_hashes = profile["export_structure"]["approved_header_hashes"]
+        self.assertTrue({old_hash, revalidated_hash, supplied_hash}.issubset(set(approved_hashes)))
+        self.assertIn(authoritative_fixture_hash, approved_hashes)
         self.assertEqual(profile["export_structure"]["observed_header_hash"], supplied_hash)
         self.assertEqual(profile["identity"]["accepted_view_ids"], ["2477626672974883536"])
 

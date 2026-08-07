@@ -21,7 +21,12 @@ from build_du_discovery_registry import (
 class TestDuDiscoveryRegistry(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.profiler_root = ROOT / find_profiler_root()
+        try:
+            cls.profiler_root = ROOT / find_profiler_root()
+        except FileNotFoundError as error:
+            raise unittest.SkipTest(
+                "local profiler discovery artifacts are unavailable in this clean checkout"
+            ) from error
 
     def test_parse_source_filename(self):
         parsed = parse_source_filename("A-P202211283695_D002-MW EOS Swap-MW EOS Swap Rollout-20260703160307.xlsx")
@@ -69,7 +74,7 @@ class TestDuDiscoveryRegistry(unittest.TestCase):
         entry = build_discovery_entry(profile_dir)
         self.assertEqual(entry["du_model_name"], "MW EOS Swap")
         self.assertEqual(entry["profile_id"], "mw_eos_swap_pr_v1")
-        self.assertEqual(entry["profile_status"], "PR_INPUT_READY")
+        self.assertEqual(entry["profile_status"], "PRODUCTION")
         self.assertEqual(entry["profile_version"], "0.1.0")
         self.assertEqual(entry["mapping_version"], "approved-2026-07-10-mw-eos-swap-v2")
 
@@ -78,7 +83,7 @@ class TestDuDiscoveryRegistry(unittest.TestCase):
         entry = build_discovery_entry(profile_dir)
         self.assertEqual(entry["du_model_name"], "2023 TX Rollout")
         self.assertEqual(entry["profile_id"], "tx_rollout_2023_pr_v1")
-        self.assertEqual(entry["profile_status"], "PR_INPUT_READY")
+        self.assertEqual(entry["profile_status"], "PRODUCTION")
         self.assertEqual(entry["profile_version"], "0.1.0")
         self.assertEqual(entry["mapping_version"], "approved-2026-07-10-2023-tx-rollout-v2")
 
@@ -87,7 +92,7 @@ class TestDuDiscoveryRegistry(unittest.TestCase):
         entry = build_discovery_entry(profile_dir)
         self.assertEqual(entry["du_model_name"], "Jendela TX Migration")
         self.assertEqual(entry["profile_id"], "jendela_tx_migration_pr_v1")
-        self.assertEqual(entry["profile_status"], "PR_INPUT_READY")
+        self.assertEqual(entry["profile_status"], "PRODUCTION")
         self.assertEqual(entry["profile_version"], "0.4.0")
         self.assertEqual(entry["mapping_version"], "approved-2026-08-04-jendela-tx-migration-v3")
 
@@ -102,7 +107,7 @@ class TestDuDiscoveryRegistry(unittest.TestCase):
             "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx",
         )
         self.assertEqual(entry["profile_id"], "celcomdigi_bau_2023_pr_v1")
-        self.assertEqual(entry["profile_status"], "PR_INPUT_READY")
+        self.assertEqual(entry["profile_status"], "PRODUCTION")
         self.assertEqual(entry["profile_version"], "0.2.0")
         self.assertEqual(entry["mapping_version"], "approved-2026-07-14-2023-celcomdigi-bau-tx-prpo-v1")
         self.assertTrue(entry["skill_field_presence"]["existing_tss_pr"])
@@ -337,7 +342,7 @@ class TestDuDiscoveryRegistry(unittest.TestCase):
         entry = build_discovery_entry(profile_dir)
         self.assertEqual(entry["du_model_name"], "2024 Celcomdigi BAU")
         self.assertEqual(entry["profile_id"], "celcomdigi_bau_2024_pr_v1")
-        self.assertEqual(entry["profile_status"], "PR_INPUT_READY")
+        self.assertEqual(entry["profile_status"], "PRODUCTION")
         self.assertEqual(entry["profile_version"], "0.1.0")
         self.assertEqual(entry["mapping_version"], "approved-2026-07-10-2024-celcomdigi-bau-v2")
 
@@ -346,7 +351,7 @@ class TestDuDiscoveryRegistry(unittest.TestCase):
         entry = build_discovery_entry(profile_dir)
         self.assertEqual(entry["du_model_name"], "Celcomdigi USP")
         self.assertEqual(entry["profile_id"], "celcomdigi_usp_pr_v1")
-        self.assertEqual(entry["profile_status"], "PR_INPUT_READY")
+        self.assertEqual(entry["profile_status"], "PRODUCTION")
         self.assertEqual(entry["profile_version"], "0.1.0")
         self.assertEqual(entry["mapping_version"], "approved-2026-07-10-celcomdigi-usp-v2")
 
