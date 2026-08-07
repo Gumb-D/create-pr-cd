@@ -8,7 +8,7 @@ on:
       - "scripts/generate_tss_pr_ecc.py"
       - "scripts/mw_hardware_upgrade_selector.py"
       - "tests/test_mw_hardware_upgrade_selection.py"
-      - ".github/issue-69-generator.patch"
+      - "tests/test_mw_hardware_upgrade_selector_boundaries.py"
       - ".github/workflows/issue-69-regression.yml"
 
 permissions:
@@ -29,6 +29,7 @@ jobs:
         run: |
           python -m unittest \
             tests.test_mw_hardware_upgrade_selection \
+            tests.test_mw_hardware_upgrade_selector_boundaries \
             tests.test_ti_sow_matching \
             tests.test_human_uat_remediation_48_54 \
             tests.test_geography_resolver \
