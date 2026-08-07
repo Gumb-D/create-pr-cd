@@ -153,7 +153,7 @@ class TestUnresolvedSkillFieldReview(unittest.TestCase):
         review_entry = build_review_entry(profile, shortlist_entry)
 
         self.assertEqual(review_entry["profile_id"], "zte_tx_mini_pr_v1")
-        self.assertEqual(review_entry["profile_status"], "PR_INPUT_READY")
+        self.assertEqual(review_entry["profile_status"], "PRODUCTION")
         self.assertEqual(review_entry["summary"]["missing_required_fields"], [])
         self.assertEqual(review_entry["summary"]["no_profile_selection_fields"], [])
         self.assertEqual(review_entry["summary"]["resolved_by_approval_fields"], ["site_code", "tx_sow_raw"])
@@ -278,7 +278,7 @@ class TestUnresolvedSkillFieldReview(unittest.TestCase):
 
         self.assertEqual(review_entry["profile_id"], "celcomdigi_bau_2023_pr_v1")
         self.assertEqual(review_entry["source_file_name"], "A-P202202168750_D002-2023 Celcomdigi BAU-2023 Celcomdigi BAU_(TX_PRPO)-20260714150843.xlsx")
-        self.assertEqual(review_entry["profile_status"], "PR_INPUT_READY")
+        self.assertEqual(review_entry["profile_status"], "PRODUCTION")
         self.assertEqual(review_entry["summary"]["missing_required_fields"], [])
         self.assertEqual(review_entry["summary"]["competing_candidate_fields"], ["subcontractor_planning"])
         self.assertEqual(
