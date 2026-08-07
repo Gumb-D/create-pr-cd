@@ -7,7 +7,6 @@ import sys
 import unittest
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts"
 if str(SCRIPTS) not in sys.path:
@@ -31,7 +30,7 @@ class TestMwHardwareUpgradeSelectorBoundaries(unittest.TestCase):
 
         self.assertEqual(result["status"], "RESOLVED")
         self.assertEqual(result["subtype"], "IDU_WITHOUT_SITE_SURVEY")
-        self.assertEqual(result["pbom_code"], "350001095419")
+        self.assertNotIn("pbom_code", result)
 
     def test_field_boundaries_prevent_reuse_text_from_becoming_new_idu_work(self):
         evidence = {
@@ -47,7 +46,7 @@ class TestMwHardwareUpgradeSelectorBoundaries(unittest.TestCase):
 
         self.assertEqual(result["status"], "RESOLVED")
         self.assertEqual(result["subtype"], "ODU_WITH_SITE_SURVEY")
-        self.assertEqual(result["pbom_code"], "350001095417")
+        self.assertNotIn("pbom_code", result)
         self.assertFalse(result["signals"]["new_idu"])
 
 
