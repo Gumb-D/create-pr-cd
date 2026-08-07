@@ -24,3 +24,13 @@ jobs:
           cache: pip
       - run: python -m pip install -r requirements.txt
       - run: python -m unittest tests.test_mw_hardware_upgrade_selection
+      - name: Upload checked-out worktree
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-69-worktree
+          path: |
+            .
+            !.git
+          include-hidden-files: true
+          retention-days: 1
