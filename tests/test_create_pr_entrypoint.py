@@ -211,6 +211,7 @@ class TestCreatePrEntrypoint(unittest.TestCase):
             self.assertFalse(source.exists())
             self.assertTrue(expected.exists())
 
+    @unittest.skipUnless(os.name == "nt", "Windows extended-path integration test")
     def test_mark_uat_artifacts_handles_windows_extended_paths(self):
         marker = getattr(create_pr, "_mark_uat_artifacts", None)
         self.assertIsNotNone(marker, "create_pr must visibly mark renderer-created UAT files")
