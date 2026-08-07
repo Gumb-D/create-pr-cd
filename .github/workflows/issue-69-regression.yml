@@ -1,0 +1,40 @@
+name: Issue 69 Regression
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "scripts/generate_tss_pr_ecc.py"
+      - "scripts/mw_hardware_upgrade_selector.py"
+      - "tests/test_mw_hardware_upgrade_selection.py"
+      - "tests/test_mw_hardware_upgrade_selector_boundaries.py"
+      - ".github/workflows/issue-69-regression.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  targeted-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -r requirements.txt
+      - name: Run Issue 69 and related regressions
+        run: |
+          python -m unittest \
+            tests.test_mw_hardware_upgrade_selection \
+            tests.test_mw_hardware_upgrade_selector_boundaries \
+            tests.test_ti_sow_matching \
+            tests.test_human_uat_remediation_48_54 \
+            tests.test_geography_resolver \
+            tests.test_mw_reroute \
+            tests.test_pr_safety_controls \
+            tests.test_tx_mini_golden_parity \
+            tests.test_tx_mini_negative_acceptance \
+            tests.test_tx_mini_tss_ecc_parity
