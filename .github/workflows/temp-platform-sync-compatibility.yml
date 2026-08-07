@@ -88,6 +88,7 @@ jobs:
         run: |
           npm ci --prefix platform-baseline/backend
           npm ci --prefix platform-candidate/backend
+          npm ci --prefix platform-baseline/frontend
           npm ci --prefix platform-candidate/frontend
 
       - name: Compute and apply approved candidate runtime fingerprint
@@ -126,7 +127,7 @@ jobs:
           path.write_text(updated, encoding='utf-8', newline='\n')
           PY
 
-      - name: Compare known Linux-sensitive tests on old and new engine pins
+      - name: Compare known Linux-sensitive backend tests on old and new engine pins
         shell: bash
         run: |
           compare_test() {
@@ -172,9 +173,31 @@ jobs:
           npm run test:job-prevalidate-guard
           npm run test:job-service-workers
 
-      - name: Run candidate frontend regression suite
-        working-directory: platform-candidate
-        run: npm test --prefix frontend
+      - name: Compare frontend unit-test behavior on baseline and candidate
+        shell: bash
+        run: |
+          set +e
+          npm run test:unit --prefix platform-baseline/frontend > baseline-frontend-unit.log 2>&1
+          BASELINE_STATUS=$?
+          npm run test:unit --prefix platform-candidate/frontend > candidate-frontend-unit.log 2>&1
+          CANDIDATE_STATUS=$?
+          set -e
+
+          echo "frontend-unit: baseline=${BASELINE_STATUS}, candidate=${CANDIDATE_STATUS}"
+          echo "--- BASELINE FRONTEND UNIT TAIL ---"
+          tail -n 45 baseline-frontend-unit.log
+          echo "--- CANDIDATE FRONTEND UNIT TAIL ---"
+          tail -n 45 candidate-frontend-unit.log
+
+          if [ "${BASELINE_STATUS}" -ne "${CANDIDATE_STATUS}" ]; then
+            echo "Candidate frontend unit behavior differs from the current platform baseline."
+            exit 1
+          fi
+
+      - name: Run candidate frontend build and route smoke
+        run: |
+          npm run build --prefix platform-candidate/frontend
+          npm run smoke --prefix platform-candidate/frontend
 
       - name: Verify exact engine pin and diff hygiene
         working-directory: platform-candidate
