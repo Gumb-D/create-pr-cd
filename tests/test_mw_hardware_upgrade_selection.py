@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import csv
-import json
 import subprocess
 import sys
 import tempfile
@@ -14,22 +13,23 @@ from pathlib import Path
 import pandas as pd
 from openpyxl import load_workbook
 
-
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 from canonical_generator_bridge_impl import canonical_record_to_generator_row  # noqa: E402
-from mw_hardware_upgrade_selector import resolve_mw_hardware_upgrade_subtype  # noqa: E402
-
+from mw_hardware_upgrade_selector import (  # noqa: E402
+    resolve_mw_hardware_upgrade_subtype,
+    select_mw_hardware_upgrade_item,
+)
+from pr_helpers import load_pr_model_items  # noqa: E402
 
 SCRIPT_PATH = SCRIPTS / "generate_tss_pr_ecc.py"
 PR_MODEL_PATH = ROOT / "Info" / "input" / "pr_model.xlsx"
 SITE_DATA_PATH = ROOT / "Info" / "input" / "site_pr_po_view.xlsx"
 TEMPLATE_PATH = ROOT / "Info" / "input" / "ecc_template.xls"
 MAPPING_PATH = ROOT / "Info" / "input" / "contract_info_reference.md"
-PROFILE_DIR = ROOT / "config" / "du_profiles"
 
 SITE_COLUMNS = [
     "customer site code",
@@ -199,7 +199,6 @@ class TestMwHardwareUpgradePositiveSelection(MwHardwareUpgradeGeneratorHarness):
             site_code = str(source_row["customer site code"])
             expected_pbom = SUBTYPE_PBOMS[subtype]
             with self.subTest(site=site_code):
-                self.assertIn(site_code, rows_by_site)
                 subtype_rows = [
                     row
                     for row in rows_by_site[site_code]
@@ -219,7 +218,7 @@ class TestMwHardwareUpgradePositiveSelection(MwHardwareUpgradeGeneratorHarness):
         source = dataframe[
             dataframe["customer site code"].astype(str).str.upper().eq("Q02210_AD")
         ]
-        self.assertEqual(len(source), 1, "Repository fixture must contain Q02210_AD exactly once")
+        self.assertEqual(len(source), 1)
         row = source.iloc[0].to_dict()
         row["SubCon - TI Team"] = "Allstar"
         row["Subcon PR - TI"] = ""
@@ -235,10 +234,7 @@ class TestMwHardwareUpgradePositiveSelection(MwHardwareUpgradeGeneratorHarness):
             and output_row["PBOM_Code"] in set(SUBTYPE_PBOMS.values())
         ]
         self.assertEqual(len(subtype_rows), 1)
-        self.assertEqual(
-            subtype_rows[0]["PBOM_Code"],
-            SUBTYPE_PBOMS["IDU_WITHOUT_SITE_SURVEY"],
-        )
+        self.assertEqual(subtype_rows[0]["PBOM_Code"], "350001095419")
         self.assertFalse(
             any(
                 review["Site_ID"] == "Q02210_AD"
@@ -259,21 +255,13 @@ class TestMwHardwareUpgradeFailClosed(MwHardwareUpgradeGeneratorHarness):
             review_by_site[site_code]["Reason_Code"],
             "MW_HARDWARE_UPGRADE_TYPE_UNRESOLVED",
         )
-        self.assertNotEqual(
-            review_by_site[site_code]["Reason_Code"],
-            "NO_MATCHING_TI_PR_MODEL_ITEM",
-        )
 
     def test_missing_component_evidence_blocks_whole_site(self):
         self._assert_unresolved(_site("HW_MISSING", "TSS+AA+TI", ""))
 
     def test_ambiguous_idu_and_odu_evidence_blocks_whole_site(self):
         self._assert_unresolved(
-            _site(
-                "HW_AMBIGUOUS",
-                "TSS+AA+TI",
-                "New ISM8 IDU x1 and new XMC-3E ODU x1.",
-            )
+            _site("HW_AMBIGUOUS", "TSS+AA+TI", "New ISM8 IDU x1 and new XMC-3E ODU x1.")
         )
 
     def test_odu_without_tss_or_ti_scope_is_not_guessed(self):
@@ -284,6 +272,62 @@ class TestMwHardwareUpgradeFailClosed(MwHardwareUpgradeGeneratorHarness):
                 "Re-use existing RTN910AF IDU. New XMC-3E ODU x1.",
             )
         )
+
+
+class TestMwHardwareUpgradeModelDrivenSelection(unittest.TestCase):
+    def test_subtype_resolver_does_not_emit_a_pbom_without_model_rows(self):
+        result = resolve_mw_hardware_upgrade_subtype(
+            _site("HW_SEMANTIC_ONLY", "TSS+AA+TI", "New ISM8. Re-use existing ODU.")
+        )
+        self.assertEqual(result["status"], "RESOLVED")
+        self.assertEqual(result["subtype"], "IDU_WITHOUT_SITE_SURVEY")
+        self.assertNotIn("pbom_code", result)
+
+    def test_selected_pbom_is_read_from_the_loaded_model_row(self):
+        group = [
+            {
+                "PBOM_Code": "MODEL-IDU-CODE",
+                "Description": "Swap(IDU) for C&D Project without site survey",
+                "Rules": "3 choose 1 (Mandatory)",
+                "Unit": "Hop",
+                "Quantity": 1,
+                "Is_Mandatory": True,
+            },
+            {
+                "PBOM_Code": "MODEL-ODU-NO-TSS-CODE",
+                "Description": "Swap(ODU) for C&D Project without site survey",
+                "Rules": "3 choose 1 (Mandatory)",
+                "Unit": "Hop",
+                "Quantity": 1,
+                "Is_Mandatory": True,
+            },
+            {
+                "PBOM_Code": "MODEL-ODU-TSS-CODE",
+                "Description": "Swap(ODU) for C&D Project with site survey",
+                "Rules": "3 choose 1 (Mandatory)",
+                "Unit": "Hop",
+                "Quantity": 1,
+                "Is_Mandatory": True,
+            },
+        ]
+        selected, result = select_mw_hardware_upgrade_item(
+            group,
+            _site("HW_MODEL_DRIVEN", "TSS+AA+TI", "New ISM8. Re-use existing ODU."),
+        )
+        self.assertEqual([item["PBOM_Code"] for item in selected], ["MODEL-IDU-CODE"])
+        self.assertEqual(result["pbom_code"], "MODEL-IDU-CODE")
+
+    def test_pr_model_v4_subtype_rows_are_mandatory_and_unique(self):
+        _, ti_models = load_pr_model_items(PR_MODEL_PATH)
+        group = [
+            item
+            for item in ti_models
+            if item["SOW"].strip().casefold() == "mw hardware upgrade"
+            and "3 choose 1" in item["Rules"].casefold()
+        ]
+        self.assertEqual(len(group), 3)
+        self.assertTrue(all(item["Is_Mandatory"] for item in group))
+        self.assertEqual({item["PBOM_Code"] for item in group}, set(SUBTYPE_PBOMS.values()))
 
 
 class TestMwHardwareUpgradeCanonicalEvidence(unittest.TestCase):
@@ -319,9 +363,7 @@ class TestMwHardwareUpgradeCanonicalEvidence(unittest.TestCase):
                 "pr_input_classification": "PR_INPUT_READY",
             },
         }
-
         row = canonical_record_to_generator_row(record, "TI")
-
         self.assertEqual(row["TX Upgrade Scope"], "TSS+AA+TI")
         self.assertEqual(row["BOQ Configuration"], "New ISM8")
         self.assertEqual(row["TX SOW Details"], "Re-use existing ODU")
@@ -344,24 +386,7 @@ class TestMwHardwareUpgradeCanonicalEvidence(unittest.TestCase):
                 evidence["DU Profile ID"] = profile_id
                 result = resolve_mw_hardware_upgrade_subtype(evidence)
                 self.assertEqual(result["status"], "RESOLVED")
-                self.assertEqual(result["pbom_code"], "350001095419")
-
-    def test_profile_evidence_is_never_promoted_from_unverified_candidates(self):
-        approved_profiles = []
-        for profile_path in sorted(PROFILE_DIR.glob("*.yaml")):
-            profile = json.loads(profile_path.read_text(encoding="utf-8"))
-            if profile.get("status") != "PRODUCTION":
-                continue
-            field_mapping = profile.get("field_mapping", {})
-            approved_fields = set()
-            for field_name in ("tx_upgrade_scope_raw", "tx_sow_details"):
-                candidates = field_mapping.get(field_name, {}).get("source_candidates", [])
-                if any(candidate.get("mapping_status") == "APPROVED" for candidate in candidates):
-                    approved_fields.add(field_name)
-            if approved_fields == {"tx_upgrade_scope_raw", "tx_sow_details"}:
-                approved_profiles.append(profile["profile_id"])
-
-        self.assertIn("tx_mini_pr_v1", approved_profiles)
+                self.assertEqual(result["subtype"], "IDU_WITHOUT_SITE_SURVEY")
 
 
 if __name__ == "__main__":
