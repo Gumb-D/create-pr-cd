@@ -37,51 +37,59 @@ def _text(value: Any) -> str:
     return re.sub(r"\s+", " ", str(value)).strip()
 
 
-def _combined_evidence(row: Mapping[str, Any]) -> str:
-    return " | ".join(
-        f"{field}={_text(row.get(field, ''))}"
+def _evidence_texts(row: Mapping[str, Any]) -> list[str]:
+    return [
+        _text(row.get(field, ""))
         for field in EVIDENCE_FIELDS
         if _text(row.get(field, ""))
+    ]
+
+
+def _has_any(patterns: Sequence[str], texts: Sequence[str]) -> bool:
+    return any(
+        re.search(pattern, text, flags=re.IGNORECASE)
+        for text in texts
+        for pattern in patterns
     )
-
-
-def _has_any(patterns: Sequence[str], text: str) -> bool:
-    return any(re.search(pattern, text, flags=re.IGNORECASE) for pattern in patterns)
 
 
 def _component_signals(row: Mapping[str, Any]) -> dict[str, bool]:
-    evidence = _combined_evidence(row)
+    evidence_texts = _evidence_texts(row)
+    idu_component = r"(?:IDU|RTN\w*|ISM\d*|MD\d+|ISV\d*)"
+    odu_component = r"(?:ODU|XMC[\w-]*|SRU[\w-]*)"
+    new_action = r"(?:new|insert|install|add|replace|swap|change|upgrade)\w*"
+    completed_action = r"(?:inserted|installed|added|replaced|swapped|changed|upgraded)"
 
     new_idu = _has_any(
         (
-            r"\bnew\s+(?:\d+\s*[xX]\s*)?(?:IDU|RTN\w*|ISM\d*)\b",
-            r"\b(?:insert|install|replace|swap|change|upgrade)\w*\b.{0,45}\b(?:IDU|RTN\w*|ISM\d*)\b",
-            r"\b(?:IDU|RTN\w*|ISM\d*)\b.{0,45}\b(?:insert|install|replace|swap|change|upgrade)\w*\b",
+            rf"\bnew\s+(?:\d+\s*[xX]\s*)?{idu_component}\b",
+            rf"\b{new_action}\b[^.;\n]{{0,60}}\b{idu_component}\b",
+            rf"\b{idu_component}\b[^.;\n]{{0,45}}\b{completed_action}\b",
         ),
-        evidence,
+        evidence_texts,
     )
     new_odu = _has_any(
         (
-            r"\bnew\s+(?:\d+\s*[xX]\s*)?(?:ODU|XMC[\w-]*|SRU[\w-]*)\b",
-            r"\b(?:insert|install|replace|swap|change|upgrade)\w*\b.{0,45}\b(?:ODU|XMC[\w-]*|SRU[\w-]*)\b",
-            r"\b(?:ODU|XMC[\w-]*|SRU[\w-]*)\b.{0,45}\b(?:insert|install|replace|swap|change|upgrade)\w*\b",
+            rf"\bnew\s+(?:\d+\s*[xX]\s*)?{odu_component}\b",
+            rf"\b{new_action}\b[^.;\n]{{0,60}}\b{odu_component}\b",
+            rf"\b{odu_component}\b[^.;\n]{{0,45}}\b{completed_action}\b",
         ),
-        evidence,
+        evidence_texts,
     )
 
     reuse_idu = _has_any(
         (
-            r"\bre[- ]?use\w*\b.{0,45}\b(?:IDU|RTN\w*|ISM\d*)\b",
-            r"\bexisting\s+(?:IDU|RTN\w*|ISM\d*)\b",
+            rf"\bre[- ]?use\w*\b.{{0,45}}\b{idu_component}\b",
+            rf"\bexisting\s+{idu_component}\b",
         ),
-        evidence,
+        evidence_texts,
     )
     reuse_odu = _has_any(
         (
-            r"\bre[- ]?use\w*\b.{0,45}\b(?:ODU|XMC[\w-]*|SRU[\w-]*)\b",
-            r"\bexisting\s+(?:ODU|XMC[\w-]*|SRU[\w-]*)\b",
+            rf"\bre[- ]?use\w*\b.{{0,45}}\b{odu_component}\b",
+            rf"\bexisting\s+{odu_component}\b",
         ),
-        evidence,
+        evidence_texts,
     )
 
     return {
@@ -89,7 +97,7 @@ def _component_signals(row: Mapping[str, Any]) -> dict[str, bool]:
         "new_odu": new_odu,
         "reuse_idu": reuse_idu,
         "reuse_odu": reuse_odu,
-        "has_evidence": bool(evidence),
+        "has_evidence": bool(evidence_texts),
     }
 
 
