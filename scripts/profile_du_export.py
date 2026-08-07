@@ -255,11 +255,80 @@ def build_header_inventory(input_path: Path) -> Dict[str, Any]:
     }
 
 
+def _sheet_has_site_identity(sheet: Mapping[str, Any]) -> bool:
+    """Return whether a sheet contains the strict iEPMS DU site-identity column."""
+    return any(
+        parse_site_identity_field_code(
+            column.get("fingerprint", {}).get("field_code", "")
+        )
+        is not None
+        for column in sheet.get("columns", [])
+    )
+
+
+def resolve_authoritative_sheets(
+    inventory: Mapping[str, Any],
+    profile: Mapping[str, Any] | None = None,
+) -> List[Mapping[str, Any]]:
+    """Select the sheet(s) that define DU record structure for header approval.
+
+    The full workbook inventory remains untouched for audit/discovery. Header
+    approval is scoped separately: an explicit profile selector wins; otherwise
+    a single-sheet source remains backward compatible; multi-sheet workbooks
+    must contain exactly one sheet with the strict DU site-identity field.
+    """
+    sheets = list(inventory.get("sheets", []))
+    if not sheets:
+        raise ValueError("No authoritative DU sheet can be resolved from an empty inventory.")
+
+    selector: Any = None
+    if profile is not None:
+        selector = profile.get("export_structure", {}).get("sheet_selector")
+
+    if selector not in (None, "", []):
+        if isinstance(selector, str):
+            selected_names = [selector]
+        elif isinstance(selector, (list, tuple)) and selector and all(
+            isinstance(value, str) and value for value in selector
+        ):
+            selected_names = list(selector)
+        else:
+            raise ValueError("Configured authoritative sheet_selector must be a sheet name or a non-empty list of sheet names.")
+
+        if len(set(selected_names)) != len(selected_names):
+            raise ValueError("Configured authoritative sheet_selector contains duplicate sheet names.")
+
+        by_name = {str(sheet.get("sheet_name", "")): sheet for sheet in sheets}
+        missing = [name for name in selected_names if name not in by_name]
+        if missing:
+            raise ValueError(
+                "Configured authoritative sheet_selector did not resolve: "
+                + ", ".join(missing)
+            )
+        selected = [by_name[name] for name in selected_names]
+        if not all(_sheet_has_site_identity(sheet) for sheet in selected):
+            raise ValueError("Configured authoritative sheet_selector includes a sheet without a strict DU site identity column.")
+        return selected
+
+    if len(sheets) == 1:
+        return sheets
+
+    candidates = [sheet for sheet in sheets if _sheet_has_site_identity(sheet)]
+    if len(candidates) != 1:
+        candidate_names = [str(sheet.get("sheet_name", "")) for sheet in candidates]
+        raise ValueError(
+            "Unable to resolve exactly one authoritative DU sheet from a multi-sheet export; "
+            f"strict site-identity candidates={candidate_names}."
+        )
+    return candidates
+
+
 def _header_hash(
     inventory: Mapping[str, Any],
     *,
     structural: bool = False,
     reference_view_id: str | None = None,
+    profile: Mapping[str, Any] | None = None,
 ) -> str:
     def selected_fingerprint(column: Mapping[str, Any]) -> Dict[str, str]:
         fingerprint = _canonical_fingerprint(column.get("fingerprint", {}))
@@ -275,6 +344,7 @@ def _header_hash(
                 )
         return fingerprint
 
+    authoritative_sheets = resolve_authoritative_sheets(inventory, profile)
     hash_payload = {
         "schema_version": inventory.get("schema_version", SCHEMA_VERSION),
         "header_row_count": HEADER_ROW_COUNT,
@@ -286,7 +356,7 @@ def _header_hash(
                     for column in sheet.get("columns", [])
                 ],
             }
-            for sheet in inventory.get("sheets", [])
+            for sheet in authoritative_sheets
         ],
     }
     canonical = json.dumps(
@@ -298,14 +368,20 @@ def _header_hash(
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
-def calculate_header_hash(inventory: Mapping[str, Any]) -> str:
-    """Hash the exact normalized four-layer inventory in sheet/column order."""
-    return _header_hash(inventory)
+def calculate_header_hash(
+    inventory: Mapping[str, Any],
+    profile: Mapping[str, Any] | None = None,
+) -> str:
+    """Hash exact normalized headers from authoritative DU sheet(s) only."""
+    return _header_hash(inventory, profile=profile)
 
 
-def calculate_structural_header_hash(inventory: Mapping[str, Any]) -> str:
-    """Hash the inventory while normalizing only the site identity View suffix."""
-    return _header_hash(inventory, structural=True)
+def calculate_structural_header_hash(
+    inventory: Mapping[str, Any],
+    profile: Mapping[str, Any] | None = None,
+) -> str:
+    """Hash authoritative headers while normalizing only the site identity View suffix."""
+    return _header_hash(inventory, structural=True, profile=profile)
 
 
 def _approved_site_layout_view_ids(profile: Mapping[str, Any]) -> set[str]:
@@ -330,12 +406,13 @@ def resolve_approved_header_structure(
     """Validate exact or View-normalized structure against approved raw hashes.
 
     Existing approved hashes remain authoritative. For an unseen runtime View,
-    the inventory is rebound only at the site identity View suffix represented
-    by an APPROVED site-code mapping fingerprint. Identity accepted_view_ids is
-    never consulted. A match proves the complete layout is otherwise identical.
+    the authoritative inventory is rebound only at the site identity View suffix
+    represented by an APPROVED site-code mapping fingerprint. Identity
+    accepted_view_ids is never consulted. A match proves the selected DU layout
+    is otherwise identical; auxiliary workbook sheets remain audit evidence only.
     """
-    raw_hash = calculate_header_hash(inventory)
-    structural_hash = calculate_structural_header_hash(inventory)
+    raw_hash = calculate_header_hash(inventory, profile)
+    structural_hash = calculate_structural_header_hash(inventory, profile)
     approved_hashes = {
         str(value)
         for value in profile.get("export_structure", {}).get("approved_header_hashes", [])
@@ -351,7 +428,11 @@ def resolve_approved_header_structure(
 
     layout_view_ids = _approved_site_layout_view_ids(profile)
     for view_id in sorted(layout_view_ids):
-        candidate_hash = _header_hash(inventory, reference_view_id=view_id)
+        candidate_hash = _header_hash(
+            inventory,
+            reference_view_id=view_id,
+            profile=profile,
+        )
         if candidate_hash in approved_hashes:
             return {
                 "approved": True,
