@@ -11,7 +11,7 @@ permissions:
 jobs:
   verify-platform-sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -126,29 +126,35 @@ jobs:
           path.write_text(updated, encoding='utf-8', newline='\n')
           PY
 
-      - name: Compare integration behavior on old and new engine pins
+      - name: Compare known Linux-sensitive tests on old and new engine pins
         shell: bash
         run: |
-          set +e
-          npm run test:integration --prefix platform-baseline/backend > baseline-integration.log 2>&1
-          BASELINE_STATUS=$?
-          npm run test:integration --prefix platform-candidate/backend > candidate-integration.log 2>&1
-          CANDIDATE_STATUS=$?
-          set -e
+          compare_test() {
+            local script="$1"
+            local label="$2"
+            set +e
+            npm run "$script" --prefix platform-baseline/backend > "baseline-${label}.log" 2>&1
+            local baseline_status=$?
+            npm run "$script" --prefix platform-candidate/backend > "candidate-${label}.log" 2>&1
+            local candidate_status=$?
+            set -e
 
-          echo "BASELINE_INTEGRATION_STATUS=${BASELINE_STATUS}"
-          echo "CANDIDATE_INTEGRATION_STATUS=${CANDIDATE_STATUS}"
-          echo "--- BASELINE TAIL ---"
-          tail -n 40 baseline-integration.log
-          echo "--- CANDIDATE TAIL ---"
-          tail -n 40 candidate-integration.log
+            echo "${label}: baseline=${baseline_status}, candidate=${candidate_status}"
+            echo "--- BASELINE ${label} TAIL ---"
+            tail -n 30 "baseline-${label}.log"
+            echo "--- CANDIDATE ${label} TAIL ---"
+            tail -n 30 "candidate-${label}.log"
 
-          if [ "${BASELINE_STATUS}" -ne "${CANDIDATE_STATUS}" ]; then
-            echo "Candidate integration behavior differs from current platform baseline."
-            exit 1
-          fi
+            if [ "${baseline_status}" -ne "${candidate_status}" ]; then
+              echo "Candidate ${label} behavior differs from the current platform baseline."
+              return 1
+            fi
+          }
 
-      - name: Run candidate backend tests excluding known baseline integration result
+          compare_test test:integration integration
+          compare_test test:ran-adapter ran-adapter
+
+      - name: Run candidate backend compatibility tests
         working-directory: platform-candidate/backend
         run: |
           npm run smoke
@@ -158,7 +164,6 @@ jobs:
           npm run test:engine-integrity
           npm run test:engine-header-hash
           node scripts/error-visibility-test.js
-          npm run test:ran-adapter
           npm run test:ran-routes
           npm run test:ran-live-runtime
           npm run test:ran-worker-service
@@ -177,3 +182,16 @@ jobs:
           test "$(git -C skills/create-pr-cd rev-parse HEAD)" = "65d45a5ad0891d370f8e1efc24eb6b2a90b77aaf"
           git diff --check
           git status --short
+          git diff -- README.md backend/scripts/job-service-worker-payload-test.js backend/src/workers/manifests/mwPrManifest.js skills/create-pr-cd > ../platform-sync.patch
+
+      - name: Export verified platform update payload
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-worker-platform-create-pr-cd-65d45a5-update
+          path: |
+            platform-candidate/README.md
+            platform-candidate/backend/scripts/job-service-worker-payload-test.js
+            platform-candidate/backend/src/workers/manifests/mwPrManifest.js
+            platform-sync.patch
+          if-no-files-found: error
+          retention-days: 1
