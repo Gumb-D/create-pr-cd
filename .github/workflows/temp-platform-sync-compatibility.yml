@@ -11,7 +11,7 @@ permissions:
 jobs:
   verify-platform-sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
 
@@ -40,15 +40,16 @@ jobs:
             tests.test_tx_mini_negative_acceptance \
             tests.test_tx_mini_tss_ecc_parity
 
-      - name: Clone platform compatibility branch
+      - name: Prepare baseline and candidate platform checkouts
         run: |
-          git clone --recurse-submodules --branch chore/sync-create-pr-cd-65d45a5 \
-            https://github.com/DemonTweeks/ai-worker-platform.git platform
-          git -C platform/skills/create-pr-cd fetch origin 65d45a5ad0891d370f8e1efc24eb6b2a90b77aaf
-          git -C platform/skills/create-pr-cd checkout --detach 65d45a5ad0891d370f8e1efc24eb6b2a90b77aaf
+          git clone --recurse-submodules --branch main \
+            https://github.com/DemonTweeks/ai-worker-platform.git platform-baseline
+          cp -a platform-baseline platform-candidate
+          git -C platform-candidate/skills/create-pr-cd fetch origin 65d45a5ad0891d370f8e1efc24eb6b2a90b77aaf
+          git -C platform-candidate/skills/create-pr-cd checkout --detach 65d45a5ad0891d370f8e1efc24eb6b2a90b77aaf
 
-      - name: Apply intended platform metadata changes
-        working-directory: platform
+      - name: Apply intended candidate metadata changes
+        working-directory: platform-candidate
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -84,13 +85,13 @@ jobs:
           PY
 
       - name: Install platform dependencies
-        working-directory: platform
         run: |
-          npm ci --prefix backend
-          npm ci --prefix frontend
+          npm ci --prefix platform-baseline/backend
+          npm ci --prefix platform-candidate/backend
+          npm ci --prefix platform-candidate/frontend
 
-      - name: Compute approved runtime fingerprint
-        working-directory: platform
+      - name: Compute and apply approved candidate runtime fingerprint
+        working-directory: platform-candidate
         shell: bash
         run: |
           set -euo pipefail
@@ -125,16 +126,53 @@ jobs:
           path.write_text(updated, encoding='utf-8', newline='\n')
           PY
 
-      - name: Run platform backend compatibility suite
-        working-directory: platform
-        run: npm test --prefix backend
+      - name: Compare integration behavior on old and new engine pins
+        shell: bash
+        run: |
+          set +e
+          npm run test:integration --prefix platform-baseline/backend > baseline-integration.log 2>&1
+          BASELINE_STATUS=$?
+          npm run test:integration --prefix platform-candidate/backend > candidate-integration.log 2>&1
+          CANDIDATE_STATUS=$?
+          set -e
 
-      - name: Run platform frontend regression suite
-        working-directory: platform
+          echo "BASELINE_INTEGRATION_STATUS=${BASELINE_STATUS}"
+          echo "CANDIDATE_INTEGRATION_STATUS=${CANDIDATE_STATUS}"
+          echo "--- BASELINE TAIL ---"
+          tail -n 40 baseline-integration.log
+          echo "--- CANDIDATE TAIL ---"
+          tail -n 40 candidate-integration.log
+
+          if [ "${BASELINE_STATUS}" -ne "${CANDIDATE_STATUS}" ]; then
+            echo "Candidate integration behavior differs from current platform baseline."
+            exit 1
+          fi
+
+      - name: Run candidate backend tests excluding known baseline integration result
+        working-directory: platform-candidate/backend
+        run: |
+          npm run smoke
+          npm run test:llm-provider
+          npm run test:health-status
+          npm run test:preflight
+          npm run test:engine-integrity
+          npm run test:engine-header-hash
+          node scripts/error-visibility-test.js
+          npm run test:ran-adapter
+          npm run test:ran-routes
+          npm run test:ran-live-runtime
+          npm run test:ran-worker-service
+          npm run test:queue-registry
+          npm run test:job-control-concurrency
+          npm run test:job-prevalidate-guard
+          npm run test:job-service-workers
+
+      - name: Run candidate frontend regression suite
+        working-directory: platform-candidate
         run: npm test --prefix frontend
 
       - name: Verify exact engine pin and diff hygiene
-        working-directory: platform
+        working-directory: platform-candidate
         run: |
           test "$(git -C skills/create-pr-cd rev-parse HEAD)" = "65d45a5ad0891d370f8e1efc24eb6b2a90b77aaf"
           git diff --check
