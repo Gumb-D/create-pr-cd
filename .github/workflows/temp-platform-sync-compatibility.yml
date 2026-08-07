@@ -1,0 +1,141 @@
+name: Temporary AI Worker Platform Compatibility
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify-platform-sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run upstream Issue 69 and related regressions
+        run: |
+          python -m pip install -r requirements.txt
+          python -m unittest \
+            tests.test_mw_hardware_upgrade_selection \
+            tests.test_mw_hardware_upgrade_selector_boundaries \
+            tests.test_ti_sow_matching \
+            tests.test_human_uat_remediation_48_54 \
+            tests.test_geography_resolver \
+            tests.test_mw_reroute \
+            tests.test_pr_safety_controls \
+            tests.test_tx_mini_golden_parity \
+            tests.test_tx_mini_negative_acceptance \
+            tests.test_tx_mini_tss_ecc_parity
+
+      - name: Clone platform compatibility branch
+        run: |
+          git clone --recurse-submodules --branch chore/sync-create-pr-cd-65d45a5 \
+            https://github.com/DemonTweeks/ai-worker-platform.git platform
+          git -C platform/skills/create-pr-cd fetch origin 65d45a5ad0891d370f8e1efc24eb6b2a90b77aaf
+          git -C platform/skills/create-pr-cd checkout --detach 65d45a5ad0891d370f8e1efc24eb6b2a90b77aaf
+
+      - name: Apply intended platform metadata changes
+        working-directory: platform
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          old_version = 'approved-708fb92'
+          new_version = 'approved-65d45a5'
+          old_commit = '708fb9268c8d8d9ce213c1cb3e837090e9195251'
+          new_commit = '65d45a5ad0891d370f8e1efc24eb6b2a90b77aaf'
+
+          replacements = {
+              Path('README.md'): [(old_version, new_version), (old_commit, new_commit)],
+              Path('backend/scripts/job-service-worker-payload-test.js'): [(old_version, new_version), (old_commit, new_commit)],
+              Path('backend/src/workers/manifests/mwPrManifest.js'): [(old_version, new_version), (old_commit, new_commit)],
+          }
+
+          for path, pairs in replacements.items():
+              text = path.read_text(encoding='utf-8')
+              for old, new in pairs:
+                  if old not in text:
+                      raise SystemExit(f'{old!r} not found in {path}')
+                  text = text.replace(old, new)
+              path.write_text(text, encoding='utf-8', newline='\n')
+
+          manifest = Path('backend/src/workers/manifests/mwPrManifest.js')
+          text = manifest.read_text(encoding='utf-8')
+          anchor = "    'scripts/jendela_migration_decision.py',\n"
+          addition = "    'scripts/mw_hardware_upgrade_selector.py',\n"
+          if addition not in text:
+              if anchor not in text:
+                  raise SystemExit('runtimeFiles insertion anchor not found')
+              text = text.replace(anchor, anchor + addition)
+          manifest.write_text(text, encoding='utf-8', newline='\n')
+          PY
+
+      - name: Install platform dependencies
+        working-directory: platform
+        run: |
+          npm ci --prefix backend
+          npm ci --prefix frontend
+
+      - name: Compute approved runtime fingerprint
+        working-directory: platform
+        shell: bash
+        run: |
+          set -euo pipefail
+          FINGERPRINT="$(node - <<'NODE'
+          const path = require('path');
+          const manifest = require('./backend/src/workers/manifests/mwPrManifest');
+          const { computeRuntimeFingerprint } = require('./backend/src/services/engineIntegrityService');
+          process.stdout.write(computeRuntimeFingerprint(path.resolve('skills/create-pr-cd'), manifest.runtimeFiles));
+          NODE
+          )"
+          echo "RUNTIME_FINGERPRINT=${FINGERPRINT}"
+          echo "### Runtime fingerprint" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`${FINGERPRINT}\`" >> "$GITHUB_STEP_SUMMARY"
+          python - "$FINGERPRINT" <<'PY'
+          from pathlib import Path
+          import re
+          import sys
+
+          fingerprint = sys.argv[1]
+          if not re.fullmatch(r'[a-f0-9]{64}', fingerprint):
+              raise SystemExit(f'Invalid fingerprint: {fingerprint!r}')
+          path = Path('backend/src/workers/manifests/mwPrManifest.js')
+          text = path.read_text(encoding='utf-8')
+          updated, count = re.subn(
+              r"runtimeFingerprint: '[a-f0-9]{64}'",
+              f"runtimeFingerprint: '{fingerprint}'",
+              text,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit('Expected exactly one runtime fingerprint field')
+          path.write_text(updated, encoding='utf-8', newline='\n')
+          PY
+
+      - name: Run platform backend compatibility suite
+        working-directory: platform
+        run: npm test --prefix backend
+
+      - name: Run platform frontend regression suite
+        working-directory: platform
+        run: npm test --prefix frontend
+
+      - name: Verify exact engine pin and diff hygiene
+        working-directory: platform
+        run: |
+          test "$(git -C skills/create-pr-cd rev-parse HEAD)" = "65d45a5ad0891d370f8e1efc24eb6b2a90b77aaf"
+          git diff --check
+          git status --short
