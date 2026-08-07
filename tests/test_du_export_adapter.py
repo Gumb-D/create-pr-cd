@@ -490,11 +490,13 @@ class TestTxRolloutApprovedProfileAdapter(unittest.TestCase):
         )
         self.assertIn("MISSING_SOURCE_EVIDENCE:existing_ti_pr_status", record["validation"]["blocking_reasons"])
 
-    def test_profile_remains_non_production_and_blocks_ecc_output(self):
+    def test_production_profile_still_blocks_unverified_record_evidence(self):
         record = self._build_record({"tx_sow_lld": "MW Swap", "post_mocn_tx_sow_lld": ""})
+        self.assertEqual(self.profile["status"], "PRODUCTION")
         gate = evaluate_record(record, self.profile, scope="TSS")
         self.assertFalse(gate["allow_output"])
-        self.assertIn("DU_PROFILE_NOT_PRODUCTION", gate["blocking_reasons"])
+        self.assertNotIn("DU_PROFILE_NOT_PRODUCTION", gate["blocking_reasons"])
+        self.assertIn("UNVERIFIED_SOURCE_MAPPING:site_name", gate["blocking_reasons"])
 
     def test_changed_header_hash_still_fails_closed(self):
         production = self._production_copy()
@@ -682,11 +684,13 @@ class TestMwEosApprovedProfileAdapter(unittest.TestCase):
             "normalize_pr_reference_status",
         )
 
-    def test_profile_remains_non_production_and_blocks_ecc_output(self):
+    def test_production_profile_still_blocks_unverified_record_evidence(self):
         record = self._build_record()
+        self.assertEqual(self.profile["status"], "PRODUCTION")
         gate = evaluate_record(record, self.profile, scope="TSS")
         self.assertFalse(gate["allow_output"])
-        self.assertIn("DU_PROFILE_NOT_PRODUCTION", gate["blocking_reasons"])
+        self.assertNotIn("DU_PROFILE_NOT_PRODUCTION", gate["blocking_reasons"])
+        self.assertIn("UNVERIFIED_SOURCE_MAPPING:site_name", gate["blocking_reasons"])
 
     def test_changed_header_hash_still_fails_closed(self):
         production = self._production_copy()
@@ -899,11 +903,13 @@ class TestCelcomdigiBau2024ApprovedProfileAdapter(unittest.TestCase):
             "normalize_pr_reference_status",
         )
 
-    def test_profile_remains_non_production_and_blocks_ecc_output(self):
+    def test_production_profile_still_blocks_unverified_record_evidence(self):
         record = self._build_record()
+        self.assertEqual(self.profile["status"], "PRODUCTION")
         gate = evaluate_record(record, self.profile, scope="TSS")
         self.assertFalse(gate["allow_output"])
-        self.assertIn("DU_PROFILE_NOT_PRODUCTION", gate["blocking_reasons"])
+        self.assertNotIn("DU_PROFILE_NOT_PRODUCTION", gate["blocking_reasons"])
+        self.assertIn("UNVERIFIED_SOURCE_MAPPING:site_name", gate["blocking_reasons"])
 
     def test_changed_header_hash_still_fails_closed(self):
         production = self._production_copy()
@@ -1157,12 +1163,14 @@ class TestZteTxMiniApprovedProfileAdapter(unittest.TestCase):
             "Subcon - TI",
         )
 
-    def test_profile_passes_pr_input_gate_but_current_status_blocks_ecc_output(self):
+    def test_production_profile_keeps_record_level_fail_closed_gates(self):
         record = self._build_record(scope="TI")
         self.assertEqual(record["validation"]["pr_input_classification"], "PR_INPUT_READY")
+        self.assertEqual(self.profile["status"], "PRODUCTION")
         gate = evaluate_record(record, self.profile, scope="TI")
         self.assertFalse(gate["allow_output"])
-        self.assertIn("DU_PROFILE_NOT_PRODUCTION", gate["blocking_reasons"])
+        self.assertNotIn("DU_PROFILE_NOT_PRODUCTION", gate["blocking_reasons"])
+        self.assertIn("UNVERIFIED_SOURCE_MAPPING:site_name", gate["blocking_reasons"])
 
     def test_approved_header_hash_passes_without_header_revalidation(self):
         production = self._production_copy()
@@ -1461,12 +1469,14 @@ class TestCelcomdigiBau2023ApprovedProfileAdapter(unittest.TestCase):
             "normalize_pr_reference_status",
         )
 
-    def test_profile_passes_pr_input_gate_but_current_status_blocks_ecc_output(self):
+    def test_production_profile_keeps_record_level_fail_closed_gates(self):
         record = self._build_record(scope="TI")
         self.assertEqual(record["validation"]["pr_input_classification"], "PR_INPUT_READY")
+        self.assertEqual(self.profile["status"], "PRODUCTION")
         gate = evaluate_record(record, self.profile, scope="TI")
         self.assertFalse(gate["allow_output"])
-        self.assertIn("DU_PROFILE_NOT_PRODUCTION", gate["blocking_reasons"])
+        self.assertNotIn("DU_PROFILE_NOT_PRODUCTION", gate["blocking_reasons"])
+        self.assertIn("UNVERIFIED_SOURCE_MAPPING:site_name", gate["blocking_reasons"])
 
     def test_approved_header_hash_passes_without_header_revalidation(self):
         production = self._production_copy()
@@ -1763,11 +1773,13 @@ class TestCelcomdigiUspApprovedProfileAdapter(unittest.TestCase):
             "normalize_pr_reference_status",
         )
 
-    def test_profile_remains_non_production_and_blocks_ecc_output(self):
+    def test_production_profile_still_blocks_unverified_record_evidence(self):
         record = self._build_record()
+        self.assertEqual(self.profile["status"], "PRODUCTION")
         gate = evaluate_record(record, self.profile, scope="TSS")
         self.assertFalse(gate["allow_output"])
-        self.assertIn("DU_PROFILE_NOT_PRODUCTION", gate["blocking_reasons"])
+        self.assertNotIn("DU_PROFILE_NOT_PRODUCTION", gate["blocking_reasons"])
+        self.assertIn("UNVERIFIED_SOURCE_MAPPING:site_name", gate["blocking_reasons"])
 
     def test_changed_header_hash_still_fails_closed(self):
         production = self._production_copy()
@@ -1987,11 +1999,13 @@ class TestJendelaApprovedProfileAdapter(unittest.TestCase):
             ti_record["validation"]["blocking_reasons"],
         )
 
-    def test_profile_remains_non_production_and_blocks_ecc_output(self):
+    def test_production_profile_still_blocks_unverified_record_evidence(self):
         record = self._build_record()
+        self.assertEqual(self.profile["status"], "PRODUCTION")
         gate = evaluate_record(record, self.profile, scope="TSS")
         self.assertFalse(gate["allow_output"])
-        self.assertIn("DU_PROFILE_NOT_PRODUCTION", gate["blocking_reasons"])
+        self.assertNotIn("DU_PROFILE_NOT_PRODUCTION", gate["blocking_reasons"])
+        self.assertIn("UNVERIFIED_SOURCE_MAPPING:site_name", gate["blocking_reasons"])
 
     def test_changed_header_hash_still_fails_closed(self):
         production = self._production_copy()
