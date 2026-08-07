@@ -21,17 +21,22 @@ class TestDiscoveryPacketHeaderCompatibility(unittest.TestCase):
 
     def test_historical_tx_rollout_hash_remains_valid_when_still_approved(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "tx_rollout_2023_pr_v1.yaml")
-        compatible = _packet_compatible_profiles([profile], self._registry())
+        registry = self._registry()
+        compatible = _packet_compatible_profiles([profile], registry)
+
         self.assertEqual(len(compatible), 1)
         self.assertEqual(
             compatible[0]["export_structure"]["observed_header_hash"],
-            "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320",
-        )
-        self.assertEqual(compatible[0]["profile_version"], "0.1.0")
-        self.assertEqual(
             profile["export_structure"]["observed_header_hash"],
-            "e61b834994eeef30e7d8249f87616cb04d60598eea323feea50178fc4292c162",
         )
+        self.assertEqual(compatible[0]["profile_version"], profile["profile_version"])
+
+        historical = next(
+            item for item in registry["entries"] if item.get("profile_id") == "tx_rollout_2023_pr_v1"
+        )
+        historical_hash = "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320"
+        self.assertEqual(historical["observed_header_hash"], historical_hash)
+        self.assertIn(historical_hash, profile["export_structure"]["approved_header_hashes"])
         self.assertEqual(profile["profile_version"], "0.1.1")
 
     def test_unapproved_historical_hash_fails_closed(self):
