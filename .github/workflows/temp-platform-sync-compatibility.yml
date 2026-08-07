@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: temp-platform-sync-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -194,10 +198,50 @@ jobs:
             exit 1
           fi
 
-      - name: Run candidate frontend build and route smoke
+      - name: Run candidate frontend build and bounded route smoke
+        working-directory: platform-candidate/frontend
+        shell: bash
         run: |
-          npm run build --prefix platform-candidate/frontend
-          npm run smoke --prefix platform-candidate/frontend
+          set -euo pipefail
+          npm run build
+          npx vite preview --host 127.0.0.1 --port 4173 > /tmp/awp-vite-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          cleanup() {
+            kill "${PREVIEW_PID}" 2>/dev/null || true
+            wait "${PREVIEW_PID}" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+
+          READY=0
+          for _ in $(seq 1 60); do
+            if curl --fail --silent --show-error http://127.0.0.1:4173/ > /dev/null; then
+              READY=1
+              break
+            fi
+            sleep 0.5
+          done
+          if [ "${READY}" -ne 1 ]; then
+            cat /tmp/awp-vite-preview.log
+            exit 1
+          fi
+
+          for route in \
+            / \
+            /dashboard \
+            /workers/pr-creator \
+            /workers/pr-auditor \
+            /history \
+            /jobs/QA15-ROUTE-SMOKE \
+            /admin/login \
+            /admin/assets \
+            /admin/audit-logs \
+            /admin/health; do
+            body="$(curl --fail --silent --show-error "http://127.0.0.1:4173${route}")"
+            if printf '%s' "${body}" | grep -q 'LLM_API_KEY'; then
+              echo "${route} exposed LLM_API_KEY text"
+              exit 1
+            fi
+          done
 
       - name: Verify exact engine pin and diff hygiene
         working-directory: platform-candidate
