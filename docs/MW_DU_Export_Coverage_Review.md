@@ -80,7 +80,7 @@ Discovery-only coverage review across the 10 profiled DU exports.
 
 - Source file: `A-P202211283695_D002-MW EOS Swap-MW EOS Swap Rollout-20260703160307.xlsx`
 - Coverage status: `TRACKED_DRAFT_PROFILE`
-- Profile: `mw_eos_swap_pr_v1` `0.1.0` (mapping `approved-2026-07-10-mw-eos-swap-v2`)
+- Profile: `mw_eos_swap_pr_v1` `0.1.1` (mapping `approved-2026-07-10-mw-eos-swap-v2`)
 - Observed header hash: `46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a`
 - Next action: Continue tracked profile review through the existing DRAFT discovery packet.
 

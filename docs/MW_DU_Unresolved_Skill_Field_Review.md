@@ -101,7 +101,7 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 - Observed header hash: `46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a`
 - Missing required fields: None
 - Competing candidate fields: site_name, subcontractor_planning
-- Single-candidate but unverified fields: antenna_size_fe, antenna_size_ne, du_key
+- Single-candidate but unverified fields: du_key
 - Resolved by approved mapping (alternates rejected): site_code, tx_sow_raw
 
 ### `site_code`
@@ -148,6 +148,20 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
   - score 45: `docata|ZDCSZ01079156 | Network Planning | Microwave | TX SOW Details`
     reason: SOW details field; likely evidence, not primary trigger.
 
+### `tx_before_migration`
+
+- Skill field: `tx_before_migration`
+- Review status: `NO_REVIEW_REQUIRED`
+- Reason: Profile field is outside the current unresolved-skill review scope.
+- Selected source: `None`
+
+### `final_backhaul`
+
+- Skill field: `final_backhaul`
+- Review status: `NO_REVIEW_REQUIRED`
+- Reason: Profile field is outside the current unresolved-skill review scope.
+- Selected source: `None`
+
 ### `subcontractor_ti`
 
 - Skill field: `subcon_ti_team`
@@ -168,15 +182,15 @@ Discovery-only manual-review packet for priority DRAFT profiles. This does not a
 ### `antenna_size_ne`
 
 - Skill field: `antenna_size_ne`
-- Review status: `REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE`
-- Reason: Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile.
+- Review status: `READY_IF_APPROVAL_EVIDENCE_EXISTS`
+- Reason: Profile-selected source matches the shortlist and is already approved.
 - Selected source: `docata|ZDCSZ01093667 | Planner | Microwave | MW Antenna Size NE`
 
 ### `antenna_size_fe`
 
 - Skill field: `antenna_size_fe`
-- Review status: `REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE`
-- Reason: Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile.
+- Review status: `READY_IF_APPROVAL_EVIDENCE_EXISTS`
+- Reason: Profile-selected source matches the shortlist and is already approved.
 - Selected source: `docata|ZDCSZ01093668 | Planner | Microwave | MW Antenna Size FE`
 
 ### `existing_tss_pr_status`

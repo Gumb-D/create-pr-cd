@@ -113,11 +113,7 @@ Prioritized governance action queue for the current DU Profiles.
     hint: Use the unresolved review packet to compare the currently selected source against alternates.
   - `mw_eos_swap_pr_v1:02` `CONFIRM_COMPETING_CANDIDATE` `subcontractor_planning`: Choose one exact four-layer source for `subcontractor_planning` from the competing shortlist candidates.
     hint: Use the unresolved review packet to compare the currently selected source against alternates.
-  - `mw_eos_swap_pr_v1:03` `VERIFY_SINGLE_CANDIDATE` `antenna_size_fe`: Verify the current single shortlist-aligned source for `antenna_size_fe`.
-    hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `mw_eos_swap_pr_v1:04` `VERIFY_SINGLE_CANDIDATE` `antenna_size_ne`: Verify the current single shortlist-aligned source for `antenna_size_ne`.
-    hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
-  - `mw_eos_swap_pr_v1:05` `VERIFY_SINGLE_CANDIDATE` `du_key`: Verify the current single shortlist-aligned source for `du_key`.
+  - `mw_eos_swap_pr_v1:03` `VERIFY_SINGLE_CANDIDATE` `du_key`: Verify the current single shortlist-aligned source for `du_key`.
     hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
 
 ## tx_mini_pr_v1 (TX Mini Project)

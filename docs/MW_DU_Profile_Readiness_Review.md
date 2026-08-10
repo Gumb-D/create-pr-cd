@@ -93,7 +93,7 @@ Lifecycle-readiness summary for the governed DU Profiles.
 
 - Readiness status: `PRODUCTION_READY`
 - Profile status: `PRODUCTION`
-- Profile version: `0.1.0`
+- Profile version: `0.1.1`
 - Mapping version: `approved-2026-07-10-mw-eos-swap-v2`
 - Observed header hash: `46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a`
 - Approved header hashes: `1`
@@ -113,7 +113,7 @@ Lifecycle-readiness summary for the governed DU Profiles.
 - Profile version: `0.2.0`
 - Mapping version: `approved-2026-07-07-tx-mini-v1`
 - Observed header hash: `830864906f3e69041995bec10b0a5840d5f8c6fa5defa2cfaef30b868b91a921`
-- Approved header hashes: `3`
+- Approved header hashes: `4`
 - Overall blockers: ``
 - Release prerequisites:
   - Approve the DU model identity and four-layer source mappings.

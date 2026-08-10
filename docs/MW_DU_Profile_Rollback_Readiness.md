@@ -60,10 +60,10 @@ Discovery-only rollback-readiness review for tracked DU profiles.
 
 - Rollback readiness status: `ROLLBACK_BASELINE_RECORDED`
 - Current status: `PRODUCTION`
-- Profile version: `0.1.0`
+- Profile version: `0.1.1`
 - Mapping version: `approved-2026-07-10-mw-eos-swap-v2`
 - Observed header hash: `46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a`
-- Rollback target: `mw_eos_swap_pr_v1` `0.1.0`
+- Rollback target: `mw_eos_swap_pr_v1` `0.1.1`
 - Rollback target header hashes: `46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a`
 - Note: Rollback baseline is documented from the current approved profile identity and header-hash set.
 
@@ -75,7 +75,7 @@ Discovery-only rollback-readiness review for tracked DU profiles.
 - Mapping version: `approved-2026-07-07-tx-mini-v1`
 - Observed header hash: `830864906f3e69041995bec10b0a5840d5f8c6fa5defa2cfaef30b868b91a921`
 - Rollback target: `tx_mini_pr_v1` `0.2.0`
-- Rollback target header hashes: `167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221, 1a466e31d3c25ca73f059123d4cc33280761746ea3dca61d25a384acad5c9fde, 830864906f3e69041995bec10b0a5840d5f8c6fa5defa2cfaef30b868b91a921`
+- Rollback target header hashes: `167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221, 1a466e31d3c25ca73f059123d4cc33280761746ea3dca61d25a384acad5c9fde, 830864906f3e69041995bec10b0a5840d5f8c6fa5defa2cfaef30b868b91a921, 99645657ed5177bed3f0af673f141dc700fb7b486743cb830d5350a473c007ff`
 - Note: Rollback baseline is documented from the current approved profile identity and header-hash set.
 
 ## tx_rollout_2023_pr_v1

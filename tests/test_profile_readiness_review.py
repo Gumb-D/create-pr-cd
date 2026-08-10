@@ -72,7 +72,7 @@ class TestProfileReadinessReview(unittest.TestCase):
         expected_optional = {
             "mw_eos_swap_pr_v1": {
                 "competing": ["site_name", "subcontractor_planning"],
-                "single": ["antenna_size_fe", "antenna_size_ne", "du_key"],
+                "single": ["du_key"],
             },
             "tx_rollout_2023_pr_v1": {
                 "competing": ["subcontractor_planning"],

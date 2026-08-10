@@ -247,7 +247,7 @@
     },
     {
       "profile_id": "mw_eos_swap_pr_v1",
-      "profile_version": "0.1.0",
+      "profile_version": "0.1.1",
       "mapping_version": "approved-2026-07-10-mw-eos-swap-v2",
       "profile_status": "PRODUCTION",
       "du_model_name": "MW EOS Swap",
@@ -260,8 +260,6 @@
           "subcontractor_planning"
         ],
         "single_candidate_unverified_fields": [
-          "antenna_size_fe",
-          "antenna_size_ne",
           "du_key"
         ],
         "no_profile_selection_fields": [],
@@ -402,6 +400,24 @@
           "review_status": "RESOLVED_BY_APPROVED_MAPPING",
           "review_reason": "Profile-selected source is human-approved; the remaining shortlist alternates were rejected by that recorded decision."
         },
+        "tx_before_migration": {
+          "skill_field": "tx_before_migration",
+          "required": false,
+          "selected_status": "MISSING",
+          "recommended_source": null,
+          "alternate_candidates": [],
+          "review_status": "NO_REVIEW_REQUIRED",
+          "review_reason": "Profile field is outside the current unresolved-skill review scope."
+        },
+        "final_backhaul": {
+          "skill_field": "final_backhaul",
+          "required": false,
+          "selected_status": "MISSING",
+          "recommended_source": null,
+          "alternate_candidates": [],
+          "review_status": "NO_REVIEW_REQUIRED",
+          "review_reason": "Profile field is outside the current unresolved-skill review scope."
+        },
         "subcontractor_ti": {
           "skill_field": "subcon_ti_team",
           "required": true,
@@ -454,7 +470,7 @@
         "antenna_size_ne": {
           "skill_field": "antenna_size_ne",
           "required": false,
-          "selected_status": "UNVERIFIED",
+          "selected_status": "APPROVED",
           "recommended_source": {
             "fingerprint": {
               "field_code": "docata|ZDCSZ01093667",
@@ -462,16 +478,16 @@
               "task_name": "Microwave",
               "display_header": "MW Antenna Size NE"
             },
-            "mapping_status": "UNVERIFIED"
+            "mapping_status": "APPROVED"
           },
           "alternate_candidates": [],
-          "review_status": "REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE",
-          "review_reason": "Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile."
+          "review_status": "READY_IF_APPROVAL_EVIDENCE_EXISTS",
+          "review_reason": "Profile-selected source matches the shortlist and is already approved."
         },
         "antenna_size_fe": {
           "skill_field": "antenna_size_fe",
           "required": false,
-          "selected_status": "UNVERIFIED",
+          "selected_status": "APPROVED",
           "recommended_source": {
             "fingerprint": {
               "field_code": "docata|ZDCSZ01093668",
@@ -479,11 +495,11 @@
               "task_name": "Microwave",
               "display_header": "MW Antenna Size FE"
             },
-            "mapping_status": "UNVERIFIED"
+            "mapping_status": "APPROVED"
           },
           "alternate_candidates": [],
-          "review_status": "REVIEW_REQUIRED_UNVERIFIED_SINGLE_CANDIDATE",
-          "review_reason": "Only one shortlist-aligned source candidate exists, but it remains unverified in the DRAFT profile."
+          "review_status": "READY_IF_APPROVAL_EVIDENCE_EXISTS",
+          "review_reason": "Profile-selected source matches the shortlist and is already approved."
         },
         "existing_tss_pr_status": {
           "skill_field": "existing_tss_pr",

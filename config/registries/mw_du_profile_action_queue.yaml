@@ -287,7 +287,7 @@
     },
     {
       "profile_id": "mw_eos_swap_pr_v1",
-      "profile_version": "0.1.0",
+      "profile_version": "0.1.1",
       "mapping_version": "approved-2026-07-10-mw-eos-swap-v2",
       "profile_status": "PRODUCTION",
       "du_model_name": "MW EOS Swap",
@@ -310,20 +310,6 @@
         },
         {
           "priority_id": "mw_eos_swap_pr_v1:03",
-          "action_type": "VERIFY_SINGLE_CANDIDATE",
-          "summary": "Verify the current single shortlist-aligned source for `antenna_size_fe`.",
-          "field_name": "antenna_size_fe",
-          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
-        },
-        {
-          "priority_id": "mw_eos_swap_pr_v1:04",
-          "action_type": "VERIFY_SINGLE_CANDIDATE",
-          "summary": "Verify the current single shortlist-aligned source for `antenna_size_ne`.",
-          "field_name": "antenna_size_ne",
-          "evidence_hint": "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
-        },
-        {
-          "priority_id": "mw_eos_swap_pr_v1:05",
           "action_type": "VERIFY_SINGLE_CANDIDATE",
           "summary": "Verify the current single shortlist-aligned source for `du_key`.",
           "field_name": "du_key",
