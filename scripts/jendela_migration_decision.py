@@ -13,10 +13,13 @@ from typing import Any, Mapping
 
 JENDELA_PROFILE_ID = "jendela_tx_migration_pr_v1"
 
+# These SOW names and fixed PBOM requirements are taken from candidate PR Model
+# v4.1. Dynamic choose-one PBOMs (MW geography/antenna groups) deliberately stay
+# model-driven and therefore are not hardcoded here.
 _WORK_ITEMS = {
     "Dismantle Starlink": {
         "work_item": "Dismantle Starlink",
-        "model_sow": "Starlink Dismantle (Return/MRCF included) & Migration",
+        "model_sow": "Starlink Dismanle",
         "required_pbom_codes": ["350000597850", "350000597852"],
     },
     "Dismantle MW": {
@@ -26,22 +29,26 @@ _WORK_ITEMS = {
     },
     "BBU Patching / MW IDU Patching": {
         "work_item": "BBU Patching / MW IDU Patching",
-        "model_sow": "BBU Patching / MW IDU Patching",
-        "required_pbom_codes": [],
+        # v4.1 split the historical combined patching model into BBU Patching
+        # and MW IDU Patching. Their mandatory business row is identical
+        # (PBOM 350001095420), so the combined source wording resolves to the
+        # BBU Patching model while retaining an explicit PBOM invariant.
+        "model_sow": "BBU Patching",
+        "required_pbom_codes": ["350001095420"],
     },
     "BBU Patching": {
         "work_item": "BBU Patching / MW IDU Patching",
         "model_sow": "BBU Patching",
-        "required_pbom_codes": [],
+        "required_pbom_codes": ["350001095420"],
     },
     "MW IDU Patching": {
         "work_item": "BBU Patching / MW IDU Patching",
         "model_sow": "MW IDU Patching",
-        "required_pbom_codes": [],
+        "required_pbom_codes": ["350001095420"],
     },
     "MW New Link": {
         "work_item": "MW New Link",
-        "model_sow": "MW Installation",
+        "model_sow": "MW New Link / Reroute",
         "required_pbom_codes": [],
     },
 }
