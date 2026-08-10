@@ -120,35 +120,40 @@ class TestJendelaMigrationDecision(unittest.TestCase):
         )
 
     def test_tx_before_migration_controls_dismantle_only(self):
-        cases = {
-            "Starlink": ["Dismantle Starlink"],
-            "MW": ["Dismantle MW"],
-            "Microwave": ["Dismantle MW"],
-            "Fiber Own Build": [],
-        }
-        for before, expected in cases.items():
-            with self.subTest(before=before):
-                _, decision = self._decision(before=before, tx_sow="-")
-                self.assertEqual(decision["classification"], "APPROVED")
-                self.assertEqual([item["work_item"] for item in decision["work_items"]], expected)
+    cases = {
+        "Starlink": ["Dismantle Starlink"],
+        "MW": ["Dismantle MW"],
+        "Microwave": ["Dismantle MW"],
+    }
+    for before, expected in cases.items():
+        with self.subTest(before=before):
+            _, decision = self._decision(before=before, tx_sow="-")
+            self.assertEqual(decision["classification"], "APPROVED")
+            self.assertEqual([item["work_item"] for item in decision["work_items"]], expected)
+
+    _, no_work = self._decision(before="Fiber Own Build", tx_sow="-")
+    self.assertEqual(no_work["classification"], "APPROVED_NO_OUTPUT")
+    self.assertEqual(no_work["reason_code"], "JENDELA_TI_NO_WORK_REQUIRED")
+    self.assertEqual(no_work["work_items"], [])
 
     def test_tx_sow_controls_additional_work_independently(self):
-        cases = [
-            ("BBU Patching", ["BBU Patching / MW IDU Patching"], "BBU Patching"),
-            ("MW IDU Patching", ["BBU Patching / MW IDU Patching"], "MW IDU Patching"),
-            ("BBU Patching / MW IDU Patching", ["BBU Patching / MW IDU Patching"], "BBU Patching"),
-            ("MW New Link / Reroute", ["MW New Link"], "MW New Link / Reroute"),
-            ("MW by others", [], None),
-            ("-", [], None),
-            ("", [], None),
-        ]
-        for tx_sow, expected_items, expected_model_sow in cases:
-            with self.subTest(tx_sow=tx_sow):
-                _, decision = self._decision(before="Fiber Own Build", tx_sow=tx_sow)
-                self.assertEqual(decision["classification"], "APPROVED")
-                self.assertEqual([item["work_item"] for item in decision["work_items"]], expected_items)
-                if expected_model_sow:
-                    self.assertEqual(decision["work_items"][0]["model_sow"], expected_model_sow)
+    cases = [
+        ("BBU Patching", ["BBU Patching / MW IDU Patching"], "BBU Patching"),
+        ("MW IDU Patching", ["BBU Patching / MW IDU Patching"], "MW IDU Patching"),
+        ("BBU Patching / MW IDU Patching", ["BBU Patching / MW IDU Patching"], "BBU Patching"),
+        ("MW New Link / Reroute", ["MW New Link"], "MW New Link / Reroute"),
+        ("MW by others", [], None),
+        ("-", [], None),
+        ("", [], None),
+    ]
+    for tx_sow, expected_items, expected_model_sow in cases:
+        with self.subTest(tx_sow=tx_sow):
+            _, decision = self._decision(before="Fiber Own Build", tx_sow=tx_sow)
+            expected_classification = "APPROVED" if expected_items else "APPROVED_NO_OUTPUT"
+            self.assertEqual(decision["classification"], expected_classification)
+            self.assertEqual([item["work_item"] for item in decision["work_items"]], expected_items)
+            if expected_model_sow:
+                self.assertEqual(decision["work_items"][0]["model_sow"], expected_model_sow)
 
     def test_dismantle_and_additional_work_combine_atomically(self):
         cases = [
@@ -209,6 +214,15 @@ class TestJendelaMigrationDecision(unittest.TestCase):
         self.assertEqual(partitions["ignored"], [record])
         self.assertEqual(partitions["candidates"], [])
         self.assertEqual(record["pr_generation_decision"]["reason_code"], "APPROVED_NO_OUTPUT")
+
+    def test_empty_jendela_work_plan_is_intentional_no_output(self):
+    record, decision = self._decision(before="Fiber Own Build", tx_sow="-")
+    self.assertEqual(decision["classification"], "APPROVED_NO_OUTPUT")
+    self.assertEqual(record["validation"]["pr_input_classification"], "PR_INPUT_READY")
+    partitions = create_pr._partition_records([record], "TI")
+    self.assertEqual(partitions["ignored"], [record])
+    self.assertEqual(partitions["candidates"], [])
+    self.assertEqual(record["pr_generation_decision"]["reason_code"], "JENDELA_TI_NO_WORK_REQUIRED")
 
     def test_tss_and_non_jendela_do_not_use_issue_77_exception(self):
         tss_record = self.factory.build(
