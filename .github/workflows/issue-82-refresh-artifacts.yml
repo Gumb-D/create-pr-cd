@@ -78,10 +78,6 @@ jobs:
                   'self.assertEqual(review["left_profile_version"], "0.1.0")',
                   'self.assertEqual(review["left_profile_version"], "0.1.1")',
               ),
-              Path("tests/test_profile_readiness_review.py"): (
-                  '"single": ["antenna_size_fe", "antenna_size_ne", "du_key"],',
-                  '"single": ["du_key"],',
-              ),
           }
           for path, (old, new) in replacements.items():
               text = path.read_text(encoding="utf-8")
@@ -90,6 +86,20 @@ jobs:
               if text.count(old) != 1:
                   raise SystemExit(f"Expected exactly one EOS assertion marker in {path}, found {text.count(old)}")
               path.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+          readiness_path = Path("tests/test_profile_readiness_review.py")
+          readiness = readiness_path.read_text(encoding="utf-8")
+          block_start = readiness.index('"mw_eos_swap_pr_v1": {')
+          block_end = readiness.index('"tx_rollout_2023_pr_v1": {', block_start)
+          eos_block = readiness[block_start:block_end]
+          old = '"single": ["antenna_size_fe", "antenna_size_ne", "du_key"],'
+          new = '"single": ["du_key"],'
+          if new not in eos_block:
+              if eos_block.count(old) != 1:
+                  raise SystemExit(f"Expected exactly one EOS readiness single-list marker, found {eos_block.count(old)}")
+              eos_block = eos_block.replace(old, new, 1)
+              readiness = readiness[:block_start] + eos_block + readiness[block_end:]
+              readiness_path.write_text(readiness, encoding="utf-8")
           PY
 
       - name: Rebuild downstream tracked-input governance packet
