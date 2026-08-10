@@ -208,12 +208,18 @@ class TestJendelaMigrationDecision(unittest.TestCase):
                 self.assertEqual(decision["reason_code"], "JENDELA_TX_BEFORE_MIGRATION_NOT_APPROVED")
 
     def test_cancel_drop_hard_stop_precedes_migration_output(self):
-        record, decision = self._decision(before="Starlink", tx_sow="Cancel / Drop")
-        self.assertEqual(decision["classification"], "APPROVED")
-        partitions = create_pr._partition_records([record], "TI")
-        self.assertEqual(partitions["ignored"], [record])
-        self.assertEqual(partitions["candidates"], [])
-        self.assertEqual(record["pr_generation_decision"]["reason_code"], "APPROVED_NO_OUTPUT")
+        cases = [
+            ("Starlink", "APPROVED"),
+            ("Fiber Own Build", "APPROVED_NO_OUTPUT"),
+        ]
+        for before, expected_decision_class in cases:
+            with self.subTest(before=before):
+                record, decision = self._decision(before=before, tx_sow="Cancel / Drop")
+                self.assertEqual(decision["classification"], expected_decision_class)
+                partitions = create_pr._partition_records([record], "TI")
+                self.assertEqual(partitions["ignored"], [record])
+                self.assertEqual(partitions["candidates"], [])
+                self.assertEqual(record["pr_generation_decision"]["reason_code"], "APPROVED_NO_OUTPUT")
 
     def test_empty_jendela_work_plan_is_intentional_no_output(self):
         record, decision = self._decision(before="Fiber Own Build", tx_sow="-")

@@ -327,6 +327,17 @@ def _partition_records(
             and record.get("validation", {}).get("profile_id") == "jendela_tx_migration_pr_v1"
             and isinstance(migration_decision, Mapping)
         )
+        # Global business hard stop always wins, including Jendela plans
+        # that are independently classified as intentional no-work.
+        if normalization == "APPROVED_NO_OUTPUT":
+            set_generation_decision(
+                record,
+                "IGNORED",
+                "APPROVED_NO_OUTPUT",
+                "The approved SOW normalization intentionally produces no PR output.",
+            )
+            partitions["ignored"].append(record)
+            continue
         if jendela_ti_decision and migration_decision.get("classification") == "APPROVED_NO_OUTPUT":
             set_generation_decision(
                 record,
@@ -340,17 +351,6 @@ def _partition_records(
             jendela_ti_decision
             and migration_decision.get("classification") == "APPROVED"
         )
-        # Business hard stop: the approved Cancel / Drop SOW (and every other
-        # APPROVED_NO_OUTPUT value) outranks Jendela migration eligibility.
-        if normalization == "APPROVED_NO_OUTPUT":
-            set_generation_decision(
-                record,
-                "IGNORED",
-                "APPROVED_NO_OUTPUT",
-                "The approved SOW normalization intentionally produces no PR output.",
-            )
-            partitions["ignored"].append(record)
-            continue
         if record.get("validation", {}).get("pr_input_classification") != PR_INPUT_READY:
             set_generation_decision(
                 record,
