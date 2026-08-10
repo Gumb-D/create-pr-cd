@@ -7,8 +7,11 @@ on:
     paths:
       - "scripts/generate_tss_pr_ecc.py"
       - "scripts/antenna_evidence_resolver.py"
+      - "scripts/create_pr_impl.py"
+      - "config/du_profiles/mw_eos_swap_pr_v1.yaml"
       - "tests/test_issue_82_mw_eos_antenna.py"
       - "tests/test_issue_82_antenna_false_positive.py"
+      - "tests/test_issue_82_codex_review.py"
       - ".github/workflows/issue-82-regression.yml"
 
 permissions:
@@ -30,6 +33,7 @@ jobs:
           python -m unittest \
             tests.test_issue_82_mw_eos_antenna \
             tests.test_issue_82_antenna_false_positive \
+            tests.test_issue_82_codex_review \
             tests.test_ti_sow_matching \
             tests.test_human_uat_remediation_48_54 \
             tests.test_mw_reroute \
