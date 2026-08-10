@@ -11,6 +11,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from create_pr import (
     CreatePrError,
+    _assert_reconciliation_success,
     _assert_unique_project_site_codes,
     _build_site_reconciliation,
     _canonical_relocate_site_id,
@@ -64,6 +65,13 @@ class TestIssue74RendererReconciliation(unittest.TestCase):
         worksheet.append([1, site_code])
         workbook.save(path)
 
+    @staticmethod
+    def _write_review(path, site_code, reason_code="NO_MATCHING_TI_PR_MODEL_ITEM"):
+        with path.open("w", encoding="utf-8-sig", newline="") as handle:
+            writer = csv.DictWriter(handle, fieldnames=["Site_ID", "Reason_Code"])
+            writer.writeheader()
+            writer.writerow({"Site_ID": site_code, "Reason_Code": reason_code})
+
     def test_reads_generated_and_review_required_sites(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -71,10 +79,7 @@ class TestIssue74RendererReconciliation(unittest.TestCase):
             self._write_ecc(ecc, "A_Relocate")
 
             review = root / "REVIEW_REQUIRED_TI_20260810.csv"
-            with review.open("w", encoding="utf-8-sig", newline="") as handle:
-                writer = csv.DictWriter(handle, fieldnames=["Site_ID", "Reason_Code"])
-                writer.writeheader()
-                writer.writerow({"Site_ID": "B_Relocate", "Reason_Code": "NO_MATCHING_TI_PR_MODEL_ITEM"})
+            self._write_review(review, "B_Relocate")
 
             candidates = [record("A_RELOCATE1"), record("B_RELOCATE2")]
             result = collect_renderer_reconciliation(
@@ -88,6 +93,28 @@ class TestIssue74RendererReconciliation(unittest.TestCase):
             self.assertEqual(result["site_dispositions"][0]["disposition"], "GENERATED")
             self.assertEqual(result["site_dispositions"][1]["disposition"], "REVIEW_REQUIRED")
             self.assertEqual(result["site_dispositions"][1]["reason_code"], "NO_MATCHING_TI_PR_MODEL_ITEM")
+
+    def test_review_required_takes_precedence_over_generated_ecc(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            ecc = root / "Central-Magicell TX Rollout TI PR 20260810.xlsx"
+            review = root / "REVIEW_REQUIRED_TI_20260810.csv"
+            self._write_ecc(ecc, "A_Relocate")
+            self._write_review(review, "A_Relocate", "PARTIAL_PR_MODEL_REVIEW")
+
+            result = collect_renderer_reconciliation(
+                root,
+                [record("A_RELOCATE1")],
+                "TI",
+                lambda item: _canonical_relocate_site_id(item["site"]["site_code"]),
+                created_paths=[ecc, review],
+            )
+
+            disposition = result["site_dispositions"][0]
+            self.assertEqual(disposition["disposition"], "REVIEW_REQUIRED")
+            self.assertEqual(disposition["reason_code"], "PARTIAL_PR_MODEL_REVIEW")
+            self.assertTrue(disposition["ecc_evidence_present"])
+            self.assertTrue(disposition["review_evidence_present"])
 
     def test_overwritten_same_day_ecc_is_touched_for_reconciliation(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -152,6 +179,36 @@ class TestIssue74Reconciliation(unittest.TestCase):
         self.assertEqual(result["unaccounted_count"], 0)
         self.assertEqual(result["site_dispositions"][0]["disposition"], "FAILED")
         self.assertEqual(result["site_dispositions"][0]["reason_code"], "RENDERER_SITE_UNACCOUNTED")
+
+    def test_failed_reconciliation_fails_closed(self):
+        with self.assertRaises(CreatePrError) as caught:
+            _assert_reconciliation_success({
+                "failed_count": 1,
+                "unaccounted_count": 0,
+                "site_dispositions": [
+                    {
+                        "site_code": "MISSING_FROM_RENDERER",
+                        "disposition": "FAILED",
+                        "reason_code": "RENDERER_SITE_UNACCOUNTED",
+                    }
+                ],
+            })
+
+        self.assertEqual(caught.exception.code, "PR_SITE_RECONCILIATION_FAILED")
+
+    def test_review_required_is_terminal_but_not_engine_failure(self):
+        _assert_reconciliation_success({
+            "failed_count": 0,
+            "unaccounted_count": 0,
+            "review_required_count": 1,
+            "site_dispositions": [
+                {
+                    "site_code": "B_REVIEW",
+                    "disposition": "REVIEW_REQUIRED",
+                    "reason_code": "NO_MATCHING_TI_PR_MODEL_ITEM",
+                }
+            ],
+        })
 
 
 if __name__ == "__main__":
