@@ -46,6 +46,108 @@ def _sync_legacy_hash_mirrors(root: Path, sha256_value: str) -> list[Path]:
     return changed
 
 
+def _replace_current_model_version_refs(value: Any, previous_version: str, version: str) -> Any:
+    if isinstance(value, dict):
+        return {key: _replace_current_model_version_refs(item, previous_version, version) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_replace_current_model_version_refs(item, previous_version, version) for item in value]
+    if isinstance(value, str):
+        return value.replace(f"PR Model v{previous_version}", f"PR Model v{version}")
+    return value
+
+
+def _sync_audit_metadata(
+    root: Path,
+    *,
+    previous_version: str,
+    previous_sha: str,
+    version: str,
+    sha256_value: str,
+) -> list[Path]:
+    """Keep audit/current-model evidence aligned with an accepted production promotion.
+
+    These files never select the runtime model. They are synchronized inside the
+    same rollback-protected transaction so operational audit evidence cannot say
+    that a retired model is CURRENT after the authoritative baseline changes.
+    """
+    changed: list[Path] = []
+
+    history = root / "docs/pr_model_history.md"
+    if history.exists():
+        text = history.read_text(encoding="utf-8")
+        lines = text.splitlines()
+        previous_prefix = f"| v{previous_version} |"
+        current_prefix = f"| v{version} |"
+        found_current = False
+        for index, line in enumerate(lines):
+            if line.startswith(previous_prefix) and previous_version != version:
+                lines[index] = (
+                    f"| v{previous_version} | `{previous_sha}` | RETIRED | "
+                    f"Superseded by v{version}; Git history remains the historical source. |"
+                )
+            if line.startswith(current_prefix):
+                lines[index] = (
+                    f"| v{version} | `{sha256_value}` | CURRENT | "
+                    "Current approved production workbook at `Info/input/pr_model.xlsx`. |"
+                )
+                found_current = True
+        if not found_current:
+            try:
+                insert_at = lines.index("## Operating standard")
+            except ValueError:
+                insert_at = len(lines)
+            while insert_at > 0 and not lines[insert_at - 1].strip():
+                insert_at -= 1
+            lines.insert(
+                insert_at,
+                f"| v{version} | `{sha256_value}` | CURRENT | Current approved production workbook at `Info/input/pr_model.xlsx`. |",
+            )
+        updated = "\n".join(lines).rstrip() + "\n"
+        if updated != text:
+            history.write_text(updated, encoding="utf-8")
+            changed.append(history)
+
+    inventory = root / "docs/pr_model_reference_inventory.md"
+    if inventory.exists():
+        text = inventory.read_text(encoding="utf-8")
+        updated = re.sub(r"(?m)^version = [^\n]+$", f"version = {version}", text, count=1)
+        updated = re.sub(r"(?m)^sha256 = [0-9a-f]{64}$", f"sha256 = {sha256_value}", updated, count=1)
+        status_pattern = re.compile(
+            r"## v[^\n]+ (?:candidate|production) status\n.*?(?=\n## Historical isolation rule)",
+            re.S,
+        )
+        production_status = (
+            f"## v{version} production status\n\n"
+            f"PR Model v{version} is the current production baseline at `Info/input/pr_model.xlsx`.\n\n"
+            f"Exact production SHA-256: `{sha256_value}`.\n\n"
+            "Promotion is retained only after compatibility/approval requirements and the full rollback-protected regression gate pass.\n"
+        )
+        updated, count = status_pattern.subn(production_status.rstrip(), updated, count=1)
+        if not count:
+            marker = "\n## Historical isolation rule"
+            if marker in updated:
+                updated = updated.replace(marker, "\n\n" + production_status.rstrip() + marker, 1)
+        if updated != text:
+            inventory.write_text(updated.rstrip() + "\n", encoding="utf-8")
+            changed.append(inventory)
+
+    registry = root / "config/registries/canonical_sow_registry.yaml"
+    if registry.exists():
+        text = registry.read_text(encoding="utf-8")
+        try:
+            payload = json.loads(text)
+        except json.JSONDecodeError:
+            payload = None
+        if payload is not None:
+            updated_payload = _replace_current_model_version_refs(payload, previous_version, version)
+            updated = json.dumps(updated_payload, ensure_ascii=False, indent=2) + "\n"
+            if updated != text:
+                registry.write_text(updated, encoding="utf-8")
+                changed.append(registry)
+
+    return changed
+
+
 def _run_regression_gate(root: Path) -> dict[str, Any]:
     command = [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-p", "test_*.py", "-v"]
     result = subprocess.run(command, cwd=root, text=True, capture_output=True, check=False)
@@ -154,6 +256,8 @@ def promote_pr_model(
 
     production_path = current["expected_path"]
     config_path = repo_root / "config/pr_model_baseline.yaml"
+    previous_version = str(baseline["model"]["version"])
+    previous_sha = str(baseline["workbook"]["sha256"])
 
     next_baseline = json.loads(json.dumps(baseline))
     next_baseline["model"]["version"] = str(version)
@@ -166,6 +270,9 @@ def promote_pr_model(
         repo_root / "scripts/generate_tss_pr_ecc.py",
         repo_root / "scripts/run_tx_mini_ecc_parity.py",
         repo_root / "tests/test_jendela_approved_pr_model.py",
+        repo_root / "docs/pr_model_history.md",
+        repo_root / "docs/pr_model_reference_inventory.md",
+        repo_root / "config/registries/canonical_sow_registry.yaml",
     ]
     snapshots = {path: path.read_bytes() for path in tracked_paths if path.exists()}
 
@@ -173,6 +280,13 @@ def promote_pr_model(
         production_path.write_bytes(candidate_bytes)
         config_path.write_text(json.dumps(next_baseline, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         mirror_paths = _sync_legacy_hash_mirrors(repo_root, candidate_sha)
+        audit_paths = _sync_audit_metadata(
+            repo_root,
+            previous_version=previous_version,
+            previous_sha=previous_sha,
+            version=str(version),
+            sha256_value=candidate_sha,
+        )
         validated = validate_pr_model_baseline(root=repo_root)
         regression = _run_regression_gate(repo_root)
     except Exception as exc:
@@ -197,6 +311,7 @@ def promote_pr_model(
         "approval": approval,
         "regression": regression,
         "legacy_hash_mirrors_updated": [str(path.relative_to(repo_root)) for path in mirror_paths],
+        "audit_metadata_updated": [str(path.relative_to(repo_root)) for path in audit_paths],
     }
 
 
