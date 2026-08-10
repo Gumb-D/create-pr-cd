@@ -13,13 +13,16 @@ on:
       - "tests/test_issue_82_antenna_false_positive.py"
       - "tests/test_issue_82_codex_review.py"
       - ".github/workflows/issue-82-regression.yml"
+  push:
+    branches:
+      - "fix/mw-eos-antenna-evidence"
 
 permissions:
   contents: write
 
 jobs:
   apply-verified-codex-remediation:
-    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'fix/mw-eos-antenna-evidence'
+    if: github.event_name == 'push' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'fix/mw-eos-antenna-evidence')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
