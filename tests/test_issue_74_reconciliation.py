@@ -9,12 +9,24 @@ from openpyxl import Workbook
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from create_pr import _build_site_reconciliation, _canonical_relocate_site_id
-from renderer_reconciliation import collect_renderer_reconciliation
+from create_pr import (
+    CreatePrError,
+    _assert_unique_project_site_codes,
+    _build_site_reconciliation,
+    _canonical_relocate_site_id,
+)
+from renderer_reconciliation import (
+    collect_renderer_reconciliation,
+    snapshot_renderer_artifacts,
+    touched_renderer_artifacts,
+)
 
 
-def record(site_code):
-    return {"site": {"site_code": site_code}}
+def record(site_code, project_key="Malaysia_CelcomDigi_Project", source_row=5):
+    return {
+        "site": {"site_code": site_code},
+        "identity": {"project_key": project_key, "source_row_number": source_row},
+    }
 
 
 class TestIssue74RelocateIdentity(unittest.TestCase):
@@ -24,17 +36,39 @@ class TestIssue74RelocateIdentity(unittest.TestCase):
         self.assertEqual(_canonical_relocate_site_id("S00311_Relocate"), "S00311_Relocate")
 
 
+class TestIssue74ProjectSiteUniqueness(unittest.TestCase):
+    def test_duplicate_site_code_in_same_project_fails_closed(self):
+        records = [record("S001", source_row=5), record("s001", source_row=9)]
+
+        with self.assertRaises(CreatePrError) as caught:
+            _assert_unique_project_site_codes(records)
+
+        self.assertEqual(caught.exception.code, "DUPLICATE_SITE_CODE_IN_PROJECT")
+        self.assertEqual(caught.exception.details["duplicates"][0]["site_code"], "S001")
+        self.assertEqual(caught.exception.details["duplicates"][0]["source_rows"], [5, 9])
+
+    def test_same_site_code_in_different_projects_does_not_collide(self):
+        _assert_unique_project_site_codes([
+            record("S001", project_key="P1", source_row=5),
+            record("S001", project_key="P2", source_row=9),
+        ])
+
+
 class TestIssue74RendererReconciliation(unittest.TestCase):
+    @staticmethod
+    def _write_ecc(path, site_code):
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.title = "details"
+        worksheet.append(["SN.", "Site ID*"])
+        worksheet.append([1, site_code])
+        workbook.save(path)
+
     def test_reads_generated_and_review_required_sites(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             ecc = root / "Central-Magicell TX Rollout TI PR 20260810.xlsx"
-            workbook = Workbook()
-            worksheet = workbook.active
-            worksheet.title = "details"
-            worksheet.append(["SN.", "Site ID*"])
-            worksheet.append([1, "A_Relocate"])
-            workbook.save(ecc)
+            self._write_ecc(ecc, "A_Relocate")
 
             review = root / "REVIEW_REQUIRED_TI_20260810.csv"
             with review.open("w", encoding="utf-8-sig", newline="") as handle:
@@ -54,6 +88,26 @@ class TestIssue74RendererReconciliation(unittest.TestCase):
             self.assertEqual(result["site_dispositions"][0]["disposition"], "GENERATED")
             self.assertEqual(result["site_dispositions"][1]["disposition"], "REVIEW_REQUIRED")
             self.assertEqual(result["site_dispositions"][1]["reason_code"], "NO_MATCHING_TI_PR_MODEL_ITEM")
+
+    def test_overwritten_same_day_ecc_is_touched_for_reconciliation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            ecc = root / "Central-Magicell TX Rollout TI PR 20260810.xlsx"
+            self._write_ecc(ecc, "OLD_SITE")
+            before = snapshot_renderer_artifacts(root)
+
+            self._write_ecc(ecc, "A_Relocate")
+            touched = touched_renderer_artifacts(root, before)
+
+            self.assertEqual(touched, [ecc.resolve()])
+            result = collect_renderer_reconciliation(
+                root,
+                [record("A_RELOCATE1")],
+                "TI",
+                lambda item: _canonical_relocate_site_id(item["site"]["site_code"]),
+                created_paths=touched,
+            )
+            self.assertEqual(result["site_dispositions"][0]["disposition"], "GENERATED")
 
 
 class TestIssue74Reconciliation(unittest.TestCase):
