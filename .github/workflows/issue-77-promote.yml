@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   promote:
-    if: github.event.head_commit.message == 'chore(issue-77): retrigger v4.1 promotion with status'
+    if: github.event.head_commit.message == 'chore(issue-77): retrigger promotion after baseline expectation'
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout Issue 77 branch
