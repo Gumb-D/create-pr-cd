@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""Promote a compatible PR Model candidate into the single current production baseline."""
+"""Promote a compatible or explicitly reviewed PR Model into the single current production baseline."""
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
 import re
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -63,7 +62,64 @@ def _run_regression_gate(root: Path) -> dict[str, Any]:
     return {"status": "PASS", "command": command}
 
 
-def promote_pr_model(candidate_path: Path | str, version: str, *, root: Path | str | None = None) -> dict[str, Any]:
+def _load_review_approval(
+    approval_path: Path | str,
+    *,
+    root: Path,
+    candidate_sha: str,
+    version: str,
+    reason_codes: list[str],
+) -> dict[str, Any]:
+    path = Path(approval_path)
+    if not path.is_absolute():
+        path = root / path
+    try:
+        approval = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise PrModelPromotionError(
+            "PR_MODEL_PROMOTION_APPROVAL_INVALID",
+            "Reviewed-change approval evidence is missing or invalid.",
+            {"approval_path": str(path), "exception": type(exc).__name__},
+        ) from exc
+
+    approved_codes = {str(code) for code in approval.get("approved_reason_codes", [])}
+    required_codes = {str(code) for code in reason_codes}
+    unapproved = sorted(required_codes - approved_codes)
+    references = approval.get("business_change_references", [])
+    errors = []
+    if approval.get("status") != "APPROVED":
+        errors.append("status")
+    if str(approval.get("candidate_version")) != str(version):
+        errors.append("candidate_version")
+    if str(approval.get("candidate_sha256", "")).lower() != candidate_sha.lower():
+        errors.append("candidate_sha256")
+    if not isinstance(references, list) or not [item for item in references if str(item).strip()]:
+        errors.append("business_change_references")
+    if unapproved:
+        errors.append("approved_reason_codes")
+
+    if errors:
+        raise PrModelPromotionError(
+            "PR_MODEL_PROMOTION_APPROVAL_INVALID",
+            "Approval evidence does not authorize all reviewed changes for this exact candidate.",
+            {
+                "approval_path": str(path),
+                "invalid_fields": errors,
+                "unapproved_reason_codes": unapproved,
+                "candidate_version": version,
+                "candidate_sha256": candidate_sha,
+            },
+        )
+    return approval
+
+
+def promote_pr_model(
+    candidate_path: Path | str,
+    version: str,
+    *,
+    root: Path | str | None = None,
+    approval_path: Path | str | None = None,
+) -> dict[str, Any]:
     repo_root = _repo_root(root)
     current = validate_pr_model_baseline(root=repo_root)
     baseline = load_pr_model_baseline(repo_root)
@@ -77,16 +133,25 @@ def promote_pr_model(candidate_path: Path | str, version: str, *, root: Path | s
             {"candidate_path": str(candidate)},
         )
 
-    report = analyze_pr_model_change(current["path"], candidate)
-    if report["status"] != "COMPATIBLE":
-        raise PrModelPromotionError(
-            "PR_MODEL_PROMOTION_REVIEW_REQUIRED",
-            "Candidate cannot replace production until compatibility review is cleared.",
-            {"candidate_path": str(candidate), "candidate_version": version, "compatibility": report},
-        )
-
     candidate_bytes = candidate.read_bytes()
     candidate_sha = hashlib.sha256(candidate_bytes).hexdigest()
+    report = analyze_pr_model_change(current["path"], candidate)
+    approval = None
+    if report["status"] != "COMPATIBLE":
+        if approval_path is None:
+            raise PrModelPromotionError(
+                "PR_MODEL_PROMOTION_REVIEW_REQUIRED",
+                "Candidate cannot replace production until compatibility review is cleared.",
+                {"candidate_path": str(candidate), "candidate_version": version, "compatibility": report},
+            )
+        approval = _load_review_approval(
+            approval_path,
+            root=repo_root,
+            candidate_sha=candidate_sha,
+            version=version,
+            reason_codes=report.get("reason_codes", []),
+        )
+
     production_path = current["expected_path"]
     config_path = repo_root / "config/pr_model_baseline.yaml"
 
@@ -129,18 +194,20 @@ def promote_pr_model(candidate_path: Path | str, version: str, *, root: Path | s
         "sha256": validated["actual_sha256"],
         "path": str(validated["path"]),
         "compatibility": report,
+        "approval": approval,
         "regression": regression,
         "legacy_hash_mirrors_updated": [str(path.relative_to(repo_root)) for path in mirror_paths],
     }
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Promote a compatible PR Model candidate.")
+    parser = argparse.ArgumentParser(description="Promote a compatible or reviewed PR Model candidate.")
     parser.add_argument("candidate")
     parser.add_argument("--version", required=True)
+    parser.add_argument("--approval", help="JSON approval evidence for reviewed compatibility changes")
     args = parser.parse_args()
     try:
-        result = promote_pr_model(args.candidate, args.version)
+        result = promote_pr_model(args.candidate, args.version, approval_path=args.approval)
     except PrModelPromotionError as exc:
         print(json.dumps({"status": "ERROR", "code": exc.code, "message": str(exc), "details": exc.details}, ensure_ascii=False, indent=2))
         return 2
