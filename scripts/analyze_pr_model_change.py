@@ -70,6 +70,11 @@ def _row_payload(row: tuple[Any, ...]) -> dict[str, Any]:
     }
 
 
+def _is_mandatory(row: tuple[Any, ...]) -> bool:
+    rules = str(row[6] or "").strip().casefold()
+    return "mandatory" in rules
+
+
 def analyze_pr_model_change(current_path: Path | str, candidate_path: Path | str) -> dict[str, Any]:
     current_rows = extract_business_rows(current_path)
     candidate_rows = extract_business_rows(candidate_path)
@@ -86,12 +91,15 @@ def analyze_pr_model_change(current_path: Path | str, candidate_path: Path | str
     current_sows = {str(row[1]) for row in current_rows if row[0] in {"TSS", "TI"}}
     candidate_sows = {str(row[1]) for row in candidate_rows if row[0] in {"TSS", "TI"}}
     new_sows = sorted(candidate_sows - current_sows)
+    added_mandatory = [row for row in added if row[0] in {"TSS", "TI"} and _is_mandatory(row)]
 
     reason_codes: list[str] = []
     if removed:
         reason_codes.append("REMOVED_BUSINESS_ROWS")
     if new_sows:
         reason_codes.append("NEW_SOW")
+    if added_mandatory:
+        reason_codes.append("ADDED_MANDATORY_ROWS")
 
     status = "REVIEW_REQUIRED" if reason_codes else "COMPATIBLE"
     return {
@@ -101,9 +109,11 @@ def analyze_pr_model_change(current_path: Path | str, candidate_path: Path | str
         "candidate_row_count": len(candidate_rows),
         "removed_count": len(removed),
         "added_count": len(added),
+        "added_mandatory_count": len(added_mandatory),
         "new_sows": new_sows,
         "removed_rows": [_row_payload(row) for row in removed],
         "added_rows": [_row_payload(row) for row in added],
+        "added_mandatory_rows": [_row_payload(row) for row in added_mandatory],
     }
 
 
