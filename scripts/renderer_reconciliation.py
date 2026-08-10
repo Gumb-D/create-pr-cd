@@ -2,10 +2,43 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping
 
 from openpyxl import load_workbook
+
+
+def _artifact_signature(path: Path) -> tuple[int, int, str]:
+    stat = path.stat()
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    return stat.st_size, stat.st_mtime_ns, digest
+
+
+def snapshot_renderer_artifacts(output: Path) -> dict[str, tuple[int, int, str]]:
+    """Snapshot direct output files so same-name overwrites can be detected later."""
+    root = Path(output)
+    if not root.exists():
+        return {}
+    return {
+        str(path.resolve()): _artifact_signature(path)
+        for path in root.glob("*")
+        if path.is_file()
+    }
+
+
+def touched_renderer_artifacts(
+    output: Path,
+    before: Mapping[str, tuple[int, int, str]] | None = None,
+) -> list[Path]:
+    """Return files created or overwritten since the supplied snapshot."""
+    baseline = dict(before or {})
+    current = snapshot_renderer_artifacts(output)
+    return sorted(
+        Path(path)
+        for path, signature in current.items()
+        if baseline.get(path) != signature
+    )
 
 
 def _csv_site_codes(path: Path) -> tuple[set[str], dict[str, str]]:
