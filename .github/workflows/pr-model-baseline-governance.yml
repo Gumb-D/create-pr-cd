@@ -1,0 +1,37 @@
+name: PR Model Baseline Governance
+
+on:
+  pull_request:
+    paths:
+      - 'config/pr_model_baseline.yaml'
+      - 'Info/input/pr_model.xlsx'
+      - 'scripts/pr_model_baseline.py'
+      - 'scripts/analyze_pr_model_change.py'
+      - 'scripts/create_pr.py'
+      - 'scripts/generate_tss_pr_ecc.py'
+      - 'scripts/run_tx_mini_ecc_parity.py'
+      - 'tests/test_pr_model_baseline.py'
+      - 'tests/test_pr_model_change_analyzer.py'
+      - '.github/workflows/pr-model-baseline-governance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  baseline-governance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install test dependencies
+        run: python -m pip install --upgrade pip openpyxl pandas pyyaml xlrd
+
+      - name: Run Issue 75 baseline tests
+        run: python -m unittest tests.test_pr_model_baseline tests.test_pr_model_change_analyzer -v
