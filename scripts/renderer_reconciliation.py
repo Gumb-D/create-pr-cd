@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import csv
 from pathlib import Path
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Iterable, Mapping
 
 from openpyxl import load_workbook
 
@@ -43,23 +43,32 @@ def _ecc_site_codes(path: Path) -> set[str]:
 
 def collect_renderer_reconciliation(
     output: Path,
-    before: set[Path],
     candidates: list[Mapping[str, Any]],
     scope: str,
     render_site_code: Callable[[Mapping[str, Any]], str],
+    *,
+    before: set[Path] | None = None,
+    created_paths: Iterable[Path | str] | None = None,
 ) -> dict[str, Any]:
     """Reconcile renderer-created ECC/review artifacts back to source site codes."""
-    created = [
-        path.resolve()
-        for path in Path(output).glob("*")
-        if path.is_file() and path.resolve() not in before
-    ]
+    if created_paths is not None:
+        created = [Path(path).resolve() for path in created_paths]
+    else:
+        excluded = {Path(path).resolve() for path in (before or set())}
+        created = [
+            path.resolve()
+            for path in Path(output).glob("*")
+            if path.is_file() and path.resolve() not in excluded
+        ]
+
     generated_rendered: set[str] = set()
     review_rendered: set[str] = set()
     duplicate_rendered: set[str] = set()
     review_reasons: dict[str, str] = {}
 
     for path in created:
+        if not path.exists():
+            continue
         upper_name = path.name.upper()
         if path.suffix.lower() == ".xlsx" and " PR " in upper_name:
             generated_rendered.update(_ecc_site_codes(path))
