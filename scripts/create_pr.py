@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 import create_pr_impl as _impl
+from renderer_reconciliation import collect_renderer_reconciliation
 
 
 for _name in dir(_impl):
@@ -57,8 +58,26 @@ def _sync_dependencies() -> None:
     _impl._partition_records = _partition_records
 
 
+def _reconcile_summary(summary, scope):
+    partitions = _LAST_PARTITIONS or {
+        "candidates": [], "duplicates": [], "ignored": [], "review_required": []
+    }
+    selected = []
+    for bucket in ("candidates", "duplicates", "ignored", "review_required"):
+        selected.extend(partitions.get(bucket, []))
+
+    renderer = collect_renderer_reconciliation(
+        Path(summary["output_root"]),
+        partitions.get("candidates", []),
+        scope,
+        lambda record: _impl._renderer_row(record).get("customer site code", ""),
+        created_paths=summary.get("created_files", []),
+    )
+    return _impl._build_site_reconciliation(selected, partitions, renderer)
+
+
 def run(parsed):
-    """Run the implementation and persist the ignored-record audit reference."""
+    """Run the implementation and persist ignored/reconciliation audit data."""
 
     global _LAST_PARTITIONS
     _LAST_PARTITIONS = None
@@ -72,6 +91,7 @@ def run(parsed):
         summary["run_mode"],
     )
     summary["ignored_report"] = str(ignored_path.resolve()) if ignored_path else None
+    summary.update(_reconcile_summary(summary, parsed.scope))
     Path(summary["summary_path"]).write_text(
         json.dumps(summary, ensure_ascii=False, indent=2),
         encoding="utf-8",
