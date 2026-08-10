@@ -15,7 +15,14 @@ PR_MODEL_SHEET_NAME = "TX Line Item (After 21-Apr 26)"
 
 
 def load_pr_model_items(path: Any) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
-    """Load TSS and every valid TI model row, including named sections after blank separators."""
+    """Load TSS and every valid TI model row, including named sections after blank separators.
+
+    PR Model v4.1 intentionally combines New Link and Reroute under one visible
+    SOW. Reroute-only TI rows are distinguished by the workbook Remarks value.
+    They are exposed internally as ``MW Reroute`` while retaining ``Source_SOW``
+    so Jendela's independent new-link work item cannot accidentally inherit a
+    dismantle/return group from the same visible model SOW.
+    """
     import pandas as pd
 
     dataframe = pd.read_excel(path, sheet_name=PR_MODEL_SHEET_NAME, header=None)
@@ -63,15 +70,26 @@ def load_pr_model_items(path: Any) -> tuple[List[Dict[str, Any]], List[Dict[str,
         if str(pbom).strip().casefold() == "code":
             continue
         rules = dataframe.iloc[index, 5]
+        remarks = dataframe.iloc[index, 6] if len(dataframe.columns) > 6 else None
+        source_sow = str(sow).strip()
+        remarks_text = str(remarks).strip() if pd.notna(remarks) else ""
+        effective_sow = source_sow
+        if (
+            normalize_ti_sow(source_sow) == "MW NEW LINK / REROUTE"
+            and remarks_text.casefold() == "reroute"
+        ):
+            effective_sow = "MW Reroute"
         ti_models.append(
             {
-                "SOW": str(sow).strip(),
+                "SOW": effective_sow,
+                "Source_SOW": source_sow,
                 "PBOM_Code": normalize_pbom_code(pbom),
                 "Description": str(description).strip(),
                 "Unit": str(dataframe.iloc[index, 3]).strip() if pd.notna(dataframe.iloc[index, 3]) else "Hop",
                 "Quantity": float(dataframe.iloc[index, 4]) if pd.notna(dataframe.iloc[index, 4]) else 1,
                 "Is_Mandatory": "Mandatory" in str(rules) if pd.notna(rules) else False,
                 "Rules": str(rules).strip() if pd.notna(rules) else "",
+                "Remarks": remarks_text,
             }
         )
 
@@ -230,16 +248,17 @@ def ti_sow_matches_model(
 
 
 def is_mw_reroute_row(row: Dict[str, Any]) -> bool:
-    """
-    Determine if a TI row should be processed as MW Reroute.
-    This function is used by the TI matching logic and checks the Tx SOW field.
+    """Determine whether a TI row should use the legacy MW reroute selector.
 
-    Args:
-        row: Dictionary representing a site data row
-
-    Returns:
-        True if the row qualifies as MW Reroute based on Tx SOW, False otherwise
+    Issue #77 Jendela ``MW New Link`` is deliberately excluded even though its
+    v4.1 model SOW contains the word ``Reroute``. Jendela dismantle is already a
+    separate work item derived from TX Before Migration and must never be
+    inferred a second time by the renderer.
     """
+    profile_id = str(row.get("DU Profile ID", "") or "").strip()
+    migration_work_item = str(row.get("Migration Work Item", "") or "").strip()
+    if profile_id == "jendela_tx_migration_pr_v1" and migration_work_item == "MW New Link":
+        return False
     sow = str(row.get('Tx SOW', '')).strip().lower()
     return "mw" in sow and 'reroute' in sow
 
@@ -250,7 +269,7 @@ def parse_mw_new_link_reroute(sow: str, upgrade_scope: str) -> bool:
 
     Args:
         sow: Tx SOW string
-        upgrade_scope: TX Upgrade Scope string
+        upgrade_scope: TX Upgrade Scope
 
     Returns:
         True if this is a reroute (has 'dismantle' in upgrade_scope), False for new link
