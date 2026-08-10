@@ -66,7 +66,7 @@ class TestPrModelChangeAnalyzer(unittest.TestCase):
         self.assertIn("NEW_SOW", report["reason_codes"])
         self.assertEqual(report["new_sows"], ["Brand New SOW"])
 
-    def test_added_row_under_existing_sow_is_compatible_but_reported(self):
+    def test_added_optional_row_under_existing_sow_is_compatible_but_reported(self):
         with tempfile.TemporaryDirectory() as tmp:
             current = Path(tmp) / "current.xlsx"
             candidate = Path(tmp) / "candidate.xlsx"
@@ -78,6 +78,20 @@ class TestPrModelChangeAnalyzer(unittest.TestCase):
             report = analyze_pr_model_change(current, candidate)
         self.assertEqual(report["status"], "COMPATIBLE")
         self.assertEqual(report["added_count"], 1)
+
+    def test_added_mandatory_row_under_existing_sow_requires_review(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            current = Path(tmp) / "current.xlsx"
+            candidate = Path(tmp) / "candidate.xlsx"
+            _write_model(current, [["MW Swap", 100, "Swap", "Hop", 1, "Mandatory", None, None]])
+            _write_model(candidate, [
+                ["MW Swap", 100, "Swap", "Hop", 1, "Mandatory", None, None],
+                ["MW Swap", 102, "Mandatory extra", "Hop", 1, "Mandatory", None, None],
+            ])
+            report = analyze_pr_model_change(current, candidate)
+        self.assertEqual(report["status"], "REVIEW_REQUIRED")
+        self.assertIn("ADDED_MANDATORY_ROWS", report["reason_codes"])
+        self.assertEqual(report["added_mandatory_count"], 1)
 
 
 if __name__ == "__main__":
