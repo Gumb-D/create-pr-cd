@@ -44,7 +44,6 @@ class TestIssue77JendelaRedesign(unittest.TestCase):
             "Starlink": ["Dismantle Starlink"],
             "MW": ["Dismantle MW"],
             "Microwave": ["Dismantle MW"],
-            "Fiber Own Build": [],
         }
         for before, expected in cases.items():
             with self.subTest(before=before):
@@ -52,22 +51,29 @@ class TestIssue77JendelaRedesign(unittest.TestCase):
                 self.assertEqual(result["classification"], "APPROVED")
                 self.assertEqual(self.work_items(result), expected)
 
+        no_work = self.derive(before="Fiber Own Build", tx_sow="-")
+        self.assertEqual(no_work["classification"], "APPROVED_NO_OUTPUT")
+        self.assertEqual(self.work_items(no_work), [])
+
     def test_tx_sow_controls_additional_work_only(self):
-        cases = {
+        work_cases = {
             "BBU Patching / MW IDU Patching": ["BBU Patching / MW IDU Patching"],
             "BBU Patching": ["BBU Patching / MW IDU Patching"],
             "MW IDU Patching": ["BBU Patching / MW IDU Patching"],
             "MW New Link / Reroute": ["MW New Link"],
-            "MW by others": [],
-            "-": [],
-            "": [],
-            None: [],
         }
-        for tx_sow, expected in cases.items():
+        for tx_sow, expected in work_cases.items():
             with self.subTest(tx_sow=tx_sow):
                 result = self.derive(before="Fiber Own Build", tx_sow=tx_sow)
                 self.assertEqual(result["classification"], "APPROVED")
                 self.assertEqual(self.work_items(result), expected)
+
+        for tx_sow in ("MW by others", "-", "", None):
+            with self.subTest(tx_sow=tx_sow):
+                result = self.derive(before="Fiber Own Build", tx_sow=tx_sow)
+                self.assertEqual(result["classification"], "APPROVED_NO_OUTPUT")
+                self.assertEqual(result["reason_code"], "JENDELA_TI_NO_WORK_REQUIRED")
+                self.assertEqual(self.work_items(result), [])
 
     def test_independent_decisions_are_combined_atomically(self):
         cases = [
@@ -75,13 +81,16 @@ class TestIssue77JendelaRedesign(unittest.TestCase):
             ("MW", "MW New Link / Reroute", ["Dismantle MW", "MW New Link"]),
             ("Fiber Own Build", "MW New Link / Reroute", ["MW New Link"]),
             ("MW", "", ["Dismantle MW"]),
-            ("Fiber Own Build", "", []),
         ]
         for before, tx_sow, expected in cases:
             with self.subTest(before=before, tx_sow=tx_sow):
                 result = self.derive(before=before, tx_sow=tx_sow)
                 self.assertEqual(result["classification"], "APPROVED")
                 self.assertEqual(self.work_items(result), expected)
+
+        no_work = self.derive(before="Fiber Own Build", tx_sow="")
+        self.assertEqual(no_work["classification"], "APPROVED_NO_OUTPUT")
+        self.assertEqual(self.work_items(no_work), [])
 
     def test_missing_or_unknown_tx_before_migration_fails_closed(self):
         for before in (None, "", "Satellite", "Unknown"):
