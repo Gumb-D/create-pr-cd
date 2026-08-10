@@ -118,13 +118,19 @@ def collect_renderer_reconciliation(
         source_code = str(record.get("site", {}).get("site_code", "") or "").strip()
         rendered_code = str(render_site_code(record) or "").strip()
         key = rendered_code.upper()
-        if key in generated_rendered:
-            disposition = "GENERATED"
-            reason_code = "ECC_GENERATED"
-        elif key in review_rendered:
+        has_generated = key in generated_rendered
+        has_review = key in review_rendered
+        has_duplicate = key in duplicate_rendered
+
+        # REVIEW_REQUIRED is a stronger terminal state than GENERATED. A renderer may
+        # emit partial ECC rows while also quarantining unresolved line items.
+        if has_review:
             disposition = "REVIEW_REQUIRED"
             reason_code = review_reasons.get(key) or "RENDERER_REVIEW_REQUIRED"
-        elif key in duplicate_rendered:
+        elif has_generated:
+            disposition = "GENERATED"
+            reason_code = "ECC_GENERATED"
+        elif has_duplicate:
             disposition = "DUPLICATE_BLOCKED"
             reason_code = "RENDERER_DUPLICATE_BLOCKED"
         else:
@@ -136,6 +142,9 @@ def collect_renderer_reconciliation(
                 "rendered_site_code": rendered_code,
                 "disposition": disposition,
                 "reason_code": reason_code,
+                "ecc_evidence_present": has_generated,
+                "review_evidence_present": has_review,
+                "duplicate_evidence_present": has_duplicate,
             }
         )
 
