@@ -1,9 +1,9 @@
 name: Issue 82 Refresh Profile Artifacts
 
 on:
-  push:
+  pull_request:
     branches:
-      - "fix/mw-eos-antenna-evidence"
+      - main
     paths:
       - ".github/workflows/issue-82-refresh-artifacts.yml"
 
@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   refresh-profile-artifacts:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'fix/mw-eos-antenna-evidence'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
