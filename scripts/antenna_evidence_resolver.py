@@ -38,7 +38,12 @@ _NON_INSTALL_INTENT_PATTERN = re.compile(
     r"\b(?:dismantl(?:e|ed|ing)?|decom(?:mission(?:ed|ing)?)?|remove|removed|removal|existing|old|reuse|reused|retain|retained)\b",
     re.IGNORECASE,
 )
-_CLAUSE_SEPARATOR_PATTERN = re.compile(r"(?:[;\n]|\b(?:and|then)\b)", re.IGNORECASE)
+# Treat normal action punctuation as a clause boundary without splitting the
+# decimal point inside values such as 0.6 or 2.4.
+_CLAUSE_SEPARATOR_PATTERN = re.compile(
+    r"(?:[;,\n&]|(?<!\d)\.(?!\d)|\b(?:and|then)\b)",
+    re.IGNORECASE,
+)
 
 
 def _is_blank(value: Any) -> bool:
@@ -95,18 +100,8 @@ def _parse_direct_size(value: Any) -> float | None:
     return max(supported) if supported else None
 
 
-def _context_window(text: str, start: int, end: int, radius: int = 48) -> str:
-    left_boundary = max(text.rfind(";", 0, start), text.rfind("\n", 0, start))
-    right_candidates = [
-        value for value in (text.find(";", end), text.find("\n", end)) if value != -1
-    ]
-    segment_start = 0 if left_boundary == -1 else left_boundary + 1
-    segment_end = min(right_candidates) if right_candidates else len(text)
-    return text[max(segment_start, start - radius):min(segment_end, end + radius)].casefold()
-
-
-def _intent_clause(text: str, start: int, end: int) -> tuple[str, int]:
-    """Return the local action clause containing one candidate size token."""
+def _clause_bounds(text: str, start: int, end: int) -> tuple[int, int]:
+    """Return action-clause bounds around one candidate size token."""
     clause_start = 0
     clause_end = len(text)
     for match in _CLAUSE_SEPARATOR_PATTERN.finditer(text):
@@ -116,6 +111,19 @@ def _intent_clause(text: str, start: int, end: int) -> tuple[str, int]:
         if match.start() >= end:
             clause_end = match.start()
             break
+    return clause_start, clause_end
+
+
+def _context_window(text: str, start: int, end: int, radius: int = 48) -> str:
+    clause_start, clause_end = _clause_bounds(text, start, end)
+    return text[
+        max(clause_start, start - radius):min(clause_end, end + radius)
+    ].casefold()
+
+
+def _intent_clause(text: str, start: int, end: int) -> tuple[str, int]:
+    """Return the local action clause containing one candidate size token."""
+    clause_start, clause_end = _clause_bounds(text, start, end)
     return text[clause_start:clause_end], clause_start
 
 
@@ -186,7 +194,9 @@ def _parse_detail_sizes(value: Any, *, require_antenna_context: bool) -> list[fl
     """Extract supported installation antenna sizes from governed SOW details."""
     if _is_blank(value):
         return []
-    text = str(value).replace(",", ".")
+    # Convert only decimal commas; preserve ordinary comma punctuation so it
+    # remains an intent-clause boundary.
+    text = re.sub(r"(?<=\d),(?=\d)", ".", str(value))
     candidates: list[float] = []
     consumed: list[tuple[int, int]] = []
 
@@ -208,7 +218,7 @@ def _parse_detail_sizes(value: Any, *, require_antenna_context: bool) -> list[fl
     # Bare decimals are accepted only when the number itself has explicit
     # antenna-installation context. Guards also prevent partial IP matches.
     for match in re.finditer(r"(?<![\d.])(\d+\.\d+)(?![\d.])", text):
-        if any(start <= match.start() < end for start, end in consumed):
+        if any(consumed_start <= match.start() < consumed_end for consumed_start, consumed_end in consumed):
             continue
         if not _has_antenna_specific_context(text, match.start(), match.end()):
             continue
