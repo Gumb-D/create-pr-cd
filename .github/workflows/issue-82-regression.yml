@@ -12,6 +12,7 @@ on:
       - "tests/test_issue_82_mw_eos_antenna.py"
       - "tests/test_issue_82_antenna_false_positive.py"
       - "tests/test_issue_82_codex_review.py"
+      - "tests/test_issue_82_legacy_renderer_contract.py"
       - ".github/workflows/issue-82-regression.yml"
 
 permissions:
@@ -34,8 +35,10 @@ jobs:
             tests.test_issue_82_mw_eos_antenna \
             tests.test_issue_82_antenna_false_positive \
             tests.test_issue_82_codex_review \
+            tests.test_issue_82_legacy_renderer_contract \
             tests.test_ti_sow_matching \
             tests.test_human_uat_remediation_48_54 \
+            tests.test_jendela_approved_pr_model \
             tests.test_mw_reroute \
             tests.test_pr_safety_controls \
             tests.test_du_profile_loader
