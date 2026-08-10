@@ -8,6 +8,7 @@ on:
       - "scripts/generate_tss_pr_ecc.py"
       - "scripts/antenna_evidence_resolver.py"
       - "tests/test_issue_82_mw_eos_antenna.py"
+      - "tests/test_issue_82_antenna_false_positive.py"
       - ".github/workflows/issue-82-regression.yml"
 
 permissions:
@@ -28,6 +29,7 @@ jobs:
         run: |
           python -m unittest \
             tests.test_issue_82_mw_eos_antenna \
+            tests.test_issue_82_antenna_false_positive \
             tests.test_ti_sow_matching \
             tests.test_human_uat_remediation_48_54 \
             tests.test_mw_reroute \
