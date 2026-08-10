@@ -51,6 +51,7 @@ class TestInstallationAntennaEvidenceResolver(unittest.TestCase):
             {
                 "MW Config Antenna Size NE": "0.6m",
                 "MW Config Antenna Size FE": "1.2",
+                "TX SOW Details": "Install new antenna 3.0m",
                 "NE SOW Details": "Install new antenna 1.8m",
                 "FE SOW Details": "Target antenna 2.4m",
             }
@@ -61,12 +62,14 @@ class TestInstallationAntennaEvidenceResolver(unittest.TestCase):
         self.assertEqual(result["selected_size"], 1.2)
         self.assertEqual(result["ne_source"], "MW Config Antenna Size NE")
         self.assertEqual(result["fe_source"], "MW Config Antenna Size FE")
+        self.assertEqual(result["group_source"], "ENDPOINT_EVIDENCE")
 
     def test_falls_back_to_endpoint_sow_details(self):
         result = resolve_installation_antenna_evidence(
             {
                 "MW Config Antenna Size NE": "",
                 "MW Config Antenna Size FE": "",
+                "TX SOW Details": "",
                 "NE SOW Details": "Install new antenna 0.6m",
                 "FE SOW Details": "Target antenna 1.2m",
             }
@@ -78,11 +81,30 @@ class TestInstallationAntennaEvidenceResolver(unittest.TestCase):
         self.assertEqual(result["ne_source"], "NE SOW Details")
         self.assertEqual(result["fe_source"], "FE SOW Details")
 
+    def test_falls_back_to_common_tx_sow_details_for_group_decision(self):
+        result = resolve_installation_antenna_evidence(
+            {
+                "MW Config Antenna Size NE": "",
+                "MW Config Antenna Size FE": "",
+                "TX SOW Details": "MW swap install antenna 0.6m and target antenna 1.2m",
+                "NE SOW Details": "",
+                "FE SOW Details": "",
+            }
+        )
+        self.assertEqual(result["status"], "RESOLVED_COMMON")
+        self.assertIsNone(result["ne_size"])
+        self.assertIsNone(result["fe_size"])
+        self.assertEqual(result["selected_size"], 1.2)
+        self.assertEqual(result["common_size"], 1.2)
+        self.assertEqual(result["group_source"], "TX SOW Details")
+        self.assertEqual(result["evidence"][0]["source"], "TX SOW Details")
+
     def test_normalizes_bare_and_m_suffix_formats(self):
         result = resolve_installation_antenna_evidence(
             {
                 "MW Config Antenna Size NE": "0.6",
                 "MW Config Antenna Size FE": "0.6m",
+                "TX SOW Details": "",
                 "NE SOW Details": "",
                 "FE SOW Details": "",
             }
@@ -97,6 +119,7 @@ class TestInstallationAntennaEvidenceResolver(unittest.TestCase):
             {
                 "MW Config Antenna Size NE": "",
                 "MW Config Antenna Size FE": "",
+                "TX SOW Details": "",
                 "NE SOW Details": "Install new antenna 0.6m; VLAN 1234; 18G radio",
                 "FE SOW Details": "Build target antenna 1.2m; capacity 833Mbps",
             }
@@ -111,6 +134,7 @@ class TestInstallationAntennaEvidenceResolver(unittest.TestCase):
             {
                 "MW Config Antenna Size NE": "",
                 "MW Config Antenna Size FE": "",
+                "TX SOW Details": "",
                 "NE SOW Details": "Install new antenna 0.6m",
                 "FE SOW Details": "",
             }
@@ -125,6 +149,7 @@ class TestInstallationAntennaEvidenceResolver(unittest.TestCase):
             {
                 "MW Config Antenna Size NE": "",
                 "MW Config Antenna Size FE": "",
+                "TX SOW Details": "",
                 "NE SOW Details": "",
                 "FE SOW Details": "",
             }
@@ -188,7 +213,7 @@ class TestMwSwapGeneratorFallback(unittest.TestCase):
                     review_rows = list(csv.DictReader(handle))
             return result, generated_sites, review_rows
 
-    def test_mw_swap_uses_ne_fe_sow_details_when_direct_sizes_blank(self):
+    def test_mw_swap_uses_governed_tx_sow_detail_when_direct_sizes_blank(self):
         site_code = "ISSUE82_MW_EOS_SWAP"
         row = {
             "customer site code": site_code,
@@ -205,9 +230,9 @@ class TestMwSwapGeneratorFallback(unittest.TestCase):
             "SubCon - TI Team": "Seri Pancar",
             "Subcon PR - TI": "",
             "BOQ Configuration": "",
-            "TX SOW Details": "",
-            "NE SOW Details": "Install new antenna 0.6m",
-            "FE SOW Details": "Install new antenna 1.2m",
+            "TX SOW Details": "MW swap install antenna 0.6m and target antenna 1.2m",
+            "NE SOW Details": "",
+            "FE SOW Details": "",
         }
 
         result, generated_sites, review_rows = self._run_generator([row])
