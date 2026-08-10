@@ -1,4 +1,5 @@
 import json
+import re
 import sys
 import tempfile
 import unittest
@@ -56,13 +57,24 @@ class TestPrModelBaseline(unittest.TestCase):
             self.assertEqual(ctx.exception.code, PR_MODEL_BASELINE_MISMATCH)
             self.assertIn(sha256(b"candidate").hexdigest(), str(ctx.exception))
 
-    def test_generator_and_parity_do_not_own_duplicate_hash_constants(self):
-        generator = (ROOT / "scripts/generate_tss_pr_ecc.py").read_text(encoding="utf-8")
-        parity = (ROOT / "scripts/run_tx_mini_ecc_parity.py").read_text(encoding="utf-8")
-        self.assertNotIn("APPROVED_PR_MODEL_SHA256 =", generator)
-        self.assertNotIn("APPROVED_PR_MODEL_SHA256 =", parity)
-        self.assertIn("validate_pr_model_baseline", generator)
-        self.assertIn("validate_pr_model_baseline", parity)
+    def test_official_entrypoint_enforces_authoritative_baseline(self):
+        entrypoint = (ROOT / "scripts/create_pr.py").read_text(encoding="utf-8")
+        self.assertIn("validate_pr_model_baseline(parsed.pr_model)", entrypoint)
+        self.assertIn("except PrModelBaselineError as error", entrypoint)
+        self.assertIn('summary["pr_model_baseline"]', entrypoint)
+
+    def test_legacy_hash_mirrors_match_authoritative_baseline(self):
+        baseline = load_pr_model_baseline(ROOT)
+        expected = baseline["workbook"]["sha256"]
+        pattern = re.compile(r'APPROVED_PR_MODEL_SHA256\s*=\s*["\']([0-9a-f]{64})["\']')
+        for relative in (
+            "scripts/generate_tss_pr_ecc.py",
+            "scripts/run_tx_mini_ecc_parity.py",
+        ):
+            text = (ROOT / relative).read_text(encoding="utf-8")
+            match = pattern.search(text)
+            self.assertIsNotNone(match, relative)
+            self.assertEqual(match.group(1), expected, relative)
 
 
 if __name__ == "__main__":
