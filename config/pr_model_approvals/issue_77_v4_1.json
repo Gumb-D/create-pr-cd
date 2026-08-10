@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0",
+  "status": "APPROVED",
+  "candidate_version": "4.1",
+  "candidate_sha256": "6c4fda502a8998b41bd88704dd6c59d986dc6c46fe42b82947d12c0c0cd8178f",
+  "approved_reason_codes": [
+    "REMOVED_BUSINESS_ROWS",
+    "NEW_SOW",
+    "ADDED_MANDATORY_ROWS"
+  ],
+  "business_change_references": [
+    "GitHub Issue #77",
+    "docs/superpowers/specs/2026-08-10-jendela-tx-migration-issue-77-redesign.md"
+  ],
+  "business_decision_summary": [
+    "Issue #77 replaces the historical Jendela Final Backhaul transition matrix with independent TX Before Migration dismantle selection and Tx SOW additional-work selection.",
+    "Final Backhaul remains optional audit evidence and is not a PR decision or blocking field.",
+    "PR Model v4.1 intentionally restructures historical Jendela-only ADDITIONAL rows into current TI SOWs, including Starlink Dismanle, MW Dismantle, MW New Link / Reroute, BBU Patching and MW IDU Patching.",
+    "Tx SOW MW by others is the explicit no-additional-MW-PR ownership signal; Issue #77 does not infer Huawei/ZTE ownership from site-code patterns.",
+    "The candidate identity is approved only for the exact SHA-256 recorded in this file and remains subject to the regression gate in the promotion mechanism."
+  ],
+  "approved_on": "2026-08-10",
+  "approval_scope": "Issue #77 Jendela TX Migration redesign and PR Model v4.1 promotion"
+}
