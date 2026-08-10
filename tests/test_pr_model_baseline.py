@@ -95,6 +95,25 @@ class TestPrModelBaseline(unittest.TestCase):
             self.assertIsNotNone(match, relative)
             self.assertEqual(match.group(1), expected, relative)
 
+    def test_audit_metadata_describes_the_authoritative_current_baseline(self):
+        baseline = load_pr_model_baseline(ROOT)
+        version = str(baseline["model"]["version"])
+        expected_sha = str(baseline["workbook"]["sha256"])
+
+        history = (ROOT / "docs/pr_model_history.md").read_text(encoding="utf-8")
+        current_rows = [line for line in history.splitlines() if "| CURRENT |" in line]
+        self.assertEqual(len(current_rows), 1)
+        self.assertIn(f"| v{version} | `{expected_sha}` | CURRENT |", current_rows[0])
+
+        inventory = (ROOT / "docs/pr_model_reference_inventory.md").read_text(encoding="utf-8")
+        self.assertIn(f"version = {version}", inventory)
+        self.assertIn(f"sha256 = {expected_sha}", inventory)
+        self.assertIn(f"## v{version} production status", inventory)
+        self.assertNotIn(f"## v{version} candidate status", inventory)
+
+        registry = (ROOT / "config/registries/canonical_sow_registry.yaml").read_text(encoding="utf-8")
+        self.assertIn(f"PR Model v{version}", registry)
+
 
 if __name__ == "__main__":
     unittest.main()
