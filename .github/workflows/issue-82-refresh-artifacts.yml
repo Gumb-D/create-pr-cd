@@ -78,13 +78,17 @@ jobs:
                   'self.assertEqual(review["left_profile_version"], "0.1.0")',
                   'self.assertEqual(review["left_profile_version"], "0.1.1")',
               ),
+              Path("tests/test_profile_readiness_review.py"): (
+                  '"single": ["antenna_size_fe", "antenna_size_ne", "du_key"],',
+                  '"single": ["du_key"],',
+              ),
           }
           for path, (old, new) in replacements.items():
               text = path.read_text(encoding="utf-8")
               if new in text:
                   continue
               if text.count(old) != 1:
-                  raise SystemExit(f"Expected exactly one EOS version assertion in {path}, found {text.count(old)}")
+                  raise SystemExit(f"Expected exactly one EOS assertion marker in {path}, found {text.count(old)}")
               path.write_text(text.replace(old, new, 1), encoding="utf-8")
           PY
 
@@ -121,7 +125,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add config/registries docs tests/test_missing_field_bridge_review.py tests/test_mw_pair_divergence_review.py
+          git add config/registries docs tests/test_missing_field_bridge_review.py tests/test_mw_pair_divergence_review.py tests/test_profile_readiness_review.py
           if git diff --cached --quiet; then
             echo "No governed artifact changes to commit."
           else
