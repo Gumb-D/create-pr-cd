@@ -18,3 +18,5 @@ This file is audit metadata only. Runtime selection is controlled exclusively by
 5. A mismatch fails closed with `PR_MODEL_BASELINE_MISMATCH`.
 6. Automated compatibility/regression is the default validation method.
 7. Human review is required only when the candidate introduces, removes, or changes business meaning that cannot be safely resolved by existing approved rules.
+8. A reviewed change is unlocked only by approval evidence bound to the exact candidate version/SHA, covering every analyzer reason code and recording the business-change reference.
+9. Approval evidence cannot bypass the full regression gate; failed promotion restores the previous production baseline.
