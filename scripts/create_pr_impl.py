@@ -577,7 +577,15 @@ def run(parsed: argparse.Namespace) -> dict[str, Any]:
                 "--all-sites",
                 "--du-model-name", metadata["du_model_name"],
             ]
-            result = subprocess.run(command, cwd=ROOT, text=True, capture_output=True, check=False)
+            result = subprocess.run(
+                command,
+                cwd=ROOT,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                capture_output=True,
+                check=False,
+            )
             if result.stdout:
                 print(result.stdout, end="")
             if result.stderr:
