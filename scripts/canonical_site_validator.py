@@ -189,7 +189,8 @@ def validate_canonical_site_record(record: Mapping[str, Any], scope: str) -> Dic
             blocking_reasons.append("MISSING_SOURCE_EVIDENCE:tx_sow_raw")
 
         decision = record.get("pr_context", {}).get("migration_decision", {})
-        if not isinstance(decision, Mapping) or decision.get("classification") != "APPROVED":
+        approved_decision_classes = {"APPROVED", "APPROVED_NO_OUTPUT"}
+        if not isinstance(decision, Mapping) or decision.get("classification") not in approved_decision_classes:
             reason_code = (
                 decision.get("reason_code")
                 if isinstance(decision, Mapping)
