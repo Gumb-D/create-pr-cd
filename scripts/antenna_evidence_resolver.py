@@ -2,8 +2,8 @@
 
 Direct canonical antenna fields remain authoritative. Endpoint SOW details are
 allowed only as fallback evidence, followed by the common TX SOW Details source
-when it contains explicit antenna-size evidence. Canonical production rows must
-also prove that every consumed source mapping is APPROVED.
+when it contains explicit antenna-installation-size evidence. Canonical
+production rows must also prove that every consumed source mapping is APPROVED.
 """
 from __future__ import annotations
 
@@ -30,6 +30,15 @@ _SOURCE_STATUS_FIELDS = {
 }
 
 _ANTENNA_WORDS = ("antenna", "dish")
+_INSTALL_INTENT_PATTERN = re.compile(
+    r"\b(?:install(?:ation|ed|ing)?|new|target|proposed|build|upgrade)\b",
+    re.IGNORECASE,
+)
+_NON_INSTALL_INTENT_PATTERN = re.compile(
+    r"\b(?:dismantl(?:e|ed|ing)?|decom(?:mission(?:ed|ing)?)?|remove|removed|removal|existing|old|reuse|reused|retain|retained)\b",
+    re.IGNORECASE,
+)
+_CLAUSE_SEPARATOR_PATTERN = re.compile(r"(?:[;\n]|\b(?:and|then)\b)", re.IGNORECASE)
 
 
 def _is_blank(value: Any) -> bool:
@@ -96,18 +105,62 @@ def _context_window(text: str, start: int, end: int, radius: int = 48) -> str:
     return text[max(segment_start, start - radius):min(segment_end, end + radius)].casefold()
 
 
+def _intent_clause(text: str, start: int, end: int) -> tuple[str, int]:
+    """Return the local action clause containing one candidate size token."""
+    clause_start = 0
+    clause_end = len(text)
+    for match in _CLAUSE_SEPARATOR_PATTERN.finditer(text):
+        if match.end() <= start:
+            clause_start = match.end()
+            continue
+        if match.start() >= end:
+            clause_end = match.start()
+            break
+    return text[clause_start:clause_end], clause_start
+
+
+def _has_installation_intent(text: str, start: int, end: int) -> bool:
+    """Accept only sizes governed by an installation/new/target action.
+
+    A SOW-detail cell can describe both old and new equipment. The decision is
+    made per numeric token inside its local clause so a larger dismantle size
+    cannot win the installation largest-size rule.
+    """
+    clause, clause_start = _intent_clause(text, start, end)
+    token_center = ((start + end) / 2) - clause_start
+
+    positive = list(_INSTALL_INTENT_PATTERN.finditer(clause))
+    if not positive:
+        return False
+    negative = list(_NON_INSTALL_INTENT_PATTERN.finditer(clause))
+
+    nearest_positive = min(
+        abs(((match.start() + match.end()) / 2) - token_center)
+        for match in positive
+    )
+    if not negative:
+        return True
+    nearest_negative = min(
+        abs(((match.start() + match.end()) / 2) - token_center)
+        for match in negative
+    )
+    return nearest_positive < nearest_negative
+
+
 def _has_antenna_specific_context(text: str, start: int, end: int) -> bool:
-    """Tie a numeric token to antenna semantics, not generic install/upgrade text."""
+    """Tie a numeric token to antenna installation semantics."""
     window = _context_window(text, start, end)
     if not any(word in window for word in _ANTENNA_WORDS):
+        return False
+    if not _has_installation_intent(text, start, end):
         return False
 
     suffix = text[end:min(len(text), end + 16)].casefold()
     if re.match(r"\s*(?:ghz|mhz|mbps|gbps|kbps)\b", suffix):
         return False
 
-    # `antenna cable 3.0m` describes cable length, not dish diameter. Reject
-    # when cable is the nearest semantic noun to the numeric token.
+    # `install antenna cable 3.0m` describes cable length, not dish diameter.
+    # Reject when cable is the nearest semantic noun to the numeric token.
     token_center = (start + end) // 2
     lowered = text.casefold()
     antenna_positions = [
@@ -130,7 +183,7 @@ def _has_antenna_specific_context(text: str, start: int, end: int) -> bool:
 
 
 def _parse_detail_sizes(value: Any, *, require_antenna_context: bool) -> list[float]:
-    """Extract supported antenna sizes from governed SOW-detail evidence."""
+    """Extract supported installation antenna sizes from governed SOW details."""
     if _is_blank(value):
         return []
     text = str(value).replace(",", ".")
@@ -152,8 +205,8 @@ def _parse_detail_sizes(value: Any, *, require_antenna_context: bool) -> list[fl
             candidates.append(size)
             consumed.append((match.start(), match.end()))
 
-    # Bare decimals are accepted only when the number itself has antenna-
-    # specific context. The guards also prevent partial matches inside IPs.
+    # Bare decimals are accepted only when the number itself has explicit
+    # antenna-installation context. Guards also prevent partial IP matches.
     for match in re.finditer(r"(?<![\d.])(\d+\.\d+)(?![\d.])", text):
         if any(start <= match.start() < end for start, end in consumed):
             continue
@@ -188,8 +241,9 @@ def _endpoint_resolution(
 
     detail_raw = row.get(detail_field, "")
     if _source_is_approved(row, detail_field):
-        # SOW-detail fields are free text. Even though they are endpoint-specific,
-        # require antenna/dish context so cable lengths cannot select antenna PBOMs.
+        # SOW-detail fields are free text. Even though endpoint-specific, they
+        # must prove antenna installation intent so old/dismantle/cable values
+        # cannot select the installation PBOM.
         detail_sizes = _parse_detail_sizes(detail_raw, require_antenna_context=True)
         if detail_sizes:
             return {
@@ -213,7 +267,8 @@ def resolve_installation_antenna_evidence(row: Mapping[str, Any]) -> dict[str, A
 
     Canonical rows consume only APPROVED mappings. Legacy direct-generator rows
     have no governance marker and retain their historical direct-field contract.
-    SOW-detail fallbacks remain fail-closed unless the value is antenna-specific.
+    SOW-detail fallbacks remain fail-closed unless the value is both antenna-
+    specific and governed by installation intent.
     """
     ne = _endpoint_resolution(row, DIRECT_NE, DETAIL_NE)
     fe = _endpoint_resolution(row, DIRECT_FE, DETAIL_FE)
