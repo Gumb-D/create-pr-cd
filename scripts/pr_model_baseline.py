@@ -9,6 +9,7 @@ from typing import Any
 
 PR_MODEL_BASELINE_MISMATCH = "PR_MODEL_BASELINE_MISMATCH"
 DEFAULT_CONFIG = Path("config/pr_model_baseline.yaml")
+LEGACY_DEFAULT_ALIAS = Path("pr_model.xlsx")
 
 
 class PrModelBaselineError(ValueError):
@@ -84,9 +85,17 @@ def validate_pr_model_baseline(
     baseline = load_pr_model_baseline(repo_root, config_path)
     declared_path = Path(str(baseline["workbook"]["path"]))
     expected_path = declared_path if declared_path.is_absolute() else repo_root / declared_path
-    actual_path = Path(workbook_path) if workbook_path is not None else expected_path
-    if not actual_path.is_absolute():
-        actual_path = repo_root / actual_path
+
+    requested_path = Path(workbook_path) if workbook_path is not None else None
+    if requested_path == LEGACY_DEFAULT_ALIAS and not (repo_root / requested_path).exists():
+        # Backward-compatible alias only: old internal callers that still pass
+        # bare `pr_model.xlsx` resolve to the one authoritative current baseline.
+        # Any other explicit path remains subject to exact SHA validation.
+        actual_path = expected_path
+    else:
+        actual_path = requested_path if requested_path is not None else expected_path
+        if not actual_path.is_absolute():
+            actual_path = repo_root / actual_path
 
     if not actual_path.exists():
         raise PrModelBaselineError(
