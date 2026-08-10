@@ -19,17 +19,14 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   baseline-governance:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Issue 77 head
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: fix/issue-77-jendela-tx-migration-redesign
-          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -38,144 +35,6 @@ jobs:
 
       - name: Install test dependencies
         run: python -m pip install --upgrade pip openpyxl pandas pyyaml xlrd
-
-      - name: Repair and verify Codex P2 no-output fix
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import re
-
-          def lines(items):
-              return "\n".join(items) + "\n"
-
-          impl = Path('scripts/create_pr_impl.py')
-          text = impl.read_text(encoding='utf-8')
-          start_candidates = [
-              '        migration_decision = context.get("migration_decision", {})\n',
-          ]
-          start = next((text.find(marker) for marker in start_candidates if text.find(marker) >= 0), -1)
-          end_marker = '        # Business hard stop: the approved Cancel / Drop SOW (and every other\n'
-          end = text.find(end_marker, start)
-          if start < 0 or end < 0:
-              raise SystemExit('create_pr_impl partition markers not found')
-          replacement = lines([
-              '        migration_decision = context.get("migration_decision", {})',
-              '        jendela_ti_decision = (',
-              '            scope == "TI"',
-              '            and record.get("validation", {}).get("profile_id") == "jendela_tx_migration_pr_v1"',
-              '            and isinstance(migration_decision, Mapping)',
-              '        )',
-              '        if jendela_ti_decision and migration_decision.get("classification") == "APPROVED_NO_OUTPUT":',
-              '            set_generation_decision(',
-              '                record,',
-              '                "IGNORED",',
-              '                str(migration_decision.get("reason_code") or "JENDELA_TI_NO_WORK_REQUIRED"),',
-              '                "The approved Jendela TI work plan contains no PR work items.",',
-              '            )',
-              '            partitions["ignored"].append(record)',
-              '            continue',
-              '        approved_jendela_ti_decision = (',
-              '            jendela_ti_decision',
-              '            and migration_decision.get("classification") == "APPROVED"',
-              '        )',
-          ])
-          impl.write_text(text[:start] + replacement + text[end:], encoding='utf-8')
-
-          tests = Path('tests/test_human_uat_remediation_48_54.py')
-          text = tests.read_text(encoding='utf-8')
-
-          def replace_function(text, name, next_name, body_lines):
-              pattern = re.compile(
-                  rf'    def {re.escape(name)}\(self\):\n.*?(?=    def {re.escape(next_name)}\(self\):)',
-                  re.S,
-              )
-              replacement = lines(body_lines) + '\n'
-              updated, count = pattern.subn(lambda _: replacement, text, count=1)
-              if count != 1:
-                  raise SystemExit(f'{name} replacement count={count}')
-              return updated
-
-          text = replace_function(
-              text,
-              'test_tx_before_migration_controls_dismantle_only',
-              'test_tx_sow_controls_additional_work_independently',
-              [
-                  '    def test_tx_before_migration_controls_dismantle_only(self):',
-                  '        cases = {',
-                  '            "Starlink": ["Dismantle Starlink"],',
-                  '            "MW": ["Dismantle MW"],',
-                  '            "Microwave": ["Dismantle MW"],',
-                  '        }',
-                  '        for before, expected in cases.items():',
-                  '            with self.subTest(before=before):',
-                  '                _, decision = self._decision(before=before, tx_sow="-")',
-                  '                self.assertEqual(decision["classification"], "APPROVED")',
-                  '                self.assertEqual([item["work_item"] for item in decision["work_items"]], expected)',
-                  '',
-                  '        _, no_work = self._decision(before="Fiber Own Build", tx_sow="-")',
-                  '        self.assertEqual(no_work["classification"], "APPROVED_NO_OUTPUT")',
-                  '        self.assertEqual(no_work["reason_code"], "JENDELA_TI_NO_WORK_REQUIRED")',
-                  '        self.assertEqual(no_work["work_items"], [])',
-              ],
-          )
-
-          text = replace_function(
-              text,
-              'test_tx_sow_controls_additional_work_independently',
-              'test_dismantle_and_additional_work_combine_atomically',
-              [
-                  '    def test_tx_sow_controls_additional_work_independently(self):',
-                  '        cases = [',
-                  '            ("BBU Patching", ["BBU Patching / MW IDU Patching"], "BBU Patching"),',
-                  '            ("MW IDU Patching", ["BBU Patching / MW IDU Patching"], "MW IDU Patching"),',
-                  '            ("BBU Patching / MW IDU Patching", ["BBU Patching / MW IDU Patching"], "BBU Patching"),',
-                  '            ("MW New Link / Reroute", ["MW New Link"], "MW New Link / Reroute"),',
-                  '            ("MW by others", [], None),',
-                  '            ("-", [], None),',
-                  '            ("", [], None),',
-                  '        ]',
-                  '        for tx_sow, expected_items, expected_model_sow in cases:',
-                  '            with self.subTest(tx_sow=tx_sow):',
-                  '                _, decision = self._decision(before="Fiber Own Build", tx_sow=tx_sow)',
-                  '                expected_classification = "APPROVED" if expected_items else "APPROVED_NO_OUTPUT"',
-                  '                self.assertEqual(decision["classification"], expected_classification)',
-                  '                self.assertEqual([item["work_item"] for item in decision["work_items"]], expected_items)',
-                  '                if expected_model_sow:',
-                  '                    self.assertEqual(decision["work_items"][0]["model_sow"], expected_model_sow)',
-              ],
-          )
-
-          text = replace_function(
-              text,
-              'test_empty_jendela_work_plan_is_intentional_no_output',
-              'test_tss_and_non_jendela_do_not_use_issue_77_exception',
-              [
-                  '    def test_empty_jendela_work_plan_is_intentional_no_output(self):',
-                  '        record, decision = self._decision(before="Fiber Own Build", tx_sow="-")',
-                  '        self.assertEqual(decision["classification"], "APPROVED_NO_OUTPUT")',
-                  '        self.assertEqual(record["validation"]["pr_input_classification"], "PR_INPUT_READY")',
-                  '        partitions = create_pr._partition_records([record], "TI")',
-                  '        self.assertEqual(partitions["ignored"], [record])',
-                  '        self.assertEqual(partitions["candidates"], [])',
-                  '        self.assertEqual(record["pr_generation_decision"]["reason_code"], "JENDELA_TI_NO_WORK_REQUIRED")',
-              ],
-          )
-          tests.write_text(text, encoding='utf-8')
-          PY
-
-          python -m py_compile scripts/create_pr_impl.py tests/test_human_uat_remediation_48_54.py
-          python -m unittest tests.test_issue_77_jendela_redesign tests.test_human_uat_remediation_48_54.TestJendelaMigrationDecision -v
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- scripts/create_pr_impl.py tests/test_human_uat_remediation_48_54.py
-          if git diff --cached --quiet; then
-            echo 'No Codex P2 repair changes to commit.'
-          else
-            git commit -m "fix(issue-77): route empty Jendela plans to no-output"
-            git push origin HEAD:fix/issue-77-jendela-tx-migration-redesign
-          fi
 
       - name: Run Issue 75 governance tests
         run: python -m unittest tests.test_pr_model_baseline tests.test_pr_model_change_analyzer tests.test_pr_model_promotion -v
