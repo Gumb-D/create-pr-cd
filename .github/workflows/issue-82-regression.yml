@@ -32,6 +32,7 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
 
           path = Path("scripts/generate_tss_pr_ecc.py")
           text = path.read_text(encoding="utf-8")
@@ -43,39 +44,47 @@ jobs:
                   raise SystemExit("Issue 82 import marker not found")
               text = text.replace(import_marker, resolver_import + import_marker, 1)
 
-          old = '''                antenna_category, antenna_remark, antenna_size = determine_ti_antenna_category(
-                    row.get("MW Config Antenna Size NE", ""),
-                    row.get("MW Config Antenna Size FE", "")
-                )'''
-          if text.count(old) != 1:
-              raise SystemExit(f"Issue 82 antenna call marker count={text.count(old)}; expected 1")
-
-          new = '''                antenna_resolution = resolve_installation_antenna_evidence(row)
-                resolved_ne_size = antenna_resolution["ne_size"]
-                resolved_fe_size = antenna_resolution["fe_size"]
-                if antenna_resolution["status"] == "RESOLVED_COMMON":
-                    resolved_ne_size = antenna_resolution["selected_size"]
-                    resolved_fe_size = antenna_resolution["selected_size"]
-
-                antenna_category, antenna_remark, antenna_size = determine_ti_antenna_category(
-                    resolved_ne_size,
-                    resolved_fe_size
-                )
-
-                if antenna_resolution["status"] in {"RESOLVED", "RESOLVED_COMMON"}:
-                    evidence_sources = ",".join(
-                        str(item.get("source", ""))
-                        for item in antenna_resolution.get("evidence", [])
-                        if item.get("source")
-                    )
-                    _safe_print(
-                        "[ANTENNA_EVIDENCE]",
-                        f"site={site_id}",
-                        f"status={antenna_resolution['status']}",
-                        f"selected_size={antenna_resolution['selected_size']}",
-                        f"sources={evidence_sources}",
-                    )'''
-          path.write_text(text.replace(old, new, 1), encoding="utf-8")
+          pattern = re.compile(
+              r'(?P<indent>^[ \t]*)antenna_category, antenna_remark, antenna_size = determine_ti_antenna_category\(\s*'
+              r'row\.get\("MW Config Antenna Size NE", ""\),\s*'
+              r'row\.get\("MW Config Antenna Size FE", ""\)\s*'
+              r'\)',
+              re.MULTILINE,
+          )
+          matches = list(pattern.finditer(text))
+          if len(matches) != 1:
+              raise SystemExit(f"Issue 82 antenna call structural matches={len(matches)}; expected 1")
+          indent = matches[0].group("indent")
+          lines = [
+              'antenna_resolution = resolve_installation_antenna_evidence(row)',
+              'resolved_ne_size = antenna_resolution["ne_size"]',
+              'resolved_fe_size = antenna_resolution["fe_size"]',
+              'if antenna_resolution["status"] == "RESOLVED_COMMON":',
+              '    resolved_ne_size = antenna_resolution["selected_size"]',
+              '    resolved_fe_size = antenna_resolution["selected_size"]',
+              '',
+              'antenna_category, antenna_remark, antenna_size = determine_ti_antenna_category(',
+              '    resolved_ne_size,',
+              '    resolved_fe_size',
+              ')',
+              '',
+              'if antenna_resolution["status"] in {"RESOLVED", "RESOLVED_COMMON"}:',
+              '    evidence_sources = ",".join(',
+              '        str(item.get("source", ""))',
+              '        for item in antenna_resolution.get("evidence", [])',
+              '        if item.get("source")',
+              '    )',
+              '    _safe_print(',
+              '        "[ANTENNA_EVIDENCE]",',
+              '        f"site={site_id}",',
+              '        f"status={antenna_resolution[\'status\']}",',
+              '        f"selected_size={antenna_resolution[\'selected_size\']}",',
+              '        f"sources={evidence_sources}",',
+              '    )',
+          ]
+          replacement = "\n".join(indent + line if line else "" for line in lines)
+          text = pattern.sub(replacement, text, count=1)
+          path.write_text(text, encoding="utf-8")
           PY
       - name: Verify patched current tree
         run: |
