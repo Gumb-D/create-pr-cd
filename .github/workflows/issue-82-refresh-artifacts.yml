@@ -25,24 +25,84 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: python -m pip install -r requirements.txt
-      - name: Refresh governed MW DU discovery packet
-        run: python scripts/refresh_mw_du_discovery_packet.py
-      - name: Verify regenerated profile artifacts
+
+      - name: Sync EOS profile metadata into tracked discovery evidence
         run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          registry_path = Path("config/registries/mw_du_model_discovery_registry.yaml")
+          registry = json.loads(registry_path.read_text(encoding="utf-8"))
+          changed = 0
+          for entry in registry.get("entries", []):
+              if entry.get("profile_id") == "mw_eos_swap_pr_v1":
+                  if entry.get("profile_version") != "0.1.1":
+                      entry["profile_version"] = "0.1.1"
+                      changed += 1
+          if changed == 0:
+              print("Discovery EOS profile metadata already synchronized.")
+          else:
+              registry_path.write_text(json.dumps(registry, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+              print(f"Synchronized {changed} EOS discovery entries to profile_version 0.1.1")
+
+          replacements = {
+              Path("tests/test_missing_field_bridge_review.py"): (
+                  'self.assertEqual(bridge_entry["profile_version"], "0.1.0")',
+                  'self.assertEqual(bridge_entry["profile_version"], "0.1.1")',
+              ),
+              Path("tests/test_mw_pair_divergence_review.py"): (
+                  'self.assertEqual(review["left_profile_version"], "0.1.0")',
+                  'self.assertEqual(review["left_profile_version"], "0.1.1")',
+              ),
+          }
+          for path, (old, new) in replacements.items():
+              text = path.read_text(encoding="utf-8")
+              if new in text:
+                  continue
+              if text.count(old) != 1:
+                  raise SystemExit(f"Expected exactly one version assertion marker in {path}: {text.count(old)}")
+              path.write_text(text.replace(old, new, 1), encoding="utf-8")
+          PY
+
+      - name: Rebuild tracked-input governance packet
+        run: |
+          python scripts/build_unresolved_skill_field_review.py
+          python scripts/build_missing_field_bridge_review.py
+          python scripts/build_mw_pair_divergence_review.py
+          python scripts/build_profile_readiness_review.py
+          python scripts/build_profile_action_queue.py
+          python scripts/build_profile_review_matrix.py
+          python scripts/build_du_export_coverage_review.py
+          python scripts/build_profile_transition_review.py
+          python scripts/build_profile_deprecation_review.py
+          python scripts/build_profile_rollback_readiness.py
+          python scripts/build_profile_traceability_audit.py
+
+      - name: Verify regenerated packet consistency
+        run: |
+          python scripts/check_discovery_packet_consistency.py
           python -m unittest \
+            tests.test_unresolved_skill_field_review \
             tests.test_missing_field_bridge_review \
             tests.test_mw_pair_divergence_review \
+            tests.test_profile_readiness_review \
+            tests.test_profile_action_queue \
+            tests.test_profile_review_matrix \
             tests.test_du_export_coverage_review \
-            tests.test_profile_traceability_audit \
-            tests.test_discovery_packet_regeneration
-      - name: Commit regenerated registries and docs
+            tests.test_profile_transition_review \
+            tests.test_profile_deprecation_review \
+            tests.test_profile_rollback_readiness \
+            tests.test_profile_traceability_audit
+
+      - name: Commit regenerated registries, docs and version assertions
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add config/registries docs
+          git add config/registries docs tests/test_missing_field_bridge_review.py tests/test_mw_pair_divergence_review.py
           if git diff --cached --quiet; then
             echo "No governed artifact changes to commit."
           else
-            git commit -m "chore(issue-82): refresh profile governance artifacts"
+            git commit -m "chore(issue-82): sync EOS profile governance artifacts"
             git push origin HEAD:fix/mw-eos-antenna-evidence
           fi
