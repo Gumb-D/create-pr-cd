@@ -1,6 +1,6 @@
 {
   "profile_id": "mw_eos_swap_pr_v1",
-  "profile_version": "0.1.0",
+  "profile_version": "0.1.1",
   "mapping_version": "approved-2026-07-10-mw-eos-swap-v2",
   "status": "PRODUCTION",
   "identity": {
@@ -31,10 +31,10 @@
     "existing_ti_pr_status": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00959243", "wbs_stage": "Commercial", "task_name": "Microwave", "display_header": "Subcon PR - TI"}, "mapping_status": "APPROVED"}], "transforms": ["normalize_pr_reference_status"]},
     "latitude": {"required": false, "source_candidates": [], "transforms": ["parse_decimal"]},
     "longitude": {"required": false, "source_candidates": [], "transforms": ["parse_decimal"]},
-    "antenna_size_ne": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01093667", "wbs_stage": "Planner", "task_name": "Microwave", "display_header": "MW Antenna Size NE"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
-    "antenna_size_fe": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01093668", "wbs_stage": "Planner", "task_name": "Microwave", "display_header": "MW Antenna Size FE"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "antenna_size_ne": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01093667", "wbs_stage": "Planner", "task_name": "Microwave", "display_header": "MW Antenna Size NE"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
+    "antenna_size_fe": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01093668", "wbs_stage": "Planner", "task_name": "Microwave", "display_header": "MW Antenna Size FE"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "boq_configuration": {"required": false, "source_candidates": [], "transforms": ["trim"]},
-    "tx_sow_details": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01079156", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "TX SOW Details"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "tx_sow_details": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01079156", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "TX SOW Details"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "ne_sow_details": {"required": false, "source_candidates": [], "transforms": ["trim"]},
     "fe_sow_details": {"required": false, "source_candidates": [], "transforms": ["trim"]}
   },
@@ -43,7 +43,8 @@
     "reject_ambiguous_source_mapping": true,
     "require_evidence_for_every_canonical_field": true,
     "profile_notes": [
-      "Only the six human-approved PR-critical mappings are promoted for PR input review; all other fields remain discovery-only or optional.",
+      "Only the six human-approved PR-critical mappings are promoted for PR input review; other fields remain discovery-only or optional unless separately approved as governed evidence.",
+      "Issue #82 optional antenna evidence approval: Human UAT Issue #50 approved relevant NE/FE antenna fields and TX SOW Details as governed antenna evidence; the required PR-critical mapping set and mapping_version remain unchanged.",
       "The approved MW EOS Swap header hash stays strict and fail-closed for changed, missing, ambiguous, or unapproved source evidence.",
       "Existing PR status/reference fields normalize through the established duplicate-prevention transform.",
       "Tx SOW normalization is a controlled derived field and is not a separate source-column mapping.",
