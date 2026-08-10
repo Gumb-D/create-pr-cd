@@ -237,6 +237,29 @@ def _reconcile_summary(summary, scope, before_renderer=None):
     return _build_site_reconciliation(selected, partitions, renderer)
 
 
+def _persist_reconciliation_artifact_error(summary, error):
+    """Replace a previously successful summary when reconciliation evidence cannot be read."""
+    diagnostic = {
+        "exception_type": type(error).__name__,
+        "message": str(error),
+    }
+    summary["status"] = "ERROR"
+    summary["code"] = "PR_RECONCILIATION_ARTIFACT_READ_FAILED"
+    summary["reconciliation_error"] = diagnostic
+    Path(summary["summary_path"]).write_text(
+        json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    raise CreatePrError(
+        "PR_RECONCILIATION_ARTIFACT_READ_FAILED",
+        "Renderer output could not be read for site reconciliation.",
+        {
+            "summary_path": summary.get("summary_path"),
+            "reconciliation_error": diagnostic,
+            "required_action": "Inspect the renderer output artifact for corruption or incomplete write, then rerun create-pr.",
+        },
+    ) from error
+
+
 def run(parsed):
     """Run the implementation and persist ignored/reconciliation audit data."""
     global _LAST_PARTITIONS
@@ -249,7 +272,11 @@ def run(parsed):
         Path(summary["output_root"]), parsed.scope, ignored_records, summary["run_mode"]
     )
     summary["ignored_report"] = str(ignored_path.resolve()) if ignored_path else None
-    reconciliation = _reconcile_summary(summary, parsed.scope, before_renderer)
+    try:
+        reconciliation = _reconcile_summary(summary, parsed.scope, before_renderer)
+    except Exception as error:
+        _persist_reconciliation_artifact_error(summary, error)
+
     summary.update(reconciliation)
 
     if reconciliation.get("failed_count", 0) or reconciliation.get("unaccounted_count", 0):
