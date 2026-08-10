@@ -199,11 +199,15 @@ class TestMwSwapGeneratorFallback(unittest.TestCase):
             )
 
             generated_sites = set()
+            generated_rows = []
+            generated_files = []
             for workbook_path in output.glob("*.xlsx"):
+                generated_files.append(workbook_path.name)
                 workbook = load_workbook(workbook_path, data_only=True)
                 worksheet = workbook["details"]
                 for values in worksheet.iter_rows(min_row=2, values_only=True):
-                    if values[0]:
+                    generated_rows.append(values)
+                    if len(values) > 3 and values[3]:
                         generated_sites.add(str(values[3]))
 
             review_rows = []
@@ -211,7 +215,14 @@ class TestMwSwapGeneratorFallback(unittest.TestCase):
             if review_files:
                 with review_files[0].open(newline="", encoding="utf-8-sig") as handle:
                     review_rows = list(csv.DictReader(handle))
-            return result, generated_sites, review_rows
+            diagnostics = {
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "generated_files": generated_files,
+                "generated_rows": generated_rows[:10],
+                "review_rows": review_rows,
+            }
+            return result, generated_sites, review_rows, diagnostics
 
     def test_mw_swap_uses_governed_tx_sow_detail_when_direct_sizes_blank(self):
         site_code = "ISSUE82_MW_EOS_SWAP"
@@ -235,15 +246,23 @@ class TestMwSwapGeneratorFallback(unittest.TestCase):
             "FE SOW Details": "",
         }
 
-        result, generated_sites, review_rows = self._run_generator([row])
+        result, generated_sites, review_rows, diagnostics = self._run_generator([row])
         self.assertEqual(
             result.returncode,
             0,
-            msg=f"stdout:\n{result.stdout}\n\nstderr:\n{result.stderr}",
+            msg=f"Generator failed diagnostics: {diagnostics!r}",
         )
-        self.assertIn(site_code, generated_sites)
+        self.assertIn(
+            site_code,
+            generated_sites,
+            msg=f"Expected site was not generated. Diagnostics: {diagnostics!r}",
+        )
         review_by_site = {item.get("Site_ID"): item for item in review_rows}
-        self.assertNotIn(site_code, review_by_site)
+        self.assertNotIn(
+            site_code,
+            review_by_site,
+            msg=f"Site remained review-required. Diagnostics: {diagnostics!r}",
+        )
 
 
 if __name__ == "__main__":
