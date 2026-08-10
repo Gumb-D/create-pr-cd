@@ -322,14 +322,13 @@ def _partition_records(
             .get("normalization_status")
         )
         migration_decision = context.get("migration_decision", {})
-        approved_jendela_ti_decision = (
+        jendela_ti_decision = (
             scope == "TI"
             and record.get("validation", {}).get("profile_id") == "jendela_tx_migration_pr_v1"
             and isinstance(migration_decision, Mapping)
-            and migration_decision.get("classification") == "APPROVED"
         )
-        # Business hard stop: the approved Cancel / Drop SOW (and every other
-        # APPROVED_NO_OUTPUT value) outranks Jendela migration eligibility.
+        # Global business hard stop always wins, including Jendela plans
+        # that are independently classified as intentional no-work.
         if normalization == "APPROVED_NO_OUTPUT":
             set_generation_decision(
                 record,
@@ -339,6 +338,19 @@ def _partition_records(
             )
             partitions["ignored"].append(record)
             continue
+        if jendela_ti_decision and migration_decision.get("classification") == "APPROVED_NO_OUTPUT":
+            set_generation_decision(
+                record,
+                "IGNORED",
+                str(migration_decision.get("reason_code") or "JENDELA_TI_NO_WORK_REQUIRED"),
+                "The approved Jendela TI work plan contains no PR work items.",
+            )
+            partitions["ignored"].append(record)
+            continue
+        approved_jendela_ti_decision = (
+            jendela_ti_decision
+            and migration_decision.get("classification") == "APPROVED"
+        )
         if record.get("validation", {}).get("pr_input_classification") != PR_INPUT_READY:
             set_generation_decision(
                 record,

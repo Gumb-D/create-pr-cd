@@ -25,7 +25,7 @@
     "tx_sow_raw": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00815532", "wbs_stage": "Planner", "task_name": "Microwave", "display_header": "Tx SOW"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "tx_upgrade_scope_raw": {"required": false, "source_candidates": [], "transforms": ["trim"]},
     "tx_before_migration": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01016454", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "TX Before Migration"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
-    "final_backhaul": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00823600", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Final Backhaul"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
+    "final_backhaul": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00823600", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Final Backhaul"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "region": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|region_name", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "region"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "state": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00008", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "Province/State"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "subcontractor_tss": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ640307", "wbs_stage": "RPM", "task_name": "SubCon - TSS", "display_header": "SubCon - TSS"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
@@ -47,13 +47,16 @@
     "reject_ambiguous_source_mapping": true,
     "require_evidence_for_every_canonical_field": true,
     "profile_notes": [
-      "Ten mappings are human-approved for production operation: site_code, tx_sow_raw, tx_before_migration, final_backhaul, region, state, subcontractor_tss, subcontractor_ti, existing_tss_pr_status, and existing_ti_pr_status.",
-      "The approved migration decision matrix applies only to TI and derives complete atomic work plans from TX Before Migration plus Final Backhaul; TSS remains under ordinary Tx SOW controls.",
-      "The exact Jendela migration source value MW normalizes to Microwave only at the TI migration decision boundary; original source values remain in decision audit evidence.",
+      "Issue #77 changes Jendela TI business work-plan derivation only; the approved four-layer source mapping identity remains version 0.4.0 / approved-2026-08-04-jendela-tx-migration-v3.",
+      "TX Before Migration controls dismantle work; Tx SOW independently controls additional work; the two are combined atomically.",
+      "Final Backhaul remains an approved optional source mapping for audit evidence only. It is not a PR decision input and must not trigger REVIEW_REQUIRED when blank, missing, or changed.",
+      "TX Before Migration Starlink creates Starlink dismantle; MW/Microwave creates MW dismantle; Fiber Own Build creates no dismantle work.",
+      "Tx SOW BBU Patching / MW IDU Patching selects the patching PR model; MW New Link / Reroute selects MW new-link work; MW by others and blank/- create no additional work.",
+      "Unknown TX Before Migration or unsupported actionable Tx SOW values fail closed and must never produce a partial migration ECC.",
+      "TSS remains under ordinary Tx SOW controls and is not changed by Issue #77.",
       "Header hash enforcement remains strict and accepts only f45c209df5ca75b333f9b590ebc01c05c097e44231d22433290f8078e57c9056 for the corrected official export shape.",
       "Duplicate-prevention fields existing_tss_pr_status and existing_ti_pr_status both normalize via normalize_pr_reference_status before validation and downstream use.",
-      "subcontractor_tss remains optional for this Jendela scope even though its approved source is locked for PR review workflows.",
-      "All non-approved Jendela candidates remain UNVERIFIED. Production enabled by JJ on 2026-08-06; formal production jobs are the validation surface and non-production UAT is not a release prerequisite."
+      "All non-approved Jendela candidates remain UNVERIFIED. Production enabled by JJ on 2026-08-06; formal production jobs remain the validation surface."
     ]
   }
 }

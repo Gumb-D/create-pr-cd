@@ -99,7 +99,7 @@ class TestDuProfileLoader(_LegacyTestDuProfileLoader):
         profile = self._assert_production_profile("jendela_tx_migration_pr_v1.yaml")
         self.assertEqual(profile["profile_version"], "0.4.0")
         self.assertTrue(profile["field_mapping"]["tx_before_migration"]["required"])
-        self.assertTrue(profile["field_mapping"]["final_backhaul"]["required"])
+        self.assertFalse(profile["field_mapping"]["final_backhaul"]["required"])
         self.assertFalse(profile["field_mapping"]["subcontractor_tss"]["required"])
 
     def test_pr_input_ready_2023_celcomdigi_bau_profile_loads_with_human_approved_pr_critical_mappings(self):
