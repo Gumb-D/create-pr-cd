@@ -55,6 +55,8 @@ class TestIssue77JendelaRedesign(unittest.TestCase):
     def test_tx_sow_controls_additional_work_only(self):
         cases = {
             "BBU Patching / MW IDU Patching": ["BBU Patching / MW IDU Patching"],
+            "BBU Patching": ["BBU Patching / MW IDU Patching"],
+            "MW IDU Patching": ["BBU Patching / MW IDU Patching"],
             "MW New Link / Reroute": ["MW New Link"],
             "MW by others": [],
             "-": [],
@@ -98,16 +100,21 @@ class TestIssue77JendelaRedesign(unittest.TestCase):
         self.assertEqual(result["reason_code"], "JENDELA_TX_SOW_NOT_APPROVED")
         self.assertEqual(result["work_items"], [])
 
-    def test_work_item_model_mapping_is_explicit(self):
+    def test_work_item_model_mapping_is_explicit_and_v4_1_backed(self):
         starlink = self.derive(before="Starlink", tx_sow="-")["work_items"][0]
-        self.assertEqual(starlink["model_sow"], "Starlink Dismantle (Return/MRCF included) & Migration")
+        self.assertEqual(starlink["model_sow"], "Starlink Dismanle")
         self.assertEqual(starlink["required_pbom_codes"], ["350000597850", "350000597852"])
 
         patching = self.derive(before="Fiber Own Build", tx_sow="BBU Patching / MW IDU Patching")["work_items"][0]
-        self.assertEqual(patching["model_sow"], "BBU Patching / MW IDU Patching")
+        self.assertEqual(patching["model_sow"], "BBU Patching")
+        self.assertEqual(patching["required_pbom_codes"], ["350001095420"])
+
+        idu = self.derive(before="Fiber Own Build", tx_sow="MW IDU Patching")["work_items"][0]
+        self.assertEqual(idu["model_sow"], "MW IDU Patching")
+        self.assertEqual(idu["required_pbom_codes"], ["350001095420"])
 
         mw_new_link = self.derive(before="Fiber Own Build", tx_sow="MW New Link / Reroute")["work_items"][0]
-        self.assertEqual(mw_new_link["model_sow"], "MW Installation")
+        self.assertEqual(mw_new_link["model_sow"], "MW New Link / Reroute")
 
     def test_non_jendela_and_tss_are_unchanged(self):
         self.assertIsNone(
