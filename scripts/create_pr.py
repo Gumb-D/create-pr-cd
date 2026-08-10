@@ -265,7 +265,9 @@ def run(parsed):
     """Run the implementation only after validating the single approved PR Model baseline."""
     global _LAST_PARTITIONS
     _LAST_PARTITIONS = None
-    baseline = validate_pr_model_baseline(parsed.pr_model)
+    baseline = validate_pr_model_baseline(getattr(parsed, "pr_model", None))
+    if not hasattr(parsed, "pr_model"):
+        parsed.pr_model = baseline["path"]
     _sync_dependencies()
     before_renderer = snapshot_renderer_artifacts(Path(parsed.output))
     summary = _impl.run(parsed)
