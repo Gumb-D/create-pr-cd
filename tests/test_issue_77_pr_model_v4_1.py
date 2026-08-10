@@ -5,7 +5,7 @@ from openpyxl import load_workbook
 
 
 ROOT = Path(__file__).resolve().parent.parent
-CANDIDATE = ROOT / "Info" / "input" / "pr_model_v4.1.xlsx"
+CANONICAL = ROOT / "Info" / "input" / "pr_model.xlsx"
 STARLINK_SOW = "Starlink Dismanle"
 MW_NEW_LINK_SOW = "MW New Link / Reroute"
 
@@ -13,7 +13,7 @@ MW_NEW_LINK_SOW = "MW New Link / Reroute"
 class TestIssue77PrModelV41(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        workbook = load_workbook(CANDIDATE, read_only=True, data_only=True)
+        workbook = load_workbook(CANONICAL, read_only=True, data_only=True)
         worksheet = workbook["TX Line Item (After 21-Apr 26)"]
         ti_header_row = next(
             row[0].row
