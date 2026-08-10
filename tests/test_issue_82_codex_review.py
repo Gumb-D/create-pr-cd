@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression tests for the P1 findings from the first Codex review of PR #83."""
+"""Regression tests for Codex review findings on Issue #82 / PR #83."""
 from __future__ import annotations
 
 import json
@@ -150,6 +150,49 @@ class TestStrictDetailParsing(unittest.TestCase):
         result = self._resolve_common("MW swap; install antenna size 1.2")
         self.assertEqual(result["status"], "RESOLVED_COMMON")
         self.assertEqual(result["selected_size"], 1.2)
+
+    def test_endpoint_detail_cable_length_is_not_antenna_evidence(self):
+        result = resolve_installation_antenna_evidence(
+            {
+                "MW Config Antenna Size NE": "",
+                "MW Config Antenna Size FE": "",
+                "NE SOW Details": "Install IF cable 3.0m",
+                "FE SOW Details": "Install IF cable 3.0m",
+                "TX SOW Details": "",
+            }
+        )
+        self.assertEqual(result["status"], "MISSING")
+        self.assertIsNone(result["selected_size"])
+
+    def test_endpoint_detail_explicit_antenna_value_still_resolves(self):
+        result = resolve_installation_antenna_evidence(
+            {
+                "MW Config Antenna Size NE": "",
+                "MW Config Antenna Size FE": "",
+                "NE SOW Details": "Install antenna 0.6m",
+                "FE SOW Details": "Target antenna 1.2m",
+                "TX SOW Details": "",
+            }
+        )
+        self.assertEqual(result["status"], "RESOLVED")
+        self.assertEqual(result["selected_size"], 1.2)
+
+
+class TestDirectSizeCompatibility(unittest.TestCase):
+    def test_direct_meter_and_metre_spellings_remain_supported(self):
+        for spelling in ("0.6 meter", "0.6 metre", "0.6 meters", "0.6 metres"):
+            with self.subTest(spelling=spelling):
+                result = resolve_installation_antenna_evidence(
+                    {
+                        "MW Config Antenna Size NE": spelling,
+                        "MW Config Antenna Size FE": spelling,
+                        "NE SOW Details": "",
+                        "FE SOW Details": "",
+                        "TX SOW Details": "",
+                    }
+                )
+                self.assertEqual(result["status"], "RESOLVED")
+                self.assertEqual(result["selected_size"], 0.6)
 
 
 if __name__ == "__main__":
