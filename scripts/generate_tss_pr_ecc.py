@@ -45,6 +45,7 @@ def _safe_print(*args, file=None, **kwargs):
     encoding = getattr(file, "encoding", None) or getattr(sys.stdout, "encoding", None)
     safe_args = tuple(_console_safe_text(arg, encoding) for arg in args)
     print(*safe_args, file=file, **kwargs)
+from antenna_evidence_resolver import resolve_installation_antenna_evidence
 from pr_helpers import (
     normalize_pbom_code,
     normalize_ti_sow,
@@ -1321,10 +1322,31 @@ for idx in range(len(candidates)):
 
             if requires_antenna:
 
+                antenna_resolution = resolve_installation_antenna_evidence(row)
+                resolved_ne_size = antenna_resolution["ne_size"]
+                resolved_fe_size = antenna_resolution["fe_size"]
+                if antenna_resolution["status"] == "RESOLVED_COMMON":
+                    resolved_ne_size = antenna_resolution["selected_size"]
+                    resolved_fe_size = antenna_resolution["selected_size"]
+
                 antenna_category, antenna_remark, antenna_size = determine_ti_antenna_category(
-                    row.get("MW Config Antenna Size NE", ""),
-                    row.get("MW Config Antenna Size FE", "")
+                    resolved_ne_size,
+                    resolved_fe_size
                 )
+
+                if antenna_resolution["status"] in {"RESOLVED", "RESOLVED_COMMON"}:
+                    evidence_sources = ",".join(
+                        str(item.get("source", ""))
+                        for item in antenna_resolution.get("evidence", [])
+                        if item.get("source")
+                    )
+                    _safe_print(
+                        "[ANTENNA_EVIDENCE]",
+                        f"site={site_id}",
+                        f"status={antenna_resolution['status']}",
+                        f"selected_size={antenna_resolution['selected_size']}",
+                        f"sources={evidence_sources}",
+                    )
 
                 if antenna_remark:
                     remarks = antenna_remark
