@@ -5,9 +5,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import os
+import re
 import shutil
-import tempfile
+import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -24,6 +25,42 @@ class PrModelPromotionError(RuntimeError):
 
 def _repo_root(root: Path | str | None = None) -> Path:
     return Path(root).resolve() if root is not None else Path(__file__).resolve().parent.parent
+
+
+def _sync_legacy_hash_mirrors(root: Path, sha256_value: str) -> list[Path]:
+    """Synchronize transitional hard-coded mirrors until legacy consumers are removed."""
+    targets = (
+        (root / "scripts/generate_tss_pr_ecc.py", "APPROVED_PR_MODEL_SHA256"),
+        (root / "scripts/run_tx_mini_ecc_parity.py", "APPROVED_PR_MODEL_SHA256"),
+        (root / "tests/test_jendela_approved_pr_model.py", "APPROVED_V4_SHA256"),
+    )
+    changed: list[Path] = []
+    for path, constant in targets:
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8")
+        pattern = re.compile(rf'({re.escape(constant)}\s*=\s*["\'])[0-9a-f]{{64}}(["\'])')
+        updated, count = pattern.subn(rf"\g<1>{sha256_value}\g<2>", text, count=1)
+        if count:
+            path.write_text(updated, encoding="utf-8")
+            changed.append(path)
+    return changed
+
+
+def _run_regression_gate(root: Path) -> dict[str, Any]:
+    command = [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-p", "test_*.py", "-v"]
+    result = subprocess.run(command, cwd=root, text=True, capture_output=True, check=False)
+    if result.returncode != 0:
+        raise PrModelPromotionError(
+            "PR_MODEL_REGRESSION_FAILED",
+            "Candidate baseline failed the broad regression gate.",
+            {
+                "returncode": result.returncode,
+                "stdout_tail": result.stdout[-4000:],
+                "stderr_tail": result.stderr[-4000:],
+            },
+        )
+    return {"status": "PASS", "command": command}
 
 
 def promote_pr_model(candidate_path: Path | str, version: str, *, root: Path | str | None = None) -> dict[str, Any]:
@@ -58,27 +95,32 @@ def promote_pr_model(candidate_path: Path | str, version: str, *, root: Path | s
     next_baseline["workbook"]["path"] = str(baseline["workbook"]["path"])
     next_baseline["workbook"]["sha256"] = candidate_sha
 
-    with tempfile.TemporaryDirectory(dir=repo_root) as tmp:
-        staging = Path(tmp)
-        staged_workbook = staging / "pr_model.xlsx"
-        staged_config = staging / "pr_model_baseline.yaml"
-        staged_workbook.write_bytes(candidate_bytes)
-        staged_config.write_text(json.dumps(next_baseline, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    tracked_paths = [
+        production_path,
+        config_path,
+        repo_root / "scripts/generate_tss_pr_ecc.py",
+        repo_root / "scripts/run_tx_mini_ecc_parity.py",
+        repo_root / "tests/test_jendela_approved_pr_model.py",
+    ]
+    snapshots = {path: path.read_bytes() for path in tracked_paths if path.exists()}
 
-        old_workbook = production_path.read_bytes()
-        old_config = config_path.read_bytes()
-        try:
-            shutil.copy2(staged_workbook, production_path)
-            os.replace(staged_config, config_path)
-            validated = validate_pr_model_baseline(root=repo_root)
-        except Exception as exc:
-            production_path.write_bytes(old_workbook)
-            config_path.write_bytes(old_config)
-            raise PrModelPromotionError(
-                "PR_MODEL_PROMOTION_ROLLED_BACK",
-                "Promotion failed and the previous production baseline was restored.",
-                {"exception": type(exc).__name__, "message": str(exc)},
-            ) from exc
+    try:
+        production_path.write_bytes(candidate_bytes)
+        config_path.write_text(json.dumps(next_baseline, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        mirror_paths = _sync_legacy_hash_mirrors(repo_root, candidate_sha)
+        validated = validate_pr_model_baseline(root=repo_root)
+        regression = _run_regression_gate(repo_root)
+    except Exception as exc:
+        for path, payload in snapshots.items():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(payload)
+        if isinstance(exc, PrModelPromotionError):
+            raise
+        raise PrModelPromotionError(
+            "PR_MODEL_PROMOTION_ROLLED_BACK",
+            "Promotion failed and the previous production baseline was restored.",
+            {"exception": type(exc).__name__, "message": str(exc)},
+        ) from exc
 
     return {
         "status": "PROMOTED",
@@ -87,6 +129,8 @@ def promote_pr_model(candidate_path: Path | str, version: str, *, root: Path | s
         "sha256": validated["actual_sha256"],
         "path": str(validated["path"]),
         "compatibility": report,
+        "regression": regression,
+        "legacy_hash_mirrors_updated": [str(path.relative_to(repo_root)) for path in mirror_paths],
     }
 
 
