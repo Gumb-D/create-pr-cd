@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from hashlib import sha256
 from pathlib import Path
+from unittest.mock import patch
 
 from openpyxl import Workbook
 
@@ -67,7 +68,33 @@ class TestPrModelPromotion(unittest.TestCase):
             self.assertEqual(current.read_bytes(), before_bytes)
             self.assertEqual((root / "config/pr_model_baseline.yaml").read_text(encoding="utf-8"), before_config)
 
-    def test_compatible_candidate_replaces_current_and_updates_identity(self):
+    def test_regression_failure_does_not_touch_production(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "Info/input").mkdir(parents=True)
+            current = root / "Info/input/pr_model.xlsx"
+            candidate = root / "candidate.xlsx"
+            rows = [["MW Swap", 100, "Swap", "Hop", 1, "Mandatory", None, None]]
+            _write_model(current, rows)
+            _write_model(candidate, rows)
+            _write_baseline(root, current)
+            before_bytes = current.read_bytes()
+            before_config = (root / "config/pr_model_baseline.yaml").read_text(encoding="utf-8")
+
+            failure = PrModelPromotionError(
+                "PR_MODEL_REGRESSION_FAILED",
+                "Regression gate failed.",
+                {"returncode": 1},
+            )
+            with patch("promote_pr_model._run_regression_gate", side_effect=failure):
+                with self.assertRaises(PrModelPromotionError) as ctx:
+                    promote_pr_model(candidate, "4.1", root=root)
+
+            self.assertEqual(ctx.exception.code, "PR_MODEL_REGRESSION_FAILED")
+            self.assertEqual(current.read_bytes(), before_bytes)
+            self.assertEqual((root / "config/pr_model_baseline.yaml").read_text(encoding="utf-8"), before_config)
+
+    def test_compatible_candidate_replaces_current_and_updates_identity_after_regression_pass(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / "Info/input").mkdir(parents=True)
@@ -78,10 +105,13 @@ class TestPrModelPromotion(unittest.TestCase):
             _write_model(candidate, rows)
             _write_baseline(root, current)
 
-            result = promote_pr_model(candidate, "4.1", root=root)
+            with patch("promote_pr_model._run_regression_gate", return_value={"status": "PASS"}) as gate:
+                result = promote_pr_model(candidate, "4.1", root=root)
             config = json.loads((root / "config/pr_model_baseline.yaml").read_text(encoding="utf-8"))
 
+            gate.assert_called_once_with(root)
             self.assertEqual(result["status"], "PROMOTED")
+            self.assertEqual(result["regression"]["status"], "PASS")
             self.assertEqual(config["model"]["version"], "4.1")
             self.assertEqual(config["workbook"]["sha256"], sha256(candidate.read_bytes()).hexdigest())
             self.assertEqual(current.read_bytes(), candidate.read_bytes())
