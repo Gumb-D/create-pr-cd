@@ -1,0 +1,1 @@
+CI validation phase started for Issue #77. The redesign is intentionally not promoted to the production PR Model baseline until candidate compatibility and repository regression gates pass.
