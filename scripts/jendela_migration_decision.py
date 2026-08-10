@@ -59,6 +59,7 @@ _TX_SOW_WORK = {
     "mw idu patching": "MW IDU Patching",
     "mw new link / reroute": "MW New Link",
     "mw by others": None,
+    "cancel / drop": None,
     "-": None,
     "": None,
 }
@@ -111,8 +112,10 @@ def derive_jendela_migration_decision(
             "work_items": [],
         }
 
-    # Blank and '-' are explicit no-additional-work states. Every other unknown
-    # value fails closed so a dismantle item can never leak out as partial ECC.
+    # Blank, '-', MW by others and Cancel / Drop are explicit no-additional-work
+    # states. Cancel / Drop remains subject to the existing higher-priority
+    # partition hard stop, so the decision must not make the canonical record
+    # REVIEW_REQUIRED before that global rule is applied.
     if tx_sow not in _TX_SOW_WORK:
         return {
             "classification": "REVIEW_REQUIRED",
