@@ -48,6 +48,20 @@ def _write_baseline(root: Path, workbook: Path, version="4.0"):
     (root / "config/pr_model_baseline.yaml").write_text(json.dumps(config, indent=2), encoding="utf-8")
 
 
+def _write_approval(root: Path, candidate: Path, version: str, reason_codes, candidate_sha=None):
+    approval = {
+        "schema_version": "1.0",
+        "status": "APPROVED",
+        "candidate_version": version,
+        "candidate_sha256": candidate_sha or sha256(candidate.read_bytes()).hexdigest(),
+        "approved_reason_codes": list(reason_codes),
+        "business_change_references": ["#77"],
+    }
+    path = root / "approval.json"
+    path.write_text(json.dumps(approval, indent=2), encoding="utf-8")
+    return path
+
+
 class TestPrModelPromotion(unittest.TestCase):
     def test_review_required_candidate_does_not_touch_production(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -67,6 +81,57 @@ class TestPrModelPromotion(unittest.TestCase):
             self.assertEqual(ctx.exception.code, "PR_MODEL_PROMOTION_REVIEW_REQUIRED")
             self.assertEqual(current.read_bytes(), before_bytes)
             self.assertEqual((root / "config/pr_model_baseline.yaml").read_text(encoding="utf-8"), before_config)
+
+    def test_review_approval_with_wrong_candidate_hash_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "Info/input").mkdir(parents=True)
+            current = root / "Info/input/pr_model.xlsx"
+            candidate = root / "candidate.xlsx"
+            _write_model(current, [["MW Installation", 200, "Install", "Hop", 1, "Mandatory", None, None]])
+            _write_model(candidate, [])
+            _write_baseline(root, current)
+            approval = _write_approval(root, candidate, "4.1", ["REMOVED_BUSINESS_ROWS"], candidate_sha="0" * 64)
+
+            with self.assertRaises(PrModelPromotionError) as ctx:
+                promote_pr_model(candidate, "4.1", root=root, approval_path=approval)
+
+            self.assertEqual(ctx.exception.code, "PR_MODEL_PROMOTION_APPROVAL_INVALID")
+
+    def test_review_approval_must_cover_every_reported_reason_code(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "Info/input").mkdir(parents=True)
+            current = root / "Info/input/pr_model.xlsx"
+            candidate = root / "candidate.xlsx"
+            _write_model(current, [["MW Installation", 200, "Install", "Hop", 1, "Mandatory", None, None]])
+            _write_model(candidate, [["Brand New SOW", 300, "New", "Hop", 1, "Mandatory", None, None]])
+            _write_baseline(root, current)
+            approval = _write_approval(root, candidate, "4.1", ["REMOVED_BUSINESS_ROWS"])
+
+            with self.assertRaises(PrModelPromotionError) as ctx:
+                promote_pr_model(candidate, "4.1", root=root, approval_path=approval)
+
+            self.assertEqual(ctx.exception.code, "PR_MODEL_PROMOTION_APPROVAL_INVALID")
+            self.assertIn("NEW_SOW", ctx.exception.details["unapproved_reason_codes"])
+
+    def test_valid_review_approval_unlocks_reviewed_changes_but_still_requires_regression(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "Info/input").mkdir(parents=True)
+            current = root / "Info/input/pr_model.xlsx"
+            candidate = root / "candidate.xlsx"
+            _write_model(current, [["MW Installation", 200, "Install", "Hop", 1, "Mandatory", None, None]])
+            _write_model(candidate, [])
+            _write_baseline(root, current)
+            approval = _write_approval(root, candidate, "4.1", ["REMOVED_BUSINESS_ROWS"])
+
+            with patch("promote_pr_model._run_regression_gate", return_value={"status": "PASS"}) as gate:
+                result = promote_pr_model(candidate, "4.1", root=root, approval_path=approval)
+
+            gate.assert_called_once_with(root)
+            self.assertEqual(result["status"], "PROMOTED")
+            self.assertEqual(result["approval"]["business_change_references"], ["#77"])
 
     def test_regression_failure_does_not_touch_production(self):
         with tempfile.TemporaryDirectory() as tmp:
