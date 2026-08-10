@@ -4,10 +4,16 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 import sys
 from pathlib import Path
 
 import create_pr_impl as _impl
+from renderer_reconciliation import (
+    collect_renderer_reconciliation,
+    snapshot_renderer_artifacts,
+    touched_renderer_artifacts,
+)
 
 
 for _name in dir(_impl):
@@ -15,20 +21,172 @@ for _name in dir(_impl):
         globals().setdefault(_name, getattr(_impl, _name))
 
 _ORIGINAL_PARTITION = _impl._partition_records
+_ORIGINAL_RENDERER_ROW = _impl._renderer_row
 _LAST_PARTITIONS = None
 
 
-def _partition_records(records, scope, policy=None):
-    """Delegate partitioning while retaining the auditable decision sets."""
+def _canonical_relocate_site_id(value):
+    """Render the approved Decom - Relo Site ID without changing source identity."""
+    text = str(value or "").strip()
+    match = re.match(r"^(.*?)[_-]RELOCATE(?:_?\d+)?$", text, flags=re.IGNORECASE)
+    if not match:
+        return text
+    base = match.group(1).rstrip("_-")
+    return f"{base}_Relocate" if base else text
 
+
+def _renderer_row(record):
+    row = _ORIGINAL_RENDERER_ROW(record)
+    sow = str(record.get("pr_context", {}).get("tx_sow_normalized", "") or "").strip().upper()
+    if sow == "DECOM - RELO":
+        row["customer site code"] = _canonical_relocate_site_id(row.get("customer site code", ""))
+    return row
+
+
+def _record_site_code(record):
+    return str(record.get("site", {}).get("site_code", "") or "").strip()
+
+
+def _record_project_key(record):
+    return str(record.get("identity", {}).get("project_key", "") or "").strip()
+
+
+def _assert_unique_project_site_codes(records):
+    """Fail closed if the Project + Site Code business identity is duplicated."""
+    seen = {}
+    duplicates = {}
+    for record in records:
+        project_key = _record_project_key(record)
+        site_code = _record_site_code(record)
+        if not site_code:
+            continue
+        key = (project_key.casefold(), site_code.upper())
+        source_row = record.get("identity", {}).get("source_row_number")
+        if key not in seen:
+            seen[key] = {
+                "project_key": project_key,
+                "site_code": site_code.upper(),
+                "source_rows": [source_row] if source_row is not None else [],
+            }
+            continue
+        duplicate = duplicates.setdefault(key, dict(seen[key]))
+        if source_row is not None:
+            duplicate.setdefault("source_rows", []).append(source_row)
+
+    if duplicates:
+        details = sorted(
+            duplicates.values(),
+            key=lambda item: (str(item.get("project_key", "")).casefold(), str(item.get("site_code", ""))),
+        )
+        raise CreatePrError(
+            "DUPLICATE_SITE_CODE_IN_PROJECT",
+            "Site Code must be unique within a Project before PR generation.",
+            {
+                "duplicates": details,
+                "required_action": "Correct the duplicate Project + Site Code records in the source export before rerunning create-pr.",
+            },
+        )
+
+
+def _partition_records(records, scope, policy=None):
+    """Validate business identity, then delegate partitioning and retain audit sets."""
     global _LAST_PARTITIONS
+    _assert_unique_project_site_codes(records)
     _LAST_PARTITIONS = _ORIGINAL_PARTITION(records, scope, policy)
     return _LAST_PARTITIONS
 
 
+def _build_site_reconciliation(selected, partitions, renderer_reconciliation=None):
+    """Assign exactly one terminal engine disposition to every selected site."""
+    renderer_by_site = {
+        str(item.get("site_code", "")).strip().upper(): dict(item)
+        for item in (renderer_reconciliation or {}).get("site_dispositions", [])
+        if str(item.get("site_code", "")).strip()
+    }
+    direct = {}
+    for bucket, disposition in (
+        ("review_required", "REVIEW_REQUIRED"),
+        ("ignored", "IGNORED_WITH_APPROVED_REASON"),
+        ("duplicates", "DUPLICATE_BLOCKED"),
+    ):
+        for record in partitions.get(bucket, []):
+            code = _record_site_code(record)
+            decision = record.get("pr_generation_decision", {})
+            direct[code.upper()] = {
+                "site_code": code,
+                "disposition": disposition,
+                "reason_code": decision.get("reason_code", ""),
+                "reason": decision.get("reason", ""),
+            }
+
+    candidate_codes = {_record_site_code(record).upper() for record in partitions.get("candidates", [])}
+    site_dispositions = []
+    for record in selected:
+        source_code = _record_site_code(record)
+        key = source_code.upper()
+        terminal = direct.get(key)
+        if terminal is None and key in candidate_codes:
+            terminal = renderer_by_site.get(key)
+            if terminal is None:
+                terminal = {
+                    "site_code": source_code,
+                    "disposition": "FAILED",
+                    "reason_code": "RENDERER_SITE_UNACCOUNTED",
+                    "reason": "The site entered the renderer candidate set but returned no terminal renderer disposition.",
+                }
+        if terminal is None:
+            terminal = {
+                "site_code": source_code,
+                "disposition": "FAILED",
+                "reason_code": "ENGINE_SITE_UNACCOUNTED",
+                "reason": "The selected site did not enter any terminal engine partition.",
+            }
+        site_dispositions.append(terminal)
+
+    counts = {name: 0 for name in (
+        "GENERATED", "REVIEW_REQUIRED", "IGNORED_WITH_APPROVED_REASON", "DUPLICATE_BLOCKED", "FAILED"
+    )}
+    for item in site_dispositions:
+        disposition = str(item.get("disposition", ""))
+        if disposition in counts:
+            counts[disposition] += 1
+    accounted = sum(counts.values())
+    return {
+        "requested_count": len(selected),
+        "generated_count": counts["GENERATED"],
+        "review_required_count": counts["REVIEW_REQUIRED"],
+        "approved_ignored_count": counts["IGNORED_WITH_APPROVED_REASON"],
+        "duplicate_blocked_count": counts["DUPLICATE_BLOCKED"],
+        "failed_count": counts["FAILED"],
+        "unaccounted_count": max(0, len(selected) - accounted),
+        "site_dispositions": site_dispositions,
+    }
+
+
+def _assert_reconciliation_success(reconciliation):
+    """Fail closed only for engine-unaccounted outcomes, not valid review terminals."""
+    failed_count = int(reconciliation.get("failed_count", 0) or 0)
+    unaccounted_count = int(reconciliation.get("unaccounted_count", 0) or 0)
+    if failed_count or unaccounted_count:
+        failed_sites = [
+            item
+            for item in reconciliation.get("site_dispositions", [])
+            if str(item.get("disposition", "")).upper() == "FAILED"
+        ]
+        raise CreatePrError(
+            "PR_SITE_RECONCILIATION_FAILED",
+            "PR generation did not produce a valid terminal engine outcome for every requested site.",
+            {
+                "failed_count": failed_count,
+                "unaccounted_count": unaccounted_count,
+                "failed_sites": failed_sites,
+                "required_action": "Review renderer/engine failure evidence before rerunning create-pr.",
+            },
+        )
+
+
 def _write_ignored_report(output, scope, records, run_mode=RUN_MODE_PRODUCTION):
     """Write one auditable row for every ignored record, including SM."""
-
     if not records:
         return None
     marker = f"_{UAT_MARKER}" if run_mode == RUN_MODE_NON_PRODUCTION_UAT else ""
@@ -42,8 +200,7 @@ def _write_ignored_report(output, scope, records, run_mode=RUN_MODE_PRODUCTION):
 
 
 def _sync_dependencies() -> None:
-    """Propagate public test seams and the audit partition wrapper."""
-
+    """Propagate public test seams and audit wrappers."""
     for name in (
         "resolve_du_profile",
         "build_canonical_records",
@@ -55,27 +212,81 @@ def _sync_dependencies() -> None:
         if public_value is not None:
             setattr(_impl, name, public_value)
     _impl._partition_records = _partition_records
+    _impl._renderer_row = _renderer_row
+
+
+def _reconcile_summary(summary, scope, before_renderer=None):
+    partitions = _LAST_PARTITIONS or {
+        "candidates": [], "duplicates": [], "ignored": [], "review_required": []
+    }
+    selected = []
+    for bucket in ("candidates", "duplicates", "ignored", "review_required"):
+        selected.extend(partitions.get(bucket, []))
+
+    touched = touched_renderer_artifacts(
+        Path(summary["output_root"]),
+        before_renderer or {},
+    )
+    renderer = collect_renderer_reconciliation(
+        Path(summary["output_root"]),
+        partitions.get("candidates", []),
+        scope,
+        lambda record: _renderer_row(record).get("customer site code", ""),
+        created_paths=touched,
+    )
+    return _build_site_reconciliation(selected, partitions, renderer)
+
+
+def _persist_reconciliation_artifact_error(summary, error):
+    """Replace a previously successful summary when reconciliation evidence cannot be read."""
+    diagnostic = {
+        "exception_type": type(error).__name__,
+        "message": str(error),
+    }
+    summary["status"] = "ERROR"
+    summary["code"] = "PR_RECONCILIATION_ARTIFACT_READ_FAILED"
+    summary["reconciliation_error"] = diagnostic
+    Path(summary["summary_path"]).write_text(
+        json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    raise CreatePrError(
+        "PR_RECONCILIATION_ARTIFACT_READ_FAILED",
+        "Renderer output could not be read for site reconciliation.",
+        {
+            "summary_path": summary.get("summary_path"),
+            "reconciliation_error": diagnostic,
+            "required_action": "Inspect the renderer output artifact for corruption or incomplete write, then rerun create-pr.",
+        },
+    ) from error
 
 
 def run(parsed):
-    """Run the implementation and persist the ignored-record audit reference."""
-
+    """Run the implementation and persist ignored/reconciliation audit data."""
     global _LAST_PARTITIONS
     _LAST_PARTITIONS = None
     _sync_dependencies()
+    before_renderer = snapshot_renderer_artifacts(Path(parsed.output))
     summary = _impl.run(parsed)
     ignored_records = (_LAST_PARTITIONS or {}).get("ignored", [])
     ignored_path = _write_ignored_report(
-        Path(summary["output_root"]),
-        parsed.scope,
-        ignored_records,
-        summary["run_mode"],
+        Path(summary["output_root"]), parsed.scope, ignored_records, summary["run_mode"]
     )
     summary["ignored_report"] = str(ignored_path.resolve()) if ignored_path else None
+    try:
+        reconciliation = _reconcile_summary(summary, parsed.scope, before_renderer)
+    except Exception as error:
+        _persist_reconciliation_artifact_error(summary, error)
+
+    summary.update(reconciliation)
+
+    if reconciliation.get("failed_count", 0) or reconciliation.get("unaccounted_count", 0):
+        summary["status"] = "ERROR"
+        summary["code"] = "PR_SITE_RECONCILIATION_FAILED"
+
     Path(summary["summary_path"]).write_text(
-        json.dumps(summary, ensure_ascii=False, indent=2),
-        encoding="utf-8",
+        json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
     )
+    _assert_reconciliation_success(reconciliation)
     return summary
 
 

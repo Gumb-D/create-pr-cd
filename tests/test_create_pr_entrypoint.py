@@ -11,7 +11,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-from openpyxl import load_workbook
+from openpyxl import Workbook, load_workbook
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -68,6 +68,16 @@ def _metadata(profile_id: str = "test_profile") -> dict:
         "view_id": "2",
         "header_hash": "abc",
     }
+
+
+def _write_fake_ecc(path: Path, site_code: str) -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "details"
+    worksheet.append(["SN.", "Site ID*"])
+    worksheet.append([1, site_code])
+    workbook.save(path)
+    workbook.close()
 
 
 class TestCreatePrEntrypoint(unittest.TestCase):
@@ -385,7 +395,7 @@ class TestCreatePrEntrypoint(unittest.TestCase):
 
         def fake_renderer(command, **_kwargs):
             output = Path(command[command.index("--output") + 1])
-            (output / "Central-GTSB Production DU TSS PR 20260729.xlsx").write_bytes(b"formal")
+            _write_fake_ecc(output / "Central-GTSB Production DU TSS PR 20260729.xlsx", "PROD-1")
             return SimpleNamespace(returncode=0, stdout="", stderr="")
 
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -1,10 +1,10 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "registry_type": "canonical_sow_registry",
   "approved_by": "JJ",
-  "approved_date": "2026-07-07",
+  "approved_date": "2026-08-10",
   "source_profile": "tx_mini_pr_v1",
-  "source_evidence": "Local TX Mini mapping-decision package (output/du-20260706-profile/tx-mini-mapping-review/, rounds 3-4); raw values cross-checked against Info/input/pr_model.xlsx sheet 'TX Line Item (After 21-Apr 26)'.",
+  "source_evidence": "Original TX Mini mapping-decision package for the 2026-07-07 entries; Decom - Relo separately confirmed by JJ on 2026-08-10 as an independent SOW present in the current approved PR Model v4.0. Runtime PR Model validation remains authoritative and PR Model-driven.",
   "normalization_rule": "trim + collapse internal whitespace + UPPERCASE, then exact registry lookup",
   "unknown_value_policy": "REVIEW_REQUIRED",
   "entries": [
@@ -19,6 +19,7 @@
     {"raw_value": "MW IDU Relocation", "canonical_sow": "MW IDU RELOCATION", "classification": "PR_TRIGGER"},
     {"raw_value": "IPRAN Port Upgrade", "canonical_sow": "IPRAN PORT UPGRADE", "classification": "PR_TRIGGER"},
     {"raw_value": "MW Dismantle", "canonical_sow": "MW DISMANTLE", "classification": "PR_TRIGGER"},
+    {"raw_value": "Decom - Relo", "canonical_sow": "DECOM - RELO", "classification": "PR_TRIGGER"},
     {"raw_value": "Cancel / Drop", "canonical_sow": "CANCEL / DROP", "classification": "NO_PR_TRIGGER"},
     {"raw_value": "MW Remote Upgrade", "canonical_sow": "MW REMOTE UPGRADE", "classification": "REVIEW_REQUIRED"},
     {"raw_value": "New Starlink", "canonical_sow": "NEW STARLINK", "classification": "REVIEW_REQUIRED"},
@@ -26,10 +27,11 @@
     {"raw_value": "Existing TX", "canonical_sow": "EXISTING TX", "classification": "REVIEW_REQUIRED"}
   ],
   "notes": [
-    "PR_TRIGGER entries match an existing PR-model SOW exactly after normalization; identity normalization approved by JJ on 2026-07-07.",
+    "PR_TRIGGER entries use exact identity normalization and must still match the loaded approved PR Model; the registry never supplies PBOM codes, descriptions, quantities, or guessed line items.",
+    "Decom - Relo is an independent approved SOW and must not be aliased to MW IDU RELOCATION merely because both are relocation-related.",
     "NO_PR_TRIGGER is an intentional skip: no PR output, no quarantine.",
-    "REVIEW_REQUIRED entries have no PR-model SOW and quarantine fail-closed until a business rule exists.",
+    "REVIEW_REQUIRED entries quarantine fail-closed until a business rule exists.",
     "Values absent from this registry always classify as REVIEW_REQUIRED; the registry never guesses.",
-    "This registry records the value-level business ruling only; it does not enable ECC output and does not change the tx_mini_pr_v1 lifecycle status."
+    "This registry records the value-level business ruling only; runtime PR Model v4.0 validation and PR Model-driven item selection remain authoritative."
   ]
 }

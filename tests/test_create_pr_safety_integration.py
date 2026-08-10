@@ -7,7 +7,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-from openpyxl import load_workbook
+from openpyxl import Workbook, load_workbook
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -41,6 +41,16 @@ def record(site: str, subcontractor: str) -> dict:
             "blocking_reasons": [],
         },
     }
+
+
+def write_fake_ecc(path: Path, site_code: str) -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "details"
+    worksheet.append(["SN.", "Site ID*"])
+    worksheet.append([1, site_code])
+    workbook.save(path)
+    workbook.close()
 
 
 class TestCreatePrSafetyIntegration(unittest.TestCase):
@@ -81,7 +91,7 @@ class TestCreatePrSafetyIntegration(unittest.TestCase):
                 seen_renderer_sites.append(worksheet.cell(row_number, site_col).value)
                 seen_renderer_subcontractors.append(worksheet.cell(row_number, subcon_col).value)
             workbook.close()
-            (output / "Central-CCSMY Test DU TSS PR 20260729.xlsx").write_bytes(b"safe-ecc")
+            write_fake_ecc(output / "Central-CCSMY Test DU TSS PR 20260729.xlsx", "CCSMY-SITE")
             return SimpleNamespace(returncode=0, stdout="", stderr="")
 
         with tempfile.TemporaryDirectory() as temp_dir:
