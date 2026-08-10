@@ -1,14 +1,18 @@
 import csv
+import json
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest import mock
 
 from openpyxl import Workbook
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
+import create_pr
 from create_pr import (
     CreatePrError,
     _assert_reconciliation_success,
@@ -209,6 +213,30 @@ class TestIssue74Reconciliation(unittest.TestCase):
                 }
             ],
         })
+
+    def test_reconciliation_parse_failure_persists_error_summary(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            summary_path = root / "CREATE_PR_SUMMARY_TI.json"
+            summary = {
+                "status": "SUCCESS",
+                "output_root": str(root),
+                "summary_path": str(summary_path),
+                "run_mode": "PRODUCTION",
+            }
+            parsed = SimpleNamespace(output=root, scope="TI")
+
+            with mock.patch.object(create_pr._impl, "run", return_value=summary), \
+                 mock.patch.object(create_pr, "_reconcile_summary", side_effect=ValueError("bad workbook")):
+                with self.assertRaises(CreatePrError) as caught:
+                    create_pr.run(parsed)
+
+            self.assertEqual(caught.exception.code, "PR_RECONCILIATION_ARTIFACT_READ_FAILED")
+            persisted = json.loads(summary_path.read_text(encoding="utf-8"))
+            self.assertEqual(persisted["status"], "ERROR")
+            self.assertEqual(persisted["code"], "PR_RECONCILIATION_ARTIFACT_READ_FAILED")
+            self.assertEqual(persisted["reconciliation_error"]["exception_type"], "ValueError")
+            self.assertIn("bad workbook", persisted["reconciliation_error"]["message"])
 
 
 if __name__ == "__main__":
