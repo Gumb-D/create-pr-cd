@@ -5,6 +5,8 @@ import tempfile
 import unittest
 from hashlib import sha256
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts"
@@ -62,6 +64,16 @@ class TestPrModelBaseline(unittest.TestCase):
         self.assertIn("validate_pr_model_baseline(parsed.pr_model)", entrypoint)
         self.assertIn("except PrModelBaselineError as error", entrypoint)
         self.assertIn('summary["pr_model_baseline"]', entrypoint)
+
+    def test_entrypoint_rejects_wrong_model_before_engine_run(self):
+        import create_pr
+
+        parsed = SimpleNamespace(pr_model="definitely-not-approved.xlsx", output="output")
+        with patch.object(create_pr._impl, "run") as engine_run:
+            with self.assertRaises(PrModelBaselineError) as ctx:
+                create_pr.run(parsed)
+        self.assertEqual(ctx.exception.code, PR_MODEL_BASELINE_MISMATCH)
+        engine_run.assert_not_called()
 
     def test_legacy_hash_mirrors_match_authoritative_baseline(self):
         baseline = load_pr_model_baseline(ROOT)
