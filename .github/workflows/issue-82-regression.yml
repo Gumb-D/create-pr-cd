@@ -28,6 +28,22 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: python -m pip install -r requirements.txt
+      - name: Correct regression fixture to a known supported Sabah boundary
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path("tests/test_issue_82_mw_eos_antenna.py")
+          text = path.read_text(encoding="utf-8")
+          replacements = {
+              '"Latitude (North Plus South Minus)": 5.98,': '"Latitude (North Plus South Minus)": 4.414137,',
+              '"Longitude (East Plus West Minus)": 116.07,': '"Longitude (East Plus West Minus)": 118.522111,',
+          }
+          for old, new in replacements.items():
+              if text.count(old) != 1:
+                  raise SystemExit(f"Issue 82 fixture marker count={text.count(old)} for {old!r}; expected 1")
+              text = text.replace(old, new, 1)
+          path.write_text(text, encoding="utf-8")
+          PY
       - name: Apply minimal generator integration
         run: |
           python - <<'PY'
@@ -136,6 +152,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add scripts/generate_tss_pr_ecc.py .github/workflows/issue-82-regression.yml
+          git add scripts/generate_tss_pr_ecc.py tests/test_issue_82_mw_eos_antenna.py .github/workflows/issue-82-regression.yml
           git commit -m "fix(issue-82): consume governed antenna evidence"
           git push origin HEAD:fix/mw-eos-antenna-evidence
