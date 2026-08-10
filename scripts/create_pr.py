@@ -9,7 +9,11 @@ import sys
 from pathlib import Path
 
 import create_pr_impl as _impl
-from renderer_reconciliation import collect_renderer_reconciliation
+from renderer_reconciliation import (
+    collect_renderer_reconciliation,
+    snapshot_renderer_artifacts,
+    touched_renderer_artifacts,
+)
 
 
 for _name in dir(_impl):
@@ -39,15 +43,57 @@ def _renderer_row(record):
     return row
 
 
-def _partition_records(records, scope, policy=None):
-    """Delegate partitioning while retaining the auditable decision sets."""
-    global _LAST_PARTITIONS
-    _LAST_PARTITIONS = _ORIGINAL_PARTITION(records, scope, policy)
-    return _LAST_PARTITIONS
-
-
 def _record_site_code(record):
     return str(record.get("site", {}).get("site_code", "") or "").strip()
+
+
+def _record_project_key(record):
+    return str(record.get("identity", {}).get("project_key", "") or "").strip()
+
+
+def _assert_unique_project_site_codes(records):
+    """Fail closed if the Project + Site Code business identity is duplicated."""
+    seen = {}
+    duplicates = {}
+    for record in records:
+        project_key = _record_project_key(record)
+        site_code = _record_site_code(record)
+        if not site_code:
+            continue
+        key = (project_key.casefold(), site_code.upper())
+        source_row = record.get("identity", {}).get("source_row_number")
+        if key not in seen:
+            seen[key] = {
+                "project_key": project_key,
+                "site_code": site_code.upper(),
+                "source_rows": [source_row] if source_row is not None else [],
+            }
+            continue
+        duplicate = duplicates.setdefault(key, dict(seen[key]))
+        if source_row is not None:
+            duplicate.setdefault("source_rows", []).append(source_row)
+
+    if duplicates:
+        details = sorted(
+            duplicates.values(),
+            key=lambda item: (str(item.get("project_key", "")).casefold(), str(item.get("site_code", ""))),
+        )
+        raise CreatePrError(
+            "DUPLICATE_SITE_CODE_IN_PROJECT",
+            "Site Code must be unique within a Project before PR generation.",
+            {
+                "duplicates": details,
+                "required_action": "Correct the duplicate Project + Site Code records in the source export before rerunning create-pr.",
+            },
+        )
+
+
+def _partition_records(records, scope, policy=None):
+    """Validate business identity, then delegate partitioning and retain audit sets."""
+    global _LAST_PARTITIONS
+    _assert_unique_project_site_codes(records)
+    _LAST_PARTITIONS = _ORIGINAL_PARTITION(records, scope, policy)
+    return _LAST_PARTITIONS
 
 
 def _build_site_reconciliation(selected, partitions, renderer_reconciliation=None):
@@ -147,7 +193,7 @@ def _sync_dependencies() -> None:
     _impl._renderer_row = _renderer_row
 
 
-def _reconcile_summary(summary, scope):
+def _reconcile_summary(summary, scope, before_renderer=None):
     partitions = _LAST_PARTITIONS or {
         "candidates": [], "duplicates": [], "ignored": [], "review_required": []
     }
@@ -155,12 +201,16 @@ def _reconcile_summary(summary, scope):
     for bucket in ("candidates", "duplicates", "ignored", "review_required"):
         selected.extend(partitions.get(bucket, []))
 
+    touched = touched_renderer_artifacts(
+        Path(summary["output_root"]),
+        before_renderer or {},
+    )
     renderer = collect_renderer_reconciliation(
         Path(summary["output_root"]),
         partitions.get("candidates", []),
         scope,
         lambda record: _renderer_row(record).get("customer site code", ""),
-        created_paths=summary.get("created_files", []),
+        created_paths=touched,
     )
     return _build_site_reconciliation(selected, partitions, renderer)
 
@@ -170,13 +220,14 @@ def run(parsed):
     global _LAST_PARTITIONS
     _LAST_PARTITIONS = None
     _sync_dependencies()
+    before_renderer = snapshot_renderer_artifacts(Path(parsed.output))
     summary = _impl.run(parsed)
     ignored_records = (_LAST_PARTITIONS or {}).get("ignored", [])
     ignored_path = _write_ignored_report(
         Path(summary["output_root"]), parsed.scope, ignored_records, summary["run_mode"]
     )
     summary["ignored_report"] = str(ignored_path.resolve()) if ignored_path else None
-    summary.update(_reconcile_summary(summary, parsed.scope))
+    summary.update(_reconcile_summary(summary, parsed.scope, before_renderer))
     Path(summary["summary_path"]).write_text(
         json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
     )
