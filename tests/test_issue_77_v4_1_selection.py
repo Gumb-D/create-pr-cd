@@ -11,13 +11,13 @@ from jendela_migration_decision import JENDELA_PROFILE_ID, derive_jendela_migrat
 from pr_helpers import is_mw_reroute_row, load_pr_model_items
 
 
-CANDIDATE = ROOT / "Info" / "input" / "pr_model_v4.1.xlsx"
+CANONICAL = ROOT / "Info" / "input" / "pr_model.xlsx"
 
 
 class TestIssue77V41Selection(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        _, cls.ti_models = load_pr_model_items(CANDIDATE)
+        _, cls.ti_models = load_pr_model_items(CANONICAL)
 
     def _mandatory_pboms(self, sow):
         return {
