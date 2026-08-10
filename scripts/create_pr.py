@@ -163,6 +163,28 @@ def _build_site_reconciliation(selected, partitions, renderer_reconciliation=Non
     }
 
 
+def _assert_reconciliation_success(reconciliation):
+    """Fail closed only for engine-unaccounted outcomes, not valid review terminals."""
+    failed_count = int(reconciliation.get("failed_count", 0) or 0)
+    unaccounted_count = int(reconciliation.get("unaccounted_count", 0) or 0)
+    if failed_count or unaccounted_count:
+        failed_sites = [
+            item
+            for item in reconciliation.get("site_dispositions", [])
+            if str(item.get("disposition", "")).upper() == "FAILED"
+        ]
+        raise CreatePrError(
+            "PR_SITE_RECONCILIATION_FAILED",
+            "PR generation did not produce a valid terminal engine outcome for every requested site.",
+            {
+                "failed_count": failed_count,
+                "unaccounted_count": unaccounted_count,
+                "failed_sites": failed_sites,
+                "required_action": "Review renderer/engine failure evidence before rerunning create-pr.",
+            },
+        )
+
+
 def _write_ignored_report(output, scope, records, run_mode=RUN_MODE_PRODUCTION):
     """Write one auditable row for every ignored record, including SM."""
     if not records:
@@ -227,10 +249,17 @@ def run(parsed):
         Path(summary["output_root"]), parsed.scope, ignored_records, summary["run_mode"]
     )
     summary["ignored_report"] = str(ignored_path.resolve()) if ignored_path else None
-    summary.update(_reconcile_summary(summary, parsed.scope, before_renderer))
+    reconciliation = _reconcile_summary(summary, parsed.scope, before_renderer)
+    summary.update(reconciliation)
+
+    if reconciliation.get("failed_count", 0) or reconciliation.get("unaccounted_count", 0):
+        summary["status"] = "ERROR"
+        summary["code"] = "PR_SITE_RECONCILIATION_FAILED"
+
     Path(summary["summary_path"]).write_text(
         json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
     )
+    _assert_reconciliation_success(reconciliation)
     return summary
 
 
