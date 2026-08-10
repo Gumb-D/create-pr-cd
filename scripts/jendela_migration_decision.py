@@ -13,8 +13,8 @@ from typing import Any, Mapping
 
 JENDELA_PROFILE_ID = "jendela_tx_migration_pr_v1"
 
-# These SOW names and fixed PBOM requirements are taken from candidate PR Model
-# v4.1. Dynamic choose-one PBOMs (MW geography/antenna groups) deliberately stay
+# These SOW names and fixed PBOM requirements are taken from PR Model v4.1.
+# Dynamic choose-one PBOMs (MW geography/antenna groups) deliberately stay
 # model-driven and therefore are not hardcoded here.
 _WORK_ITEMS = {
     "Dismantle Starlink": {
@@ -139,6 +139,15 @@ def derive_jendela_migration_decision(
         work_item_names.append(dismantle_work)
     if additional_work:
         work_item_names.append(additional_work)
+
+    if not work_item_names:
+        return {
+            "classification": "APPROVED_NO_OUTPUT",
+            "reason_code": "JENDELA_TI_NO_WORK_REQUIRED",
+            "decision_code": "JENDELA_TI_NO_WORK",
+            "source_values": source_values,
+            "work_items": [],
+        }
 
     return {
         "classification": "APPROVED",
