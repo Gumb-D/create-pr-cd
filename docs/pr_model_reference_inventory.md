@@ -37,7 +37,9 @@ Candidate SHA-256:
 6c4fda502a8998b41bd88704dd6c59d986dc6c46fe42b82947d12c0c0cd8178f
 ```
 
-Issue #75 does **not** promote v4.1. The candidate removes business rows that the current Jendela implementation depends on, so it remains `REVIEW_REQUIRED` until Issue #77 redesigns/revalidates Jendela against the new model and full regression passes.
+Issue #75 does **not** promote v4.1. The candidate removes business rows that the current Jendela implementation depends on, so it remains `REVIEW_REQUIRED` until Issue #77 redesigns/revalidates Jendela against the new model.
+
+After #77 is complete, reviewed compatibility changes may be unlocked only with explicit JSON promotion approval evidence that matches the exact candidate version and SHA above, covers every analyzer reason code, and records at least one business-change reference. The approval does not change runtime selection and cannot bypass the full regression gate. Only after that evidence and regression pass may `promote_pr_model.py` replace the current production baseline.
 
 ## Historical isolation rule
 
