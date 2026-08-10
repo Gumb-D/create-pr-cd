@@ -21,11 +21,12 @@ import pr_helpers
 
 CANONICAL_PR_MODEL = ROOT / "Info" / "input" / "pr_model.xlsx"
 APPROVED_V4_SHA256 = "d3cc64664fc147f8c560688e41264753592eb0b8cdc513d7ebe2d9b989e8aefd"
-STARLINK_SOW = "Starlink Dismantle (Return/MRCF included) & Migration"
+STARLINK_SOW = "Starlink Dismanle"
+MW_NEW_LINK_SOW = "MW New Link / Reroute"
 
 
 class TestApprovedJendelaPrModel(unittest.TestCase):
-    def _candidate_record(self, decision_code, work_items):
+    def _candidate_record(self, work_items):
         return {
             "identity": {"source_row_number": 7},
             "site": {"site_code": "JENDELA-TEST", "site_name": "Jendela Test", "du_key": "DU-JENDELA"},
@@ -35,7 +36,7 @@ class TestApprovedJendelaPrModel(unittest.TestCase):
                 "subcontractor_ti": "GTSB",
                 "migration_decision": {
                     "classification": "APPROVED",
-                    "decision_code": decision_code,
+                    "decision_code": "JENDELA_TI_WORK_PLAN",
                     "work_items": work_items,
                 },
             },
@@ -74,7 +75,7 @@ class TestApprovedJendelaPrModel(unittest.TestCase):
     def test_canonical_workbook_is_the_exact_approved_v4_bytes(self):
         self.assertEqual(sha256(CANONICAL_PR_MODEL.read_bytes()).hexdigest(), APPROVED_V4_SHA256)
 
-    def test_canonical_workbook_contains_exact_jendela_ti_rows(self):
+    def test_canonical_workbook_contains_exact_v4_1_jendela_rows(self):
         workbook = load_workbook(CANONICAL_PR_MODEL, read_only=True, data_only=True)
         worksheet = workbook["TX Line Item (After 21-Apr 26)"]
         ti_header_row = next(
@@ -83,32 +84,36 @@ class TestApprovedJendelaPrModel(unittest.TestCase):
             if isinstance(row[0].value, str) and "TI Model" in row[0].value
         )
         rows = [
-            (row[0].row, tuple(cell.value for cell in row[:7]))
+            tuple(cell.value for cell in row[:7])
             for row in worksheet.iter_rows(min_row=ti_header_row + 1)
             if row[1].value is not None
         ]
         workbook.close()
 
-        starlink_rows = [row for row in rows if row[1][0] == STARLINK_SOW]
-        self.assertEqual([row[0] for row in starlink_rows], [403, 404])
-        self.assertEqual([str(row[1][1]) for row in starlink_rows], ["350000597850", "350000597852"])
-        self.assertTrue(all(row[1][5] == "Mandatory" for row in starlink_rows))
+        starlink_rows = [row for row in rows if row[0] == STARLINK_SOW]
+        self.assertEqual([str(row[1]) for row in starlink_rows], ["350000597850", "350000597852"])
+        self.assertTrue(all(row[5] == "Mandatory" for row in starlink_rows))
 
-        mw_installation_rows = [row for row in rows if row[1][0] == "MW Installation"]
-        self.assertEqual((mw_installation_rows[0][0], mw_installation_rows[-1][0]), (438, 470))
-        self.assertTrue(all("Mandatory" in str(row[1][5]) for row in mw_installation_rows))
+        self.assertTrue(any(row[0] == "MW Dismantle" for row in rows))
+        self.assertTrue(any(row[0] == MW_NEW_LINK_SOW for row in rows))
+        self.assertTrue(any(row[0] == "BBU Patching" and str(row[1]) == "350001095420" for row in rows))
+        self.assertTrue(any(row[0] == "MW IDU Patching" and str(row[1]) == "350001095420" for row in rows))
 
-        self.assertTrue(any(row[1][0] == "MW Dismantle" and row[0] == 359 for row in rows))
-        self.assertTrue(any(row[1][0] == "BBU Patching" and row[0] == 40 for row in rows))
+        self.assertFalse(any(row[0] == "Starlink Dismantle (Return/MRCF included) & Migration" for row in rows))
+        self.assertFalse(any(row[0] == "MW Installation" for row in rows))
 
-    def test_loader_reads_exact_jendela_rows_after_section_breaks(self):
-        loader = getattr(pr_helpers, "load_pr_model_items", None)
-        self.assertIsNotNone(loader)
-        _, ti_models = loader(CANONICAL_PR_MODEL)
+    def test_loader_separates_v4_1_new_link_and_reroute_rows(self):
+        _, ti_models = pr_helpers.load_pr_model_items(CANONICAL_PR_MODEL)
         starlink = [item for item in ti_models if item["SOW"] == STARLINK_SOW]
         self.assertEqual([item["PBOM_Code"] for item in starlink], ["350000597850", "350000597852"])
         self.assertTrue(all(item["Is_Mandatory"] for item in starlink))
-        self.assertEqual(len([item for item in ti_models if item["SOW"] == "MW Installation"]), 33)
+
+        new_link = [item for item in ti_models if item["SOW"] == MW_NEW_LINK_SOW]
+        reroute = [item for item in ti_models if item["SOW"] == "MW Reroute"]
+        self.assertTrue(new_link)
+        self.assertTrue(reroute)
+        self.assertTrue(all(item.get("Remarks", "").casefold() != "reroute" for item in new_link))
+        self.assertTrue(all(item.get("Remarks", "").casefold() == "reroute" for item in reroute))
 
     def test_modified_canonical_candidate_fails_hash_validation(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -119,83 +124,93 @@ class TestApprovedJendelaPrModel(unittest.TestCase):
             workbook.save(modified)
             workbook.close()
             candidate = self._candidate_record(
-                "STARLINK_TO_FIBER_OWN_BUILD",
                 [
                     {
                         "work_item": "Dismantle Starlink",
                         "model_sow": STARLINK_SOW,
                         "required_pbom_codes": ["350000597850", "350000597852"],
-                    },
-                    {"work_item": "BBU Patching", "model_sow": "BBU Patching", "required_pbom_codes": []},
-                ],
+                    }
+                ]
             )
             result, output = self._run_generator(candidate, modified)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("PR_MODEL_HASH_MISMATCH", result.stderr + result.stdout)
-        self.assertIn("officially approved PR Model v4", result.stderr + result.stdout)
         self.assertEqual(list(output.glob("*.xlsx")), [])
 
-    def test_missing_either_real_starlink_pbom_fails_required_selection(self):
+    def test_fixed_v4_1_starlink_and_patching_pboms_are_unique(self):
         _, ti_models = pr_helpers.load_pr_model_items(CANONICAL_PR_MODEL)
-        selected = [item for item in ti_models if item["SOW"] == STARLINK_SOW]
-        required = ["350000597850", "350000597852"]
-        for missing_pbom in required:
-            with self.subTest(missing_pbom=missing_pbom):
-                incomplete = [item for item in selected if item["PBOM_Code"] != missing_pbom]
+
+        starlink = [item for item in ti_models if item["SOW"] == STARLINK_SOW]
+        self.assertEqual(
+            pr_helpers.validate_required_pbom_selection(
+                starlink,
+                ["350000597850", "350000597852"],
+            ),
+            (True, None),
+        )
+
+        for sow in ("BBU Patching", "MW IDU Patching"):
+            with self.subTest(sow=sow):
+                mandatory = [item for item in ti_models if item["SOW"] == sow and item["Is_Mandatory"]]
+                self.assertEqual([item["PBOM_Code"] for item in mandatory], ["350001095420"])
                 self.assertEqual(
-                    pr_helpers.validate_required_pbom_selection(incomplete, required),
-                    (False, "JENDELA_REQUIRED_PBOM_NOT_UNIQUE"),
+                    pr_helpers.validate_required_pbom_selection(mandatory, ["350001095420"]),
+                    (True, None),
                 )
 
-    def test_all_four_migration_branches_generate_complete_atomic_ecc(self):
+    def test_new_business_work_plans_generate_complete_atomic_ecc(self):
         cases = [
             (
-                "STARLINK_TO_FIBER_OWN_BUILD",
                 [
                     {
                         "work_item": "Dismantle Starlink",
                         "model_sow": STARLINK_SOW,
                         "required_pbom_codes": ["350000597850", "350000597852"],
                     },
-                    {"work_item": "BBU Patching", "model_sow": "BBU Patching", "required_pbom_codes": []},
+                    {
+                        "work_item": "BBU Patching / MW IDU Patching",
+                        "model_sow": "BBU Patching",
+                        "required_pbom_codes": ["350001095420"],
+                    },
                 ],
                 {"350000597850", "350000597852", "350001095420"},
             ),
             (
-                "MICROWAVE_TO_FIBER_OWN_BUILD",
                 [
                     {"work_item": "Dismantle MW", "model_sow": "MW Dismantle", "required_pbom_codes": []},
-                    {"work_item": "BBU Patching", "model_sow": "BBU Patching", "required_pbom_codes": []},
+                    {
+                        "work_item": "BBU Patching / MW IDU Patching",
+                        "model_sow": "MW IDU Patching",
+                        "required_pbom_codes": ["350001095420"],
+                    },
                 ],
                 {"350000589265", "350001095413", "350001095420"},
             ),
             (
-                "STARLINK_TO_MICROWAVE",
                 [
                     {
                         "work_item": "Dismantle Starlink",
                         "model_sow": STARLINK_SOW,
                         "required_pbom_codes": ["350000597850", "350000597852"],
                     },
-                    {"work_item": "MW New Link", "model_sow": "MW Installation", "required_pbom_codes": []},
+                    {"work_item": "MW New Link", "model_sow": MW_NEW_LINK_SOW, "required_pbom_codes": []},
                 ],
                 {"350000597850", "350000597852", "350000214932", "350001095409"},
             ),
             (
-                "MICROWAVE_TO_MICROWAVE",
                 [
                     {"work_item": "Dismantle MW", "model_sow": "MW Dismantle", "required_pbom_codes": []},
-                    {"work_item": "MW New Link", "model_sow": "MW Installation", "required_pbom_codes": []},
+                    {"work_item": "MW New Link", "model_sow": MW_NEW_LINK_SOW, "required_pbom_codes": []},
                 ],
                 {"350000589265", "350001095413", "350000214932", "350001095409"},
             ),
         ]
-        for decision_code, work_items, expected_pboms in cases:
-            with self.subTest(decision_code=decision_code):
-                result, output = self._run_generator(self._candidate_record(decision_code, work_items))
+        for work_items, expected_pboms in cases:
+            with self.subTest(work_items=[item["work_item"] for item in work_items]):
+                result, output = self._run_generator(self._candidate_record(work_items))
                 self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
                 output_files = list(output.glob("*.xlsx"))
-                self.assertEqual(len(output_files), 1, result.stdout)
+                self.assertEqual(len(output_files), 1, result.stdout + result.stderr)
                 self.assertEqual(list(output.glob("REVIEW_REQUIRED_TI_*.csv")), [])
                 workbook = load_workbook(output_files[0], read_only=True, data_only=True)
                 worksheet = workbook["details"]
@@ -203,17 +218,20 @@ class TestApprovedJendelaPrModel(unittest.TestCase):
                 workbook.close()
                 self.assertEqual(actual_pboms, expected_pboms)
 
-    def test_missing_starlink_pbom_rejects_entire_atomic_decision(self):
+    def test_missing_fixed_pbom_rejects_entire_atomic_decision(self):
         candidate = self._candidate_record(
-            "STARLINK_TO_FIBER_OWN_BUILD",
             [
                 {
                     "work_item": "Dismantle Starlink",
                     "model_sow": STARLINK_SOW,
                     "required_pbom_codes": ["350000597850", "350000597852", "MISSING-PBOM"],
                 },
-                {"work_item": "BBU Patching", "model_sow": "BBU Patching", "required_pbom_codes": []},
-            ],
+                {
+                    "work_item": "BBU Patching / MW IDU Patching",
+                    "model_sow": "BBU Patching",
+                    "required_pbom_codes": ["350001095420"],
+                },
+            ]
         )
         result, output = self._run_generator(candidate)
         self.assertEqual(result.returncode, 0, result.stderr)
