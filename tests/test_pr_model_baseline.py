@@ -21,23 +21,25 @@ from pr_model_baseline import (
 )
 
 
+EXPECTED_PRODUCTION_VERSION = "4.1"
+EXPECTED_PRODUCTION_SHA256 = "6c4fda502a8998b41bd88704dd6c59d986dc6c46fe42b82947d12c0c0cd8178f"
+
+
 class TestPrModelBaseline(unittest.TestCase):
     def test_repository_baseline_declares_single_current_v4(self):
         baseline = load_pr_model_baseline(ROOT)
         self.assertEqual(baseline["baseline_id"], "celcomdigi_tx_pr_model_current")
         self.assertEqual(baseline["status"], "PRODUCTION")
-        self.assertEqual(baseline["model"]["version"], "4.0")
+        self.assertEqual(baseline["model"]["version"], EXPECTED_PRODUCTION_VERSION)
         self.assertEqual(baseline["workbook"]["path"], "Info/input/pr_model.xlsx")
-        self.assertEqual(
-            baseline["workbook"]["sha256"],
-            "d3cc64664fc147f8c560688e41264753592eb0b8cdc513d7ebe2d9b989e8aefd",
-        )
+        self.assertEqual(baseline["workbook"]["sha256"], EXPECTED_PRODUCTION_SHA256)
 
     def test_repository_workbook_matches_declared_baseline(self):
         result = validate_pr_model_baseline(root=ROOT)
-        self.assertEqual(result["version"], "4.0")
+        self.assertEqual(result["version"], EXPECTED_PRODUCTION_VERSION)
         self.assertEqual(result["path"], ROOT / "Info/input/pr_model.xlsx")
         self.assertEqual(result["actual_sha256"], result["expected_sha256"])
+        self.assertEqual(result["actual_sha256"], EXPECTED_PRODUCTION_SHA256)
 
     def test_legacy_bare_default_alias_resolves_only_to_current_baseline(self):
         result = validate_pr_model_baseline(Path("pr_model.xlsx"), root=ROOT)
