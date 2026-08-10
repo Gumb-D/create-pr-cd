@@ -10,8 +10,7 @@ on:
       - 'scripts/create_pr.py'
       - 'scripts/generate_tss_pr_ecc.py'
       - 'scripts/run_tx_mini_ecc_parity.py'
-      - 'tests/test_pr_model_baseline.py'
-      - 'tests/test_pr_model_change_analyzer.py'
+      - 'tests/**'
       - '.github/workflows/pr-model-baseline-governance.yml'
   workflow_dispatch:
 
@@ -35,3 +34,6 @@ jobs:
 
       - name: Run Issue 75 baseline tests
         run: python -m unittest tests.test_pr_model_baseline tests.test_pr_model_change_analyzer -v
+
+      - name: Run broad regression
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
