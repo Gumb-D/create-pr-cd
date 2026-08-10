@@ -30,7 +30,6 @@ _SOURCE_STATUS_FIELDS = {
 }
 
 _ANTENNA_WORDS = ("antenna", "dish")
-_DISQUALIFYING_UNITS = ("ghz", "mhz", "mbps", "gbps", "kbps")
 
 
 def _is_blank(value: Any) -> bool:
@@ -72,10 +71,10 @@ def _parse_direct_size(value: Any) -> float | None:
     text = str(value).strip().replace(",", ".")
     candidates: list[float] = []
 
-    # Dedicated fields commonly contain `0.6`, `0.6m`, or strings such as
-    # `18G_1.2M(MAC)`. Values above 5m are never valid antenna diameters here.
+    # Dedicated fields commonly contain `0.6`, `0.6m`, `0.6 meter/metre`, or
+    # compact strings such as `18G_1.2M(MAC)`. Values above 5m are rejected.
     for match in re.finditer(
-        r"(?<![A-Za-z0-9])(\d+(?:\.\d+)?)(?=\s*(?:m\b|$|[_/;,)]))",
+        r"(?<![A-Za-z0-9])(\d+(?:\.\d+)?)(?=\s*(?:m(?:eters?|etres?)?\b|$|[_/;,)]))",
         text,
         re.IGNORECASE,
     ):
@@ -138,10 +137,11 @@ def _parse_detail_sizes(value: Any, *, require_antenna_context: bool) -> list[fl
     candidates: list[float] = []
     consumed: list[tuple[int, int]] = []
 
-    # Endpoint-specific detail fields may contain compact forms such as
-    # `18G_1.2M(MAC)`. Common TX SOW Details is broader and therefore requires
-    # antenna-specific context even when an `m` suffix is present.
-    for match in re.finditer(r"(?<![A-Za-z0-9])(\d+(?:\.\d+)?)\s*m\b", text, re.IGNORECASE):
+    for match in re.finditer(
+        r"(?<![A-Za-z0-9])(\d+(?:\.\d+)?)\s*m(?:eters?|etres?)?\b",
+        text,
+        re.IGNORECASE,
+    ):
         if require_antenna_context and not _has_antenna_specific_context(text, match.start(), match.end()):
             continue
         try:
@@ -188,7 +188,9 @@ def _endpoint_resolution(
 
     detail_raw = row.get(detail_field, "")
     if _source_is_approved(row, detail_field):
-        detail_sizes = _parse_detail_sizes(detail_raw, require_antenna_context=False)
+        # SOW-detail fields are free text. Even though they are endpoint-specific,
+        # require antenna/dish context so cable lengths cannot select antenna PBOMs.
+        detail_sizes = _parse_detail_sizes(detail_raw, require_antenna_context=True)
         if detail_sizes:
             return {
                 "size": max(detail_sizes),
@@ -210,7 +212,8 @@ def resolve_installation_antenna_evidence(row: Mapping[str, Any]) -> dict[str, A
     """Resolve NE/FE installation evidence and one governed PR-model group size.
 
     Canonical rows consume only APPROVED mappings. Legacy direct-generator rows
-    have no governance marker and retain their historical input contract.
+    have no governance marker and retain their historical direct-field contract.
+    SOW-detail fallbacks remain fail-closed unless the value is antenna-specific.
     """
     ne = _endpoint_resolution(row, DIRECT_NE, DETAIL_NE)
     fe = _endpoint_resolution(row, DIRECT_FE, DETAIL_FE)
@@ -228,8 +231,6 @@ def resolve_installation_antenna_evidence(row: Mapping[str, Any]) -> dict[str, A
         group_source = "ENDPOINT_EVIDENCE"
     elif common_size is not None:
         status = "RESOLVED_COMMON"
-        # Common evidence supplements missing endpoint evidence; it must never
-        # overwrite a larger, higher-priority resolved endpoint value.
         selected_size = max(endpoint_sizes + [common_size])
         group_source = COMMON_DETAIL if not endpoint_sizes else "ENDPOINT_AND_TX_SOW_DETAILS"
     elif endpoint_sizes:
