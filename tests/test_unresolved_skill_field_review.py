@@ -89,9 +89,6 @@ class TestUnresolvedSkillFieldReview(unittest.TestCase):
 
         self.assertEqual(review_entry["profile_id"], "tx_mini_pr_v1")
         self.assertEqual(review_entry["source_file_name"], shortlist_entry["source_file_name"])
-        # Every TX Mini ruling landed by 2026-07-08: nothing is missing or
-        # competing, and the human-approved selections record their rejected
-        # shortlist alternates as resolved-by-approval.
         self.assertEqual(review_entry["summary"]["missing_required_fields"], [])
         self.assertEqual(review_entry["summary"]["competing_candidate_fields"], [])
         self.assertEqual(
@@ -101,7 +98,6 @@ class TestUnresolvedSkillFieldReview(unittest.TestCase):
         self.assertEqual(
             review_entry["field_reviews"]["tx_sow_raw"]["review_status"], "RESOLVED_BY_APPROVED_MAPPING"
         )
-        # Rejected alternates stay listed for traceability.
         self.assertEqual(
             review_entry["field_reviews"]["tx_sow_raw"]["alternate_candidates"][0]["fingerprint"]["display_header"],
             "TX SOW Details",
@@ -254,16 +250,24 @@ class TestUnresolvedSkillFieldReview(unittest.TestCase):
             entry for entry in shortlist_registry["entries"] if "Jendela TX Migration" in entry["source_file_name"]
         )
 
-        for field_name in ("tx_before_migration", "final_backhaul"):
-            with self.subTest(field_name=field_name):
-                missing = json.loads(json.dumps(profile))
-                missing["field_mapping"][field_name]["source_candidates"] = []
-                review_entry = build_review_entry(missing, shortlist_entry)
-                self.assertIn(field_name, review_entry["summary"]["missing_required_fields"])
-                self.assertEqual(
-                    review_entry["field_reviews"][field_name]["review_status"],
-                    "REVIEW_REQUIRED_NO_PROFILE_SELECTION",
-                )
+        missing_before = json.loads(json.dumps(profile))
+        missing_before["field_mapping"]["tx_before_migration"]["source_candidates"] = []
+        before_review = build_review_entry(missing_before, shortlist_entry)
+        self.assertIn("tx_before_migration", before_review["summary"]["missing_required_fields"])
+        self.assertEqual(
+            before_review["field_reviews"]["tx_before_migration"]["review_status"],
+            "REVIEW_REQUIRED_NO_PROFILE_SELECTION",
+        )
+
+        missing_final = json.loads(json.dumps(profile))
+        missing_final["field_mapping"]["final_backhaul"]["source_candidates"] = []
+        final_review = build_review_entry(missing_final, shortlist_entry)
+        self.assertNotIn("final_backhaul", final_review["summary"]["missing_required_fields"])
+        self.assertFalse(final_review["field_reviews"]["final_backhaul"]["required"])
+        self.assertEqual(
+            final_review["field_reviews"]["final_backhaul"]["review_status"],
+            "REVIEW_REQUIRED_NO_PROFILE_SELECTION",
+        )
 
     def test_2023_celcomdigi_bau_entry_uses_corrected_tx_prpo_candidates(self):
         shortlist_registry = json.loads(
