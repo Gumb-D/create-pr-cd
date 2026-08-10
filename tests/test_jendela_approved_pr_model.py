@@ -20,7 +20,7 @@ import pr_helpers
 
 
 CANONICAL_PR_MODEL = ROOT / "Info" / "input" / "pr_model.xlsx"
-APPROVED_V4_SHA256 = "d3cc64664fc147f8c560688e41264753592eb0b8cdc513d7ebe2d9b989e8aefd"
+APPROVED_V4_SHA256 = "6c4fda502a8998b41bd88704dd6c59d986dc6c46fe42b82947d12c0c0cd8178f"
 STARLINK_SOW = "Starlink Dismanle"
 MW_NEW_LINK_SOW = "MW New Link / Reroute"
 

@@ -78,7 +78,7 @@ def parse_args():
 
 import hashlib
 
-APPROVED_PR_MODEL_SHA256 = "d3cc64664fc147f8c560688e41264753592eb0b8cdc513d7ebe2d9b989e8aefd"
+APPROVED_PR_MODEL_SHA256 = "6c4fda502a8998b41bd88704dd6c59d986dc6c46fe42b82947d12c0c0cd8178f"
 
 
 def validate_pr_model_file(path, description="PR Model"):

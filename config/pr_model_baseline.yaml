@@ -4,11 +4,11 @@
   "status": "PRODUCTION",
   "model": {
     "name": "CelcomDigi TX PR Model",
-    "version": "4.0"
+    "version": "4.1"
   },
   "workbook": {
     "path": "Info/input/pr_model.xlsx",
-    "sha256": "d3cc64664fc147f8c560688e41264753592eb0b8cdc513d7ebe2d9b989e8aefd"
+    "sha256": "6c4fda502a8998b41bd88704dd6c59d986dc6c46fe42b82947d12c0c0cd8178f"
   },
   "validation": {
     "mismatch_policy": "FAIL_CLOSED",
