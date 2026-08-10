@@ -1,0 +1,37 @@
+name: Issue 82 Regression
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "scripts/generate_tss_pr_ecc.py"
+      - "scripts/antenna_evidence_resolver.py"
+      - "tests/test_issue_82_mw_eos_antenna.py"
+      - ".github/workflows/issue-82-regression.yml"
+  push:
+    branches:
+      - "fix/mw-eos-antenna-evidence"
+
+permissions:
+  contents: read
+
+jobs:
+  targeted-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -r requirements.txt
+      - name: Run Issue 82 and related regressions
+        run: |
+          python -m unittest \
+            tests.test_issue_82_mw_eos_antenna \
+            tests.test_ti_sow_matching \
+            tests.test_human_uat_remediation_48_54 \
+            tests.test_mw_reroute \
+            tests.test_pr_safety_controls
