@@ -1,11 +1,16 @@
+import csv
 import sys
+import tempfile
 import unittest
 from pathlib import Path
+
+from openpyxl import Workbook
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from create_pr import _build_site_reconciliation, _canonical_relocate_site_id
+from renderer_reconciliation import collect_renderer_reconciliation
 
 
 def record(site_code):
@@ -17,6 +22,38 @@ class TestIssue74RelocateIdentity(unittest.TestCase):
         self.assertEqual(_canonical_relocate_site_id("B00288_RELOCATE1"), "B00288_Relocate")
         self.assertEqual(_canonical_relocate_site_id("S00144_Relocate_1"), "S00144_Relocate")
         self.assertEqual(_canonical_relocate_site_id("S00311_Relocate"), "S00311_Relocate")
+
+
+class TestIssue74RendererReconciliation(unittest.TestCase):
+    def test_reads_generated_and_review_required_sites(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            ecc = root / "Central-Magicell TX Rollout TI PR 20260810.xlsx"
+            workbook = Workbook()
+            worksheet = workbook.active
+            worksheet.title = "details"
+            worksheet.append(["SN.", "Site ID*"])
+            worksheet.append([1, "A_Relocate"])
+            workbook.save(ecc)
+
+            review = root / "REVIEW_REQUIRED_TI_20260810.csv"
+            with review.open("w", encoding="utf-8-sig", newline="") as handle:
+                writer = csv.DictWriter(handle, fieldnames=["Site_ID", "Reason_Code"])
+                writer.writeheader()
+                writer.writerow({"Site_ID": "B_Relocate", "Reason_Code": "NO_MATCHING_TI_PR_MODEL_ITEM"})
+
+            candidates = [record("A_RELOCATE1"), record("B_RELOCATE2")]
+            result = collect_renderer_reconciliation(
+                root,
+                candidates,
+                "TI",
+                lambda item: _canonical_relocate_site_id(item["site"]["site_code"]),
+                created_paths=[ecc, review],
+            )
+
+            self.assertEqual(result["site_dispositions"][0]["disposition"], "GENERATED")
+            self.assertEqual(result["site_dispositions"][1]["disposition"], "REVIEW_REQUIRED")
+            self.assertEqual(result["site_dispositions"][1]["reason_code"], "NO_MATCHING_TI_PR_MODEL_ITEM")
 
 
 class TestIssue74Reconciliation(unittest.TestCase):
