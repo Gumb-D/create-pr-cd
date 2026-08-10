@@ -39,6 +39,11 @@ class TestPrModelBaseline(unittest.TestCase):
         self.assertEqual(result["path"], ROOT / "Info/input/pr_model.xlsx")
         self.assertEqual(result["actual_sha256"], result["expected_sha256"])
 
+    def test_legacy_bare_default_alias_resolves_only_to_current_baseline(self):
+        result = validate_pr_model_baseline(Path("pr_model.xlsx"), root=ROOT)
+        self.assertEqual(result["path"], ROOT / "Info/input/pr_model.xlsx")
+        self.assertEqual(result["actual_sha256"], result["expected_sha256"])
+
     def test_hash_mismatch_fails_closed_with_precise_code(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -61,7 +66,7 @@ class TestPrModelBaseline(unittest.TestCase):
 
     def test_official_entrypoint_enforces_authoritative_baseline(self):
         entrypoint = (ROOT / "scripts/create_pr.py").read_text(encoding="utf-8")
-        self.assertIn("validate_pr_model_baseline(parsed.pr_model)", entrypoint)
+        self.assertIn('validate_pr_model_baseline(getattr(parsed, "pr_model", None))', entrypoint)
         self.assertIn("except PrModelBaselineError as error", entrypoint)
         self.assertIn('summary["pr_model_baseline"]', entrypoint)
 
