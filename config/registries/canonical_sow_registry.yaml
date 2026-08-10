@@ -4,7 +4,7 @@
   "approved_by": "JJ",
   "approved_date": "2026-08-10",
   "source_profile": "tx_mini_pr_v1",
-  "source_evidence": "Original TX Mini mapping-decision package for the 2026-07-07 entries; Decom - Relo separately confirmed by JJ on 2026-08-10 as an independent SOW present in the current approved PR Model v4.0. Runtime PR Model validation remains authoritative and PR Model-driven.",
+  "source_evidence": "Original TX Mini mapping-decision package for the 2026-07-07 entries; Decom - Relo separately confirmed by JJ on 2026-08-10 as an independent SOW present in the current approved PR Model v4.1. Runtime PR Model validation remains authoritative and PR Model-driven.",
   "normalization_rule": "trim + collapse internal whitespace + UPPERCASE, then exact registry lookup",
   "unknown_value_policy": "REVIEW_REQUIRED",
   "entries": [
@@ -32,6 +32,6 @@
     "NO_PR_TRIGGER is an intentional skip: no PR output, no quarantine.",
     "REVIEW_REQUIRED entries quarantine fail-closed until a business rule exists.",
     "Values absent from this registry always classify as REVIEW_REQUIRED; the registry never guesses.",
-    "This registry records the value-level business ruling only; runtime PR Model v4.0 validation and PR Model-driven item selection remain authoritative."
+    "This registry records the value-level business ruling only; runtime PR Model v4.1 validation and PR Model-driven item selection remain authoritative."
   ]
 }
