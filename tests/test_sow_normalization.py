@@ -31,6 +31,7 @@ EXPECTED_PR_TRIGGER_VALUES = {
     "MW IDU Relocation",
     "IPRAN Port Upgrade",
     "MW Dismantle",
+    "Decom - Relo",
 }
 
 
@@ -38,10 +39,10 @@ class TestLiveRegistry(unittest.TestCase):
     def setUp(self):
         self.registry = load_canonical_sow_registry(LIVE_REGISTRY_PATH)
 
-    def test_registry_covers_all_sixteen_observed_values(self):
-        self.assertEqual(len(self.registry["entries"]), 16)
+    def test_registry_covers_all_seventeen_observed_values(self):
+        self.assertEqual(len(self.registry["entries"]), 17)
 
-    def test_eleven_pr_trigger_values_use_identity_normalization(self):
+    def test_twelve_pr_trigger_values_use_identity_normalization(self):
         triggers = {
             e["raw_value"]: e
             for e in self.registry["entries"]
@@ -50,6 +51,12 @@ class TestLiveRegistry(unittest.TestCase):
         self.assertEqual(set(triggers), EXPECTED_PR_TRIGGER_VALUES)
         for entry in triggers.values():
             self.assertEqual(entry["canonical_sow"], " ".join(entry["raw_value"].split()).upper())
+
+    def test_decom_relo_is_independent_approved_pr_trigger(self):
+        result = normalize_tx_sow("Decom - Relo", self.registry)
+        self.assertEqual(result["canonical_sow"], "DECOM - RELO")
+        self.assertEqual(result["classification"], CLASSIFICATION_PR_TRIGGER)
+        self.assertEqual(result["normalization_status"], "APPROVED")
 
     def test_cancel_drop_is_intentional_no_pr_trigger(self):
         result = normalize_tx_sow("Cancel / Drop", self.registry)
