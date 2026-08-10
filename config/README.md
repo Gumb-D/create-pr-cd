@@ -10,4 +10,19 @@ Safety rules:
 - Profiles must never contain browser cookies, tokens, employee numbers, session IDs, or proxy credentials.
 - Local iEPMS auth belongs only in the Git-ignored `scripts/api_auth.json` file.
 
-`pr_model_profiles/` is reserved for the later PR Model workbook version gate. It is intentionally not connected to current runtime behavior.
+## Current PR Model baseline
+
+`pr_model_baseline.yaml` is the authoritative runtime identity for the single current production PR Model.
+
+It owns:
+
+- current model version;
+- production workbook path;
+- approved SHA-256;
+- fail-closed mismatch policy.
+
+Production keeps only one selectable workbook at `Info/input/pr_model.xlsx`. Historical PR Model versions may remain in Git/document history but must not be selectable runtime baselines.
+
+The official `scripts/create_pr.py` entrypoint validates this baseline before DU processing or ECC rendering. A mismatch returns `PR_MODEL_BASELINE_MISMATCH` and stops execution.
+
+Future candidate workbooks must be compared with `scripts/analyze_pr_model_change.py` and must pass compatibility/regression checks before the baseline is updated. Business-semantic removals or new SOWs require review instead of silent promotion.
