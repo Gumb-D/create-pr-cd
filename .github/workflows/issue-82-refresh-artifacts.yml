@@ -26,25 +26,48 @@ jobs:
           cache: pip
       - run: python -m pip install -r requirements.txt
 
-      - name: Sync EOS profile metadata into tracked discovery evidence
+      - name: Rebuild only the EOS discovery-dependent review entry
         run: |
           python - <<'PY'
           import json
+          import sys
           from pathlib import Path
 
-          registry_path = Path("config/registries/mw_du_model_discovery_registry.yaml")
-          registry = json.loads(registry_path.read_text(encoding="utf-8"))
-          changed = 0
-          for entry in registry.get("entries", []):
+          sys.path.insert(0, str(Path("scripts").resolve()))
+          from build_unresolved_skill_field_review import build_review_entry, review_markdown
+
+          profile = json.loads(Path("config/du_profiles/mw_eos_swap_pr_v1.yaml").read_text(encoding="utf-8"))
+          observed_hash = profile["export_structure"]["observed_header_hash"]
+
+          discovery_path = Path("config/registries/mw_du_model_discovery_registry.yaml")
+          discovery = json.loads(discovery_path.read_text(encoding="utf-8"))
+          eos_discovery = [entry for entry in discovery.get("entries", []) if entry.get("profile_id") == "mw_eos_swap_pr_v1"]
+          if not eos_discovery:
+              raise SystemExit("EOS discovery entry not found")
+          for entry in eos_discovery:
+              entry["profile_version"] = profile["profile_version"]
+              entry["mapping_version"] = profile["mapping_version"]
+              entry["profile_status"] = profile["status"]
+          discovery_path.write_text(json.dumps(discovery, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          shortlist = json.loads(Path("config/registries/mw_du_priority_skill_field_shortlists.yaml").read_text(encoding="utf-8"))
+          shortlist_entry = next(
+              entry for entry in shortlist.get("entries", [])
+              if str(entry.get("observed_header_hash", "")) == str(observed_hash)
+          )
+
+          unresolved_path = Path("config/registries/mw_du_unresolved_skill_field_review.yaml")
+          unresolved = json.loads(unresolved_path.read_text(encoding="utf-8"))
+          new_eos = build_review_entry(profile, shortlist_entry)
+          replaced = 0
+          for index, entry in enumerate(unresolved.get("entries", [])):
               if entry.get("profile_id") == "mw_eos_swap_pr_v1":
-                  if entry.get("profile_version") != "0.1.1":
-                      entry["profile_version"] = "0.1.1"
-                      changed += 1
-          if changed == 0:
-              print("Discovery EOS profile metadata already synchronized.")
-          else:
-              registry_path.write_text(json.dumps(registry, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-              print(f"Synchronized {changed} EOS discovery entries to profile_version 0.1.1")
+                  unresolved["entries"][index] = new_eos
+                  replaced += 1
+          if replaced != 1:
+              raise SystemExit(f"Expected exactly one EOS unresolved entry, found {replaced}")
+          unresolved_path.write_text(json.dumps(unresolved, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          Path("docs/MW_DU_Unresolved_Skill_Field_Review.md").write_text(review_markdown(unresolved), encoding="utf-8")
 
           replacements = {
               Path("tests/test_missing_field_bridge_review.py"): (
@@ -61,13 +84,12 @@ jobs:
               if new in text:
                   continue
               if text.count(old) != 1:
-                  raise SystemExit(f"Expected exactly one version assertion marker in {path}: {text.count(old)}")
+                  raise SystemExit(f"Expected exactly one EOS version assertion in {path}, found {text.count(old)}")
               path.write_text(text.replace(old, new, 1), encoding="utf-8")
           PY
 
-      - name: Rebuild tracked-input governance packet
+      - name: Rebuild downstream tracked-input governance packet
         run: |
-          python scripts/build_unresolved_skill_field_review.py
           python scripts/build_missing_field_bridge_review.py
           python scripts/build_mw_pair_divergence_review.py
           python scripts/build_profile_readiness_review.py
@@ -95,7 +117,7 @@ jobs:
             tests.test_profile_rollback_readiness \
             tests.test_profile_traceability_audit
 
-      - name: Commit regenerated registries, docs and version assertions
+      - name: Commit regenerated EOS governance packet
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
