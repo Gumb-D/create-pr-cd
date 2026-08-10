@@ -11,7 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 from antenna_evidence_resolver import resolve_installation_antenna_evidence
-from create_pr_impl import _renderer_row
+from create_pr import CANONICAL_RENDERER_COLUMNS, _renderer_row
 
 
 class TestApprovedEvidenceProvenance(unittest.TestCase):
@@ -53,6 +53,15 @@ class TestApprovedEvidenceProvenance(unittest.TestCase):
         self.assertEqual(row["TX SOW Details Mapping Status"], "APPROVED")
         self.assertEqual(row["NE SOW Details Mapping Status"], "UNVERIFIED")
         self.assertEqual(row["FE SOW Details Mapping Status"], "UNVERIFIED")
+        for column in (
+            "Antenna Evidence Governance",
+            "Antenna Size NE Mapping Status",
+            "Antenna Size FE Mapping Status",
+            "TX SOW Details Mapping Status",
+            "NE SOW Details Mapping Status",
+            "FE SOW Details Mapping Status",
+        ):
+            self.assertIn(column, CANONICAL_RENDERER_COLUMNS)
 
     def test_unverified_common_detail_is_ignored_in_canonical_mode(self):
         result = resolve_installation_antenna_evidence(
@@ -86,6 +95,7 @@ class TestApprovedEvidenceProvenance(unittest.TestCase):
 
     def test_eos_profile_marks_only_governed_issue_82_sources_approved(self):
         profile = json.loads((REPO_ROOT / "config" / "du_profiles" / "mw_eos_swap_pr_v1.yaml").read_text(encoding="utf-8"))
+        self.assertEqual(profile["profile_version"], "0.1.1")
         fields = profile["field_mapping"]
         for name in ("antenna_size_ne", "antenna_size_fe", "tx_sow_details"):
             with self.subTest(name=name):
