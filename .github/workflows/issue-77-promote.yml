@@ -9,10 +9,11 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   promote:
-    if: github.event.head_commit.message == 'chore(issue-77): trigger v4.1 promotion'
+    if: github.event.head_commit.message == 'chore(issue-77): retrigger v4.1 promotion with status'
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout Issue 77 branch
@@ -30,11 +31,31 @@ jobs:
         run: python -m pip install --upgrade pip openpyxl pandas pyyaml xlrd
 
       - name: Promote exact reviewed candidate
-        run: >-
-          python scripts/promote_pr_model.py
-          Info/input/pr_model_v4.1.xlsx
-          --version 4.1
-          --approval config/pr_model_approvals/issue_77_v4_1.json
+        id: promotion
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          python scripts/promote_pr_model.py \
+            Info/input/pr_model_v4.1.xlsx \
+            --version 4.1 \
+            --approval config/pr_model_approvals/issue_77_v4_1.json \
+            > issue77-promotion.log 2>&1
+          status=$?
+          cat issue77-promotion.log
+          {
+            echo '### Issue #77 PR Model v4.1 promotion runner'
+            echo
+            echo '```text'
+            tail -n 120 issue77-promotion.log
+            echo '```'
+            echo
+            echo "Exit code: $status"
+          } > issue77-promotion-comment.md
+          gh issue comment 77 --body-file issue77-promotion-comment.md
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit $status
 
       - name: Verify candidate and canonical bytes are identical
         shell: bash
@@ -67,3 +88,10 @@ jobs:
           fi
           git commit -m "chore(issue-77): promote PR Model v4.1"
           git push origin HEAD:fix/issue-77-jendela-tx-migration-redesign
+
+      - name: Record committed promotion
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment 77 --body "Issue #77 promotion runner completed successfully and pushed the v4.1 production-baseline commit to PR #79."
