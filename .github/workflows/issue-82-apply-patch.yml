@@ -1,0 +1,95 @@
+name: Issue 82 Apply Generator Patch
+
+on:
+  push:
+    branches:
+      - "fix/mw-eos-antenna-evidence"
+    paths:
+      - ".github/workflows/issue-82-apply-patch.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/mw-eos-antenna-evidence
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -r requirements.txt
+      - name: Apply minimal generator integration
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("scripts/generate_tss_pr_ecc.py")
+          text = path.read_text(encoding="utf-8")
+
+          import_marker = "from pr_helpers import ("
+          resolver_import = "from antenna_evidence_resolver import resolve_installation_antenna_evidence\n"
+          if resolver_import not in text:
+              if import_marker not in text:
+                  raise SystemExit("Issue 82 import marker not found")
+              text = text.replace(import_marker, resolver_import + import_marker, 1)
+
+          old = '''                antenna_category, antenna_remark, antenna_size = determine_ti_antenna_category(
+                              row.get("MW Config Antenna Size NE", ""),
+                              row.get("MW Config Antenna Size FE", "")
+                          )'''
+          if old not in text:
+              old = '''                antenna_category, antenna_remark, antenna_size = determine_ti_antenna_category(
+                    row.get("MW Config Antenna Size NE", ""),
+                    row.get("MW Config Antenna Size FE", "")
+                )'''
+          if text.count(old) != 1:
+              raise SystemExit(f"Issue 82 antenna call marker count={text.count(old)}; expected 1")
+
+          new = '''                antenna_resolution = resolve_installation_antenna_evidence(row)
+                resolved_ne_size = antenna_resolution["ne_size"]
+                resolved_fe_size = antenna_resolution["fe_size"]
+                if antenna_resolution["status"] == "RESOLVED_COMMON":
+                    resolved_ne_size = antenna_resolution["selected_size"]
+                    resolved_fe_size = antenna_resolution["selected_size"]
+
+                antenna_category, antenna_remark, antenna_size = determine_ti_antenna_category(
+                    resolved_ne_size,
+                    resolved_fe_size
+                )
+
+                if antenna_resolution["status"] in {"RESOLVED", "RESOLVED_COMMON"}:
+                    evidence_sources = ",".join(
+                        str(item.get("source", ""))
+                        for item in antenna_resolution.get("evidence", [])
+                        if item.get("source")
+                    )
+                    _safe_print(
+                        "[ANTENNA_EVIDENCE]",
+                        f"site={site_id}",
+                        f"status={antenna_resolution['status']}",
+                        f"selected_size={antenna_resolution['selected_size']}",
+                        f"sources={evidence_sources}",
+                    )'''
+          text = text.replace(old, new, 1)
+          path.write_text(text, encoding="utf-8")
+          PY
+      - name: Verify Issue 82 focused regression
+        run: |
+          python -m unittest \
+            tests.test_issue_82_mw_eos_antenna \
+            tests.test_ti_sow_matching \
+            tests.test_mw_reroute
+      - name: Commit verified patch and remove temporary workflow
+        run: |
+          rm .github/workflows/issue-82-apply-patch.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/generate_tss_pr_ecc.py .github/workflows/issue-82-apply-patch.yml
+          git commit -m "fix(issue-82): consume governed antenna evidence"
+          git push origin HEAD:fix/mw-eos-antenna-evidence
