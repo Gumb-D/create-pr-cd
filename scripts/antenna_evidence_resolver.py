@@ -39,9 +39,12 @@ _NON_INSTALL_INTENT_PATTERN = re.compile(
     re.IGNORECASE,
 )
 # Treat normal action punctuation as a clause boundary without splitting the
-# decimal point inside values such as 0.6 or 2.4.
+# decimal point inside values such as 0.6 or 2.4. Replacement transitions are
+# boundaries only when they explicitly introduce a new/target replacement, so
+# phrases such as `antenna with size 0.6m` remain one installation clause.
 _CLAUSE_SEPARATOR_PATTERN = re.compile(
-    r"(?:[;,\n&]|(?<!\d)\.(?!\d)|\b(?:and|then)\b)",
+    r"(?:[;,\n&]|(?<!\d)\.(?!\d)|\b(?:and|then)\b|"
+    r"\b(?:with|by|to)\b(?=\s+(?:new|target|proposed|replacement)\b))",
     re.IGNORECASE,
 )
 
@@ -216,8 +219,10 @@ def _parse_detail_sizes(value: Any, *, require_antenna_context: bool) -> list[fl
             consumed.append((match.start(), match.end()))
 
     # Bare decimals are accepted only when the number itself has explicit
-    # antenna-installation context. Guards also prevent partial IP matches.
-    for match in re.finditer(r"(?<![\d.])(\d+\.\d+)(?![\d.])", text):
+    # antenna-installation context. A trailing sentence period is allowed, but
+    # a following `.digit` still blocks the match so IP/multi-dot values cannot
+    # be consumed as antenna sizes.
+    for match in re.finditer(r"(?<![\d.])(\d+\.\d+)(?!\d)(?!\.\d)", text):
         if any(consumed_start <= match.start() < consumed_end for consumed_start, consumed_end in consumed):
             continue
         if not _has_antenna_specific_context(text, match.start(), match.end()):
