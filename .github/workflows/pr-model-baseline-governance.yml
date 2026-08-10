@@ -39,19 +39,17 @@ jobs:
           else
             python - <<'PY'
           from pathlib import Path
+          import re
 
           impl = Path('scripts/create_pr_impl.py')
           text = impl.read_text(encoding='utf-8')
-          old = '''        migration_decision = context.get("migration_decision", {})
-          approved_jendela_ti_decision = (
-              scope == "TI"
-              and record.get("validation", {}).get("profile_id") == "jendela_tx_migration_pr_v1"
-              and isinstance(migration_decision, Mapping)
-              and migration_decision.get("classification") == "APPROVED"
-          )
-          # Business hard stop: the approved Cancel / Drop SOW (and every other
-          '''
-          new = '''        migration_decision = context.get("migration_decision", {})
+          start_marker = '        migration_decision = context.get("migration_decision", {})\n'
+          end_marker = '        # Business hard stop: the approved Cancel / Drop SOW (and every other\n'
+          start = text.find(start_marker)
+          end = text.find(end_marker, start)
+          if start < 0 or end < 0:
+              raise SystemExit('create_pr_impl partition markers not found')
+          replacement = '''        migration_decision = context.get("migration_decision", {})
           jendela_ti_decision = (
               scope == "TI"
               and record.get("validation", {}).get("profile_id") == "jendela_tx_migration_pr_v1"
@@ -70,62 +68,70 @@ jobs:
               jendela_ti_decision
               and migration_decision.get("classification") == "APPROVED"
           )
-          # Business hard stop: the approved Cancel / Drop SOW (and every other
           '''
-          if old not in text:
-              raise SystemExit('create_pr_impl partition anchor not found')
-          impl.write_text(text.replace(old, new, 1), encoding='utf-8')
+          impl.write_text(text[:start] + replacement + text[end:], encoding='utf-8')
 
           tests = Path('tests/test_human_uat_remediation_48_54.py')
           text = tests.read_text(encoding='utf-8')
-          old = '''        cases = {
-              "Starlink": ["Dismantle Starlink"],
-              "MW": ["Dismantle MW"],
-              "Microwave": ["Dismantle MW"],
-              "Fiber Own Build": [],
-          }
-          for before, expected in cases.items():
-              with self.subTest(before=before):
-                  _, decision = self._decision(before=before, tx_sow="-")
-                  self.assertEqual(decision["classification"], "APPROVED")
-                  self.assertEqual([item["work_item"] for item in decision["work_items"]], expected)
-          '''
-          new = '''        cases = {
-              "Starlink": ["Dismantle Starlink"],
-              "MW": ["Dismantle MW"],
-              "Microwave": ["Dismantle MW"],
-          }
-          for before, expected in cases.items():
-              with self.subTest(before=before):
-                  _, decision = self._decision(before=before, tx_sow="-")
-                  self.assertEqual(decision["classification"], "APPROVED")
-                  self.assertEqual([item["work_item"] for item in decision["work_items"]], expected)
 
-          _, no_work = self._decision(before="Fiber Own Build", tx_sow="-")
-          self.assertEqual(no_work["classification"], "APPROVED_NO_OUTPUT")
-          self.assertEqual(no_work["reason_code"], "JENDELA_TI_NO_WORK_REQUIRED")
-          self.assertEqual(no_work["work_items"], [])
-          '''
-          if old not in text:
-              raise SystemExit('human UAT dismantle anchor not found')
-          text = text.replace(old, new, 1)
+          pattern = re.compile(
+              r'    def test_tx_before_migration_controls_dismantle_only\(self\):\n.*?(?=    def test_tx_sow_controls_additional_work_independently)',
+              re.S,
+          )
+          replacement = '''    def test_tx_before_migration_controls_dismantle_only(self):
+              cases = {
+                  "Starlink": ["Dismantle Starlink"],
+                  "MW": ["Dismantle MW"],
+                  "Microwave": ["Dismantle MW"],
+              }
+              for before, expected in cases.items():
+                  with self.subTest(before=before):
+                      _, decision = self._decision(before=before, tx_sow="-")
+                      self.assertEqual(decision["classification"], "APPROVED")
+                      self.assertEqual([item["work_item"] for item in decision["work_items"]], expected)
 
-          old = '''                self.assertEqual(decision["classification"], "APPROVED")
-                  self.assertEqual([item["work_item"] for item in decision["work_items"]], expected_items)
-                  if expected_model_sow:
-          '''
-          new = '''                expected_classification = "APPROVED" if expected_items else "APPROVED_NO_OUTPUT"
-                  self.assertEqual(decision["classification"], expected_classification)
-                  self.assertEqual([item["work_item"] for item in decision["work_items"]], expected_items)
-                  if expected_model_sow:
-          '''
-          if old not in text:
-              raise SystemExit('human UAT Tx SOW anchor not found')
-          text = text.replace(old, new, 1)
+              _, no_work = self._decision(before="Fiber Own Build", tx_sow="-")
+              self.assertEqual(no_work["classification"], "APPROVED_NO_OUTPUT")
+              self.assertEqual(no_work["reason_code"], "JENDELA_TI_NO_WORK_REQUIRED")
+              self.assertEqual(no_work["work_items"], [])
 
-          anchor = '''    def test_tss_and_non_jendela_do_not_use_issue_77_exception(self):
           '''
-          insertion = '''    def test_empty_jendela_work_plan_is_intentional_no_output(self):
+          text, count = pattern.subn(replacement, text, count=1)
+          if count != 1:
+              raise SystemExit(f'human UAT dismantle function replacement count={count}')
+
+          pattern = re.compile(
+              r'    def test_tx_sow_controls_additional_work_independently\(self\):\n.*?(?=    def test_dismantle_and_additional_work_combine_atomically)',
+              re.S,
+          )
+          replacement = '''    def test_tx_sow_controls_additional_work_independently(self):
+              cases = [
+                  ("BBU Patching", ["BBU Patching / MW IDU Patching"], "BBU Patching"),
+                  ("MW IDU Patching", ["BBU Patching / MW IDU Patching"], "MW IDU Patching"),
+                  ("BBU Patching / MW IDU Patching", ["BBU Patching / MW IDU Patching"], "BBU Patching"),
+                  ("MW New Link / Reroute", ["MW New Link"], "MW New Link / Reroute"),
+                  ("MW by others", [], None),
+                  ("-", [], None),
+                  ("", [], None),
+              ]
+              for tx_sow, expected_items, expected_model_sow in cases:
+                  with self.subTest(tx_sow=tx_sow):
+                      _, decision = self._decision(before="Fiber Own Build", tx_sow=tx_sow)
+                      expected_classification = "APPROVED" if expected_items else "APPROVED_NO_OUTPUT"
+                      self.assertEqual(decision["classification"], expected_classification)
+                      self.assertEqual([item["work_item"] for item in decision["work_items"]], expected_items)
+                      if expected_model_sow:
+                          self.assertEqual(decision["work_items"][0]["model_sow"], expected_model_sow)
+
+          '''
+          text, count = pattern.subn(replacement, text, count=1)
+          if count != 1:
+              raise SystemExit(f'human UAT Tx SOW function replacement count={count}')
+
+          anchor = '    def test_tss_and_non_jendela_do_not_use_issue_77_exception(self):\n'
+          if anchor not in text:
+              raise SystemExit('human UAT insertion anchor not found')
+          integration = '''    def test_empty_jendela_work_plan_is_intentional_no_output(self):
               record, decision = self._decision(before="Fiber Own Build", tx_sow="-")
               self.assertEqual(decision["classification"], "APPROVED_NO_OUTPUT")
               self.assertEqual(record["validation"]["pr_input_classification"], "PR_INPUT_READY")
@@ -134,10 +140,8 @@ jobs:
               self.assertEqual(partitions["candidates"], [])
               self.assertEqual(record["pr_generation_decision"]["reason_code"], "JENDELA_TI_NO_WORK_REQUIRED")
 
-          ''' + anchor
-          if anchor not in text:
-              raise SystemExit('human UAT insertion anchor not found')
-          tests.write_text(text.replace(anchor, insertion, 1), encoding='utf-8')
+          '''
+          tests.write_text(text.replace(anchor, integration + anchor, 1), encoding='utf-8')
           PY
 
             git config user.name "github-actions[bot]"
