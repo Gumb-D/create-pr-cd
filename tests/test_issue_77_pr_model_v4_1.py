@@ -22,7 +22,7 @@ class TestIssue77PrModelV41(unittest.TestCase):
         cls.rows = [
             tuple(cell.value for cell in row[:7])
             for row in worksheet.iter_rows(min_row=ti_header_row + 1)
-            if row[0].value is not None or row[1].value is not None
+            if row[1].value is not None
         ]
         workbook.close()
 
