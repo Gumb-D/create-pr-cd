@@ -1,0 +1,1 @@
+Issue #77 redesign branch CI trigger. The candidate PR Model remains non-production until compatibility and broad regression gates pass.
