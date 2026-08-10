@@ -177,6 +177,34 @@ class TestStrictDetailParsing(unittest.TestCase):
         self.assertEqual(result["status"], "RESOLVED")
         self.assertEqual(result["selected_size"], 1.2)
 
+    def test_common_detail_uses_install_size_not_larger_dismantle_size(self):
+        result = self._resolve_common(
+            "Dismantle existing antenna 2.4m and install new antenna 0.6m"
+        )
+        self.assertEqual(result["status"], "RESOLVED_COMMON")
+        self.assertEqual(result["selected_size"], 0.6)
+        self.assertEqual(result["common_size"], 0.6)
+
+    def test_endpoint_detail_uses_install_size_not_larger_dismantle_size(self):
+        result = resolve_installation_antenna_evidence(
+            {
+                "MW Config Antenna Size NE": "",
+                "MW Config Antenna Size FE": "",
+                "NE SOW Details": "Dismantle existing antenna 2.4m; install new antenna 0.6m",
+                "FE SOW Details": "Install target antenna 1.2m",
+                "TX SOW Details": "",
+            }
+        )
+        self.assertEqual(result["status"], "RESOLVED")
+        self.assertEqual(result["ne_size"], 0.6)
+        self.assertEqual(result["fe_size"], 1.2)
+        self.assertEqual(result["selected_size"], 1.2)
+
+    def test_dismantle_only_detail_is_not_installation_evidence(self):
+        result = self._resolve_common("Dismantle existing antenna 2.4m")
+        self.assertEqual(result["status"], "MISSING")
+        self.assertIsNone(result["selected_size"])
+
 
 class TestDirectSizeCompatibility(unittest.TestCase):
     def test_direct_meter_and_metre_spellings_remain_supported(self):
