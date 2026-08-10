@@ -6,8 +6,8 @@ This file is audit metadata only. Runtime selection is controlled exclusively by
 |---|---|---|---|
 | v3.0 | historical | RETIRED | Historical reference only. Must not drive current runtime decisions. |
 | v3.2 | historical | RETIRED | Historical reference only. Must not drive current runtime decisions. |
-| v4.0 | `d3cc64664fc147f8c560688e41264753592eb0b8cdc513d7ebe2d9b989e8aefd` | CURRENT | Current approved production workbook at `Info/input/pr_model.xlsx`. |
-| v4.1 | `6c4fda502a8998b41bd88704dd6c59d986dc6c46fe42b82947d12c0c0cd8178f` | CANDIDATE / REVIEW_REQUIRED | Supplied 2026-08-10. Compatibility review blocks promotion because current Jendela-specific PR Model rows are removed. See Issue #77. |
+| v4.0 | `d3cc64664fc147f8c560688e41264753592eb0b8cdc513d7ebe2d9b989e8aefd` | RETIRED | Superseded by v4.1 on 2026-08-10. Git history remains the historical source. |
+| v4.1 | `6c4fda502a8998b41bd88704dd6c59d986dc6c46fe42b82947d12c0c0cd8178f` | CURRENT | Current approved production workbook at `Info/input/pr_model.xlsx`; reviewed Issue #77 changes were approved for this exact SHA and passed the promotion regression gate. |
 
 ## Operating standard
 
@@ -20,3 +20,4 @@ This file is audit metadata only. Runtime selection is controlled exclusively by
 7. Human review is required only when the candidate introduces, removes, or changes business meaning that cannot be safely resolved by existing approved rules.
 8. A reviewed change is unlocked only by approval evidence bound to the exact candidate version/SHA, covering every analyzer reason code and recording the business-change reference.
 9. Approval evidence cannot bypass the full regression gate; failed promotion restores the previous production baseline.
+10. Promotion must synchronize current/retired audit metadata and current-model evidence in the same rollback-protected transaction as the authoritative workbook/config update.
