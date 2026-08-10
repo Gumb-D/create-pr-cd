@@ -51,10 +51,19 @@ def _canonical_relocate_site_id(value):
     return f"{base}_Relocate" if base else text
 
 
+def _canonical_source_fields(record):
+    """Return canonical source evidence only when the record carries that contract."""
+    source_evidence = record.get("source_evidence")
+    if not isinstance(source_evidence, Mapping):
+        return None
+    fields = source_evidence.get("fields")
+    return fields if isinstance(fields, Mapping) else None
+
+
 def _source_mapping_status(record, canonical_field):
     """Return canonical mapping approval state for renderer-side evidence gates."""
-    fields = record.get("source_evidence", {}).get("fields", {})
-    if not isinstance(fields, Mapping):
+    fields = _canonical_source_fields(record)
+    if fields is None:
         return ""
     evidence = fields.get(canonical_field, {})
     if not isinstance(evidence, Mapping):
@@ -64,9 +73,12 @@ def _source_mapping_status(record, canonical_field):
 
 def _renderer_row(record):
     row = _ORIGINAL_RENDERER_ROW(record)
+    canonical_fields = _canonical_source_fields(record)
     row.update(
         {
-            "Antenna Evidence Governance": "CANONICAL_MAPPING_STATUS",
+            "Antenna Evidence Governance": (
+                "CANONICAL_MAPPING_STATUS" if canonical_fields is not None else ""
+            ),
             "Antenna Size NE Mapping Status": _source_mapping_status(record, "antenna_size_ne"),
             "Antenna Size FE Mapping Status": _source_mapping_status(record, "antenna_size_fe"),
             "TX SOW Details Mapping Status": _source_mapping_status(record, "tx_sow_details"),
