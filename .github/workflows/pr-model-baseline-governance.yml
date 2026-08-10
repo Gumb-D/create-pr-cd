@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'config/pr_model_baseline.yaml'
+      - 'config/README.md'
       - 'Info/input/pr_model.xlsx'
       - 'scripts/pr_model_baseline.py'
       - 'scripts/analyze_pr_model_change.py'
@@ -12,6 +13,8 @@ on:
       - 'scripts/generate_tss_pr_ecc.py'
       - 'scripts/run_tx_mini_ecc_parity.py'
       - 'tests/**'
+      - 'docs/pr_model_history.md'
+      - 'docs/pr_model_reference_inventory.md'
       - '.github/workflows/pr-model-baseline-governance.yml'
   workflow_dispatch:
 
