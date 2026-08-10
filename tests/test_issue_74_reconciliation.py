@@ -5,7 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from create_pr_impl import _build_site_reconciliation, _canonical_relocate_site_id
+from create_pr import _build_site_reconciliation, _canonical_relocate_site_id
 
 
 def record(site_code):
