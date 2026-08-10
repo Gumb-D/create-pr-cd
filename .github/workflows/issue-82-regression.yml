@@ -14,6 +14,7 @@ on:
       - "tests/test_issue_82_codex_review.py"
       - "tests/test_issue_82_legacy_renderer_contract.py"
       - "tests/test_issue_82_punctuation_intent.py"
+      - "tests/test_issue_82_replacement_phrase.py"
       - ".github/workflows/issue-82-regression.yml"
 
 permissions:
@@ -38,6 +39,7 @@ jobs:
             tests.test_issue_82_codex_review \
             tests.test_issue_82_legacy_renderer_contract \
             tests.test_issue_82_punctuation_intent \
+            tests.test_issue_82_replacement_phrase \
             tests.test_ti_sow_matching \
             tests.test_human_uat_remediation_48_54 \
             tests.test_jendela_approved_pr_model \
