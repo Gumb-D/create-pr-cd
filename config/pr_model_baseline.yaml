@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "baseline_id": "celcomdigi_tx_pr_model_current",
+  "status": "PRODUCTION",
+  "model": {
+    "name": "CelcomDigi TX PR Model",
+    "version": "4.0"
+  },
+  "workbook": {
+    "path": "Info/input/pr_model.xlsx",
+    "sha256": "d3cc64664fc147f8c560688e41264753592eb0b8cdc513d7ebe2d9b989e8aefd"
+  },
+  "validation": {
+    "mismatch_policy": "FAIL_CLOSED",
+    "error_code": "PR_MODEL_BASELINE_MISMATCH"
+  },
+  "history_policy": {
+    "runtime_keeps_only_current": true,
+    "historical_source": "git_history"
+  }
+}

@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 import create_pr_impl as _impl
+from pr_model_baseline import PrModelBaselineError, validate_pr_model_baseline
 from renderer_reconciliation import (
     collect_renderer_reconciliation,
     snapshot_renderer_artifacts,
@@ -261,12 +262,20 @@ def _persist_reconciliation_artifact_error(summary, error):
 
 
 def run(parsed):
-    """Run the implementation and persist ignored/reconciliation audit data."""
+    """Run the implementation only after validating the single approved PR Model baseline."""
     global _LAST_PARTITIONS
     _LAST_PARTITIONS = None
+    baseline = validate_pr_model_baseline(getattr(parsed, "pr_model", None))
+    if not hasattr(parsed, "pr_model"):
+        parsed.pr_model = baseline["path"]
     _sync_dependencies()
     before_renderer = snapshot_renderer_artifacts(Path(parsed.output))
     summary = _impl.run(parsed)
+    summary["pr_model_baseline"] = {
+        "baseline_id": baseline["baseline_id"],
+        "version": baseline["version"],
+        "sha256": baseline["actual_sha256"],
+    }
     ignored_records = (_LAST_PARTITIONS or {}).get("ignored", [])
     ignored_path = _write_ignored_report(
         Path(summary["output_root"]), parsed.scope, ignored_records, summary["run_mode"]
@@ -295,6 +304,8 @@ def main() -> int:
         result = run(parse_args())
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
+    except PrModelBaselineError as error:
+        payload = {"status": "ERROR", "code": error.code, "message": str(error), "details": error.details}
     except DuProfileResolutionError as error:
         payload = {"status": "ERROR", "code": error.code, "message": str(error), "details": error.details}
     except (CreatePrError, SafetyControlError) as error:
