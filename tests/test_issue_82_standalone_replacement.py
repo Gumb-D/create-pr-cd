@@ -89,6 +89,17 @@ class TestIssue82StandaloneReplacement(unittest.TestCase):
                 self.assertIsNone(result["common_size"])
                 self.assertIsNone(result["selected_size"])
 
+    def test_size_first_source_multiline_target_fails_closed(self):
+        for text in (
+            "Upgrade 2.4m antenna to\n0.6m antenna",
+            "Replace 2.4m dish with\n0.6m dish",
+        ):
+            with self.subTest(text=text):
+                result = self._resolve(text)
+                self.assertEqual(result["status"], "MISSING")
+                self.assertIsNone(result["common_size"])
+                self.assertIsNone(result["selected_size"])
+
     def test_unrelated_multiline_antenna_port_does_not_discard_valid_size(self):
         result = self._resolve("Install antenna 0.6m. Route cable to\nantenna port")
         self.assertEqual(result["status"], "RESOLVED_COMMON")
