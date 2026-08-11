@@ -33,6 +33,16 @@ class TestIssue84JendelaBeforeMwAntenna(unittest.TestCase):
     def test_4034r_mw_config_parses_before_antenna_size(self):
         self.assertEqual(parse_jendela_before_mw_antenna_size("18G 1.2 SP 1+0"), 1.2)
 
+    def test_parser_accepts_ghz_frequency_suffix(self):
+        for raw in (
+            "18GHz 1.2 1+0",
+            "18 GHz 1.2 1+0",
+            "18GHz 1.2 SP 1+0",
+            "18 GHz 1.2 SP 1+0",
+        ):
+            with self.subTest(raw=raw):
+                self.assertEqual(parse_jendela_before_mw_antenna_size(raw), 1.2)
+
     def test_parser_continues_past_bandwidth_token_to_valid_antenna_size(self):
         self.assertEqual(
             parse_jendela_before_mw_antenna_size("18G 112M 1.2M SP 1+0"),
@@ -104,6 +114,14 @@ class TestIssue84JendelaBeforeMwAntenna(unittest.TestCase):
         self.assertIsNone(
             parse_jendela_before_mw_antenna_size("18G 1.2 SP 1+0 / 23G SP 1+0"),
         )
+
+    def test_parser_fails_closed_on_polarization_evidence_outside_standard_links(self):
+        for raw in (
+            "18G 1.2 SP 1+0 / 0.6 SP",
+            "18G 1.2 SP 1+0 / N/A SP",
+        ):
+            with self.subTest(raw=raw):
+                self.assertIsNone(parse_jendela_before_mw_antenna_size(raw))
 
     def test_parser_accepts_repeated_polarized_configs_when_antenna_size_agrees(self):
         self.assertEqual(
