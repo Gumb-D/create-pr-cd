@@ -189,8 +189,8 @@ def _index_unique_registry_entries(entries: Iterable[Any]):
     return indexed, duplicates, invalid_indexes
 
 
-def _source_collection(registry, name, invalid_collections):
-    raw = (registry or {}).get(name, [])
+def _source_collection(registry: Mapping[str, Any], name: str, invalid_collections: set[str]):
+    raw = registry.get(name, [])
     if not isinstance(raw, list):
         invalid_collections.add(name)
         return []
@@ -213,11 +213,32 @@ def build_rollback_registry(profiles, deprecation_registry, rollback_baseline_re
         str(entry["profile_id"]): entry for entry in deprecation_registry.get("entries", [])
         if isinstance(entry, Mapping) and entry.get("profile_id") is not None
     }
+
+    rollback_source_root_invalid = (
+        rollback_baseline_registry is not None
+        and not isinstance(rollback_baseline_registry, Mapping)
+    )
+    rollback_source: Mapping[str, Any] = (
+        rollback_baseline_registry
+        if isinstance(rollback_baseline_registry, Mapping)
+        else {}
+    )
+
     invalid_collections: set[str] = set()
-    source_entries = _source_collection(rollback_baseline_registry, "entries", invalid_collections)
-    required_ids = _source_collection(rollback_baseline_registry, "required_profile_ids", invalid_collections)
+    source_entries = _source_collection(rollback_source, "entries", invalid_collections)
+    required_ids = _source_collection(rollback_source, "required_profile_ids", invalid_collections)
     baseline_by_profile, duplicate_ids, invalid_entry_indexes = _index_unique_registry_entries(source_entries)
-    source_required_ids = {str(x) for x in required_ids if x is not None}
+
+    invalid_required_profile_id_indexes = {
+        index
+        for index, value in enumerate(required_ids)
+        if not isinstance(value, str) or not value.strip()
+    }
+    source_required_ids = {
+        value.strip()
+        for index, value in enumerate(required_ids)
+        if index not in invalid_required_profile_id_indexes
+    }
 
     entries: list[Dict[str, Any]] = []
     for profile in profiles:
@@ -230,12 +251,16 @@ def build_rollback_registry(profiles, deprecation_registry, rollback_baseline_re
         )
         entries.append(entry)
 
+    if rollback_source_root_invalid:
+        _force_block(entries, "ROLLBACK_BASELINE_SOURCE_ROOT_INVALID", "Rollback remains blocked because the baseline source root must be a mapping/object.")
     if duplicate_ids:
         _force_block(entries, "DUPLICATE_ROLLBACK_BASELINE_ENTRIES", "Rollback remains blocked because the baseline source contains duplicate profile IDs: " + ", ".join(sorted(duplicate_ids)) + ".")
     if invalid_collections:
         _force_block(entries, "ROLLBACK_BASELINE_SOURCE_COLLECTION_INVALID", "Rollback remains blocked because baseline source collections are malformed: " + ", ".join(sorted(invalid_collections)) + ".")
     if invalid_entry_indexes:
         _force_block(entries, "ROLLBACK_BASELINE_SOURCE_ENTRY_INVALID", "Rollback remains blocked because baseline source contains malformed entries at indexes: " + ", ".join(str(i) for i in sorted(invalid_entry_indexes)) + ".")
+    if invalid_required_profile_id_indexes:
+        _force_block(entries, "ROLLBACK_BASELINE_REQUIRED_PROFILE_ID_INVALID", "Rollback remains blocked because required_profile_ids contains malformed members at indexes: " + ", ".join(str(i) for i in sorted(invalid_required_profile_id_indexes)) + ".")
 
     registry: Dict[str, Any] = {
         "schema_version": "1.0",
@@ -248,12 +273,16 @@ def build_rollback_registry(profiles, deprecation_registry, rollback_baseline_re
             "Profiles that require an explicit prior baseline are independently governed in build_profile_rollback_readiness.py.",
         ],
     }
+    if rollback_source_root_invalid:
+        registry["rollback_source_root_invalid"] = True
     if duplicate_ids:
         registry["duplicate_rollback_profile_ids"] = sorted(duplicate_ids)
     if invalid_collections:
         registry["invalid_rollback_source_collections"] = sorted(invalid_collections)
     if invalid_entry_indexes:
         registry["invalid_rollback_source_entry_indexes"] = sorted(invalid_entry_indexes)
+    if invalid_required_profile_id_indexes:
+        registry["invalid_required_profile_id_indexes"] = sorted(invalid_required_profile_id_indexes)
     return registry
 
 
