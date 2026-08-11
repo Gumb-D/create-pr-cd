@@ -29,8 +29,9 @@ This knowledge base separates **business approval** from **runtime implementatio
 
 As of 2026-08-11:
 
-- TSS/TI are runtime scopes.
-- Planning business logic is approved under Issue #34 for all eight supported DU Models, but runtime implementation is still pending.
+- TSS and TI are active runtime scopes.
+- Planning is implemented as an active runtime scope under Issue #34 for all eight supported DU Models through the official `scripts/create_pr.py --scope Planning` entrypoint.
+- Planning uses approved four-layer DU Profile fields, deterministic PBOM selection, shared contract/purchasing mapping, a dedicated Planning ECC renderer and terminal reconciliation.
 - Operation Backoffice remains a separate future scope and is not part of Issue #34.
 
 ## Directory
@@ -68,7 +69,7 @@ Use the following order:
 4. **This KB:** controlled inventory, explanation and test specification.
 5. **Unapproved/historical documentation:** reference only.
 
-If runtime and approved intended behavior disagree because implementation is still pending, record that state explicitly rather than silently claiming the feature is executable.
+If runtime and approved intended behavior disagree, record that state explicitly rather than silently choosing one.
 
 ## Rule lifecycle
 
@@ -85,7 +86,7 @@ EXTRACTED → VERIFIED → APPROVED → IMPLEMENTED → REGRESSION_TESTED
 - `REGRESSION_TESTED`: an automated test proves the intended result.
 - `DEPRECATED`: retained for traceability only.
 
-The current YAML enum does not yet represent `IMPLEMENTED` and `REGRESSION_TESTED` directly; see `KB-DIV-006`.
+The current YAML enum does not yet represent `IMPLEMENTED` and `REGRESSION_TESTED` directly; see `KB-DIV-006`. For Issue #34, implementation state is represented by active runtime code, test evidence and the resolved divergence record.
 
 ## Change workflow
 
@@ -95,18 +96,24 @@ The current YAML enum does not yet represent `IMPLEMENTED` and `REGRESSION_TESTE
 4. Obtain business approval for a rule change.
 5. Change code/config in a separate implementation step.
 6. Add or update regression fixtures.
-7. Update `runtime_status` only after implementation is merged and verified.
+7. Update runtime/governance status after implementation is verified.
 
-## Issue #34 Planning baseline
+## Issue #34 Planning implementation
 
-The approved Planning decision is recorded in:
+The Planning decision and implementation are recorded in:
 
 - `docs/superpowers/specs/2026-08-11-planning-pr-all-du-design.md`
 - `docs/superpowers/plans/2026-08-11-planning-pr-all-du.md`
 - `rules/pr_creator_rule_register.yaml` (`PRC-ELIG-003`, `PRC-PLAN-001`, `PRC-PLAN-002`)
 - `validation/acceptance_questions.yaml` (`AQ-025` through `AQ-032`)
+- `scripts/planning_pr_selector.py`
+- `scripts/planning_pr_runtime.py`
+- `scripts/planning_ecc_renderer.py`
+- `scripts/create_pr.py`
 
-The runtime must remain fail-closed until those acceptance requirements are implemented and tested.
+Regression evidence includes selector, profile-field, canonical, eligibility, renderer, official-entrypoint and all-eight-DU raw four-header end-to-end tests, plus the full repository unittest suite.
+
+Planning remains fail closed for unknown/ambiguous required evidence. Operation Backoffice remains unsupported.
 
 ## First operating objective
 
