@@ -1,6 +1,9 @@
 {
   "schema_version": "1.0",
   "registry_type": "profile_rollback_baseline_source",
+  "required_profile_ids": [
+    "jendela_tx_migration_pr_v1"
+  ],
   "entries": [
     {
       "profile_id": "jendela_tx_migration_pr_v1",
