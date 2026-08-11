@@ -48,12 +48,8 @@ _SOURCE_SIDE_INTENT_PATTERN = re.compile(
 
 _HWS_RE = r"[ \t]*"
 _HWS1_RE = r"[ \t]+"
-_MWS_RE = r"[ \t\r\n]*"
-_MWS1_RE = r"[ \t\r\n]+"
 _TARGET_MODIFIER_RE = rf"(?:(?:install(?:ed|ing)?){_HWS1_RE})?(?:(?:a|an|the){_HWS1_RE})?(?:(?:new|target|proposed|replacement){_HWS1_RE})?"
-_MULTILINE_TARGET_MODIFIER_RE = rf"(?:(?:install(?:ed|ing)?){_MWS1_RE})?(?:(?:a|an|the){_MWS1_RE})?(?:(?:new|target|proposed|replacement){_MWS1_RE})?"
 _METRE_SUFFIX_RE = rf"(?:{_HWS_RE}m(?:eters?|etres?)?\b)?"
-_MULTILINE_METRE_SUFFIX_RE = rf"(?:{_MWS_RE}m(?:eters?|etres?)?\b)?"
 _QUOTE_UNIT_RE = r'''['"′″’‘“”]'''
 _TARGET_FIRST_SOURCE_PATTERN = re.compile(
     rf"\b(?:replacing|to{_HWS1_RE}replace)\b", re.IGNORECASE
@@ -105,17 +101,25 @@ _EXPLICIT_NON_METRE_UNIT_SUFFIX_PATTERN = re.compile(
     re.IGNORECASE,
 )
 _MULTI_DOT_NUMERIC_TOKEN_PATTERN = re.compile(r"(?<![\d.])\d+(?:\.\d+){2,}(?:/\d+)?(?![\d./])")
+_ML_WS_RE = r"[ \t\r\n]*"
+_ML_WS1_RE = r"[ \t\r\n]+"
+_MULTILINE_TARGET_MODIFIER_RE = (
+    rf"(?:(?:install(?:ed|ing)?){_ML_WS1_RE})?"
+    rf"(?:(?:a|an|the){_ML_WS1_RE})?"
+    rf"(?:(?:new|target|proposed|replacement){_ML_WS1_RE})?"
+)
 _MULTILINE_FORWARD_ANTENNA_SIZE_TARGET_RE = (
-    rf"{_MULTILINE_TARGET_MODIFIER_RE}(?:antenna|dish)\b{_MWS_RE}"
-    rf"(?:(?:(?:with|of){_MWS1_RE})?(?:size|diameter)\b{_MWS_RE}[:=]?{_MWS_RE})?"
-    rf"\d+(?:[.,]\d+)?{_MULTILINE_METRE_SUFFIX_RE}"
+    rf"{_MULTILINE_TARGET_MODIFIER_RE}(?:antenna|dish)\b{_ML_WS_RE}"
+    rf"(?:(?:(?:with|of){_ML_WS1_RE})?(?:size|diameter)\b{_ML_WS_RE}[:=]?{_ML_WS_RE})?"
+    rf"\d+(?:[.,]\d+)?(?:{_ML_WS_RE}m(?:eters?|etres?)?\b)?"
 )
-_MULTILINE_REVERSE_ANTENNA_SIZE_TARGET_RE = (
-    rf"{_MULTILINE_TARGET_MODIFIER_RE}\d+(?:[.,]\d+)?{_MULTILINE_METRE_SUFFIX_RE}{_MWS1_RE}(?:antenna|dish)\b"
+_MULTILINE_GENERIC_REVERSE_ANTENNA_TARGET_RE = (
+    rf"{_MULTILINE_TARGET_MODIFIER_RE}(?:[\(\[]{_ML_WS_RE})?\d+(?:[.,]\d+)?"
+    rf"[^;,&!?]{{0,48}}?\b(?:antenna|dish)\b"
 )
-_BROKEN_MULTILINE_INSTALL_TARGET_PATTERN = re.compile(
-    rf"\b(?:with|by|to|for)\b{_MWS1_RE}(?:"
-    rf"{_MULTILINE_FORWARD_ANTENNA_SIZE_TARGET_RE}|{_MULTILINE_REVERSE_ANTENNA_SIZE_TARGET_RE})",
+_BROKEN_MULTILINE_DIRECTIONAL_TARGET_PATTERN = re.compile(
+    rf"\b(?:with|by|to|for)\b{_ML_WS1_RE}(?:"
+    rf"{_MULTILINE_FORWARD_ANTENNA_SIZE_TARGET_RE}|{_MULTILINE_GENERIC_REVERSE_ANTENNA_TARGET_RE})",
     re.IGNORECASE,
 )
 
@@ -248,6 +252,20 @@ def _directional_target_has_valid_governing_action(text: str, clause_start: int)
     return True
 
 
+def _has_broken_multiline_directional_target(text: str) -> bool:
+    for match in _BROKEN_MULTILINE_DIRECTIONAL_TARGET_PATTERN.finditer(text):
+        matched_target = match.group(0)
+        if "\r" not in matched_target and "\n" not in matched_target:
+            continue
+        source_clause_start = 0
+        for boundary in _CLAUSE_SEPARATOR_PATTERN.finditer(text, 0, match.start()):
+            source_clause_start = boundary.end()
+        source_clause = text[source_clause_start:match.start()]
+        if _DIRECTIONAL_GOVERNING_ACTION_PATTERN.search(source_clause) is not None:
+            return True
+    return False
+
+
 def _has_installation_intent(text: str, start: int, end: int) -> bool:
     clause_start, clause_end = _clause_bounds(text, start, end)
     clause = text[clause_start:clause_end]
@@ -290,10 +308,8 @@ def _parse_detail_sizes(value: Any, *, require_antenna_context: bool) -> list[fl
     if _is_blank(value):
         return []
     text = re.sub(r"(?<=\d),(?=\d)", ".", str(value))
-    for broken_multiline_target in _BROKEN_MULTILINE_INSTALL_TARGET_PATTERN.finditer(text):
-        matched_target = broken_multiline_target.group(0)
-        if "\r" in matched_target or "\n" in matched_target:
-            return []
+    if _has_broken_multiline_directional_target(text):
+        return []
     candidates: list[float] = []
     consumed: list[tuple[int, int]] = []
     for match in re.finditer(
@@ -333,23 +349,60 @@ def _endpoint_resolution(row: Mapping[str, Any], direct_field: str, detail_field
     if _source_is_approved(row, direct_field):
         direct_size = _parse_direct_size(direct_raw)
         if direct_size is not None:
-            return {"size": direct_size, "source": direct_field, "raw_value": direct_raw, "priority": "DIRECT", "mapping_status": _mapping_status(row, direct_field) or None}
+            return {
+                "size": direct_size,
+                "source": direct_field,
+                "raw_value": direct_raw,
+                "priority": "DIRECT",
+                "mapping_status": _mapping_status(row, direct_field) or None,
+                "invalid_authoritative": False,
+            }
+        if not _is_blank(direct_raw):
+            return {
+                "size": None,
+                "source": direct_field,
+                "raw_value": direct_raw,
+                "priority": "DIRECT_INVALID",
+                "mapping_status": _mapping_status(row, direct_field) or None,
+                "invalid_authoritative": True,
+            }
     detail_raw = row.get(detail_field, "")
     if _source_is_approved(row, detail_field):
         detail_sizes = _parse_detail_sizes(detail_raw, require_antenna_context=True)
         if detail_sizes:
-            return {"size": max(detail_sizes), "source": detail_field, "raw_value": detail_raw, "priority": "ENDPOINT_SOW_DETAIL", "mapping_status": _mapping_status(row, detail_field) or None}
-    return {"size": None, "source": None, "raw_value": None, "priority": None, "mapping_status": None}
+            return {
+                "size": max(detail_sizes),
+                "source": detail_field,
+                "raw_value": detail_raw,
+                "priority": "ENDPOINT_SOW_DETAIL",
+                "mapping_status": _mapping_status(row, detail_field) or None,
+                "invalid_authoritative": False,
+            }
+    return {
+        "size": None,
+        "source": None,
+        "raw_value": None,
+        "priority": None,
+        "mapping_status": None,
+        "invalid_authoritative": False,
+    }
 
 
 def resolve_installation_antenna_evidence(row: Mapping[str, Any]) -> dict[str, Any]:
     ne = _endpoint_resolution(row, DIRECT_NE, DETAIL_NE)
     fe = _endpoint_resolution(row, DIRECT_FE, DETAIL_FE)
+    invalid_direct = bool(ne.get("invalid_authoritative") or fe.get("invalid_authoritative"))
     endpoint_sizes = [v for v in (ne["size"], fe["size"]) if v is not None]
     common_raw = row.get(COMMON_DETAIL, "")
-    common_sizes = _parse_detail_sizes(common_raw, require_antenna_context=True) if _source_is_approved(row, COMMON_DETAIL) else []
+    common_sizes = (
+        _parse_detail_sizes(common_raw, require_antenna_context=True)
+        if not invalid_direct and _source_is_approved(row, COMMON_DETAIL)
+        else []
+    )
     common_size = max(common_sizes) if common_sizes else None
-    if ne["size"] is not None and fe["size"] is not None:
+    if invalid_direct:
+        status, selected_size, group_source = "MISSING", None, "INVALID_DIRECT_EVIDENCE"
+    elif ne["size"] is not None and fe["size"] is not None:
         status, selected_size, group_source = "RESOLVED", max(endpoint_sizes), "ENDPOINT_EVIDENCE"
     elif common_size is not None:
         status = "RESOLVED_COMMON"
@@ -362,7 +415,31 @@ def resolve_installation_antenna_evidence(row: Mapping[str, Any]) -> dict[str, A
     evidence = []
     for endpoint, resolved in (("NE", ne), ("FE", fe)):
         if resolved["size"] is not None:
-            evidence.append({"endpoint": endpoint, "source": resolved["source"], "raw_value": resolved["raw_value"], "size": resolved["size"], "priority": resolved["priority"], "mapping_status": resolved["mapping_status"]})
+            evidence.append({
+                "endpoint": endpoint,
+                "source": resolved["source"],
+                "raw_value": resolved["raw_value"],
+                "size": resolved["size"],
+                "priority": resolved["priority"],
+                "mapping_status": resolved["mapping_status"],
+            })
     if common_size is not None:
-        evidence.append({"endpoint": "GROUP", "source": COMMON_DETAIL, "raw_value": common_raw, "size": common_size, "priority": "COMMON_SOW_DETAIL", "mapping_status": _mapping_status(row, COMMON_DETAIL) or None})
-    return {"status": status, "ne_size": ne["size"], "fe_size": fe["size"], "selected_size": selected_size, "ne_source": ne["source"], "fe_source": fe["source"], "group_source": group_source, "common_size": common_size, "evidence": evidence}
+        evidence.append({
+            "endpoint": "GROUP",
+            "source": COMMON_DETAIL,
+            "raw_value": common_raw,
+            "size": common_size,
+            "priority": "COMMON_SOW_DETAIL",
+            "mapping_status": _mapping_status(row, COMMON_DETAIL) or None,
+        })
+    return {
+        "status": status,
+        "ne_size": ne["size"],
+        "fe_size": fe["size"],
+        "selected_size": selected_size,
+        "ne_source": ne["source"],
+        "fe_source": fe["source"],
+        "group_source": group_source,
+        "common_size": common_size,
+        "evidence": evidence,
+    }
