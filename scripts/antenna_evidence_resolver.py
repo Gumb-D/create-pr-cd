@@ -61,6 +61,10 @@ _NEGATED_INTENT_PREFIX_PATTERN = re.compile(
     rf"{_HWS_RE})$",
     re.IGNORECASE,
 )
+_POSTPOSITIVE_NOT_REQUIRED_PATTERN = re.compile(
+    rf"\b(?:is{_HWS1_RE})?not{_HWS1_RE}required\b",
+    re.IGNORECASE,
+)
 _FORWARD_ANTENNA_SIZE_TARGET_RE = (
     rf"{_TARGET_MODIFIER_RE}(?:antenna|dish)\b{_HWS_RE}"
     rf"(?:(?:(?:with|of){_HWS1_RE})?(?:size|diameter)\b{_HWS_RE}[:=]?{_HWS_RE})?"
@@ -198,7 +202,7 @@ def _intent_is_negated(clause: str, intent_start: int) -> bool:
     return _NEGATED_INTENT_PREFIX_PATTERN.search(prefix) is not None
 
 
-def _directional_target_governing_action_is_negated(text: str, clause_start: int) -> bool:
+def _directional_target_has_valid_governing_action(text: str, clause_start: int) -> bool:
     separator = next(
         (
             match
@@ -218,13 +222,20 @@ def _directional_target_governing_action_is_negated(text: str, clause_start: int
     if not actions:
         return False
     governing_action = actions[-1]
-    return _intent_is_negated(source_clause, governing_action.start())
+    if _intent_is_negated(source_clause, governing_action.start()):
+        return False
+    if _POSTPOSITIVE_NOT_REQUIRED_PATTERN.search(source_clause[governing_action.end():]):
+        return False
+    return True
 
 
 def _has_installation_intent(text: str, start: int, end: int) -> bool:
     clause_start, clause_end = _clause_bounds(text, start, end)
     clause = text[clause_start:clause_end]
     token_center = ((start + end) / 2) - clause_start
+    candidate_end = end - clause_start
+    if _POSTPOSITIVE_NOT_REQUIRED_PATTERN.search(clause[candidate_end:]):
+        return False
     if clause_end < len(text) and _DIRECTIONAL_ANTENNA_SEPARATOR_PATTERN.match(text, clause_end):
         return False
     if _has_source_side_transition(text, start, end, clause_start, clause_end):
@@ -232,7 +243,7 @@ def _has_installation_intent(text: str, start: int, end: int) -> bool:
     if _is_target_first_source(text, start, clause_start):
         return False
     if _is_directional_target_clause(text, clause_start):
-        return not _directional_target_governing_action_is_negated(text, clause_start)
+        return _directional_target_has_valid_governing_action(text, clause_start)
     positive = [
         match for match in _INSTALL_INTENT_PATTERN.finditer(clause)
         if not _intent_is_negated(clause, match.start())
