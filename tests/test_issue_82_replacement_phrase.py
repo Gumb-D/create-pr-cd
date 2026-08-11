@@ -214,6 +214,26 @@ class TestIssue82ReplacementPhrase(unittest.TestCase):
                 self.assertIsNone(result["common_size"])
                 self.assertIsNone(result["selected_size"])
 
+    def test_target_first_replacement_excludes_replaced_source_size(self):
+        for text in (
+            "Install antenna 0.6m replacing antenna 2.4m",
+            "Install antenna 0.6m to replace antenna 2.4m",
+        ):
+            with self.subTest(text=text):
+                result = self._resolve_common(text)
+                self.assertEqual(result["status"], "RESOLVED_COMMON")
+                self.assertEqual(result["common_size"], 0.6)
+                self.assertEqual(result["selected_size"], 0.6)
+
+    def test_carriage_return_is_hard_action_line_boundary(self):
+        for boundary in ("\r", "\r\n"):
+            text = f"Dismantle antenna 2.4m{boundary}Install antenna 0.6m"
+            with self.subTest(boundary=repr(boundary)):
+                result = self._resolve_common(text)
+                self.assertEqual(result["status"], "RESOLVED_COMMON")
+                self.assertEqual(result["common_size"], 0.6)
+                self.assertEqual(result["selected_size"], 0.6)
+
 
 if __name__ == "__main__":
     unittest.main()
