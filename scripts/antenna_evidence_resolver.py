@@ -44,7 +44,7 @@ _SOURCE_MODIFIERS_RE = r"(?:(?:the|a|an|existing|old|current|new|target|proposed
 _SOURCE_SIZE_RE = r"\d+(?:[.,]\d+)?(?:[ \t]*m(?:eters?|etres?)?\b)?"
 _SIZED_ANTENNA_SOURCE_RE = (
     rf"(?:{_SOURCE_MODIFIERS_RE}(?:antenna|dish)\b[ \t]+"
-    rf"(?:(?:size|diameter)\b[ \t]*[:=]?[ \t]*)?{_SOURCE_SIZE_RE}|"
+    rf"(?:(?:(?:with|of)[ \t]+)?(?:size|diameter)\b[ \t]*[:=]?[ \t]*)?{_SOURCE_SIZE_RE}|"
     rf"{_SOURCE_MODIFIERS_RE}{_SOURCE_SIZE_RE}[ \t]+(?:antenna|dish)\b)"
 )
 _ANTENNA_GOVERNED_DIRECTIONAL_ACTION_PATTERN = re.compile(
