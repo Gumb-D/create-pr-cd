@@ -154,6 +154,18 @@ class TestIssue82ReplacementPhrase(unittest.TestCase):
                 self.assertEqual(result["status"], "MISSING")
                 self.assertIsNone(result["selected_size"])
 
+    def test_invalid_reverse_directional_target_fails_closed(self):
+        for text in (
+            "Upgrade antenna 2.4m to 0.6-inch antenna",
+            "Upgrade antenna 2.4m to 0.6mm antenna",
+            'Upgrade antenna 2.4m to 0.6" antenna',
+        ):
+            with self.subTest(text=text):
+                result = self._resolve_common(text)
+                self.assertEqual(result["status"], "MISSING")
+                self.assertIsNone(result["common_size"])
+                self.assertIsNone(result["selected_size"])
+
 
 if __name__ == "__main__":
     unittest.main()
