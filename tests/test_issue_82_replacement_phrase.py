@@ -234,6 +234,19 @@ class TestIssue82ReplacementPhrase(unittest.TestCase):
                 self.assertEqual(result["common_size"], 0.6)
                 self.assertEqual(result["selected_size"], 0.6)
 
+    def test_negated_installation_phrases_fail_closed(self):
+        for text in (
+            "Do not install antenna 2.4m",
+            "No new antenna 1.2m required",
+            "Not required to install antenna 0.6m",
+            "Without installing antenna 0.6m",
+        ):
+            with self.subTest(text=text):
+                result = self._resolve_common(text)
+                self.assertEqual(result["status"], "MISSING")
+                self.assertIsNone(result["common_size"])
+                self.assertIsNone(result["selected_size"])
+
 
 if __name__ == "__main__":
     unittest.main()
