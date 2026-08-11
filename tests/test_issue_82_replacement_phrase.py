@@ -251,6 +251,8 @@ class TestIssue82ReplacementPhrase(unittest.TestCase):
         for text in (
             "Do not upgrade antenna 2.4m to antenna 0.6m",
             "Cannot replace antenna 2.4m with new antenna 0.6m",
+            "Do not upgrade existing antenna 2.4m to antenna 0.6m",
+            "Cannot replace old antenna 2.4m with new antenna 0.6m",
         ):
             with self.subTest(text=text):
                 result = self._resolve_common(text)
