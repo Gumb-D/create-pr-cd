@@ -48,7 +48,7 @@ _SOURCE_SIDE_INTENT_PATTERN = re.compile(
 
 _HWS_RE = r"[ \t]*"
 _HWS1_RE = r"[ \t]+"
-_TARGET_MODIFIER_RE = rf"(?:(?:install(?:ed|ing)?){_HWS1_RE}(?:(?:a|an|the){_HWS1_RE})?)?(?:(?:new|target|proposed|replacement){_HWS1_RE})?"
+_TARGET_MODIFIER_RE = rf"(?:(?:install(?:ed|ing)?){_HWS1_RE})?(?:(?:a|an|the){_HWS1_RE})?(?:(?:new|target|proposed|replacement){_HWS1_RE})?"
 _METRE_SUFFIX_RE = rf"(?:{_HWS_RE}m(?:eters?|etres?)?\b)?"
 _QUOTE_UNIT_RE = r'''['"′″’‘“”]'''
 _TARGET_FIRST_SOURCE_PATTERN = re.compile(
@@ -102,10 +102,11 @@ _EXPLICIT_NON_METRE_UNIT_SUFFIX_PATTERN = re.compile(
 )
 _MULTI_DOT_NUMERIC_TOKEN_PATTERN = re.compile(r"(?<![\d.])\d+(?:\.\d+){2,}(?:/\d+)?(?![\d./])")
 _BROKEN_MULTILINE_INSTALL_TARGET_PATTERN = re.compile(
-    rf"\b(?:with|by|to|for)\b[ \t\r\n]+install(?:ed|ing)?"
-    rf"(?:[ \t\r\n]+(?:a|an|the))?"
-    rf"(?:[ \t\r\n]+(?:new|target|proposed|replacement))?"
-    rf"[ \t\r\n]+(?:antenna|dish)\b",
+    rf"\b(?:with|by|to|for)\b[ \t\r\n]+"
+    rf"(?:(?:install(?:ed|ing)?)[ \t\r\n]+)?"
+    rf"(?:(?:a|an|the)[ \t\r\n]+)?"
+    rf"(?:(?:new|target|proposed|replacement)[ \t\r\n]+)?"
+    rf"(?:antenna|dish)\b",
     re.IGNORECASE,
 )
 
