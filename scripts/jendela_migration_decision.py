@@ -97,7 +97,7 @@ def parse_jendela_before_mw_antenna_size(value: Any) -> float | None:
     polarization token (SP/DP/XPIC). That structural evidence takes precedence
     over generic ``M``-suffixed tokens, which may represent channel bandwidth.
     If polarization structure is unavailable, a generic explicit-metre fallback
-    is accepted only when it yields one unambiguous in-range value.
+    is accepted only when exactly one in-range token is present.
     """
     text = " ".join(str(value or "").strip().split())
     if not text:
@@ -108,13 +108,13 @@ def parse_jendela_before_mw_antenna_size(value: Any) -> float | None:
         if _valid_antenna_size(size):
             return size
 
-    fallback_sizes = {
+    fallback_sizes = [
         float(match.group(1))
         for match in _EXPLICIT_ANTENNA_SIZE.finditer(text)
         if _valid_antenna_size(float(match.group(1)))
-    }
+    ]
     if len(fallback_sizes) == 1:
-        return next(iter(fallback_sizes))
+        return fallback_sizes[0]
     return None
 
 
