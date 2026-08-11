@@ -34,7 +34,7 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: python -m pip install -r requirements.txt
-      - name: Run Issue 34 and related safety regressions
+      - name: Run Issue 34 Planning and safety regressions
         run: |
           python -m unittest \
             tests.test_issue_34_planning_selector \
