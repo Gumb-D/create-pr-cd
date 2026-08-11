@@ -10,16 +10,19 @@ This design applies only to `jendela_tx_migration_pr_v1` TI decisions that requi
 
 `SP`, `DP`, and `XPIC` are **optional parsing hints**, not mandatory business data. Their absence must not by itself make a record review-required.
 
+When more than one valid Before MW antenna diameter can be identified from the MW Config, the business rule is to use the **largest valid antenna size** for the MW Dismantle selection. Different valid antenna sizes are therefore not, by themselves, a review-required ambiguity.
+
 ## Parser Contract
 
-The parser must return an antenna diameter in metres only when the value can be identified unambiguously from the MW Config structure.
+The parser must identify valid Jendela v4.1 MW Dismantle antenna diameters from MW Config structure and return the largest valid diameter found.
 
-1. Prefer a numeric antenna token immediately adjacent to a polarization marker (`SP`, `DP`, `XPIC`) when such markers exist.
-2. When no polarization marker exists, infer from the standard MW Config sequence using the position after the frequency token and before the radio configuration token such as `1+0`, while rejecting bandwidth-like or competing numeric tokens.
-3. A single structurally unambiguous antenna token may be accepted even without polarization wording. Example: `18G 1.2 1+0` -> `1.2m`.
-4. A channel-width-only value such as `18G 3.5M 1+0` must not be treated as a 3.5m antenna merely because it is numerically in the antenna range.
-5. Multiple complete link configurations are accepted only when every link can be parsed and all resolved antenna sizes agree. Missing, invalid, or conflicting link evidence fails closed.
-6. If the parser cannot distinguish antenna size from other numeric tokens with confidence, return unresolved rather than guess.
+1. Prefer numeric antenna tokens structurally associated with polarization markers (`SP`, `DP`, `XPIC`) when such markers exist.
+2. When no polarization marker exists, infer antenna candidates from the standard MW Config sequence between the frequency token and the radio configuration token such as `1+0`.
+3. A structurally valid antenna token may be accepted without polarization wording. Example: `18G 1.2 1+0` -> `1.2m`.
+4. Bandwidth-only values such as `3.5M` must not be treated as antenna diameters merely because they are numeric.
+5. When multiple valid antenna diameters are identified, return the maximum. Example: `18G 0.6 SP 1+0 / 23G 1.2 SP 1+0` -> `1.2m`.
+6. Invalid, missing, malformed, or nonnumeric antenna evidence in a complete MW link remains fail-closed; the maximum rule applies only to successfully identified valid antenna diameters.
+7. Standalone smaller numeric content outside a valid MW link does not invalidate a larger valid link result. The production source is not expected to emit hybrid values such as `18G 1.2 1+0 / 0.6`; if encountered, the larger valid antenna result remains authoritative.
 
 ## Required Regression Cases
 
@@ -29,14 +32,18 @@ Accepted:
 - `18G 1.2 1+0` -> `1.2`
 - `18G 112M 1.2M SP 1+0` -> `1.2`
 - `18G 3.5M 1.2M SP 1+0` -> `1.2`
-- `18G 1.2 SP 1+0 / 23G 1.2 DP 1+0` -> `1.2`
+- `18G 0.6 SP 1+0 / 23G 1.2 SP 1+0` -> `1.2`
+- `18G 0.6 1.2 1+0` -> `1.2`
+- `18G 3.5M 1.2M 1+0` -> `1.2`
+- `18G 1.2M 1.20M 1+0` -> `1.2`
+- `18G 1.2 1+0 / 0.6` -> `1.2`
+- `0.6 / 18G 1.2 1+0` -> `1.2`
 
 Rejected / unresolved:
 
-- `18G 3.5M 1+0` when no other structure establishes that `3.5M` is an antenna diameter
-- `18G 3.5M 1.2M 1+0` when both tokens remain structurally ambiguous
-- `18G 0.6 SP 1+0 / 23G 1.2 SP 1+0`
-- any multi-link value where one complete link has missing, nonnumeric, or invalid antenna evidence
+- `18G 3.5M 1+0` when the only numeric body token is a non-supported bandwidth value
+- any complete MW link with missing, nonnumeric, malformed, or unsupported antenna evidence
+- signed or identifier-embedded antenna candidates such as `-1.2`, `+1.2`, or `OD1.2`
 
 ## 4034R Acceptance
 
@@ -44,4 +51,4 @@ Rejected / unresolved:
 
 ## Safety
 
-The parser must remain fail-closed on ambiguity. This change removes the incorrect polarization prerequisite but must not restore the earlier generic “first in-range M token wins” behavior.
+The parser must never let bandwidth, malformed, missing, or unsupported evidence masquerade as a valid antenna diameter. The maximum-selection rule operates only across valid antenna candidates represented by the approved Jendela v4.1 MW Dismantle model.
