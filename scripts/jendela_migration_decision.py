@@ -80,6 +80,7 @@ def _normalized(value: Any) -> str:
 
 
 _EXPLICIT_ANTENNA_SIZE = re.compile(r"(?<![\d.])(\d+(?:\.\d+)?)\s*[mM]\b")
+_POLARIZATION_MARKER = re.compile(r"\b(?:SP|DP|XPIC)\b", re.IGNORECASE)
 _ANTENNA_BEFORE_POLARIZATION = re.compile(
     r"(?<![\d.])(\d+(?:\.\d+)?)\s*[mM]?(?=[\s_/-]+(?:SP|DP|XPIC)\b)",
     re.IGNORECASE,
@@ -94,23 +95,25 @@ def parse_jendela_before_mw_antenna_size(value: Any) -> float | None:
     """Extract existing-MW antenna size without mistaking bandwidth for antenna.
 
     Jendela MW Config places antenna diameter immediately before the
-    polarization token (SP/DP/XPIC). That structural evidence takes precedence
-    over generic ``M``-suffixed tokens, which may represent channel bandwidth.
-    Every polarization-qualified configuration must contain an in-range antenna
-    size. Multiple complete configurations are accepted only when they all agree
-    on one size; invalid or conflicting qualified values fail closed. If no
-    polarization structure exists, a generic explicit-metre fallback is accepted
-    only when exactly one in-range token is present.
+    polarization token (SP/DP/XPIC). Every polarization-qualified configuration
+    must have exactly one parseable, in-range antenna value immediately before
+    its marker. Multiple complete configurations are accepted only when they all
+    agree on one size; missing, nonnumeric, invalid, or conflicting qualified
+    values fail closed. If no polarization structure exists, a generic explicit-
+    metre fallback is accepted only when exactly one in-range token is present.
     """
     text = " ".join(str(value or "").strip().split())
     if not text:
         return None
 
+    polarization_markers = list(_POLARIZATION_MARKER.finditer(text))
     polarized_matches = [
         float(match.group(1))
         for match in _ANTENNA_BEFORE_POLARIZATION.finditer(text)
     ]
-    if polarized_matches:
+    if polarization_markers:
+        if len(polarized_matches) != len(polarization_markers):
+            return None
         if any(not _valid_antenna_size(size) for size in polarized_matches):
             return None
         polarized_sizes = set(polarized_matches)
