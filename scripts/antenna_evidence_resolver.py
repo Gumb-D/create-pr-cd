@@ -100,7 +100,7 @@ _EXPLICIT_NON_METRE_UNIT_SUFFIX_PATTERN = re.compile(
     rf"{_HWS_RE}(?:(?:[-–—/:|]{_HWS_RE})|(?:[\(\[]{_HWS_RE}))?(?:[A-Za-z]|{_QUOTE_UNIT_RE})",
     re.IGNORECASE,
 )
-_MULTI_DOT_NUMERIC_TOKEN_PATTERN = re.compile(r"(?<![\d.])\d+(?:\.\d+){2,}(?![\d.])")
+_MULTI_DOT_NUMERIC_TOKEN_PATTERN = re.compile(r"(?<![\d.])\d+(?:\.\d+){2,}(?:/\d+)?(?![\d./])")
 
 
 def _is_blank(value: Any) -> bool:
