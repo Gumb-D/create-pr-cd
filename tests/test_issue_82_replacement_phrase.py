@@ -124,6 +124,36 @@ class TestIssue82ReplacementPhrase(unittest.TestCase):
         self.assertIsNone(result["common_size"])
         self.assertIsNone(result["selected_size"])
 
+    def test_reverse_directional_target_uses_new_size(self):
+        for transition in ("to", "with", "by"):
+            text = f"Upgrade antenna 2.4m {transition} 0.6m antenna"
+            with self.subTest(transition=transition):
+                result = self._resolve_common(text)
+                self.assertEqual(result["status"], "RESOLVED_COMMON")
+                self.assertEqual(result["common_size"], 0.6)
+                self.assertEqual(result["selected_size"], 0.6)
+
+    def test_colon_delimited_action_excludes_dismantle_size(self):
+        result = self._resolve_common(
+            "Dismantle antenna 2.4m: install antenna 0.6m"
+        )
+        self.assertEqual(result["status"], "RESOLVED_COMMON")
+        self.assertEqual(result["common_size"], 0.6)
+        self.assertEqual(result["selected_size"], 0.6)
+
+    def test_colon_inside_size_phrase_stays_valid(self):
+        result = self._resolve_common("Install antenna size: 0.6m")
+        self.assertEqual(result["status"], "RESOLVED_COMMON")
+        self.assertEqual(result["common_size"], 0.6)
+
+    def test_punctuated_quote_units_are_rejected(self):
+        for punctuation in ("-", "/", "("):
+            text = f'Install antenna diameter 2.4{punctuation}"'
+            with self.subTest(punctuation=punctuation):
+                result = self._resolve_common(text)
+                self.assertEqual(result["status"], "MISSING")
+                self.assertIsNone(result["selected_size"])
+
 
 if __name__ == "__main__":
     unittest.main()
