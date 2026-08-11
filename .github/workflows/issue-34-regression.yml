@@ -1,10 +1,10 @@
-name: Issue 34 Planning Validation
+name: Issue 34 Planning Regression
 
 on:
   pull_request:
     branches:
-      - ci/issue-34-validation-base
       - main
+      - ci/issue-34-validation-base
     paths:
       - "scripts/planning_pr_selector.py"
       - "scripts/planning_pr_runtime.py"
@@ -19,11 +19,6 @@ on:
       - "scripts/generate_tss_pr_ecc.py"
       - "config/du_profiles/*.yaml"
       - "tests/test_issue_34_planning_*.py"
-      - "tests/test_du_export_adapter.py"
-      - "tests/test_du_profile_loader.py"
-      - "tests/test_create_pr_entrypoint.py"
-      - "tests/test_create_pr_safety_integration.py"
-      - "tests/test_issue_74_reconciliation.py"
       - ".github/workflows/issue-34-regression.yml"
 
 permissions:
