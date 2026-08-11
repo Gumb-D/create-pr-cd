@@ -25,14 +25,15 @@ class TestProfileRollbackReadiness(unittest.TestCase):
         )
         self.assertEqual(entry["blockers"], [])
 
-    def test_jendela_records_rollback_baseline_after_pr_input_ready(self):
+    def test_jendela_records_prior_version_rollback_baseline(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "jendela_tx_migration_pr_v1.yaml")
 
         entry = evaluate_rollback_readiness(profile, None)
 
         self.assertEqual(entry["rollback_readiness_status"], "ROLLBACK_BASELINE_RECORDED")
         self.assertEqual(entry["rollback_target_profile_id"], "jendela_tx_migration_pr_v1")
-        self.assertEqual(entry["rollback_target_profile_version"], "0.5.0")
+        self.assertEqual(entry["rollback_target_profile_version"], "0.4.0")
+        self.assertNotEqual(entry["rollback_target_profile_version"], profile["profile_version"])
         self.assertEqual(
             entry["rollback_target_header_hashes"],
             ["f45c209df5ca75b333f9b590ebc01c05c097e44231d22433290f8078e57c9056"],
