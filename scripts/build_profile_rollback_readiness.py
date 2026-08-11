@@ -8,22 +8,16 @@ from typing import Any, Dict, Iterable, Mapping
 
 from du_profile_loader import discover_du_profile_paths, load_du_profile
 
-
 RELEASED_STATUSES = {"PR_INPUT_READY", "PRODUCTION", "DEPRECATED"}
 DEFAULT_ROLLBACK_BASELINE_SOURCE = Path("config/registries/mw_du_profile_rollback_baselines_source.yaml")
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-# Independently governed prior-version requirements. These invariants deliberately
-# do not live in the editable rollback-baseline evidence source, so malformed
-# source data cannot disable the fail-closed guard it is meant to satisfy.
 GOVERNED_PRIOR_ROLLBACK_REQUIREMENTS: dict[str, dict[str, Any]] = {
     "jendela_tx_migration_pr_v1": {
         "current_profile_version": "0.5.0",
         "rollback_profile_id": "jendela_tx_migration_pr_v1",
         "rollback_profile_version": "0.4.0",
-        "rollback_header_hashes": [
-            "f45c209df5ca75b333f9b590ebc01c05c097e44231d22433290f8078e57c9056"
-        ],
+        "rollback_header_hashes": ["f45c209df5ca75b333f9b590ebc01c05c097e44231d22433290f8078e57c9056"],
         "rollback_profile_artifact_path": "config/du_profiles/archive/jendela_tx_migration_pr_v1_0.4.0.yaml",
         "rollback_profile_blob_sha": "f6226b676c0d6905988d6379040ec76f6e066ca9",
         "rollback_source_commit_sha": "6f0253edad2a4bb3abfef838e918379110bbd046",
@@ -31,25 +25,15 @@ GOVERNED_PRIOR_ROLLBACK_REQUIREMENTS: dict[str, dict[str, Any]] = {
 }
 
 
-def _validate_governed_rollback_target(
-    profile: Mapping[str, Any],
-    rollback_target_profile_id: Any,
-    rollback_target_profile_version: Any,
-    rollback_target_header_hashes: list[str],
-    blockers: list[str],
-) -> None:
-    """Enforce an independently governed rollback target for every lifecycle path."""
-    governed_requirement = GOVERNED_PRIOR_ROLLBACK_REQUIREMENTS.get(
-        str(profile.get("profile_id", ""))
-    )
-    if governed_requirement is None:
+def _validate_governed_rollback_target(profile, rollback_target_profile_id, rollback_target_profile_version, rollback_target_header_hashes, blockers):
+    requirement = GOVERNED_PRIOR_ROLLBACK_REQUIREMENTS.get(str(profile.get("profile_id", "")))
+    if requirement is None:
         return
-
-    if str(rollback_target_profile_id or "") != governed_requirement["rollback_profile_id"]:
+    if str(rollback_target_profile_id or "") != requirement["rollback_profile_id"]:
         blockers.append("ROLLBACK_TARGET_PROFILE_ID_MISMATCH")
-    if str(rollback_target_profile_version or "") != governed_requirement["rollback_profile_version"]:
+    if str(rollback_target_profile_version or "") != requirement["rollback_profile_version"]:
         blockers.append("ROLLBACK_TARGET_PROFILE_VERSION_MISMATCH")
-    if list(rollback_target_header_hashes) != list(governed_requirement["rollback_header_hashes"]):
+    if list(rollback_target_header_hashes) != list(requirement["rollback_header_hashes"]):
         blockers.append("ROLLBACK_TARGET_HEADER_HASH_MISMATCH")
 
 
@@ -57,34 +41,23 @@ def _git_blob_sha(data: bytes) -> str:
     return hashlib.sha1(f"blob {len(data)}\0".encode("ascii") + data).hexdigest()
 
 
-def _validate_governed_rollback_artifact(
-    profile: Mapping[str, Any],
-    rollback_baseline_entry: Mapping[str, Any],
-    blockers: list[str],
-) -> None:
-    """Verify the governed prior profile is a real immutable repository artifact."""
-    governed_requirement = GOVERNED_PRIOR_ROLLBACK_REQUIREMENTS.get(
-        str(profile.get("profile_id", ""))
-    )
-    if governed_requirement is None:
+def _validate_governed_rollback_artifact(profile, baseline, blockers):
+    requirement = GOVERNED_PRIOR_ROLLBACK_REQUIREMENTS.get(str(profile.get("profile_id", "")))
+    if requirement is None:
         return
-
-    artifact_path_text = str(rollback_baseline_entry.get("rollback_profile_artifact_path", "") or "")
-    expected_blob_sha = str(rollback_baseline_entry.get("rollback_profile_blob_sha", "") or "")
-    source_commit_sha = str(rollback_baseline_entry.get("rollback_source_commit_sha", "") or "")
-
-    if artifact_path_text != governed_requirement["rollback_profile_artifact_path"]:
+    path_text = str(baseline.get("rollback_profile_artifact_path", "") or "")
+    expected_blob = str(baseline.get("rollback_profile_blob_sha", "") or "")
+    source_commit = str(baseline.get("rollback_source_commit_sha", "") or "")
+    if path_text != requirement["rollback_profile_artifact_path"]:
         blockers.append("ROLLBACK_PROFILE_ARTIFACT_PATH_MISMATCH")
-    if expected_blob_sha != governed_requirement["rollback_profile_blob_sha"]:
+    if expected_blob != requirement["rollback_profile_blob_sha"]:
         blockers.append("ROLLBACK_PROFILE_ARTIFACT_BLOB_MISMATCH")
-    if source_commit_sha != governed_requirement["rollback_source_commit_sha"]:
+    if source_commit != requirement["rollback_source_commit_sha"]:
         blockers.append("ROLLBACK_PROFILE_SOURCE_COMMIT_MISMATCH")
-
-    if not artifact_path_text:
+    if not path_text:
         blockers.append("ROLLBACK_PROFILE_ARTIFACT_MISSING")
         return
-
-    artifact_path = (REPO_ROOT / artifact_path_text).resolve()
+    artifact_path = (REPO_ROOT / path_text).resolve()
     try:
         artifact_path.relative_to(REPO_ROOT)
     except ValueError:
@@ -93,174 +66,130 @@ def _validate_governed_rollback_artifact(
     if not artifact_path.is_file():
         blockers.append("ROLLBACK_PROFILE_ARTIFACT_MISSING")
         return
-
     artifact_bytes = artifact_path.read_bytes()
-    actual_blob_sha = _git_blob_sha(artifact_bytes)
-    if actual_blob_sha != expected_blob_sha:
+    if _git_blob_sha(artifact_bytes) != expected_blob:
         if "ROLLBACK_PROFILE_ARTIFACT_BLOB_MISMATCH" not in blockers:
             blockers.append("ROLLBACK_PROFILE_ARTIFACT_BLOB_MISMATCH")
         return
-
     try:
-        archived_profile = json.loads(artifact_bytes.decode("utf-8"))
+        archived = json.loads(artifact_bytes.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError):
         blockers.append("ROLLBACK_PROFILE_ARTIFACT_INVALID")
         return
-    if not isinstance(archived_profile, Mapping):
+    if not isinstance(archived, Mapping):
         blockers.append("ROLLBACK_PROFILE_ARTIFACT_INVALID")
         return
-
-    if str(archived_profile.get("profile_id", "")) != str(
-        rollback_baseline_entry.get("rollback_profile_id", "")
-    ):
+    if str(archived.get("profile_id", "")) != str(baseline.get("rollback_profile_id", "")):
         blockers.append("ROLLBACK_PROFILE_ARTIFACT_IDENTITY_MISMATCH")
-    if str(archived_profile.get("profile_version", "")) != str(
-        rollback_baseline_entry.get("rollback_profile_version", "")
-    ):
+    if str(archived.get("profile_version", "")) != str(baseline.get("rollback_profile_version", "")):
         blockers.append("ROLLBACK_PROFILE_ARTIFACT_VERSION_MISMATCH")
-    archived_hashes = list(
-        archived_profile.get("export_structure", {}).get("approved_header_hashes", [])
-    )
-    raw_target_hashes = rollback_baseline_entry.get("rollback_header_hashes", [])
-    target_hashes = raw_target_hashes if isinstance(raw_target_hashes, list) else []
+    archived_hashes = list(archived.get("export_structure", {}).get("approved_header_hashes", []))
+    raw_hashes = baseline.get("rollback_header_hashes", [])
+    target_hashes = raw_hashes if isinstance(raw_hashes, list) else []
     if archived_hashes != list(target_hashes):
         blockers.append("ROLLBACK_PROFILE_ARTIFACT_HEADER_HASH_MISMATCH")
 
 
-def _validate_explicit_rollback_baseline(
-    profile: Mapping[str, Any],
-    rollback_baseline_entry: Mapping[str, Any],
-    blockers: list[str],
-) -> tuple[Any, Any, list[str]]:
-    current_profile_version = str(profile.get("profile_version", ""))
-    baseline_current_version = str(rollback_baseline_entry.get("current_profile_version", ""))
-    rollback_target_profile_id = rollback_baseline_entry.get("rollback_profile_id")
-    rollback_target_profile_version = rollback_baseline_entry.get("rollback_profile_version")
-    raw_rollback_header_hashes = rollback_baseline_entry.get("rollback_header_hashes", [])
-    if not isinstance(raw_rollback_header_hashes, list):
+def _valid_hash_list(value: Any) -> bool:
+    return isinstance(value, list) and all(isinstance(item, str) and item.strip() for item in value)
+
+
+def _validate_explicit_rollback_baseline(profile, baseline, blockers):
+    current_version = str(profile.get("profile_version", ""))
+    baseline_current_version = str(baseline.get("current_profile_version", ""))
+    target_id = baseline.get("rollback_profile_id")
+    target_version = baseline.get("rollback_profile_version")
+    raw_hashes = baseline.get("rollback_header_hashes", [])
+    if not _valid_hash_list(raw_hashes):
         blockers.append("ROLLBACK_HEADER_HASHES_INVALID")
-        rollback_target_header_hashes: list[str] = []
+        target_hashes: list[str] = []
     else:
-        rollback_target_header_hashes = list(raw_rollback_header_hashes)
-
-    if baseline_current_version != current_profile_version:
+        target_hashes = list(raw_hashes)
+    if baseline_current_version != current_version:
         blockers.append("ROLLBACK_BASELINE_CURRENT_VERSION_MISMATCH")
-    if not rollback_target_profile_id or not rollback_target_profile_version:
+    if not target_id or not target_version:
         blockers.append("NO_RECORDED_ROLLBACK_TARGET")
-    if not rollback_target_header_hashes:
+    if not target_hashes:
         blockers.append("NO_RECORDED_ROLLBACK_HEADER_HASHES")
-    if str(rollback_target_profile_version or "") == current_profile_version:
+    if str(target_version or "") == current_version:
         blockers.append("ROLLBACK_TARGET_IS_CURRENT_PROFILE_VERSION")
+    _validate_governed_rollback_artifact(profile, baseline, blockers)
+    return target_id, target_version, target_hashes
 
-    _validate_governed_rollback_artifact(profile, rollback_baseline_entry, blockers)
-    return rollback_target_profile_id, rollback_target_profile_version, rollback_target_header_hashes
 
-
-def evaluate_rollback_readiness(
-    profile: Mapping[str, Any],
-    deprecation_entry: Mapping[str, Any] | None,
-    rollback_baseline_entry: Mapping[str, Any] | None = None,
-    explicit_prior_baseline_required: bool = False,
-) -> Dict[str, Any]:
+def evaluate_rollback_readiness(profile, deprecation_entry, rollback_baseline_entry=None, explicit_prior_baseline_required=False) -> Dict[str, Any]:
     profile_id = str(profile.get("profile_id", ""))
-    approved_header_hashes = list(profile.get("export_structure", {}).get("approved_header_hashes", []))
+    approved_hashes = list(profile.get("export_structure", {}).get("approved_header_hashes", []))
     blockers: list[str] = []
-    governed_prior_baseline_required = profile_id in GOVERNED_PRIOR_ROLLBACK_REQUIREMENTS
-
-    if not approved_header_hashes:
+    governed_required = profile_id in GOVERNED_PRIOR_ROLLBACK_REQUIREMENTS
+    if not approved_hashes:
         blockers.append("NO_APPROVED_HEADER_HASH_BASELINE")
     if str(profile.get("status", "")) not in RELEASED_STATUSES:
         blockers.append("PROFILE_NOT_RELEASED")
-
-    governed_requirement = GOVERNED_PRIOR_ROLLBACK_REQUIREMENTS.get(profile_id)
-    if governed_requirement is not None and str(profile.get("profile_version", "")) != governed_requirement["current_profile_version"]:
+    requirement = GOVERNED_PRIOR_ROLLBACK_REQUIREMENTS.get(profile_id)
+    if requirement is not None and str(profile.get("profile_version", "")) != requirement["current_profile_version"]:
         blockers.append("GOVERNED_ROLLBACK_CURRENT_VERSION_MISMATCH")
 
-    rollback_target_profile_id = None
-    rollback_target_profile_version = None
-    rollback_target_header_hashes: list[str] = []
-    review_notes: list[str] = []
-    used_explicit_prior_baseline = False
-
+    target_id = None
+    target_version = None
+    target_hashes: list[str] = []
+    notes: list[str] = []
+    used_explicit = False
     if str(profile.get("status", "")) == "DEPRECATED":
         if not isinstance(deprecation_entry, Mapping) or str(deprecation_entry.get("deprecation_status", "")) != "DEPRECATION_RECORDED":
             blockers.append("DEPRECATION_NOT_RECORDED")
         else:
-            rollback_target_profile_id = deprecation_entry.get("rollback_profile_id")
-            rollback_target_profile_version = deprecation_entry.get("rollback_profile_version")
-            rollback_target_header_hashes = list(deprecation_entry.get("superseded_header_hashes", []))
-            if not rollback_target_profile_id or not rollback_target_profile_version:
+            target_id = deprecation_entry.get("rollback_profile_id")
+            target_version = deprecation_entry.get("rollback_profile_version")
+            raw = deprecation_entry.get("superseded_header_hashes", [])
+            target_hashes = list(raw) if _valid_hash_list(raw) else []
+            if not target_id or not target_version:
                 blockers.append("NO_RECORDED_ROLLBACK_TARGET")
     else:
         if isinstance(rollback_baseline_entry, Mapping):
-            used_explicit_prior_baseline = True
-            (
-                rollback_target_profile_id,
-                rollback_target_profile_version,
-                rollback_target_header_hashes,
-            ) = _validate_explicit_rollback_baseline(profile, rollback_baseline_entry, blockers)
-        elif governed_prior_baseline_required or explicit_prior_baseline_required:
+            used_explicit = True
+            target_id, target_version, target_hashes = _validate_explicit_rollback_baseline(profile, rollback_baseline_entry, blockers)
+        elif governed_required or explicit_prior_baseline_required:
             blockers.append("EXPLICIT_PRIOR_ROLLBACK_BASELINE_REQUIRED")
-        elif approved_header_hashes:
-            rollback_target_profile_id = profile.get("profile_id")
-            rollback_target_profile_version = profile.get("profile_version")
-            rollback_target_header_hashes = approved_header_hashes
+        elif approved_hashes:
+            target_id = profile.get("profile_id")
+            target_version = profile.get("profile_version")
+            target_hashes = approved_hashes
 
-    if governed_requirement is not None and (
-        rollback_target_profile_id
-        or rollback_target_profile_version
-        or rollback_target_header_hashes
-    ):
-        _validate_governed_rollback_target(
-            profile,
-            rollback_target_profile_id,
-            rollback_target_profile_version,
-            rollback_target_header_hashes,
-            blockers,
-        )
-
+    if requirement is not None and (target_id or target_version or target_hashes):
+        _validate_governed_rollback_target(profile, target_id, target_version, target_hashes, blockers)
     status = "ROLLBACK_BASELINE_RECORDED" if not blockers else "ROLLBACK_BLOCKED"
     if status == "ROLLBACK_BLOCKED":
-        review_notes.append("Rollback remains blocked until an approved profile/header-hash baseline exists.")
-    elif used_explicit_prior_baseline:
-        review_notes.append("Rollback baseline is documented from an explicit prior approved profile identity and header-hash set.")
+        notes.append("Rollback remains blocked until an approved profile/header-hash baseline exists.")
+    elif used_explicit:
+        notes.append("Rollback baseline is documented from an explicit prior approved profile identity and header-hash set.")
     else:
-        review_notes.append("Rollback baseline is documented from the current approved profile identity and header-hash set.")
-
+        notes.append("Rollback baseline is documented from the current approved profile identity and header-hash set.")
     return {
-        "profile_id": profile["profile_id"],
-        "profile_version": profile["profile_version"],
-        "mapping_version": profile["mapping_version"],
-        "current_status": profile["status"],
-        "observed_header_hash": profile.get("export_structure", {}).get("observed_header_hash", ""),
-        "rollback_readiness_status": status,
-        "rollback_target_profile_id": rollback_target_profile_id,
-        "rollback_target_profile_version": rollback_target_profile_version,
-        "rollback_target_header_hashes": rollback_target_header_hashes,
-        "blockers": blockers,
-        "notes": review_notes,
+        "profile_id": profile["profile_id"], "profile_version": profile["profile_version"], "mapping_version": profile["mapping_version"],
+        "current_status": profile["status"], "observed_header_hash": profile.get("export_structure", {}).get("observed_header_hash", ""),
+        "rollback_readiness_status": status, "rollback_target_profile_id": target_id, "rollback_target_profile_version": target_version,
+        "rollback_target_header_hashes": target_hashes, "blockers": blockers, "notes": notes,
     }
 
 
-def _index_unique_registry_entries(entries: Iterable[Any]) -> tuple[dict[str, Mapping[str, Any]], set[str]]:
+def _index_unique_registry_entries(entries: Iterable[Any]):
     indexed: dict[str, Mapping[str, Any]] = {}
-    duplicate_profile_ids: set[str] = set()
-    for entry in entries:
-        if not isinstance(entry, Mapping) or entry.get("profile_id") is None:
+    duplicates: set[str] = set()
+    invalid_indexes: set[int] = set()
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, Mapping) or not isinstance(entry.get("profile_id"), str) or not str(entry.get("profile_id", "")).strip():
+            invalid_indexes.add(index)
             continue
         profile_id = str(entry["profile_id"])
         if profile_id in indexed:
-            duplicate_profile_ids.add(profile_id)
+            duplicates.add(profile_id)
             continue
         indexed[profile_id] = entry
-    return indexed, duplicate_profile_ids
+    return indexed, duplicates, invalid_indexes
 
 
-def _source_collection(
-    registry: Mapping[str, Any] | None,
-    name: str,
-    invalid_collections: set[str],
-) -> list[Any]:
+def _source_collection(registry, name, invalid_collections):
     raw = (registry or {}).get(name, [])
     if not isinstance(raw, list):
         invalid_collections.add(name)
@@ -268,43 +197,10 @@ def _source_collection(
     return raw
 
 
-def _block_entries_for_duplicate_source_ids(
-    entries: list[Dict[str, Any]],
-    duplicate_profile_ids: set[str],
-) -> None:
-    if not duplicate_profile_ids:
-        return
-
-    duplicate_ids = sorted(duplicate_profile_ids)
-    duplicate_note = (
-        "Rollback remains blocked because the baseline source contains duplicate "
-        f"profile IDs: {', '.join(duplicate_ids)}."
-    )
+def _force_block(entries, blocker, note):
     for entry in entries:
-        if "DUPLICATE_ROLLBACK_BASELINE_ENTRIES" not in entry["blockers"]:
-            entry["blockers"].append("DUPLICATE_ROLLBACK_BASELINE_ENTRIES")
-        entry["rollback_readiness_status"] = "ROLLBACK_BLOCKED"
-        entry["rollback_target_profile_id"] = None
-        entry["rollback_target_profile_version"] = None
-        entry["rollback_target_header_hashes"] = []
-        entry["notes"] = [duplicate_note]
-
-
-def _block_entries_for_invalid_source_collections(
-    entries: list[Dict[str, Any]],
-    invalid_collections: set[str],
-) -> None:
-    if not invalid_collections:
-        return
-
-    invalid_names = sorted(invalid_collections)
-    note = (
-        "Rollback remains blocked because baseline source collections are malformed: "
-        f"{', '.join(invalid_names)}."
-    )
-    for entry in entries:
-        if "ROLLBACK_BASELINE_SOURCE_COLLECTION_INVALID" not in entry["blockers"]:
-            entry["blockers"].append("ROLLBACK_BASELINE_SOURCE_COLLECTION_INVALID")
+        if blocker not in entry["blockers"]:
+            entry["blockers"].append(blocker)
         entry["rollback_readiness_status"] = "ROLLBACK_BLOCKED"
         entry["rollback_target_profile_id"] = None
         entry["rollback_target_profile_version"] = None
@@ -312,57 +208,34 @@ def _block_entries_for_invalid_source_collections(
         entry["notes"] = [note]
 
 
-def build_rollback_registry(
-    profiles: Iterable[Mapping[str, Any]],
-    deprecation_registry: Mapping[str, Any],
-    rollback_baseline_registry: Mapping[str, Any] | None = None,
-) -> Dict[str, Any]:
+def build_rollback_registry(profiles, deprecation_registry, rollback_baseline_registry=None) -> Dict[str, Any]:
     deprecation_by_profile = {
-        str(entry["profile_id"]): entry
-        for entry in deprecation_registry.get("entries", [])
+        str(entry["profile_id"]): entry for entry in deprecation_registry.get("entries", [])
         if isinstance(entry, Mapping) and entry.get("profile_id") is not None
     }
-
-    invalid_rollback_source_collections: set[str] = set()
-    rollback_source_entries = _source_collection(
-        rollback_baseline_registry,
-        "entries",
-        invalid_rollback_source_collections,
-    )
-    required_profile_ids = _source_collection(
-        rollback_baseline_registry,
-        "required_profile_ids",
-        invalid_rollback_source_collections,
-    )
-    rollback_baseline_by_profile, duplicate_rollback_profile_ids = _index_unique_registry_entries(
-        rollback_source_entries
-    )
-    source_required_profile_ids = {
-        str(profile_id)
-        for profile_id in required_profile_ids
-        if profile_id is not None
-    }
+    invalid_collections: set[str] = set()
+    source_entries = _source_collection(rollback_baseline_registry, "entries", invalid_collections)
+    required_ids = _source_collection(rollback_baseline_registry, "required_profile_ids", invalid_collections)
+    baseline_by_profile, duplicate_ids, invalid_entry_indexes = _index_unique_registry_entries(source_entries)
+    source_required_ids = {str(x) for x in required_ids if x is not None}
 
     entries: list[Dict[str, Any]] = []
     for profile in profiles:
         profile_id = str(profile["profile_id"])
-        duplicate_baseline = profile_id in duplicate_rollback_profile_ids
         entry = evaluate_rollback_readiness(
             profile,
             deprecation_by_profile.get(profile_id),
-            None if duplicate_baseline else rollback_baseline_by_profile.get(profile_id),
-            profile_id in source_required_profile_ids,
+            None if profile_id in duplicate_ids else baseline_by_profile.get(profile_id),
+            profile_id in source_required_ids,
         )
         entries.append(entry)
 
-    # Duplicate IDs make the rollback evidence source itself ambiguous. Block
-    # the complete generated registry even when a duplicated ID is stale or
-    # mistyped and therefore does not correspond to any currently loaded profile.
-    _block_entries_for_duplicate_source_ids(entries, duplicate_rollback_profile_ids)
-    _block_entries_for_invalid_source_collections(
-        entries,
-        invalid_rollback_source_collections,
-    )
+    if duplicate_ids:
+        _force_block(entries, "DUPLICATE_ROLLBACK_BASELINE_ENTRIES", "Rollback remains blocked because the baseline source contains duplicate profile IDs: " + ", ".join(sorted(duplicate_ids)) + ".")
+    if invalid_collections:
+        _force_block(entries, "ROLLBACK_BASELINE_SOURCE_COLLECTION_INVALID", "Rollback remains blocked because baseline source collections are malformed: " + ", ".join(sorted(invalid_collections)) + ".")
+    if invalid_entry_indexes:
+        _force_block(entries, "ROLLBACK_BASELINE_SOURCE_ENTRY_INVALID", "Rollback remains blocked because baseline source contains malformed entries at indexes: " + ", ".join(str(i) for i in sorted(invalid_entry_indexes)) + ".")
 
     registry: Dict[str, Any] = {
         "schema_version": "1.0",
@@ -375,38 +248,30 @@ def build_rollback_registry(
             "Profiles that require an explicit prior baseline are independently governed in build_profile_rollback_readiness.py.",
         ],
     }
-    if duplicate_rollback_profile_ids:
-        registry["duplicate_rollback_profile_ids"] = sorted(duplicate_rollback_profile_ids)
-    if invalid_rollback_source_collections:
-        registry["invalid_rollback_source_collections"] = sorted(
-            invalid_rollback_source_collections
-        )
+    if duplicate_ids:
+        registry["duplicate_rollback_profile_ids"] = sorted(duplicate_ids)
+    if invalid_collections:
+        registry["invalid_rollback_source_collections"] = sorted(invalid_collections)
+    if invalid_entry_indexes:
+        registry["invalid_rollback_source_entry_indexes"] = sorted(invalid_entry_indexes)
     return registry
 
 
 def rollback_markdown(registry: Mapping[str, Any]) -> str:
-    lines = [
-        "# MW DU Profile Rollback Readiness",
-        "",
-        "Discovery-only rollback-readiness review for tracked DU profiles.",
-        "",
-    ]
+    lines = ["# MW DU Profile Rollback Readiness", "", "Discovery-only rollback-readiness review for tracked DU profiles.", ""]
     for entry in registry.get("entries", []):
-        lines.append(f"## {entry['profile_id']}")
-        lines.append("")
-        lines.append(f"- Rollback readiness status: `{entry['rollback_readiness_status']}`")
-        lines.append(f"- Current status: `{entry['current_status']}`")
-        lines.append(f"- Profile version: `{entry['profile_version']}`")
-        lines.append(f"- Mapping version: `{entry['mapping_version']}`")
-        lines.append(f"- Observed header hash: `{entry['observed_header_hash']}`")
+        lines.extend([
+            f"## {entry['profile_id']}", "",
+            f"- Rollback readiness status: `{entry['rollback_readiness_status']}`",
+            f"- Current status: `{entry['current_status']}`",
+            f"- Profile version: `{entry['profile_version']}`",
+            f"- Mapping version: `{entry['mapping_version']}`",
+            f"- Observed header hash: `{entry['observed_header_hash']}`",
+        ])
         if entry.get("rollback_target_profile_id"):
-            lines.append(
-                f"- Rollback target: `{entry['rollback_target_profile_id']}` `{entry['rollback_target_profile_version']}`"
-            )
+            lines.append(f"- Rollback target: `{entry['rollback_target_profile_id']}` `{entry['rollback_target_profile_version']}`")
         if entry.get("rollback_target_header_hashes"):
-            lines.append(
-                f"- Rollback target header hashes: `{', '.join(entry['rollback_target_header_hashes'])}`"
-            )
+            lines.append(f"- Rollback target header hashes: `{', '.join(entry['rollback_target_header_hashes'])}`")
         if entry.get("blockers"):
             lines.append(f"- Blockers: `{', '.join(entry['blockers'])}`")
         for note in entry.get("notes", []):
@@ -415,13 +280,7 @@ def rollback_markdown(registry: Mapping[str, Any]) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
-def write_rollback_outputs(
-    profile_paths: Iterable[Path],
-    deprecation_registry_path: Path,
-    registry_path: Path,
-    markdown_path: Path,
-    rollback_baseline_source_path: Path = DEFAULT_ROLLBACK_BASELINE_SOURCE,
-) -> None:
+def write_rollback_outputs(profile_paths, deprecation_registry_path, registry_path, markdown_path, rollback_baseline_source_path=DEFAULT_ROLLBACK_BASELINE_SOURCE):
     profiles = [load_du_profile(path) for path in profile_paths]
     deprecation_registry = json.loads(deprecation_registry_path.read_text(encoding="utf-8"))
     rollback_baseline_registry = json.loads(rollback_baseline_source_path.read_text(encoding="utf-8"))
