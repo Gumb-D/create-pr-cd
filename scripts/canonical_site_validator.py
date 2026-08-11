@@ -29,6 +29,12 @@ SCOPE_REQUIRED_FIELDS = {
         "subcontractor_ti",
         "existing_ti_pr_status",
     ),
+    "PLANNING": (
+        "site_code",
+        "region",
+        "subcontractor_planning",
+        "existing_planning_pr_status",
+    ),
 }
 
 JENDELA_PROFILE_ID = "jendela_tx_migration_pr_v1"
@@ -49,6 +55,7 @@ FIELD_PATHS = {
     "subcontractor_planning": ("pr_context", "subcontractor_planning"),
     "existing_tss_pr_status": ("pr_context", "existing_tss_pr_status"),
     "existing_ti_pr_status": ("pr_context", "existing_ti_pr_status"),
+    "existing_planning_pr_status": ("pr_context", "existing_planning_pr_status"),
     "latitude": ("technical_context", "latitude"),
     "longitude": ("technical_context", "longitude"),
     "antenna_size_ne": ("technical_context", "antenna_size_ne"),
@@ -89,6 +96,7 @@ def empty_canonical_site_record() -> Dict[str, Any]:
             "subcontractor_planning": "",
             "existing_tss_pr_status": "",
             "existing_ti_pr_status": "",
+            "existing_planning_pr_status": "",
         },
         "technical_context": {
             "latitude": None,
@@ -132,7 +140,7 @@ def validate_canonical_site_record(record: Mapping[str, Any], scope: str) -> Dic
     """Validate the structural/provenance contract without invoking PR business rules."""
     scope = str(scope).upper()
     if scope not in SCOPE_REQUIRED_FIELDS:
-        raise ValueError("scope must be TSS or TI")
+        raise ValueError("scope must be TSS, TI, or PLANNING")
 
     blocking_reasons: list[str] = []
     warnings: list[str] = []
@@ -170,11 +178,23 @@ def validate_canonical_site_record(record: Mapping[str, Any], scope: str) -> Dic
         required_fields = [field for field in required_fields if field not in {"tx_sow_raw", "tx_sow_normalized"}]
         required_fields.append("tx_before_migration")
 
+    blank_value_allowed_fields = {
+        "existing_tss_pr_status",
+        "existing_ti_pr_status",
+        "existing_planning_pr_status",
+    }
+    if scope == "PLANNING":
+        # A blank Planning subcontractor is a valid business terminal state
+        # (no Planning PR). Its approved source column must still be present so
+        # blank is distinguishable from a missing/ambiguous header mapping.
+        blank_value_allowed_fields.add("subcontractor_planning")
+
     for field in required_fields:
         value = _get_path(record, FIELD_PATHS[field])
         # Existing PR status is allowed to be blank, but its source must remain
-        # mapped for duplicate prevention to be trustworthy.
-        if field not in {"existing_tss_pr_status", "existing_ti_pr_status"} and _is_blank(value):
+        # mapped for duplicate prevention to be trustworthy. Planning also
+        # permits a blank subcontractor as an intentional no-PR input.
+        if field not in blank_value_allowed_fields and _is_blank(value):
             blocking_reasons.append(f"MISSING_PR_CRITICAL_FIELD:{field}")
         evidence = evidence_fields.get(field) if isinstance(evidence_fields, Mapping) else None
         if not isinstance(evidence, Mapping) or not evidence.get("source_header_fingerprint"):
