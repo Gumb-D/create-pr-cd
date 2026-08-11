@@ -1,6 +1,6 @@
 # create-pr-cd
 
-Generate CelcomDigi TX PR ECC output files from site PR/PO data by matching site data with the PR model and writing ECC output grouped by region, subcontractor, and scope.
+Generate CelcomDigi TX PR ECC output files from site PR/PO data by matching site data with the PR model and writing ECC output grouped by region, subcontractor, DU Model, and scope.
 
 ## Purpose
 
@@ -18,12 +18,14 @@ create-pr-cd/
 │  │  ├─ pr_model.xlsx
 │  │  ├─ ecc_template.xls
 │  │  └─ contract_info_reference.md
+│  ├─ reference/
+│  │  └─ planning-pr/              # local business/reference evidence; raw iEPMS exports are not committed
 │  ├─ sample/
 │  │  └─ Northern-GCI TX Mini Project TSS PR 20260515.xlsx
 │  └─ OPENCLAW_SKILL_DEVELOPMENT_GUIDELINE.md
 ├─ output/
 ├─ scripts/
-├─ create-pr-cd_SKILL.md
+├─ SKILL.md
 └─ README.md
 ```
 
@@ -34,7 +36,9 @@ create-pr-cd/
 | `Info/input/site_pr_po_view.xlsx` | Daily refreshed Site PR/PO View file |
 | `Info/input/pr_model.xlsx` | PR model file |
 | `Info/input/ecc_template.xls` | ECC template file containing `details` sheet |
-| `Info/input/contract_info_reference.md` | Region → Purchasing Area and Subcontractor → Contract Number mapping |
+| `Info/input/contract_info_reference.md` | Authoritative Region → Purchasing Area and Subcontractor → Contract Number mapping |
+
+Planning discovery/UAT reference exports may be kept locally under `Info/reference/planning-pr/`. Raw iEPMS exports and generated UAT artefacts must not be committed.
 
 ## Daily Operation Steps
 
@@ -146,11 +150,12 @@ The script requires either `--site-code` or `--all-sites`.
 Do not use both at the same time.
 
 - `--scope` currently supports only `TSS` and `TI`.
-- Planning and Operation Backoffice are defined in the skill documentation but are not available in the current CLI implementation.
+- Planning business rules are approved under Issue #34 but the Planning CLI path is not enabled until implementation/regression/UAT are complete.
+- Operation Backoffice remains a separate future scope and is not part of Issue #34.
 
 ## Output Naming Convention
 
-Generated formal ECC files follow this format:
+Generated formal ECC files follow this generic format:
 
 ```text
 <Region>-<Subcontractor> <DU Model> <Scope> PR <YYYYMMDD>.xlsx
@@ -161,7 +166,7 @@ Generated formal ECC files follow this format:
 ```text
 Northern-GCI TX Mini Project TSS PR 20260518.xlsx
 Central-GTSB TX Mini Project TSS PR 20260518.xlsx
-Sabah-Seri Pancar TX Mini Project TSS PR 20260518.xlsx
+Sabah-Seri Pancar MW EOS Swap TI PR 20260518.xlsx
 ```
 
 **Split files** (when >30 unique Site IDs in a group):
@@ -173,35 +178,97 @@ Northern-GCI TX Mini Project TSS PR 20260518 Part 2.xlsx
 
 Explicit UAT artefacts insert `_NON_PRODUCTION_UAT` before the file extension and are stored in the isolated UAT run directory.
 
-**Operation Backoffice** files use `Allstar` as the subcontractor:
-
-```text
-Central-Allstar TX Mini Project Operation Backoffice PR 20260518.xlsx
-```
-
-> Note: The current CLI generator accepts only `--scope TSS` and `--scope TI`. Planning and Operation Backoffice are defined as target scopes but are not yet implemented in this script.
+> Runtime note: the current CLI generator accepts only `--scope TSS` and `--scope TI`. Planning is business-approved but not yet executable. Operation Backoffice remains undefined/unsupported future scope.
 
 ## Supported PR Scopes
 
 ### Current CLI Support
 
-The CLI currently supports these scopes:
+| Scope | Runtime Status | Business Status | Description |
+|---|---|---|---|
+| TSS | Active | Implemented | Microwave Site Survey PR |
+| TI | Active | Implemented | Microwave Integration PR |
+| Planning | Disabled pending Issue #34 | Approved | Microwave Planning PR for all eight supported DU Models |
+| Operation Backoffice | Unsupported | Future / separate scope | Microwave Backoffice PR |
 
-| Scope | Status | Description |
-|---|---|---|
-| TSS | ✓ Active | Microwave Site Survey PR |
-| TI | ✓ Active | Microwave Integration PR |
+## Planning PR Business Rules — Issue #34
 
-### Skill Roadmap
+### Supported DU Models
 
-The skill documentation defines additional scopes for future implementation:
+Planning PR is approved for:
 
-| Scope | Status | Description |
-|---|---|---|
-| Planning | 📋 Planned | Microwave Planning PR |
-| Operation Backoffice | 📋 Planned | Microwave Backoffice PR |
+1. `2023 TX Rollout`
+2. `TX Mini Project`
+3. `2023 Celcomdigi BAU`
+4. `2024 Celcomdigi BAU`
+5. `Celcomdigi USP`
+6. `Jendela TX Migration`
+7. `MW EOS Swap`
+8. `ZTE TX MINI`
 
-Each scope uses different matching logic and PR model definitions (see **Key Matching Rules** section below).
+### Planning source fields
+
+Planning uses:
+
+- `Subcon Planning` / `Subcon - Planning`
+- `Subcon PR - Planning` / approved equivalent Planning PR status/number field
+
+`TX Planning Remarks` is explicitly not a Planning PR decision input.
+
+### Eligibility
+
+```text
+Planning subcon non-blank
+AND Planning PR status/number blank
+-> evaluate Planning PBOM
+```
+
+Blank Planning subcon is ignored. A non-blank existing Planning PR status/number prevents duplicate generation. Unknown non-blank Planning subcon is `REVIEW_REQUIRED` and must not be fuzzy-substituted.
+
+### Planning PBOM matrix
+
+| Planning Subcon | DU Model group | PBOM | Qty | Unit |
+|---|---|---:|---:|---|
+| `GCI` / `GTSB` | 2023 TX Rollout; 2023 Celcomdigi BAU; 2024 Celcomdigi BAU; Celcomdigi USP; Jendela TX Migration | `350001143904` | 1 | Hop |
+| `GCI` / `GTSB` | TX Mini Project; MW EOS Swap; ZTE TX MINI | `350001143905` | 1 | Hop |
+| `GCI_AA` / `GTSB_AA` | All eight supported DU Models | `350001042321` only | 1 | Hop |
+
+For `_AA`, do not also generate `350001143904` or `350001143905`. PBOM `350001042321` is an explicitly approved deterministic optional-item exception for Planning only.
+
+### Planning contract identity
+
+Contract and Purchasing Area use:
+
+```text
+Info/input/contract_info_reference.md
+```
+
+Normalize for contract lookup only:
+
+```text
+GCI_AA  -> GCI
+GTSB_AA -> GTSB
+```
+
+The original `_AA` value remains the evidence that selects PBOM `350001042321`.
+
+### Planning non-inputs
+
+Planning PBOM selection does not depend on:
+
+- Tx SOW
+- TX Planning Remarks
+- TX Upgrade Scope
+- antenna size
+- coordinates
+- TSS/TI subcontractor
+
+Region remains available to shared Purchasing Area/output grouping logic but does not select the Planning PBOM.
+
+Design and implementation plan:
+
+- `docs/superpowers/specs/2026-08-11-planning-pr-all-du-design.md`
+- `docs/superpowers/plans/2026-08-11-planning-pr-all-du.md`
 
 ---
 
@@ -217,15 +284,6 @@ The TI implementation is active for the current CLI `--scope TI` flow.
 - MW Re-engineering intentionally remains manual review until business rules are confirmed.
 - Current CLI scope support remains `TSS` and `TI` only.
 
-Current stable baseline:
-
-| Scope / Metric | Current Result |
-|---|---:|
-| TSS output | 78 files / 2727 rows |
-| TI output | 14 files / 234 rows |
-| TI `REVIEW_REQUIRED` | 163 |
-| TI duplicates skipped | 1741 |
-
 ---
 
 ## Key Matching Rules
@@ -235,23 +293,25 @@ Current stable baseline:
 | Scope | Matching Logic |
 |---|---|
 | TSS | Tx SOW from site data |
-| TI | Tx SOW + Antenna Size from site data |
-| Planning | Fixed PBOM logic using `Subcon - Planning` mapping |
-| Operation Backoffice | Allstar + `TX Integrated actual end date` from site data |
+| TI | Tx SOW + applicable antenna/subtype evidence from site data |
+| Planning | DU Model + `Subcon Planning`; fixed approved PBOM matrix above; no Tx SOW/Planning Remarks input |
+| Operation Backoffice | Future scope; not defined by Issue #34 |
 
 ### Mapping Rules
 
 - **Purchasing Area** ← derived from Region mapping in `Info/input/contract_info_reference.md`
 - **Contract Number** ← derived from Subcontractor mapping in `Info/input/contract_info_reference.md`
-- **Unknown Subcontractors** ← fuzzy matching enabled using nearest / highest similarity match
+- **Planning `_AA` contract identity** ← `GCI_AA → GCI`, `GTSB_AA → GTSB`
+- **Unknown Planning subcontractors** ← fail closed; do not fuzzy substitute
+- **Generic non-Planning unknown subcontractors** ← existing runtime fuzzy behavior remains governed separately
 
 ### ECC Output Rules
 
 - Single sheet named `details` only
-- `SOW*` ← sourced from PR model Description
-- `PBOM Code*` ← sourced from PR model Code
-- `Unit*` ← sourced from PR model Unit
-- `Quantity*` ← PR model quantity or scope-specific quantity rule
+- `SOW*` ← sourced from the applicable approved model/selector
+- `PBOM Code*` ← sourced from the applicable approved model/selector
+- `Unit*` ← sourced from the applicable approved model/selector
+- `Quantity*` ← model quantity or scope-specific quantity rule
 - `SN.` ← sequential (1-based) per output file
 - Max 30 unique Site IDs per output file
 
@@ -263,13 +323,12 @@ Current stable baseline:
 - `SN.` starts at `1` and is sequential per file.
 - `Purchasing Area*` uses region mapping from `Info/input/contract_info_reference.md`.
 - `Contract Number*` uses subcontractor mapping from `Info/input/contract_info_reference.md`.
-- Column `P` repeats the same value as `Contract Number *`.
-- `SOW*` is sourced from the PR model `Description`.
-- `PBOM Code*` is sourced from the PR model code.
-- `Unit*` is sourced from the PR model unit.
-- Output files contain no more than `30` unique site IDs.
+- Column `P` repeats the same value as `Contract Number *` where the existing renderer contract applies.
+- PBOM/Description/Unit/Quantity come from an approved model or deterministic scope selector.
+- Output files contain no more than `30` unique Site IDs.
 - Formal output is generated only for a `PRODUCTION` profile.
 - UAT output is visibly marked and isolated under `NON_PRODUCTION_UAT/<run-id>/`.
+- Planning remains runtime-disabled until Issue #34 implementation tests pass and the CLI is intentionally enabled.
 
 ## Troubleshooting
 
@@ -284,21 +343,14 @@ Current stable baseline:
 - If the ECC template does not contain a `details` sheet, the script will raise a validation error.
 - Ensure `Info/input/ecc_template.xls` is valid and contains the required sheet.
 
-**Unknown subcontractor handling:**
-- Unknown subcontractor names use fuzzy matching to find the nearest / highest similarity match.
-- If the fuzzy match result is incorrect or undesired:
-  1. Do not automatically change the mapping file.
-  2. Verify the correct subcontractor name in the source data.
-  3. Confirm the correct contract number mapping with business stakeholders.
-  4. After confirmation, either:
-     - Update `Info/input/contract_info_reference.md` with the new mapping, **or**
-     - Standardize the subcontractor naming in the source data.
-  5. Re-run the generator.
+**Contract/subcontractor handling:**
+- The authoritative mapping is `Info/input/contract_info_reference.md`.
+- Planning accepts only `GCI`, `GTSB`, `GCI_AA`, and `GTSB_AA` for automatic processing.
+- Planning `_AA` values normalize only for contract lookup; they are not separate contracts.
+- Unknown Planning subcontractors must fail closed rather than use fuzzy matching.
 
-**PR model matching failures:**
-- If PR model matches fail, verify:
-  1. `Tx SOW` values in site data match PR model SOW descriptions (or are substrings).
-  2. PR model sheet name is correct: `TX Line Item (After 21-Apr 26)`.
-  3. Required columns exist in the PR model: `SOW`, `Description`, `Code`, `Unit`, `Quantity`.
+**PR model / selector failures:**
+- For TSS/TI, verify the active PR Model and approved scope-specific rules.
+- For Planning after Issue #34 runtime implementation, verify the DU Model and Planning subcontractor against the approved three-PBOM matrix; Tx SOW and TX Planning Remarks are not Planning selectors.
 
 ---
