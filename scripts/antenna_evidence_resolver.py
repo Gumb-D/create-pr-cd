@@ -58,13 +58,23 @@ _ANTENNA_SIZE_TARGET_RE = (
     rf"(?:{_FORWARD_ANTENNA_SIZE_TARGET_RE}|{_REVERSE_ANTENNA_SIZE_TARGET_RE})"
 )
 
+# Generic reverse target detection is intentionally broader than accepted size
+# grammar. It exists only to identify the old/source side of a directional
+# change. Invalid explicit units therefore suppress the old size and fail closed
+# rather than falling back to an existing antenna PBOM.
+_GENERIC_REVERSE_ANTENNA_TARGET_RE = (
+    rf"{_TARGET_MODIFIER_RE}\d+(?:[.,]\d+)?"
+    rf"(?:\s*(?:(?:[-–—/:|]\s*)|(?:[\(\[]\s*))?(?:[A-Za-z]+|[\"′″]))?"
+    rf"\s+(?:antenna|dish)\b"
+)
+
 # Generic directional transition is used to identify the source side even when
 # the following antenna phrase is invalid as a size target (for example a height
-# statement). Reverse targets are inherently size phrases, so their numeric form
-# is included explicitly here as well.
+# statement or a reverse target with an unsupported unit). The strict separator
+# below remains responsible for deciding whether the target itself is usable.
 _DIRECTIONAL_ANTENNA_TRANSITION_RE = (
     rf"\b(?:with|by|to)\b(?=\s+(?:"
-    rf"{_TARGET_MODIFIER_RE}(?:antenna|dish)\b|{_REVERSE_ANTENNA_SIZE_TARGET_RE}))"
+    rf"{_TARGET_MODIFIER_RE}(?:antenna|dish)\b|{_GENERIC_REVERSE_ANTENNA_TARGET_RE}))"
 )
 _DIRECTIONAL_ANTENNA_TRANSITION_PATTERN = re.compile(
     _DIRECTIONAL_ANTENNA_TRANSITION_RE,
