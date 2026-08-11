@@ -14,7 +14,7 @@ class TestMissingFieldBridgeReview(unittest.TestCase):
         unresolved_entry = {
             "profile_id": "jendela_tx_migration_pr_v1",
             "profile_version": "0.4.0",
-            "mapping_version": "approved-2026-08-04-jendela-tx-migration-v3",
+            "mapping_version": "approved-2026-08-11-jendela-tx-migration-v4",
             "observed_header_hash": "jendela-hash",
             "du_model_name": "Jendela TX Migration",
             "source_file_name": "jendela.xlsx",
@@ -115,8 +115,8 @@ class TestMissingFieldBridgeReview(unittest.TestCase):
         bridge_entry = build_bridge_entry(unresolved_entry, grouping, discovery)
 
         self.assertEqual(bridge_entry["profile_id"], "jendela_tx_migration_pr_v1")
-        self.assertEqual(bridge_entry["profile_version"], "0.4.0")
-        self.assertEqual(bridge_entry["mapping_version"], "approved-2026-08-04-jendela-tx-migration-v3")
+        self.assertEqual(bridge_entry["profile_version"], "0.5.0")
+        self.assertEqual(bridge_entry["mapping_version"], "approved-2026-08-11-jendela-tx-migration-v4")
         self.assertEqual(bridge_entry["field_bridges"], {})
 
     def test_zte_bridge_is_empty_after_local_pr_shortlist_candidates_are_detected(self):

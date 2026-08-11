@@ -11,7 +11,7 @@ PRODUCTION_PROFILES = {
     "celcomdigi_bau_2023_pr_v1.yaml": "approved-2026-07-14-2023-celcomdigi-bau-tx-prpo-v1",
     "celcomdigi_bau_2024_pr_v1.yaml": "approved-2026-07-10-2024-celcomdigi-bau-v2",
     "celcomdigi_usp_pr_v1.yaml": "approved-2026-07-10-celcomdigi-usp-v2",
-    "jendela_tx_migration_pr_v1.yaml": "approved-2026-08-04-jendela-tx-migration-v3",
+    "jendela_tx_migration_pr_v1.yaml": "approved-2026-08-11-jendela-tx-migration-v4",
     "zte_tx_mini_pr_v1.yaml": "approved-2026-07-15-zte-tx-mini-v1",
 }
 
@@ -97,7 +97,7 @@ class TestDuProfileLoader(_LegacyTestDuProfileLoader):
 
     def test_pr_input_ready_jendela_profile_loads_with_human_approved_pr_critical_mappings(self):
         profile = self._assert_production_profile("jendela_tx_migration_pr_v1.yaml")
-        self.assertEqual(profile["profile_version"], "0.4.0")
+        self.assertEqual(profile["profile_version"], "0.5.0")
         self.assertTrue(profile["field_mapping"]["tx_before_migration"]["required"])
         self.assertFalse(profile["field_mapping"]["final_backhaul"]["required"])
         self.assertFalse(profile["field_mapping"]["subcontractor_tss"]["required"])
