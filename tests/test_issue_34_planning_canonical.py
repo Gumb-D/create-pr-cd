@@ -11,6 +11,7 @@ SCRIPTS = ROOT / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
+from canonical_input_pipeline import _required_fields_for_scope  # noqa: E402
 from canonical_site_validator import PR_INPUT_READY, empty_canonical_site_record  # noqa: E402
 from du_export_adapter import PR_STATUS_NONE, build_canonical_site_record  # noqa: E402
 from profile_du_export import fingerprint_key  # noqa: E402
@@ -30,6 +31,42 @@ class PlanningCanonicalContractTest(unittest.TestCase):
         record = empty_canonical_site_record()
         self.assertIn("existing_planning_pr_status", record["pr_context"])
         self.assertEqual(record["pr_context"]["existing_planning_pr_status"], "")
+
+    def test_planning_pipeline_does_not_inherit_tss_ti_required_fields(self):
+        profile = {
+            "field_mapping": {
+                "site_code": {"required": True},
+                "region": {"required": True},
+                "tx_sow_raw": {"required": True},
+                "subcontractor_ti": {"required": True},
+                "existing_ti_pr_status": {"required": True},
+                "subcontractor_planning": {"required": False},
+                "existing_planning_pr_status": {"required": False},
+            }
+        }
+        required = _required_fields_for_scope(profile, "Planning")
+        self.assertEqual(
+            required,
+            {"site_code", "region", "subcontractor_planning", "existing_planning_pr_status"},
+        )
+        self.assertNotIn("tx_sow_raw", required)
+        self.assertNotIn("subcontractor_ti", required)
+        self.assertNotIn("existing_ti_pr_status", required)
+
+    def test_existing_tss_ti_scopes_keep_profile_required_fields(self):
+        profile = {
+            "field_mapping": {
+                "site_code": {"required": True},
+                "region": {"required": True},
+                "tx_sow_raw": {"required": True},
+                "subcontractor_ti": {"required": True},
+                "existing_ti_pr_status": {"required": True},
+            }
+        }
+        required = _required_fields_for_scope(profile, "TI")
+        self.assertIn("tx_sow_raw", required)
+        self.assertIn("subcontractor_ti", required)
+        self.assertIn("existing_ti_pr_status", required)
 
     def test_planning_scope_maps_and_validates_without_tx_sow(self):
         site_fp = _fp("SITE", "customer site code")
