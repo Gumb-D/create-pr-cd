@@ -4,6 +4,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 
@@ -97,6 +98,39 @@ class SkillContractTests(unittest.TestCase):
             self.assertEqual(contract.run(manifest), 2)
             result = json.loads((root / "result.json").read_text(encoding="utf-8"))
             self.assertEqual(result["error"]["code"], "CONTRACT_PATH_INVALID")
+
+    def test_domain_error_preserves_site_codes_not_found_details(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            output = root / "output"
+            output.mkdir()
+            cancellation = root / "control" / "cancel.requested"
+            parsed = SimpleNamespace(
+                site_data=root / "site_data.xlsx",
+                output=output,
+                scope="TSS",
+                all_sites=False,
+                site_code="A0001,QA15_UNMATCHED",
+                non_production_uat=False,
+            )
+            domain_error = {
+                "status": "ERROR",
+                "code": "SITE_CODES_NOT_FOUND",
+                "message": "Requested site codes were not found in the canonical input.",
+                "details": {"missing_site_codes": ["QA15_UNMATCHED"]},
+            }
+
+            def fake_popen(*_args, **kwargs):
+                kwargs["stderr"].write(json.dumps(domain_error).encode("utf-8"))
+                kwargs["stderr"].flush()
+                return SimpleNamespace(returncode=1, poll=lambda: 1)
+
+            with patch.object(contract.subprocess, "Popen", side_effect=fake_popen):
+                with self.assertRaises(contract.ContractError) as caught:
+                    contract.run_domain(parsed, cancellation)
+
+            self.assertEqual(caught.exception.code, "SITE_CODES_NOT_FOUND")
+            self.assertEqual(caught.exception.details["missing_site_codes"], ["QA15_UNMATCHED"])
 
 
 if __name__ == "__main__":
