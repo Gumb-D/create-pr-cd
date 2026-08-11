@@ -63,6 +63,18 @@ class TestIssue84JendelaBeforeMwAntenna(unittest.TestCase):
             1.2,
         )
 
+    def test_parser_rejects_signed_and_embedded_antenna_candidates(self):
+        for raw in (
+            "18G -1.2 SP 1+0",
+            "18G OD1.2 SP 1+0",
+            "18G +1.2 SP 1+0",
+            "18G -1.2 1+0",
+            "18G OD1.2 1+0",
+            "18G +1.2 1+0",
+        ):
+            with self.subTest(raw=raw):
+                self.assertIsNone(parse_jendela_before_mw_antenna_size(raw))
+
     def test_parser_fails_closed_when_multiple_polarized_antenna_sizes_disagree(self):
         self.assertIsNone(
             parse_jendela_before_mw_antenna_size("18G 0.6 SP 1+0 / 23G 1.2 SP 1+0"),
