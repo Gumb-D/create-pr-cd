@@ -1,12 +1,17 @@
 import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from build_profile_rollback_readiness import evaluate_rollback_readiness, rollback_markdown
+from build_profile_rollback_readiness import (
+    evaluate_rollback_readiness,
+    rollback_markdown,
+    write_rollback_outputs,
+)
 from du_profile_loader import load_du_profile
 
 
@@ -49,6 +54,27 @@ class TestProfileRollbackReadiness(unittest.TestCase):
         )
         self.assertEqual(entry["blockers"], [])
         self.assertIn("explicit prior approved profile identity", entry["notes"][0])
+
+    def test_regeneration_preserves_jendela_prior_version_rollback_target(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            registry_path = Path(tmpdir) / "rollback.json"
+            markdown_path = Path(tmpdir) / "rollback.md"
+            write_rollback_outputs(
+                [ROOT / "config" / "du_profiles" / "jendela_tx_migration_pr_v1.yaml"],
+                ROOT / "config" / "registries" / "mw_du_profile_deprecation_review.yaml",
+                registry_path,
+                markdown_path,
+                ROOT / "config" / "registries" / "mw_du_profile_rollback_baselines_source.yaml",
+            )
+
+            registry = json.loads(registry_path.read_text(encoding="utf-8"))
+            entry = registry["entries"][0]
+            markdown = markdown_path.read_text(encoding="utf-8")
+
+        self.assertEqual(entry["profile_version"], "0.5.0")
+        self.assertEqual(entry["rollback_target_profile_version"], "0.4.0")
+        self.assertIn("Rollback target: `jendela_tx_migration_pr_v1` `0.4.0`", markdown)
+        self.assertNotIn("Rollback target: `jendela_tx_migration_pr_v1` `0.5.0`", markdown)
 
     def test_explicit_rollback_baseline_fails_closed_if_it_targets_current_version(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "jendela_tx_migration_pr_v1.yaml")
