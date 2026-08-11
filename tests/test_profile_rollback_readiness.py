@@ -105,6 +105,16 @@ class TestProfileRollbackReadiness(unittest.TestCase):
         self.assertEqual(entry["rollback_readiness_status"], "ROLLBACK_BLOCKED")
         self.assertIn("ROLLBACK_TARGET_PROFILE_VERSION_MISMATCH", entry["blockers"])
 
+    def test_jendela_baseline_rejects_ungoverned_rollback_hash(self):
+        profile = load_du_profile(ROOT / "config" / "du_profiles" / "jendela_tx_migration_pr_v1.yaml")
+        baseline = dict(self._rollback_baseline_for("jendela_tx_migration_pr_v1"))
+        baseline["rollback_header_hashes"] = ["not-a-real-approved-hash"]
+
+        entry = evaluate_rollback_readiness(profile, None, baseline)
+
+        self.assertEqual(entry["rollback_readiness_status"], "ROLLBACK_BLOCKED")
+        self.assertIn("ROLLBACK_TARGET_HEADER_HASH_MISMATCH", entry["blockers"])
+
     def test_regeneration_preserves_jendela_prior_version_rollback_target(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             registry_path = Path(tmpdir) / "rollback.json"
