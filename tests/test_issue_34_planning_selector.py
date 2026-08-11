@@ -13,6 +13,10 @@ ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts"
 SELECTOR_PATH = SCRIPTS / "planning_pr_selector.py"
 
+FULL_PLANNING_DESCRIPTION = "2026-Detailed end to end transmission planning and design"
+SINGLE_HOP_DESCRIPTION = "2026-Single-hop planning and design"
+AA_DESCRIPTION = "Detailed end to end transmission planning and design (for AA modification & AA submisison sow only)"
+
 
 class PlanningSelectorPresenceTest(unittest.TestCase):
     def test_planning_selector_module_exists(self) -> None:
@@ -55,6 +59,7 @@ class PlanningSelectorContractTest(unittest.TestCase):
                     result = self.select(du_model, subcon)
                     self.assertEqual(result.status, "RESOLVED")
                     self.assertEqual(result.pbom_code, "350001143904")
+                    self.assertEqual(result.description, FULL_PLANNING_DESCRIPTION)
                     self.assertEqual(result.quantity, 1)
                     self.assertEqual(result.unit, "Hop")
                     self.assertEqual(result.contract_subcontractor, subcon)
@@ -67,6 +72,7 @@ class PlanningSelectorContractTest(unittest.TestCase):
                     result = self.select(du_model, subcon)
                     self.assertEqual(result.status, "RESOLVED")
                     self.assertEqual(result.pbom_code, "350001143905")
+                    self.assertEqual(result.description, SINGLE_HOP_DESCRIPTION)
                     self.assertEqual(result.quantity, 1)
                     self.assertEqual(result.unit, "Hop")
                     self.assertEqual(result.contract_subcontractor, subcon)
@@ -88,6 +94,7 @@ class PlanningSelectorContractTest(unittest.TestCase):
                     result = self.select(du_model, source_subcon)
                     self.assertEqual(result.status, "RESOLVED")
                     self.assertEqual(result.pbom_code, "350001042321")
+                    self.assertEqual(result.description, AA_DESCRIPTION)
                     self.assertNotIn(result.pbom_code, {"350001143904", "350001143905"})
                     self.assertEqual(result.quantity, 1)
                     self.assertEqual(result.unit, "Hop")
@@ -103,6 +110,7 @@ class PlanningSelectorContractTest(unittest.TestCase):
         result = self.select("2023 TX Rollout", "UNKNOWN_VENDOR")
         self.assertEqual(result.status, "REVIEW_REQUIRED")
         self.assertIsNone(result.pbom_code)
+        self.assertIsNone(result.description)
         self.assertIsNone(result.contract_subcontractor)
         self.assertEqual(result.reason_code, "PLANNING_SUBCONTRACTOR_NOT_APPROVED")
 
@@ -110,12 +118,14 @@ class PlanningSelectorContractTest(unittest.TestCase):
         result = self.select("Unsupported DU", "GCI")
         self.assertEqual(result.status, "REVIEW_REQUIRED")
         self.assertIsNone(result.pbom_code)
+        self.assertIsNone(result.description)
         self.assertEqual(result.reason_code, "PLANNING_DU_MODEL_NOT_APPROVED")
 
     def test_blank_planning_subcontractor_is_not_applicable(self) -> None:
         result = self.select("2023 TX Rollout", "  ")
         self.assertEqual(result.status, "NOT_APPLICABLE")
         self.assertIsNone(result.pbom_code)
+        self.assertIsNone(result.description)
         self.assertEqual(result.reason_code, "PLANNING_SUBCONTRACTOR_BLANK")
 
 
