@@ -46,6 +46,7 @@ _SOURCE_SIDE_INTENT_PATTERN = re.compile(
 
 _TARGET_MODIFIER_RE = r"(?:(?:new|target|proposed|replacement)\s+)?"
 _METRE_SUFFIX_RE = r"(?:\s*m(?:eters?|etres?)?\b)?"
+_QUOTE_UNIT_RE = r'''['"′″’‘“”]'''
 _FORWARD_ANTENNA_SIZE_TARGET_RE = (
     rf"{_TARGET_MODIFIER_RE}(?:antenna|dish)\b\s*"
     rf"(?:(?:(?:with|of)\s+)?(?:size|diameter)\b\s*[:=]?\s*)?"
@@ -64,7 +65,7 @@ _ANTENNA_SIZE_TARGET_RE = (
 # rather than falling back to an existing antenna PBOM.
 _GENERIC_REVERSE_ANTENNA_TARGET_RE = (
     rf"{_TARGET_MODIFIER_RE}\d+(?:[.,]\d+)?"
-    rf"(?:\s*(?:(?:[-–—/:|]\s*)|(?:[\(\[]\s*))?(?:[A-Za-z]+|[\"′″]))?"
+    rf"(?:\s*(?:(?:[-–—/:|]\s*)|(?:[\(\[]\s*))?(?:[A-Za-z]+|{_QUOTE_UNIT_RE}))?"
     rf"\s+(?:antenna|dish)\b"
 )
 
@@ -102,7 +103,7 @@ _CLAUSE_SEPARATOR_PATTERN = re.compile(
 )
 
 _EXPLICIT_NON_METRE_UNIT_SUFFIX_PATTERN = re.compile(
-    r"\s*(?:(?:[-–—/:|]\s*)|(?:[\(\[]\s*))?(?:[A-Za-z]|[\"′″])",
+    rf"\s*(?:(?:[-–—/:|]\s*)|(?:[\(\[]\s*))?(?:[A-Za-z]|{_QUOTE_UNIT_RE})",
     re.IGNORECASE,
 )
 
