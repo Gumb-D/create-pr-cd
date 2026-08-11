@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Permanent regression coverage for direct antenna fields containing CIDR-like values."""
+"""Permanent regression coverage for invalid direct antenna values and CIDR-like noise."""
 from __future__ import annotations
 
 import sys
@@ -44,6 +44,25 @@ class TestIssue82DirectCidr(unittest.TestCase):
         self.assertEqual(result["ne_size"], 0.6)
         self.assertEqual(result["fe_size"], 0.6)
         self.assertEqual(result["selected_size"], 0.6)
+
+    def test_invalid_nonblank_direct_values_block_weaker_fallback(self):
+        for direct_ne, direct_fe in (
+            ("6.0m", "6.0m"),
+            ("unsupported", "0.6m"),
+        ):
+            with self.subTest(direct_ne=direct_ne, direct_fe=direct_fe):
+                result = resolve_installation_antenna_evidence(
+                    {
+                        "MW Config Antenna Size NE": direct_ne,
+                        "MW Config Antenna Size FE": direct_fe,
+                        "NE SOW Details": "Install antenna 0.6m",
+                        "FE SOW Details": "Install antenna 0.6m",
+                        "TX SOW Details": "Install antenna 0.6m",
+                    }
+                )
+                self.assertEqual(result["status"], "MISSING")
+                self.assertIsNone(result["selected_size"])
+                self.assertIsNone(result["common_size"])
 
 
 if __name__ == "__main__":
