@@ -17,6 +17,7 @@ on:
       - "tests/test_issue_82_replacement_phrase.py"
       - "tests/test_issue_82_direct_cidr.py"
       - "tests/test_issue_82_directional_install_wrapper.py"
+      - "tests/test_issue_82_standalone_replacement.py"
       - ".github/workflows/issue-82-regression.yml"
 
 permissions:
@@ -44,6 +45,7 @@ jobs:
             tests.test_issue_82_replacement_phrase \
             tests.test_issue_82_direct_cidr \
             tests.test_issue_82_directional_install_wrapper \
+            tests.test_issue_82_standalone_replacement \
             tests.test_ti_sow_matching \
             tests.test_human_uat_remediation_48_54 \
             tests.test_jendela_approved_pr_model \
