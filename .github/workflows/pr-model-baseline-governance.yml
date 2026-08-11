@@ -3,157 +3,25 @@ name: PR Model Baseline Governance
 on:
   pull_request:
     paths:
-      - 'config/**'
+      - 'config/pr_model_baseline.yaml'
+      - 'config/README.md'
       - 'Info/input/pr_model.xlsx'
-      - 'scripts/**'
+      - 'scripts/pr_model_baseline.py'
+      - 'scripts/analyze_pr_model_change.py'
+      - 'scripts/promote_pr_model.py'
+      - 'scripts/create_pr.py'
+      - 'scripts/generate_tss_pr_ecc.py'
+      - 'scripts/run_tx_mini_ecc_parity.py'
       - 'tests/**'
-      - 'docs/**'
+      - 'docs/pr_model_history.md'
+      - 'docs/pr_model_reference_inventory.md'
       - '.github/workflows/pr-model-baseline-governance.yml'
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  apply-issue-84-codex-p1:
-    if: github.actor != 'github-actions[bot]'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Issue 84 branch
-        uses: actions/checkout@v4
-        with:
-          ref: fix/issue-84-jendela-before-mw-antenna
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install dependencies
-        run: python -m pip install --upgrade pip openpyxl pandas pyyaml xlrd
-
-      - name: Version Jendela mapping and tracked governance packet
-        shell: python
-        run: |
-          import json
-          import re
-          from pathlib import Path
-          import subprocess
-          import sys
-
-          OLD_PROFILE = '0.4.0'
-          NEW_PROFILE = '0.5.0'
-          OLD_MAPPING = 'approved-2026-08-04-jendela-tx-migration-v3'
-          NEW_MAPPING = 'approved-2026-08-11-jendela-tx-migration-v4'
-          PROFILE_ID = 'jendela_tx_migration_pr_v1'
-
-          profile_path = Path('config/du_profiles/jendela_tx_migration_pr_v1.yaml')
-          profile = json.loads(profile_path.read_text(encoding='utf-8'))
-          profile['profile_version'] = NEW_PROFILE
-          profile['mapping_version'] = NEW_MAPPING
-          notes = list(profile.get('validation', {}).get('profile_notes', []))
-          notes = [
-              note for note in notes
-              if 'approved four-layer source mapping identity remains version 0.4.0' not in note
-              and 'Issue #84 adds the approved Jendela MW Config fingerprint' not in note
-          ]
-          notes.insert(
-              0,
-              f'Issue #84 adds the approved Jendela MW Config fingerprint as Before MW antenna evidence; this mapping snapshot is version {NEW_PROFILE} / {NEW_MAPPING}.'
-          )
-          profile.setdefault('validation', {})['profile_notes'] = notes
-          profile_path.write_text(json.dumps(profile, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
-
-          jendela_block = re.compile(
-              r'("profile_id"\s*:\s*"' + re.escape(PROFILE_ID)
-              + r'".*?"profile_version"\s*:\s*")' + re.escape(OLD_PROFILE)
-              + r'(".*?"mapping_version"\s*:\s*")' + re.escape(OLD_MAPPING)
-              + r'(")',
-              re.DOTALL,
-          )
-
-          for path in sorted(Path('config/registries').glob('*.yaml')):
-              text = path.read_text(encoding='utf-8')
-              if OLD_MAPPING not in text:
-                  continue
-              text, count = jendela_block.subn(
-                  rf'\g<1>{NEW_PROFILE}\g<2>{NEW_MAPPING}\g<3>',
-                  text,
-              )
-              if count == 0:
-                  text = text.replace(OLD_MAPPING, NEW_MAPPING)
-              if OLD_MAPPING in text:
-                  raise SystemExit(f'{path}: stale Jendela mapping identity remains')
-              path.write_text(text, encoding='utf-8')
-
-          for path in sorted(Path('docs').glob('MW_DU_*.md')):
-              text = path.read_text(encoding='utf-8')
-              if OLD_MAPPING not in text and PROFILE_ID not in text:
-                  continue
-              lines = []
-              for line in text.splitlines(keepends=True):
-                  if OLD_MAPPING in line:
-                      line = line.replace(OLD_MAPPING, NEW_MAPPING)
-                      line = line.replace(OLD_PROFILE, NEW_PROFILE)
-                  elif PROFILE_ID in line:
-                      line = line.replace(OLD_PROFILE, NEW_PROFILE)
-                  lines.append(line)
-              path.write_text(''.join(lines), encoding='utf-8')
-
-          for path in sorted(Path('tests').glob('test_*.py')):
-              text = path.read_text(encoding='utf-8')
-              if OLD_MAPPING in text:
-                  text = text.replace(OLD_MAPPING, NEW_MAPPING)
-                  path.write_text(text, encoding='utf-8')
-
-          assertion_updates = {
-              Path('tests/test_profile_rollback_readiness.py'): [
-                  ('self.assertEqual(entry["rollback_target_profile_version"], "0.4.0")',
-                   'self.assertEqual(entry["rollback_target_profile_version"], "0.5.0")'),
-              ],
-              Path('tests/test_du_profile_loader.py'): [
-                  ('self.assertEqual(profile["profile_version"], "0.4.0")',
-                   'self.assertEqual(profile["profile_version"], "0.5.0")'),
-              ],
-              Path('tests/test_missing_field_bridge_review.py'): [
-                  ('self.assertEqual(bridge_entry["profile_version"], "0.4.0")',
-                   'self.assertEqual(bridge_entry["profile_version"], "0.5.0")'),
-              ],
-          }
-          for path, replacements in assertion_updates.items():
-              text = path.read_text(encoding='utf-8')
-              for old, new in replacements:
-                  if old not in text:
-                      raise SystemExit(f'{path}: expected current-snapshot assertion not found: {old}')
-                  text = text.replace(old, new, 1)
-              path.write_text(text, encoding='utf-8')
-
-          subprocess.run([
-              sys.executable, '-m', 'unittest',
-              'tests.test_discovery_packet_consistency',
-              'tests.test_profile_status_consistency',
-              'tests.test_profile_traceability_audit',
-              'tests.test_profile_rollback_readiness',
-              'tests.test_du_profile_loader',
-              'tests.test_missing_field_bridge_review',
-              'tests.test_profile_transition_review',
-              '-v',
-          ], check=True)
-
-      - name: Commit governance identity refresh
-        shell: bash
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add config/du_profiles/jendela_tx_migration_pr_v1.yaml config/registries docs/MW_DU_*.md tests
-          if git diff --cached --quiet; then
-            echo 'No governance changes to commit.'
-            exit 1
-          fi
-          git commit -m 'fix(issue-84): version Jendela MW Config mapping governance'
-          git push origin HEAD:fix/issue-84-jendela-before-mw-antenna
-
   baseline-governance:
     runs-on: ubuntu-latest
     steps:
