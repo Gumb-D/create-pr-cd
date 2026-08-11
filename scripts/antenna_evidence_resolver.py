@@ -61,12 +61,14 @@ _ANTENNA_SIZE_TARGET_RE = (
 
 # Generic reverse target detection is intentionally broader than accepted size
 # grammar. It exists only to identify the old/source side of a directional
-# change. Invalid explicit units therefore suppress the old size and fail closed
-# rather than falling back to an existing antenna PBOM.
+# change. Invalid explicit units and a small number of descriptive words before
+# antenna/dish therefore suppress the old size and fail closed rather than
+# falling back to an existing antenna PBOM. Strict target acceptance below is
+# unchanged and does not consume these descriptive/invalid forms.
 _GENERIC_REVERSE_ANTENNA_TARGET_RE = (
     rf"{_TARGET_MODIFIER_RE}\d+(?:[.,]\d+)?"
     rf"(?:\s*(?:(?:[-–—/:|]\s*)|(?:[\(\[]\s*))?(?:[A-Za-z]+|{_QUOTE_UNIT_RE}))?"
-    rf"\s+(?:antenna|dish)\b"
+    rf"(?:\s+[A-Za-z][A-Za-z-]*){{0,3}}\s+(?:antenna|dish)\b"
 )
 
 # Generic directional transition is used to identify the source side even when
@@ -93,11 +95,12 @@ _DIRECTIONAL_ANTENNA_SEPARATOR_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-# All action-aware punctuation uses the same action vocabulary as the intent
-# resolver. Colon, slash, pipe and dashes split only when they introduce a real
-# action; therefore `antenna size: 0.6m` remains one valid size phrase.
+# All sentence terminators are clause boundaries. Other punctuation remains
+# action-aware and uses the same action vocabulary as the intent resolver.
+# Therefore `antenna size: 0.6m` remains one valid size phrase while
+# `Dismantle ...: install ...` splits deterministically.
 _CLAUSE_SEPARATOR_PATTERN = re.compile(
-    rf"(?:[;,\n&]|\.(?=\s|$)|\b(?:and|then)\b|"
+    rf"(?:[;,\n&!?]|\.(?=\s|$)|\b(?:and|then)\b|"
     rf"(?:[:/|]|[-–—])(?=\s*{_ACTION_INTENT_RE}\b)|{_DIRECTIONAL_ANTENNA_SEPARATOR_RE})",
     re.IGNORECASE,
 )
