@@ -69,6 +69,30 @@ class TestIssue82ReplacementPhrase(unittest.TestCase):
         self.assertEqual(result["common_size"], 0.6)
         self.assertEqual(result["selected_size"], 0.6)
 
+    def test_directional_target_without_adjective_excludes_source_size(self):
+        result = self._resolve_common("Upgrade antenna 2.4m to antenna 0.6m")
+        self.assertEqual(result["status"], "RESOLVED_COMMON")
+        self.assertEqual(result["common_size"], 0.6)
+        self.assertEqual(result["selected_size"], 0.6)
+
+    def test_slash_delimited_actions_exclude_dismantle_size(self):
+        result = self._resolve_common(
+            "Dismantle antenna 2.4m / install antenna 0.6m"
+        )
+        self.assertEqual(result["status"], "RESOLVED_COMMON")
+        self.assertEqual(result["common_size"], 0.6)
+        self.assertEqual(result["selected_size"], 0.6)
+
+    def test_non_metre_units_are_not_bare_antenna_diameters(self):
+        for text in (
+            "Install antenna bracket 2.4mm",
+            "Install antenna at clearance 2.4cm",
+        ):
+            with self.subTest(text=text):
+                result = self._resolve_common(text)
+                self.assertEqual(result["status"], "MISSING")
+                self.assertIsNone(result["selected_size"])
+
 
 if __name__ == "__main__":
     unittest.main()
