@@ -117,7 +117,7 @@ Discovery-only cross-profile review matrix for the current DRAFT profiles.
 
 - Readiness status: `PRODUCTION_READY`
 - Profile version: `0.4.0`
-- Mapping version: `approved-2026-08-04-jendela-tx-migration-v3`
+- Mapping version: `approved-2026-08-11-jendela-tx-migration-v4`
 - Observed header hash: `f45c209df5ca75b333f9b590ebc01c05c097e44231d22433290f8078e57c9056`
 - Action count: `5`
 - Action type counts:

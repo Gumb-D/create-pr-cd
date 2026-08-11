@@ -73,8 +73,8 @@
     },
     {
       "profile_id": "jendela_tx_migration_pr_v1",
-      "profile_version": "0.4.0",
-      "mapping_version": "approved-2026-08-04-jendela-tx-migration-v3",
+      "profile_version": "0.5.0",
+      "mapping_version": "approved-2026-08-11-jendela-tx-migration-v4",
       "current_status": "PRODUCTION",
       "observed_header_hash": "f45c209df5ca75b333f9b590ebc01c05c097e44231d22433290f8078e57c9056",
       "rollback_readiness_status": "ROLLBACK_BASELINE_RECORDED",

@@ -88,7 +88,7 @@ Prioritized governance action queue for the current DU Profiles.
 
 - Readiness status: `PRODUCTION_READY`
 - Profile status: `PRODUCTION`
-- Mapping version: `approved-2026-08-04-jendela-tx-migration-v3`
+- Mapping version: `approved-2026-08-11-jendela-tx-migration-v4`
 - Observed header hash: `f45c209df5ca75b333f9b590ebc01c05c097e44231d22433290f8078e57c9056`
 - Action queue:
   - `jendela_tx_migration_pr_v1:01` `CONFIRM_COMPETING_CANDIDATE` `site_name`: Choose one exact four-layer source for `site_name` from the competing shortlist candidates.
