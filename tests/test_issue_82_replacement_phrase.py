@@ -260,6 +260,29 @@ class TestIssue82ReplacementPhrase(unittest.TestCase):
                 self.assertIsNone(result["common_size"])
                 self.assertIsNone(result["selected_size"])
 
+    def test_directional_target_requires_governing_action(self):
+        for text in (
+            "Existing link is connected to antenna 2.4m",
+            "Existing radio connected to dish 1.2m",
+        ):
+            with self.subTest(text=text):
+                result = self._resolve_common(text)
+                self.assertEqual(result["status"], "MISSING")
+                self.assertIsNone(result["common_size"])
+                self.assertIsNone(result["selected_size"])
+
+    def test_postpositive_not_required_fails_closed(self):
+        for text in (
+            "Upgrade existing antenna 2.4m to new antenna 0.6m not required",
+            "Install antenna 0.6m not required",
+            "Installation of new antenna 0.6m is not required",
+        ):
+            with self.subTest(text=text):
+                result = self._resolve_common(text)
+                self.assertEqual(result["status"], "MISSING")
+                self.assertIsNone(result["common_size"])
+                self.assertIsNone(result["selected_size"])
+
 
 if __name__ == "__main__":
     unittest.main()
