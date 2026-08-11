@@ -145,6 +145,24 @@ def _unpolarized_standard_antenna_size(body: str) -> float | None:
     return max(supported_candidates)
 
 
+def _supported_standalone_sizes_outside_links(
+    text: str,
+    link_matches: list[re.Match[str]],
+) -> list[float]:
+    link_spans = [match.span() for match in link_matches]
+    supported_sizes: list[float] = []
+    for match in _UNPOLARIZED_NUMERIC_TOKEN.finditer(text):
+        if any(
+            start <= match.start() and match.end() <= end
+            for start, end in link_spans
+        ):
+            continue
+        candidate = float(match.group(1))
+        if _supported_dismantle_antenna_size(candidate):
+            supported_sizes.append(candidate)
+    return supported_sizes
+
+
 def parse_jendela_before_mw_antenna_size(value: Any) -> float | None:
     """Extract the largest valid existing-MW antenna size from MW Config evidence.
 
@@ -153,9 +171,11 @@ def parse_jendela_before_mw_antenna_size(value: Any) -> float | None:
     and every resolved value must be represented by the approved Jendela v4.1 MW
     Dismantle model. When polarization wording is absent, the parser accepts a
     standard GHz -> body -> N+N link shape and considers only supported antenna
-    diameters from the body. If multiple valid antenna diameters are identified,
-    the business rule is to return the largest. Invalid, malformed, missing, or
-    unsupported complete-link antenna evidence remains fail-closed.
+    diameters from the body. Supported standalone antenna evidence outside a
+    structurally valid link also participates in the largest-size selection. If
+    multiple valid antenna diameters are identified, the business rule is to
+    return the largest. Invalid, malformed, missing, or unsupported complete-link
+    antenna evidence remains fail-closed.
     """
     text = " ".join(str(value or "").strip().split())
     if not text:
@@ -193,6 +213,9 @@ def parse_jendela_before_mw_antenna_size(value: Any) -> float | None:
                 return None
             resolved_sizes.append(link_size)
 
+        resolved_sizes.extend(
+            _supported_standalone_sizes_outside_links(text, link_matches)
+        )
         return max(resolved_sizes)
 
     # Preserve structurally qualified legacy formatting that may omit explicit
