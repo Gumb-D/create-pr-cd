@@ -164,6 +164,7 @@
   "notes": [
     "This rollback review is fail-closed and documents whether a profile has an approved rollback baseline.",
     "A blocked result does not imply a defect; it can simply mean the profile has not reached an approved release state yet.",
-    "Explicit prior-version rollback baselines are sourced from config/registries/mw_du_profile_rollback_baselines_source.yaml."
+    "Explicit prior-version rollback baseline evidence is sourced from config/registries/mw_du_profile_rollback_baselines_source.yaml.",
+    "Profiles that require an explicit prior baseline are independently governed in build_profile_rollback_readiness.py."
   ]
 }
