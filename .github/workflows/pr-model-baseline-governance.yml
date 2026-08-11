@@ -3,25 +3,75 @@ name: PR Model Baseline Governance
 on:
   pull_request:
     paths:
-      - 'config/pr_model_baseline.yaml'
-      - 'config/README.md'
+      - 'config/**'
       - 'Info/input/pr_model.xlsx'
-      - 'scripts/pr_model_baseline.py'
-      - 'scripts/analyze_pr_model_change.py'
-      - 'scripts/promote_pr_model.py'
-      - 'scripts/create_pr.py'
-      - 'scripts/generate_tss_pr_ecc.py'
-      - 'scripts/run_tx_mini_ecc_parity.py'
+      - 'scripts/**'
       - 'tests/**'
-      - 'docs/pr_model_history.md'
-      - 'docs/pr_model_reference_inventory.md'
+      - 'docs/**'
       - '.github/workflows/pr-model-baseline-governance.yml'
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
+  apply-issue-84-codex-p1:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Issue 84 branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/issue-84-jendela-before-mw-antenna
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip openpyxl pandas pyyaml xlrd
+
+      - name: Version Jendela mapping and regenerate governance packet
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+          import subprocess
+          import sys
+
+          profile_path = Path('config/du_profiles/jendela_tx_migration_pr_v1.yaml')
+          profile = json.loads(profile_path.read_text(encoding='utf-8'))
+          profile['profile_version'] = '0.5.0'
+          profile['mapping_version'] = 'approved-2026-08-11-jendela-tx-migration-v4'
+          notes = list(profile.get('validation', {}).get('profile_notes', []))
+          notes = [
+              note for note in notes
+              if 'approved four-layer source mapping identity remains version 0.4.0' not in note
+          ]
+          notes.insert(
+              0,
+              'Issue #84 adds the approved Jendela MW Config fingerprint as Before MW antenna evidence; this mapping snapshot is version 0.5.0 / approved-2026-08-11-jendela-tx-migration-v4.'
+          )
+          profile.setdefault('validation', {})['profile_notes'] = notes
+          profile_path.write_text(json.dumps(profile, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          subprocess.run([sys.executable, 'scripts/refresh_mw_du_discovery_packet.py'], check=True)
+
+      - name: Commit governance identity refresh
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add config/du_profiles/jendela_tx_migration_pr_v1.yaml config/registries docs/MW_DU_*.md
+          if git diff --cached --quiet; then
+            echo 'No governance changes to commit.'
+            exit 1
+          fi
+          git commit -m 'fix(issue-84): version Jendela MW Config mapping governance'
+          git push origin HEAD:fix/issue-84-jendela-before-mw-antenna
+
   baseline-governance:
     runs-on: ubuntu-latest
     steps:
