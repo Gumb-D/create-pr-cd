@@ -93,6 +93,37 @@ class TestIssue82ReplacementPhrase(unittest.TestCase):
                 self.assertEqual(result["status"], "MISSING")
                 self.assertIsNone(result["selected_size"])
 
+    def test_slash_build_action_uses_only_built_antenna_size(self):
+        result = self._resolve_common(
+            "Dismantle antenna 2.4m / build antenna 0.6m"
+        )
+        self.assertEqual(result["status"], "RESOLVED_COMMON")
+        self.assertEqual(result["common_size"], 0.6)
+        self.assertEqual(result["selected_size"], 0.6)
+
+    def test_dash_delimited_actions_exclude_dismantle_size(self):
+        for separator in ("-", "–", "—"):
+            text = f"Dismantle antenna 2.4m {separator} install antenna 0.6m"
+            with self.subTest(separator=separator):
+                result = self._resolve_common(text)
+                self.assertEqual(result["status"], "RESOLVED_COMMON")
+                self.assertEqual(result["common_size"], 0.6)
+                self.assertEqual(result["selected_size"], 0.6)
+
+    def test_directional_height_is_not_antenna_diameter(self):
+        result = self._resolve_common(
+            "Upgrade antenna 2.4m to antenna mounted at 3.0m height"
+        )
+        self.assertEqual(result["status"], "MISSING")
+        self.assertIsNone(result["common_size"])
+        self.assertIsNone(result["selected_size"])
+
+    def test_punctuation_prefixed_non_metre_unit_is_rejected(self):
+        result = self._resolve_common("Install antenna bracket 2.4-inch")
+        self.assertEqual(result["status"], "MISSING")
+        self.assertIsNone(result["common_size"])
+        self.assertIsNone(result["selected_size"])
+
 
 if __name__ == "__main__":
     unittest.main()
