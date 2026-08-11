@@ -102,10 +102,10 @@ _EXPLICIT_NON_METRE_UNIT_SUFFIX_PATTERN = re.compile(
 )
 _MULTI_DOT_NUMERIC_TOKEN_PATTERN = re.compile(r"(?<![\d.])\d+(?:\.\d+){2,}(?:/\d+)?(?![\d./])")
 _BROKEN_MULTILINE_INSTALL_TARGET_PATTERN = re.compile(
-    rf"\b(?:with|by|to)\b{_HWS1_RE}install(?:ed|ing)?"
-    rf"(?:{_HWS1_RE}(?:a|an|the|new|target|proposed|replacement)){{0,2}}{_HWS_RE}"
-    rf"(?:\r\n|\r|\n)"
-    rf"(?={_HWS_RE}(?:(?:a|an|the|new|target|proposed|replacement){_HWS1_RE}){{0,2}}(?:antenna|dish)\b)",
+    rf"\b(?:with|by|to)\b[ \t\r\n]+install(?:ed|ing)?"
+    rf"(?:[ \t\r\n]+(?:a|an|the))?"
+    rf"(?:[ \t\r\n]+(?:new|target|proposed|replacement))?"
+    rf"[ \t\r\n]+(?:antenna|dish)\b",
     re.IGNORECASE,
 )
 
@@ -280,7 +280,8 @@ def _parse_detail_sizes(value: Any, *, require_antenna_context: bool) -> list[fl
     if _is_blank(value):
         return []
     text = re.sub(r"(?<=\d),(?=\d)", ".", str(value))
-    if _BROKEN_MULTILINE_INSTALL_TARGET_PATTERN.search(text):
+    broken_multiline_target = _BROKEN_MULTILINE_INSTALL_TARGET_PATTERN.search(text)
+    if broken_multiline_target and ("\r" in broken_multiline_target.group(0) or "\n" in broken_multiline_target.group(0)):
         return []
     candidates: list[float] = []
     consumed: list[tuple[int, int]] = []
