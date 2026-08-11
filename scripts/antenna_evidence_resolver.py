@@ -79,14 +79,14 @@ _GENERIC_REVERSE_ANTENNA_TARGET_RE = (
     rf"[^;,\r\n&!?]{{0,48}}?\b(?:antenna|dish)\b"
 )
 _DIRECTIONAL_ANTENNA_TRANSITION_RE = (
-    rf"\b(?:with|by|to)\b(?={_HWS1_RE}(?:"
+    rf"\b(?:with|by|to|for)\b(?={_HWS1_RE}(?:"
     rf"{_TARGET_MODIFIER_RE}(?:antenna|dish)\b|{_GENERIC_REVERSE_ANTENNA_TARGET_RE}))"
 )
 _DIRECTIONAL_ANTENNA_TRANSITION_PATTERN = re.compile(
     _DIRECTIONAL_ANTENNA_TRANSITION_RE, re.IGNORECASE
 )
 _DIRECTIONAL_ANTENNA_SEPARATOR_RE = (
-    rf"\b(?:with|by|to)\b(?={_HWS1_RE}{_ANTENNA_SIZE_TARGET_RE})"
+    rf"\b(?:with|by|to|for)\b(?={_HWS1_RE}{_ANTENNA_SIZE_TARGET_RE})"
 )
 _DIRECTIONAL_ANTENNA_SEPARATOR_PATTERN = re.compile(
     _DIRECTIONAL_ANTENNA_SEPARATOR_RE, re.IGNORECASE
@@ -102,7 +102,7 @@ _EXPLICIT_NON_METRE_UNIT_SUFFIX_PATTERN = re.compile(
 )
 _MULTI_DOT_NUMERIC_TOKEN_PATTERN = re.compile(r"(?<![\d.])\d+(?:\.\d+){2,}(?:/\d+)?(?![\d./])")
 _BROKEN_MULTILINE_INSTALL_TARGET_PATTERN = re.compile(
-    rf"\b(?:with|by|to)\b[ \t\r\n]+install(?:ed|ing)?"
+    rf"\b(?:with|by|to|for)\b[ \t\r\n]+install(?:ed|ing)?"
     rf"(?:[ \t\r\n]+(?:a|an|the))?"
     rf"(?:[ \t\r\n]+(?:new|target|proposed|replacement))?"
     rf"[ \t\r\n]+(?:antenna|dish)\b",
