@@ -115,6 +115,24 @@ class TestProfileRollbackReadiness(unittest.TestCase):
         self.assertEqual(entry["rollback_readiness_status"], "ROLLBACK_BLOCKED")
         self.assertIn("ROLLBACK_TARGET_HEADER_HASH_MISMATCH", entry["blockers"])
 
+    def test_deprecated_jendela_still_enforces_governed_prior_rollback_target(self):
+        profile = load_du_profile(ROOT / "config" / "du_profiles" / "jendela_tx_migration_pr_v1.yaml")
+        profile["status"] = "DEPRECATED"
+        deprecation_entry = {
+            "profile_id": "jendela_tx_migration_pr_v1",
+            "deprecation_status": "DEPRECATION_RECORDED",
+            "rollback_profile_id": "jendela_tx_migration_pr_v1_typo",
+            "rollback_profile_version": "0.5.0",
+            "superseded_header_hashes": ["not-a-real-approved-hash"],
+        }
+
+        entry = evaluate_rollback_readiness(profile, deprecation_entry)
+
+        self.assertEqual(entry["rollback_readiness_status"], "ROLLBACK_BLOCKED")
+        self.assertIn("ROLLBACK_TARGET_PROFILE_ID_MISMATCH", entry["blockers"])
+        self.assertIn("ROLLBACK_TARGET_PROFILE_VERSION_MISMATCH", entry["blockers"])
+        self.assertIn("ROLLBACK_TARGET_HEADER_HASH_MISMATCH", entry["blockers"])
+
     def test_regeneration_preserves_jendela_prior_version_rollback_target(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             registry_path = Path(tmpdir) / "rollback.json"
@@ -209,8 +227,6 @@ class TestProfileRollbackReadiness(unittest.TestCase):
         )
 
     def test_tx_mini_records_rollback_baseline_after_pr_input_ready(self):
-        # PR_INPUT_READY (2026-07-08) plus the approved header hash gives
-        # TX Mini a recorded rollback baseline.
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "tx_mini_pr_v1.yaml")
 
         entry = evaluate_rollback_readiness(profile, None)
