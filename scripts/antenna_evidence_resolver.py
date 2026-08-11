@@ -29,8 +29,8 @@ _SOURCE_STATUS_FIELDS = {
 _ANTENNA_WORDS = ("antenna", "dish")
 _INSTALL_INTENT_RE = r"(?:install(?:ation|ed|ing)?|replac(?:e|ed|ing)?|swap(?:ped|ping)?|new|target|proposed|replacement|build|upgrade)"
 _NON_INSTALL_INTENT_RE = (
-    r"(?:dismantl(?:e|ed|ing)?|decom(?:mission(?:ed|ing)?)?|remove|removed|removal|"
-    r"existing|old|reuse|reused|retain|retained)"
+    r"(?:dismantl(?:e|ed|ing)?|decom(?:mission(?:ed|ing)?)?|remov(?:e|ed|ing|al)|"
+    r"existing|old|reus(?:e|ed|ing)|retain(?:ed|ing)?)"
 )
 _ACTION_INTENT_RE = rf"(?:{_INSTALL_INTENT_RE}|{_NON_INSTALL_INTENT_RE})"
 _INSTALL_INTENT_PATTERN = re.compile(rf"\b{_INSTALL_INTENT_RE}\b", re.IGNORECASE)
@@ -44,7 +44,8 @@ _ANTENNA_GOVERNED_DIRECTIONAL_ACTION_PATTERN = re.compile(
     r"\b(?:upgrade|replac(?:e|ed|ing|ement)?|swap(?:ped|ping)?|chang(?:e|ed|ing)?|"
     r"migrat(?:e|ed|ing|ion)?)\b[ \t]+"
     r"(?:(?:the|a|an|existing|old|current|new|target|proposed|replacement|mw|microwave)[ \t]+)*"
-    r"(?:antenna|dish)\b",
+    r"(?:(?:antenna|dish)\b|"
+    r"\d+(?:[.,]\d+)?(?:[ \t]*m(?:eters?|etres?)?\b)?[ \t]+(?:antenna|dish)\b)",
     re.IGNORECASE,
 )
 _SOURCE_SIDE_INTENT_PATTERN = re.compile(
