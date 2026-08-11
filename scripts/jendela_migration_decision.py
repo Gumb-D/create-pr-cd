@@ -92,12 +92,10 @@ def parse_jendela_before_mw_antenna_size(value: Any) -> float | None:
     if not text:
         return None
     for pattern in (_EXPLICIT_ANTENNA_SIZE, _GHZ_POLARIZATION_ANTENNA_SIZE):
-        match = pattern.search(text)
-        if not match:
-            continue
-        size = float(match.group(1))
-        if 0.1 <= size <= 5.0:
-            return size
+        for match in pattern.finditer(text):
+            size = float(match.group(1))
+            if 0.1 <= size <= 5.0:
+                return size
     return None
 
 
