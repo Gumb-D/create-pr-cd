@@ -203,6 +203,17 @@ class TestIssue82ReplacementPhrase(unittest.TestCase):
                 self.assertEqual(result["common_size"], expected)
                 self.assertEqual(result["selected_size"], expected)
 
+    def test_reverse_noun_cannot_cross_newline_clause_boundary(self):
+        for text in (
+            "New radio version 1.2\nantenna inspection only",
+            "Upgrade software 1.2\ndish inspection only",
+        ):
+            with self.subTest(text=text):
+                result = self._resolve_common(text)
+                self.assertEqual(result["status"], "MISSING")
+                self.assertIsNone(result["common_size"])
+                self.assertIsNone(result["selected_size"])
+
 
 if __name__ == "__main__":
     unittest.main()
