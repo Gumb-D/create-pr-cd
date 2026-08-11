@@ -6,8 +6,8 @@ acceptance_suite:
 questions:
   - id: AQ-001
     title: Unsupported scope is rejected
-    scenario: "Run the CLI with Planning or Operation Backoffice."
-    expected: "Argument parsing rejects the scope and states that only TSS and TI are currently supported."
+    scenario: "Before Issue #34 runtime enablement, run the CLI with Planning or Operation Backoffice."
+    expected: "Argument parsing rejects the scope and states that only TSS and TI are currently supported. Planning may be enabled only after the Issue #34 end-to-end implementation gate; Operation Backoffice remains unsupported."
     priority: P1
     rule_ids:
       - PRC-CLI-001
@@ -153,7 +153,7 @@ questions:
   - id: AQ-018
     title: Output filename identifies group and scope
     scenario: "Generate a normal TSS or TI output."
-    expected: "Filename follows the approved Region-Subcontractor-Scope-date format."
+    expected: "Filename follows the approved Region-Subcontractor-DUModel-Scope-date format."
     priority: P2
     rule_ids:
       - PRC-OUT-003
@@ -169,7 +169,7 @@ questions:
   - id: AQ-020
     title: Antenna-independent TI models generate normally with blank or one-sided antenna input
     scenario: "A site has Tx SOW 'BBU Patching' or 'MW IDU Patching' with MW Config Antenna Size NE and FE both blank, or only one side populated."
-    expected: "A normal TI ECC line is generated with no REVIEW_REQUIRED remark, because the strictly matched mandatory model has no antenna-dependent choose-one group."
+    expected: "A normal TI ECC line is generated with no REVIEW_REQUIRED remark, because the strictly matched mandatory TI model has no antenna-dependent choose-one group."
     priority: P0
     rule_ids:
       - PRC-ANT-001
@@ -194,7 +194,7 @@ questions:
   - id: AQ-023
     title: MW New Link / Reroute survey PBOM, quantity, and duplicate controls are deterministic
     scenario: "Generate TSS output for MW New Link and MW Reroute sites, including a Reroute site with a '_LOS' site ID."
-    expected: "MW New Link selects PBOM 350000062773 with quantity 1.0 on controlled items; MW Reroute selects 350000062776 only for '_LOS' sites and otherwise 350000062773, with quantity 1.5 on controlled items; no PBOM code is duplicated in the output."
+    expected: "MW New Link selects PBOM 350000062773 with quantity 1.0 on controlled items; MW Reroute selects PBOM 350000062776 only for '_LOS' sites and otherwise 350000062773, with quantity 1.5 on controlled items; no PBOM code is duplicated in the output."
     priority: P0
     rule_ids:
       - PRC-TSS-001
@@ -207,3 +207,74 @@ questions:
     priority: P1
     rule_ids:
       - PRC-OUT-004
+
+  - id: AQ-025
+    title: Five full-planning DU Models select PBOM 350001143904
+    scenario: "For each of 2023 TX Rollout, 2023 Celcomdigi BAU, 2024 Celcomdigi BAU, Celcomdigi USP and Jendela TX Migration, process an eligible site with Subcon Planning GCI or GTSB and blank Planning PR status."
+    expected: "Exactly one Planning line is selected and its PBOM is 350001143904 with quantity 1 and unit Hop."
+    priority: P0
+    rule_ids:
+      - PRC-PLAN-001
+      - PRC-ELIG-003
+
+  - id: AQ-026
+    title: Remaining three supported DU Models select PBOM 350001143905
+    scenario: "For each of TX Mini Project, MW EOS Swap and ZTE TX MINI, process an eligible site with Subcon Planning GCI or GTSB and blank Planning PR status."
+    expected: "Exactly one Planning line is selected and its PBOM is 350001143905 with quantity 1 and unit Hop."
+    priority: P0
+    rule_ids:
+      - PRC-PLAN-001
+      - PRC-ELIG-003
+
+  - id: AQ-027
+    title: AA Planning values select only optional PBOM 350001042321
+    scenario: "For every supported DU Model, process otherwise identical eligible sites using GCI_AA and GTSB_AA."
+    expected: "Each site generates exactly one Planning item: PBOM 350001042321. PBOM 350001143904 and 350001143905 are absent."
+    priority: P0
+    rule_ids:
+      - PRC-PLAN-001
+      - PRC-SEL-001
+
+  - id: AQ-028
+    title: AA suffix is removed only for contract identity
+    scenario: "Resolve contracts for eligible Planning sites with GCI_AA and GTSB_AA."
+    expected: "GCI_AA looks up the GCI contract and GTSB_AA looks up the GTSB contract from Info/input/contract_info_reference.md, while the original _AA value still drives PBOM 350001042321 selection."
+    priority: P0
+    rule_ids:
+      - PRC-PLAN-002
+      - PRC-MAP-002
+
+  - id: AQ-029
+    title: TX Planning Remarks never changes Planning PBOM selection
+    scenario: "Run the same eligible Planning site multiple times with blank, Design, AA-related and arbitrary TX Planning Remarks values while holding DU Model and Subcon Planning constant."
+    expected: "The selected Planning PBOM is identical in every case because TX Planning Remarks is not a Planning decision input."
+    priority: P0
+    rule_ids:
+      - PRC-PLAN-001
+
+  - id: AQ-030
+    title: Blank Planning subcontractor is ignored
+    scenario: "A supported DU site has blank Subcon Planning and blank Planning PR status."
+    expected: "No Planning ECC is generated and the terminal outcome records the site as not eligible/ignored rather than silently losing it."
+    priority: P0
+    rule_ids:
+      - PRC-ELIG-003
+
+  - id: AQ-031
+    title: Existing Planning PR status prevents duplicate generation
+    scenario: "A supported DU site has an approved Planning subcontractor and a non-blank Subcon PR - Planning value, including either a PR number or controlled non-PR status text."
+    expected: "No new Planning ECC is generated; duplicate/existing-status handling is traceable in terminal reconciliation."
+    priority: P0
+    rule_ids:
+      - PRC-ELIG-003
+      - PRC-DUP-001
+
+  - id: AQ-032
+    title: Unknown Planning subcontractor fails closed
+    scenario: "A supported DU site has a non-blank Planning subcontractor other than GCI, GTSB, GCI_AA or GTSB_AA and has no existing Planning PR status."
+    expected: "The site is REVIEW_REQUIRED with no partial Planning ECC and no fuzzy Planning subcontractor substitution."
+    priority: P0
+    rule_ids:
+      - PRC-ELIG-003
+      - PRC-PLAN-002
+      - PRC-REV-001
