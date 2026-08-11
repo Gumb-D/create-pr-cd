@@ -31,20 +31,26 @@ _SOURCE_STATUS_FIELDS = {
 
 _ANTENNA_WORDS = ("antenna", "dish")
 _INSTALL_INTENT_PATTERN = re.compile(
-    r"\b(?:install(?:ation|ed|ing)?|new|target|proposed|build|upgrade)\b",
+    r"\b(?:install(?:ation|ed|ing)?|new|target|proposed|replacement|build|upgrade)\b",
     re.IGNORECASE,
 )
 _NON_INSTALL_INTENT_PATTERN = re.compile(
     r"\b(?:dismantl(?:e|ed|ing)?|decom(?:mission(?:ed|ing)?)?|remove|removed|removal|existing|old|reuse|reused|retain|retained)\b",
     re.IGNORECASE,
 )
+_REPLACEMENT_SEPARATOR_PATTERN = re.compile(
+    r"\b(?:with|by|to)\b(?=\s+(?:new|target|proposed|replacement)\s+(?:antenna|dish)\b)",
+    re.IGNORECASE,
+)
 # Treat normal action punctuation as a clause boundary without splitting the
-# decimal point inside values such as 0.6 or 2.4. Replacement transitions are
-# boundaries only when they explicitly introduce a new/target replacement, so
-# phrases such as `antenna with size 0.6m` remain one installation clause.
+# decimal point inside values such as 0.6 or 2.4. A period followed by
+# whitespace/end is a sentence boundary, including after a bare decimal token.
+# Replacement transitions are boundaries only when they explicitly introduce
+# a new/target/replacement antenna, so phrases such as `antenna with size 0.6m`
+# remain one installation clause.
 _CLAUSE_SEPARATOR_PATTERN = re.compile(
-    r"(?:[;,\n&]|(?<!\d)\.(?!\d)|\b(?:and|then)\b|"
-    r"\b(?:with|by|to)\b(?=\s+(?:new|target|proposed|replacement)\b))",
+    r"(?:[;,\n&]|\.(?=\s|$)|\b(?:and|then)\b|"
+    r"\b(?:with|by|to)\b(?=\s+(?:new|target|proposed|replacement)\s+(?:antenna|dish)\b))",
     re.IGNORECASE,
 )
 
@@ -135,10 +141,16 @@ def _has_installation_intent(text: str, start: int, end: int) -> bool:
 
     A SOW-detail cell can describe both old and new equipment. The decision is
     made per numeric token inside its local clause so a larger dismantle size
-    cannot win the installation largest-size rule.
+    cannot win the installation largest-size rule. A clause immediately before
+    an explicit directional replacement is always the source side, even when it
+    contains a generic verb such as `upgrade`.
     """
-    clause, clause_start = _intent_clause(text, start, end)
+    clause_start, clause_end = _clause_bounds(text, start, end)
+    clause = text[clause_start:clause_end]
     token_center = ((start + end) / 2) - clause_start
+
+    if clause_end < len(text) and _REPLACEMENT_SEPARATOR_PATTERN.match(text, clause_end):
+        return False
 
     positive = list(_INSTALL_INTENT_PATTERN.finditer(clause))
     if not positive:
