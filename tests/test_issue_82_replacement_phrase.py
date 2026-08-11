@@ -27,9 +27,7 @@ class TestIssue82ReplacementPhrase(unittest.TestCase):
         )
 
     def test_replace_existing_with_new_binds_only_new_size(self):
-        result = self._resolve_common(
-            "Replace existing antenna 2.4m with new antenna 0.6m"
-        )
+        result = self._resolve_common("Replace existing antenna 2.4m with new antenna 0.6m")
         self.assertEqual(result["status"], "RESOLVED_COMMON")
         self.assertEqual(result["common_size"], 0.6)
         self.assertEqual(result["selected_size"], 0.6)
@@ -46,25 +44,19 @@ class TestIssue82ReplacementPhrase(unittest.TestCase):
         self.assertIsNone(result["selected_size"])
 
     def test_bare_decimal_sentence_boundary_excludes_dismantle_size(self):
-        result = self._resolve_common(
-            "Dismantle antenna 2.4. Install antenna 0.6."
-        )
+        result = self._resolve_common("Dismantle antenna 2.4. Install antenna 0.6.")
         self.assertEqual(result["status"], "RESOLVED_COMMON")
         self.assertEqual(result["common_size"], 0.6)
         self.assertEqual(result["selected_size"], 0.6)
 
     def test_upgrade_direction_excludes_source_size(self):
-        result = self._resolve_common(
-            "Upgrade antenna 2.4m to new antenna 0.6m"
-        )
+        result = self._resolve_common("Upgrade antenna 2.4m to new antenna 0.6m")
         self.assertEqual(result["status"], "RESOLVED_COMMON")
         self.assertEqual(result["common_size"], 0.6)
         self.assertEqual(result["selected_size"], 0.6)
 
     def test_replacement_marker_is_installation_intent(self):
-        result = self._resolve_common(
-            "Replace existing antenna 2.4m with replacement antenna 0.6m"
-        )
+        result = self._resolve_common("Replace existing antenna 2.4m with replacement antenna 0.6m")
         self.assertEqual(result["status"], "RESOLVED_COMMON")
         self.assertEqual(result["common_size"], 0.6)
         self.assertEqual(result["selected_size"], 0.6)
@@ -76,27 +68,20 @@ class TestIssue82ReplacementPhrase(unittest.TestCase):
         self.assertEqual(result["selected_size"], 0.6)
 
     def test_slash_delimited_actions_exclude_dismantle_size(self):
-        result = self._resolve_common(
-            "Dismantle antenna 2.4m / install antenna 0.6m"
-        )
+        result = self._resolve_common("Dismantle antenna 2.4m / install antenna 0.6m")
         self.assertEqual(result["status"], "RESOLVED_COMMON")
         self.assertEqual(result["common_size"], 0.6)
         self.assertEqual(result["selected_size"], 0.6)
 
     def test_non_metre_units_are_not_bare_antenna_diameters(self):
-        for text in (
-            "Install antenna bracket 2.4mm",
-            "Install antenna at clearance 2.4cm",
-        ):
+        for text in ("Install antenna bracket 2.4mm", "Install antenna at clearance 2.4cm"):
             with self.subTest(text=text):
                 result = self._resolve_common(text)
                 self.assertEqual(result["status"], "MISSING")
                 self.assertIsNone(result["selected_size"])
 
     def test_slash_build_action_uses_only_built_antenna_size(self):
-        result = self._resolve_common(
-            "Dismantle antenna 2.4m / build antenna 0.6m"
-        )
+        result = self._resolve_common("Dismantle antenna 2.4m / build antenna 0.6m")
         self.assertEqual(result["status"], "RESOLVED_COMMON")
         self.assertEqual(result["common_size"], 0.6)
         self.assertEqual(result["selected_size"], 0.6)
@@ -111,9 +96,7 @@ class TestIssue82ReplacementPhrase(unittest.TestCase):
                 self.assertEqual(result["selected_size"], 0.6)
 
     def test_directional_height_is_not_antenna_diameter(self):
-        result = self._resolve_common(
-            "Upgrade antenna 2.4m to antenna mounted at 3.0m height"
-        )
+        result = self._resolve_common("Upgrade antenna 2.4m to antenna mounted at 3.0m height")
         self.assertEqual(result["status"], "MISSING")
         self.assertIsNone(result["common_size"])
         self.assertIsNone(result["selected_size"])
@@ -134,9 +117,7 @@ class TestIssue82ReplacementPhrase(unittest.TestCase):
                 self.assertEqual(result["selected_size"], 0.6)
 
     def test_colon_delimited_action_excludes_dismantle_size(self):
-        result = self._resolve_common(
-            "Dismantle antenna 2.4m: install antenna 0.6m"
-        )
+        result = self._resolve_common("Dismantle antenna 2.4m: install antenna 0.6m")
         self.assertEqual(result["status"], "RESOLVED_COMMON")
         self.assertEqual(result["common_size"], 0.6)
         self.assertEqual(result["selected_size"], 0.6)
@@ -192,6 +173,18 @@ class TestIssue82ReplacementPhrase(unittest.TestCase):
             "Upgrade antenna 2.4m to 0.6-inch diameter antenna",
             "Upgrade antenna 2.4m to 0.6' diameter antenna",
             "Upgrade antenna 2.4m to 0.6mm diameter antenna",
+        ):
+            with self.subTest(text=text):
+                result = self._resolve_common(text)
+                self.assertEqual(result["status"], "MISSING")
+                self.assertIsNone(result["common_size"])
+                self.assertIsNone(result["selected_size"])
+
+    def test_invalid_reverse_target_with_unit_punctuation_fails_closed(self):
+        for text in (
+            "Upgrade antenna 2.4m to 0.6 in. diameter antenna",
+            "Upgrade antenna 2.4m to 0.6 [inch] diameter antenna",
+            "Upgrade antenna 2.4m to 0.6 (inch) diameter antenna",
         ):
             with self.subTest(text=text):
                 result = self._resolve_common(text)
