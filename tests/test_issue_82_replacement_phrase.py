@@ -192,6 +192,17 @@ class TestIssue82ReplacementPhrase(unittest.TestCase):
                 self.assertIsNone(result["common_size"])
                 self.assertIsNone(result["selected_size"])
 
+    def test_bare_reverse_antenna_targets_remain_supported(self):
+        for text, expected in (
+            ("Upgrade antenna 2.4m to 0.6 antenna", 0.6),
+            ("New 1.2 dish", 1.2),
+        ):
+            with self.subTest(text=text):
+                result = self._resolve_common(text)
+                self.assertEqual(result["status"], "RESOLVED_COMMON")
+                self.assertEqual(result["common_size"], expected)
+                self.assertEqual(result["selected_size"], expected)
+
 
 if __name__ == "__main__":
     unittest.main()
