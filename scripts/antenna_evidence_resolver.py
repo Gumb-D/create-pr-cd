@@ -44,16 +44,20 @@ _SOURCE_SIDE_INTENT_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-_TARGET_MODIFIER_RE = r"(?:(?:new|target|proposed|replacement)\s+)?"
-_METRE_SUFFIX_RE = r"(?:\s*m(?:eters?|etres?)?\b)?"
+# Size phrases must stay inside one action line. Newlines are already clause
+# boundaries, so all internal grammar uses horizontal whitespace only.
+_HWS_RE = r"[ \t]*"
+_HWS1_RE = r"[ \t]+"
+_TARGET_MODIFIER_RE = rf"(?:(?:new|target|proposed|replacement){_HWS1_RE})?"
+_METRE_SUFFIX_RE = rf"(?:{_HWS_RE}m(?:eters?|etres?)?\b)?"
 _QUOTE_UNIT_RE = r'''['"′″’‘“”]'''
 _FORWARD_ANTENNA_SIZE_TARGET_RE = (
-    rf"{_TARGET_MODIFIER_RE}(?:antenna|dish)\b\s*"
-    rf"(?:(?:(?:with|of)\s+)?(?:size|diameter)\b\s*[:=]?\s*)?"
+    rf"{_TARGET_MODIFIER_RE}(?:antenna|dish)\b{_HWS_RE}"
+    rf"(?:(?:(?:with|of){_HWS1_RE})?(?:size|diameter)\b{_HWS_RE}[:=]?{_HWS_RE})?"
     rf"\d+(?:[.,]\d+)?{_METRE_SUFFIX_RE}"
 )
 _REVERSE_ANTENNA_SIZE_TARGET_RE = (
-    rf"{_TARGET_MODIFIER_RE}\d+(?:[.,]\d+)?{_METRE_SUFFIX_RE}\s+(?:antenna|dish)\b"
+    rf"{_TARGET_MODIFIER_RE}\d+(?:[.,]\d+)?{_METRE_SUFFIX_RE}{_HWS1_RE}(?:antenna|dish)\b"
 )
 _ANTENNA_SIZE_TARGET_RE = (
     rf"(?:{_FORWARD_ANTENNA_SIZE_TARGET_RE}|{_REVERSE_ANTENNA_SIZE_TARGET_RE})"
@@ -65,7 +69,7 @@ _ANTENNA_SIZE_TARGET_RE = (
 # between the numeric token and antenna/dish; strict target acceptance below is
 # unchanged, so invalid targets still fail closed rather than becoming evidence.
 _GENERIC_REVERSE_ANTENNA_TARGET_RE = (
-    rf"{_TARGET_MODIFIER_RE}(?:[\(\[]\s*)?\d+(?:[.,]\d+)?"
+    rf"{_TARGET_MODIFIER_RE}(?:[\(\[]{_HWS_RE})?\d+(?:[.,]\d+)?"
     rf"[^;,\n&!?]{{0,48}}?\b(?:antenna|dish)\b"
 )
 
@@ -74,7 +78,7 @@ _GENERIC_REVERSE_ANTENNA_TARGET_RE = (
 # statement or a reverse target with an unsupported unit). The strict separator
 # below remains responsible for deciding whether the target itself is usable.
 _DIRECTIONAL_ANTENNA_TRANSITION_RE = (
-    rf"\b(?:with|by|to)\b(?=\s+(?:"
+    rf"\b(?:with|by|to)\b(?={_HWS1_RE}(?:"
     rf"{_TARGET_MODIFIER_RE}(?:antenna|dish)\b|{_GENERIC_REVERSE_ANTENNA_TARGET_RE}))"
 )
 _DIRECTIONAL_ANTENNA_TRANSITION_PATTERN = re.compile(
@@ -86,7 +90,7 @@ _DIRECTIONAL_ANTENNA_TRANSITION_PATTERN = re.compile(
 # grammar. This keeps source/target binding aligned with the same size forms the
 # candidate parser accepts.
 _DIRECTIONAL_ANTENNA_SEPARATOR_RE = (
-    rf"\b(?:with|by|to)\b(?=\s+{_ANTENNA_SIZE_TARGET_RE})"
+    rf"\b(?:with|by|to)\b(?={_HWS1_RE}{_ANTENNA_SIZE_TARGET_RE})"
 )
 _DIRECTIONAL_ANTENNA_SEPARATOR_PATTERN = re.compile(
     _DIRECTIONAL_ANTENNA_SEPARATOR_RE,
@@ -99,12 +103,12 @@ _DIRECTIONAL_ANTENNA_SEPARATOR_PATTERN = re.compile(
 # `Dismantle ...: install ...` splits deterministically.
 _CLAUSE_SEPARATOR_PATTERN = re.compile(
     rf"(?:[;,\n&!?]|\.(?=\s|$)|\b(?:and|then)\b|"
-    rf"(?:[:/|]|[-–—])(?=\s*{_ACTION_INTENT_RE}\b)|{_DIRECTIONAL_ANTENNA_SEPARATOR_RE})",
+    rf"(?:[:/|]|[-–—])(?={_HWS_RE}{_ACTION_INTENT_RE}\b)|{_DIRECTIONAL_ANTENNA_SEPARATOR_RE})",
     re.IGNORECASE,
 )
 
 _EXPLICIT_NON_METRE_UNIT_SUFFIX_PATTERN = re.compile(
-    rf"\s*(?:(?:[-–—/:|]\s*)|(?:[\(\[]\s*))?(?:[A-Za-z]|{_QUOTE_UNIT_RE})",
+    rf"{_HWS_RE}(?:(?:[-–—/:|]{_HWS_RE})|(?:[\(\[]{_HWS_RE}))?(?:[A-Za-z]|{_QUOTE_UNIT_RE})",
     re.IGNORECASE,
 )
 
@@ -151,7 +155,7 @@ def _parse_direct_size(value: Any) -> float | None:
     # Dedicated fields commonly contain `0.6`, `0.6m`, `0.6 meter/metre`, or
     # compact strings such as `18G_1.2M(MAC)`. Values above 5m are rejected.
     for match in re.finditer(
-        r"(?<![A-Za-z0-9])(\d+(?:\.\d+)?)(?=\s*(?:m(?:eters?|etres?)?\b|$|[_/;,)]))",
+        r"(?<![A-Za-z0-9])(\d+(?:\.\d+)?)(?=[ \t]*(?:m(?:eters?|etres?)?\b|$|[_/;,)]))",
         text,
         re.IGNORECASE,
     ):
@@ -199,20 +203,19 @@ def _candidate_is_antenna_size_phrase(text: str, start: int, end: int) -> bool:
     # Forward forms: `antenna 0.6m`, `dish size 1.2`,
     # `antenna with size: 0.6m`, `antenna diameter 1.2m`.
     if re.search(
-        r"\b(?:antenna|dish)\b\s*(?:(?:(?:with|of)\s+)?(?:size|diameter)\b\s*[:=]?\s*)?$",
+        r"\b(?:antenna|dish)\b[ \t]*(?:(?:(?:with|of)[ \t]+)?(?:size|diameter)\b[ \t]*[:=]?[ \t]*)?$",
         left,
         re.IGNORECASE,
     ):
         return True
 
-    # Reverse forms: `0.6m antenna` / `1.2 metre dish`. For metre-suffixed
-    # candidates `end` already includes the unit, while bare decimals may have
-    # a unit immediately after the numeric token.
+    # Reverse forms: `0.6m antenna` / `1.2 metre dish`. These nouns must stay on
+    # the same action line as the candidate; newline is a hard clause boundary.
     reverse = right
-    unit = re.match(r"\s*m(?:eters?|etres?)?\b", reverse, re.IGNORECASE)
+    unit = re.match(r"[ \t]*m(?:eters?|etres?)?\b", reverse, re.IGNORECASE)
     if unit:
         reverse = reverse[unit.end():]
-    return re.match(r"\s*(?:antenna|dish)\b", reverse, re.IGNORECASE) is not None
+    return re.match(r"[ \t]*(?:antenna|dish)\b", reverse, re.IGNORECASE) is not None
 
 
 def _has_source_side_transition(text: str, start: int, end: int, clause_start: int, clause_end: int) -> bool:
@@ -266,7 +269,7 @@ def _has_antenna_specific_context(text: str, start: int, end: int) -> bool:
         return False
 
     suffix = text[end:min(len(text), end + 16)].casefold()
-    if re.match(r"\s*(?:ghz|mhz|mbps|gbps|kbps)\b", suffix):
+    if re.match(r"[ \t]*(?:ghz|mhz|mbps|gbps|kbps)\b", suffix):
         return False
     return True
 
@@ -282,7 +285,7 @@ def _parse_detail_sizes(value: Any, *, require_antenna_context: bool) -> list[fl
     consumed: list[tuple[int, int]] = []
 
     for match in re.finditer(
-        r"(?<![A-Za-z0-9])(\d+(?:\.\d+)?)\s*m(?:eters?|etres?)?\b",
+        r"(?<![A-Za-z0-9])(\d+(?:\.\d+)?)[ \t]*m(?:eters?|etres?)?\b",
         text,
         re.IGNORECASE,
     ):
@@ -299,13 +302,13 @@ def _parse_detail_sizes(value: Any, *, require_antenna_context: bool) -> list[fl
     # Bare decimals are accepted only when they form an explicit antenna-size
     # phrase. Supported metre spellings are consumed above. A bare reverse
     # `0.6 antenna` / `1.2 dish` is a valid size phrase, so the antenna noun is
-    # exempt from the non-metre-unit guard; all other alphabetic/quote units,
-    # including punctuation or bracket prefixes, continue to fail closed.
+    # exempt from the non-metre-unit guard only on the same action line; all
+    # other alphabetic/quote units continue to fail closed.
     for match in re.finditer(r"(?<![\d.])(\d+\.\d+)(?!\d)(?!\.\d)", text):
         if any(consumed_start <= match.start() < consumed_end for consumed_start, consumed_end in consumed):
             continue
         suffix = text[match.end():min(len(text), match.end() + 24)]
-        reverse_antenna_noun = re.match(r"\s*(?:antenna|dish)\b", suffix, re.IGNORECASE)
+        reverse_antenna_noun = re.match(r"[ \t]*(?:antenna|dish)\b", suffix, re.IGNORECASE)
         if not reverse_antenna_noun and _EXPLICIT_NON_METRE_UNIT_SUFFIX_PATTERN.match(suffix):
             continue
         if not _has_antenna_specific_context(text, match.start(), match.end()):
