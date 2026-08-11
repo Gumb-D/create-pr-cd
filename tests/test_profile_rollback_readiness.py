@@ -11,6 +11,14 @@ from du_profile_loader import load_du_profile
 
 
 class TestProfileRollbackReadiness(unittest.TestCase):
+    def _rollback_baseline_for(self, profile_id):
+        registry = json.loads(
+            (ROOT / "config" / "registries" / "mw_du_profile_rollback_baselines_source.yaml").read_text(
+                encoding="utf-8"
+            )
+        )
+        return next(entry for entry in registry["entries"] if entry["profile_id"] == profile_id)
+
     def test_2023_celcomdigi_bau_records_rollback_baseline_after_pr_input_ready(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "celcomdigi_bau_2023_pr_v1.yaml")
 
@@ -27,8 +35,9 @@ class TestProfileRollbackReadiness(unittest.TestCase):
 
     def test_jendela_records_prior_version_rollback_baseline(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "jendela_tx_migration_pr_v1.yaml")
+        baseline = self._rollback_baseline_for("jendela_tx_migration_pr_v1")
 
-        entry = evaluate_rollback_readiness(profile, None)
+        entry = evaluate_rollback_readiness(profile, None, baseline)
 
         self.assertEqual(entry["rollback_readiness_status"], "ROLLBACK_BASELINE_RECORDED")
         self.assertEqual(entry["rollback_target_profile_id"], "jendela_tx_migration_pr_v1")
@@ -38,6 +47,28 @@ class TestProfileRollbackReadiness(unittest.TestCase):
             entry["rollback_target_header_hashes"],
             ["f45c209df5ca75b333f9b590ebc01c05c097e44231d22433290f8078e57c9056"],
         )
+        self.assertEqual(entry["blockers"], [])
+        self.assertIn("explicit prior approved profile identity", entry["notes"][0])
+
+    def test_explicit_rollback_baseline_fails_closed_if_it_targets_current_version(self):
+        profile = load_du_profile(ROOT / "config" / "du_profiles" / "jendela_tx_migration_pr_v1.yaml")
+        invalid_baseline = dict(self._rollback_baseline_for("jendela_tx_migration_pr_v1"))
+        invalid_baseline["rollback_profile_version"] = profile["profile_version"]
+
+        entry = evaluate_rollback_readiness(profile, None, invalid_baseline)
+
+        self.assertEqual(entry["rollback_readiness_status"], "ROLLBACK_BLOCKED")
+        self.assertIn("ROLLBACK_TARGET_IS_CURRENT_PROFILE_VERSION", entry["blockers"])
+
+    def test_explicit_rollback_baseline_fails_closed_if_current_version_does_not_match(self):
+        profile = load_du_profile(ROOT / "config" / "du_profiles" / "jendela_tx_migration_pr_v1.yaml")
+        stale_baseline = dict(self._rollback_baseline_for("jendela_tx_migration_pr_v1"))
+        stale_baseline["current_profile_version"] = "0.4.0"
+
+        entry = evaluate_rollback_readiness(profile, None, stale_baseline)
+
+        self.assertEqual(entry["rollback_readiness_status"], "ROLLBACK_BLOCKED")
+        self.assertIn("ROLLBACK_BASELINE_CURRENT_VERSION_MISMATCH", entry["blockers"])
 
     def test_zte_records_rollback_baseline_after_pr_input_ready(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "zte_tx_mini_pr_v1.yaml")
