@@ -81,7 +81,7 @@ def _normalized(value: Any) -> str:
 
 _POLARIZATION_MARKER = re.compile(r"\b(?:SP|DP|XPIC)\b", re.IGNORECASE)
 _ANTENNA_BEFORE_POLARIZATION = re.compile(
-    r"(?<![\d.])(\d+(?:\.\d+)?)\s*[mM]?(?=[\s_/-]+(?:SP|DP|XPIC)\b)",
+    r"(?<![A-Za-z0-9_.,+\-])(\d+(?:\.\d+)?)\s*[mM]?(?=[\s_/-]+(?:SP|DP|XPIC)\b)",
     re.IGNORECASE,
 )
 _FREQUENCY_TOKEN = re.compile(
@@ -95,7 +95,7 @@ _STANDARD_MW_LINK = re.compile(
     re.IGNORECASE,
 )
 _UNPOLARIZED_NUMERIC_TOKEN = re.compile(
-    r"(?<![\d.])(\d+(?:\.\d+)?)(?:\s*[mM])?(?![\w.])"
+    r"(?<![A-Za-z0-9_.,+\-])(\d+(?:\.\d+)?)(?:\s*[mM])?(?![\w.])"
 )
 _DECIMAL_COMMA = re.compile(r"(?<=\d),(?=\d{1,2}(?:\D|$))")
 
@@ -150,12 +150,13 @@ def parse_jendela_before_mw_antenna_size(value: Any) -> float | None:
     """Extract existing-MW antenna size from unambiguous MW Config evidence.
 
     Polarization wording (SP/DP/XPIC) is optional. When present, it is the
-    strongest structural hint: every marker must have one parseable antenna
-    value immediately before it, and every resolved value must be represented
-    by the approved Jendela v4.1 MW Dismantle model. When polarization wording
-    is absent, the parser accepts only a standard GHz -> body -> N+N link shape
-    whose body contains exactly one supported numeric antenna candidate.
-    Decimal-comma notation is normalized before parsing. Ambiguous, unsupported,
+    strongest structural hint: every marker must have one standalone parseable
+    antenna value immediately before it, and every resolved value must be
+    represented by the approved Jendela v4.1 MW Dismantle model. When
+    polarization wording is absent, the parser accepts only a standard
+    GHz -> body -> N+N link shape whose body contains exactly one standalone
+    supported numeric antenna candidate. Decimal-comma notation is normalized
+    before parsing. Signed, identifier-embedded, ambiguous, unsupported,
     missing, or conflicting evidence fails closed.
     """
     text = " ".join(str(value or "").strip().split())
