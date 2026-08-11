@@ -280,9 +280,10 @@ def _parse_detail_sizes(value: Any, *, require_antenna_context: bool) -> list[fl
     if _is_blank(value):
         return []
     text = re.sub(r"(?<=\d),(?=\d)", ".", str(value))
-    broken_multiline_target = _BROKEN_MULTILINE_INSTALL_TARGET_PATTERN.search(text)
-    if broken_multiline_target and ("\r" in broken_multiline_target.group(0) or "\n" in broken_multiline_target.group(0)):
-        return []
+    for broken_multiline_target in _BROKEN_MULTILINE_INSTALL_TARGET_PATTERN.finditer(text):
+        matched_target = broken_multiline_target.group(0)
+        if "\r" in matched_target or "\n" in matched_target:
+            return []
     candidates: list[float] = []
     consumed: list[tuple[int, int]] = []
     for match in re.finditer(
