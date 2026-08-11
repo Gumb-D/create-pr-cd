@@ -4,7 +4,6 @@ on:
   pull_request:
     branches:
       - main
-      - ci/issue-34-validation-base
     paths:
       - "scripts/planning_pr_selector.py"
       - "scripts/planning_pr_runtime.py"
