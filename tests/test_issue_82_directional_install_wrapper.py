@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Permanent regression coverage for directional install target grammar."""
+"""Permanent regression coverage for directional install and multiline fail-closed grammar."""
 from __future__ import annotations
 
 import sys
