@@ -65,25 +65,26 @@ jobs:
           profile.setdefault('validation', {})['profile_notes'] = notes
           profile_path.write_text(json.dumps(profile, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
 
-          pair = re.compile(
-              r'("profile_version"\s*:\s*")' + re.escape(OLD_PROFILE)
-              + r'("\s*,\s*\n\s*"mapping_version"\s*:\s*")'
-              + re.escape(OLD_MAPPING)
-              + r'(")'
+          jendela_block = re.compile(
+              r'("profile_id"\s*:\s*"' + re.escape(PROFILE_ID)
+              + r'".*?"profile_version"\s*:\s*")' + re.escape(OLD_PROFILE)
+              + r'(".*?"mapping_version"\s*:\s*")' + re.escape(OLD_MAPPING)
+              + r'(")',
+              re.DOTALL,
           )
 
           for path in sorted(Path('config/registries').glob('*.yaml')):
               text = path.read_text(encoding='utf-8')
               if OLD_MAPPING not in text:
                   continue
-              text, count = pair.subn(
+              text, count = jendela_block.subn(
                   rf'\g<1>{NEW_PROFILE}\g<2>{NEW_MAPPING}\g<3>',
                   text,
               )
               if count == 0:
-                  raise SystemExit(f'{path}: found old Jendela mapping identity but no paired profile/mapping version block')
-              if OLD_MAPPING in text:
                   text = text.replace(OLD_MAPPING, NEW_MAPPING)
+              if OLD_MAPPING in text:
+                  raise SystemExit(f'{path}: stale Jendela mapping identity remains')
               path.write_text(text, encoding='utf-8')
 
           for path in sorted(Path('docs').glob('MW_DU_*.md')):
@@ -102,10 +103,9 @@ jobs:
 
           for path in sorted(Path('tests').glob('test_*.py')):
               text = path.read_text(encoding='utf-8')
-              if OLD_MAPPING not in text:
-                  continue
-              text = text.replace(OLD_MAPPING, NEW_MAPPING)
-              path.write_text(text, encoding='utf-8')
+              if OLD_MAPPING in text:
+                  text = text.replace(OLD_MAPPING, NEW_MAPPING)
+                  path.write_text(text, encoding='utf-8')
 
           subprocess.run([
               sys.executable, '-m', 'unittest',
