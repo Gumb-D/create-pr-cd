@@ -160,6 +160,20 @@ def evaluate_rollback_readiness(
     }
 
 
+def _index_unique_registry_entries(entries: Iterable[Any]) -> tuple[dict[str, Mapping[str, Any]], set[str]]:
+    indexed: dict[str, Mapping[str, Any]] = {}
+    duplicate_profile_ids: set[str] = set()
+    for entry in entries:
+        if not isinstance(entry, Mapping) or entry.get("profile_id") is None:
+            continue
+        profile_id = str(entry["profile_id"])
+        if profile_id in indexed:
+            duplicate_profile_ids.add(profile_id)
+            continue
+        indexed[profile_id] = entry
+    return indexed, duplicate_profile_ids
+
+
 def build_rollback_registry(
     profiles: Iterable[Mapping[str, Any]],
     deprecation_registry: Mapping[str, Any],
@@ -170,25 +184,37 @@ def build_rollback_registry(
         for entry in deprecation_registry.get("entries", [])
         if isinstance(entry, Mapping) and entry.get("profile_id") is not None
     }
-    rollback_baseline_by_profile = {
-        str(entry["profile_id"]): entry
-        for entry in (rollback_baseline_registry or {}).get("entries", [])
-        if isinstance(entry, Mapping) and entry.get("profile_id") is not None
-    }
+    rollback_baseline_by_profile, duplicate_rollback_profile_ids = _index_unique_registry_entries(
+        (rollback_baseline_registry or {}).get("entries", [])
+    )
     source_required_profile_ids = {
         str(profile_id)
         for profile_id in (rollback_baseline_registry or {}).get("required_profile_ids", [])
         if profile_id is not None
     }
-    entries = [
-        evaluate_rollback_readiness(
+
+    entries: list[Dict[str, Any]] = []
+    for profile in profiles:
+        profile_id = str(profile["profile_id"])
+        duplicate_baseline = profile_id in duplicate_rollback_profile_ids
+        entry = evaluate_rollback_readiness(
             profile,
-            deprecation_by_profile.get(str(profile["profile_id"])),
-            rollback_baseline_by_profile.get(str(profile["profile_id"])),
-            str(profile["profile_id"]) in source_required_profile_ids,
+            deprecation_by_profile.get(profile_id),
+            None if duplicate_baseline else rollback_baseline_by_profile.get(profile_id),
+            profile_id in source_required_profile_ids,
         )
-        for profile in profiles
-    ]
+        if duplicate_baseline:
+            if "DUPLICATE_ROLLBACK_BASELINE_ENTRIES" not in entry["blockers"]:
+                entry["blockers"].append("DUPLICATE_ROLLBACK_BASELINE_ENTRIES")
+            entry["rollback_readiness_status"] = "ROLLBACK_BLOCKED"
+            entry["rollback_target_profile_id"] = None
+            entry["rollback_target_profile_version"] = None
+            entry["rollback_target_header_hashes"] = []
+            entry["notes"] = [
+                "Rollback remains blocked because the baseline source contains duplicate entries for this profile."
+            ]
+        entries.append(entry)
+
     return {
         "schema_version": "1.0",
         "registry_type": "discovery_profile_rollback_readiness",
@@ -198,6 +224,7 @@ def build_rollback_registry(
             "A blocked result does not imply a defect; it can simply mean the profile has not reached an approved release state yet.",
             "Explicit prior-version rollback baseline evidence is sourced from config/registries/mw_du_profile_rollback_baselines_source.yaml.",
             "Profiles that require an explicit prior baseline are independently governed in build_profile_rollback_readiness.py.",
+            "Duplicate rollback baseline entries for one profile are rejected rather than resolved by last-entry-wins behavior.",
         ],
     }
 
