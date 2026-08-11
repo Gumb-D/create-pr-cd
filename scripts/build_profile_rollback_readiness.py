@@ -70,7 +70,7 @@ def evaluate_rollback_readiness(
     profile_id = str(profile.get("profile_id", ""))
     approved_header_hashes = list(profile.get("export_structure", {}).get("approved_header_hashes", []))
     blockers: list[str] = []
-    governed_prior_baseline_required = profile_id in GOVERNERNED_PRIOR_ROLLBACK_REQUIREMENTS if False else profile_id in GOVERNED_PRIOR_ROLLBACK_REQUIREMENTS
+    governed_prior_baseline_required = profile_id in GOVERNED_PRIOR_ROLLBACK_REQUIREMENTS
 
     if not approved_header_hashes:
         blockers.append("NO_APPROVED_HEADER_HASH_BASELINE")
