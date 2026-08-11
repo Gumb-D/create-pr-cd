@@ -247,6 +247,17 @@ class TestIssue82ReplacementPhrase(unittest.TestCase):
                 self.assertIsNone(result["common_size"])
                 self.assertIsNone(result["selected_size"])
 
+    def test_negated_directional_targets_fail_closed(self):
+        for text in (
+            "Do not upgrade antenna 2.4m to antenna 0.6m",
+            "Cannot replace antenna 2.4m with new antenna 0.6m",
+        ):
+            with self.subTest(text=text):
+                result = self._resolve_common(text)
+                self.assertEqual(result["status"], "MISSING")
+                self.assertIsNone(result["common_size"])
+                self.assertIsNone(result["selected_size"])
+
 
 if __name__ == "__main__":
     unittest.main()
