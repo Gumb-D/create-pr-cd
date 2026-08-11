@@ -14,11 +14,14 @@ DEFAULT_ROLLBACK_BASELINE_SOURCE = Path("config/registries/mw_du_profile_rollbac
 # Independently governed prior-version requirements. These invariants deliberately
 # do not live in the editable rollback-baseline evidence source, so malformed
 # source data cannot disable the fail-closed guard it is meant to satisfy.
-GOVERNED_PRIOR_ROLLBACK_REQUIREMENTS: dict[str, dict[str, str]] = {
+GOVERNED_PRIOR_ROLLBACK_REQUIREMENTS: dict[str, dict[str, Any]] = {
     "jendela_tx_migration_pr_v1": {
         "current_profile_version": "0.5.0",
         "rollback_profile_id": "jendela_tx_migration_pr_v1",
         "rollback_profile_version": "0.4.0",
+        "rollback_header_hashes": [
+            "f45c209df5ca75b333f9b590ebc01c05c097e44231d22433290f8078e57c9056"
+        ],
     }
 }
 
@@ -52,6 +55,8 @@ def _validate_explicit_rollback_baseline(
             blockers.append("ROLLBACK_TARGET_PROFILE_ID_MISMATCH")
         if str(rollback_target_profile_version or "") != governed_requirement["rollback_profile_version"]:
             blockers.append("ROLLBACK_TARGET_PROFILE_VERSION_MISMATCH")
+        if rollback_target_header_hashes != list(governed_requirement["rollback_header_hashes"]):
+            blockers.append("ROLLBACK_TARGET_HEADER_HASH_MISMATCH")
 
     return rollback_target_profile_id, rollback_target_profile_version, rollback_target_header_hashes
 
@@ -65,7 +70,7 @@ def evaluate_rollback_readiness(
     profile_id = str(profile.get("profile_id", ""))
     approved_header_hashes = list(profile.get("export_structure", {}).get("approved_header_hashes", []))
     blockers: list[str] = []
-    governed_prior_baseline_required = profile_id in GOVERNED_PRIOR_ROLLBACK_REQUIREMENTS
+    governed_prior_baseline_required = profile_id in GOVERNERNED_PRIOR_ROLLBACK_REQUIREMENTS if False else profile_id in GOVERNED_PRIOR_ROLLBACK_REQUIREMENTS
 
     if not approved_header_hashes:
         blockers.append("NO_APPROVED_HEADER_HASH_BASELINE")
