@@ -47,6 +47,18 @@ class TestIssue82DirectionalInstallWrapper(unittest.TestCase):
     def test_to_install_the_replacement_antenna_uses_target_size(self):
         self._assert_target_size("Upgrade antenna 2.4m to install the replacement antenna 0.6m")
 
+    def test_multiline_install_wrapper_fails_closed(self):
+        for text in (
+            "Upgrade antenna 2.4m to install a\nnew antenna 0.6m",
+            "Upgrade antenna 2.4m to install an\r\nantenna 0.6m",
+            "Upgrade antenna 2.4m to install\rthe replacement antenna 0.6m",
+        ):
+            with self.subTest(text=repr(text)):
+                result = self._resolve(text)
+                self.assertEqual(result["status"], "MISSING")
+                self.assertIsNone(result["common_size"])
+                self.assertIsNone(result["selected_size"])
+
 
 if __name__ == "__main__":
     unittest.main()
