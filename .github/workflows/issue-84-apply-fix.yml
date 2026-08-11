@@ -1,0 +1,105 @@
+name: Issue 84 Apply Scoped Fix
+
+on:
+  push:
+    branches:
+      - 'fix/issue-84-jendela-before-mw-antenna'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/issue-84-jendela-before-mw-antenna
+          fetch-depth: 0
+      - name: Apply Issue 84 implementation
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              file = Path(path)
+              text = file.read_text(encoding="utf-8")
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one replacement target, found {count}")
+              file.write_text(text.replace(old, new), encoding="utf-8")
+
+          replace_once(
+              "scripts/canonical_site_validator.py",
+              '    "antenna_size_ne": ("technical_context", "antenna_size_ne"),\n    "antenna_size_fe": ("technical_context", "antenna_size_fe"),\n    "boq_configuration": ("technical_context", "boq_configuration"),',
+              '    "antenna_size_ne": ("technical_context", "antenna_size_ne"),\n    "antenna_size_fe": ("technical_context", "antenna_size_fe"),\n    "before_mw_config_raw": ("technical_context", "before_mw_config_raw"),\n    "boq_configuration": ("technical_context", "boq_configuration"),',
+          )
+          replace_once(
+              "scripts/canonical_site_validator.py",
+              '            "antenna_size_ne": "",\n            "antenna_size_fe": "",\n            "boq_configuration": "",',
+              '            "antenna_size_ne": "",\n            "antenna_size_fe": "",\n            "before_mw_config_raw": "",\n            "boq_configuration": "",',
+          )
+
+          replace_once(
+              "config/du_profiles/jendela_tx_migration_pr_v1.yaml",
+              '    "final_backhaul": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00823600", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Final Backhaul"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},\n    "region":',
+              '    "final_backhaul": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00823600", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Final Backhaul"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},\n    "before_mw_config_raw": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01022277", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "MW Config"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},\n    "region":',
+          )
+
+          replace_once(
+              "scripts/du_export_adapter.py",
+              '    migration_decision = derive_jendela_migration_decision(\n        profile_id=str(profile.get("profile_id", "")),\n        scope=scope,\n        pr_context=record["pr_context"],\n    )',
+              '    migration_decision = derive_jendela_migration_decision(\n        profile_id=str(profile.get("profile_id", "")),\n        scope=scope,\n        pr_context=record["pr_context"],\n        technical_context=record["technical_context"],\n    )',
+          )
+
+          replace_once(
+              "scripts/jendela_migration_decision.py",
+              'from copy import deepcopy\nfrom typing import Any, Mapping',
+              'from copy import deepcopy\nimport re\nfrom typing import Any, Mapping',
+          )
+          replace_once(
+              "scripts/jendela_migration_decision.py",
+              'def _normalized(value: Any) -> str:\n    if value is None:\n        return ""\n    return " ".join(str(value).strip().split()).casefold()\n\n\ndef derive_jendela_migration_decision(',
+              'def _normalized(value: Any) -> str:\n    if value is None:\n        return ""\n    return " ".join(str(value).strip().split()).casefold()\n\n\n_EXPLICIT_ANTENNA_SIZE = re.compile(r"(?<![\\d.])(\\d+(?:\\.\\d+)?)\\s*[mM]\\b")\n_GHZ_POLARIZATION_ANTENNA_SIZE = re.compile(\n    r"\\b\\d+(?:\\.\\d+)?\\s*G(?:HZ)?\\b[\\s_/-]+(\\d+(?:\\.\\d+)?)(?=\\s*(?:M\\b)?[\\s_/-]*(?:SP|DP|XPIC)\\b)",\n    re.IGNORECASE,\n)\n\n\ndef parse_jendela_before_mw_antenna_size(value: Any) -> float | None:\n    """Extract the existing-MW antenna size from approved Jendela MW Config evidence."""\n    text = " ".join(str(value or "").strip().split())\n    if not text:\n        return None\n    for pattern in (_EXPLICIT_ANTENNA_SIZE, _GHZ_POLARIZATION_ANTENNA_SIZE):\n        match = pattern.search(text)\n        if not match:\n            continue\n        size = float(match.group(1))\n        if 0.1 <= size <= 5.0:\n            return size\n    return None\n\n\ndef derive_jendela_migration_decision(',
+          )
+          replace_once(
+              "scripts/jendela_migration_decision.py",
+              'def derive_jendela_migration_decision(\n    *, profile_id: str, scope: str, pr_context: Mapping[str, Any]\n) -> dict[str, Any] | None:',
+              'def derive_jendela_migration_decision(\n    *,\n    profile_id: str,\n    scope: str,\n    pr_context: Mapping[str, Any],\n    technical_context: Mapping[str, Any] | None = None,\n) -> dict[str, Any] | None:',
+          )
+          replace_once(
+              "scripts/jendela_migration_decision.py",
+              '    final_backhaul_raw = pr_context.get("final_backhaul")\n\n    before = _normalized(before_raw)',
+              '    final_backhaul_raw = pr_context.get("final_backhaul")\n    technical_context = technical_context or {}\n    before_mw_config_raw = technical_context.get("before_mw_config_raw")\n\n    before = _normalized(before_raw)',
+          )
+          replace_once(
+              "scripts/jendela_migration_decision.py",
+              '        "final_backhaul": final_backhaul_raw,\n    }',
+              '        "final_backhaul": final_backhaul_raw,\n        "before_mw_config_raw": before_mw_config_raw,\n    }',
+          )
+          replace_once(
+              "scripts/jendela_migration_decision.py",
+              '    return {\n        "classification": "APPROVED",\n        "reason_code": "JENDELA_TI_WORK_PLAN_APPROVED",\n        "decision_code": "JENDELA_TI_WORK_PLAN",\n        "source_values": source_values,\n        "work_items": [deepcopy(_WORK_ITEMS[name]) for name in work_item_names],\n    }',
+              '    work_items = [deepcopy(_WORK_ITEMS[name]) for name in work_item_names]\n    if dismantle_work == "Dismantle MW":\n        before_mw_antenna_size = parse_jendela_before_mw_antenna_size(before_mw_config_raw)\n        if before_mw_antenna_size is None:\n            missing = before_mw_config_raw is None or not str(before_mw_config_raw).strip()\n            return {\n                "classification": "REVIEW_REQUIRED",\n                "reason_code": (\n                    "JENDELA_BEFORE_MW_ANTENNA_MISSING"\n                    if missing\n                    else "JENDELA_BEFORE_MW_ANTENNA_UNRESOLVED"\n                ),\n                "decision_code": "",\n                "source_values": source_values,\n                "work_items": [],\n            }\n        for item in work_items:\n            if item.get("work_item") == "Dismantle MW":\n                item["before_mw_config_raw"] = before_mw_config_raw\n                item["before_mw_antenna_size_m"] = before_mw_antenna_size\n                break\n\n    return {\n        "classification": "APPROVED",\n        "reason_code": "JENDELA_TI_WORK_PLAN_APPROVED",\n        "decision_code": "JENDELA_TI_WORK_PLAN",\n        "source_values": source_values,\n        "work_items": work_items,\n    }',
+          )
+
+          replace_once(
+              "scripts/create_pr_impl.py",
+              '        required_codes = work_item.get("required_pbom_codes", [])\n        row["Required PBOM Codes"] = "|".join(str(code) for code in required_codes)\n        rendered.append(row)',
+              '        required_codes = work_item.get("required_pbom_codes", [])\n        row["Required PBOM Codes"] = "|".join(str(code) for code in required_codes)\n        if (\n            work_item.get("work_item") == "Dismantle MW"\n            and work_item.get("before_mw_antenna_size_m") not in (None, "")\n        ):\n            before_size = work_item["before_mw_antenna_size_m"]\n            row["MW Config Antenna Size NE"] = before_size\n            row["MW Config Antenna Size FE"] = before_size\n        rendered.append(row)',
+          )
+
+          replace_once(
+              "tests/test_issue_77_jendela_redesign.py",
+              '    def derive(self, *, before, tx_sow, final_backhaul="IGNORED"):\n        return derive_jendela_migration_decision(\n            profile_id=JENDELA_PROFILE_ID,\n            scope="TI",\n            pr_context={\n                "tx_before_migration": before,\n                "tx_sow_raw": tx_sow,\n                "final_backhaul": final_backhaul,\n            },\n        )',
+              '    def derive(self, *, before, tx_sow, final_backhaul="IGNORED", before_mw_config_raw="18G 1.2 SP 1+0"):\n        return derive_jendela_migration_decision(\n            profile_id=JENDELA_PROFILE_ID,\n            scope="TI",\n            pr_context={\n                "tx_before_migration": before,\n                "tx_sow_raw": tx_sow,\n                "final_backhaul": final_backhaul,\n            },\n            technical_context={"before_mw_config_raw": before_mw_config_raw},\n        )',
+          )
+      - name: Commit scoped implementation
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add scripts/canonical_site_validator.py scripts/du_export_adapter.py scripts/jendela_migration_decision.py scripts/create_pr_impl.py config/du_profiles/jendela_tx_migration_pr_v1.yaml tests/test_issue_77_jendela_redesign.py
+          git commit -m 'fix(issue-84): use Jendela MW Config for dismantle antenna'
+          git push origin HEAD:fix/issue-84-jendela-before-mw-antenna
