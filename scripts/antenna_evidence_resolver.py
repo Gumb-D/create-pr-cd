@@ -40,6 +40,13 @@ _DIRECTIONAL_GOVERNING_ACTION_PATTERN = re.compile(
     r"migrat(?:e|ed|ing|ion)?)\b",
     re.IGNORECASE,
 )
+_ANTENNA_GOVERNED_DIRECTIONAL_ACTION_PATTERN = re.compile(
+    r"\b(?:upgrade|replac(?:e|ed|ing|ement)?|swap(?:ped|ping)?|chang(?:e|ed|ing)?|"
+    r"migrat(?:e|ed|ing|ion)?)\b[ \t]+"
+    r"(?:(?:the|a|an|existing|old|current|new|target|proposed|replacement|mw|microwave)[ \t]+)*"
+    r"(?:antenna|dish)\b",
+    re.IGNORECASE,
+)
 _SOURCE_SIDE_INTENT_PATTERN = re.compile(
     rf"\b(?:upgrade|replac(?:e|ed|ing|ement)?|swap(?:ped|ping)?|chang(?:e|ed|ing)?|"
     rf"migrat(?:e|ed|ing|ion)?|{_NON_INSTALL_INTENT_RE})\b",
@@ -261,7 +268,7 @@ def _has_broken_multiline_directional_target(text: str) -> bool:
         for boundary in _CLAUSE_SEPARATOR_PATTERN.finditer(text, 0, match.start()):
             source_clause_start = boundary.end()
         source_clause = text[source_clause_start:match.start()]
-        if _DIRECTIONAL_GOVERNING_ACTION_PATTERN.search(source_clause) is not None:
+        if _ANTENNA_GOVERNED_DIRECTIONAL_ACTION_PATTERN.search(source_clause) is not None:
             return True
     return False
 
