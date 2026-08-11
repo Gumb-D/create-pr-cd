@@ -1,0 +1,88 @@
+name: Issue 82 Final Directional Patch
+
+on:
+  push:
+    branches:
+      - fix/mw-eos-antenna-evidence
+    paths:
+      - .github/workflows/issue-82-final-directional-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/mw-eos-antenna-evidence
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: python -m pip install -r requirements.txt
+      - name: Apply final directional grammar patch
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path("scripts/antenna_evidence_resolver.py")
+          text = path.read_text(encoding="utf-8")
+
+          old_governed = '''_ANTENNA_GOVERNED_DIRECTIONAL_ACTION_PATTERN = re.compile(
+              rf"\\b(?:upgrade|replac(?:e|ed|ing|ement)?|swap(?:ped|ping)?|chang(?:e|ed|ing)?|"
+              rf"migrat(?:e|ed|ing|ion)?)\\b[ \\t]+(?:from[ \\t]+)?{_SIZED_ANTENNA_SOURCE_RE}",
+              re.IGNORECASE,
+          )'''
+          new_governed = '''_ANTENNA_GOVERNED_DIRECTIONAL_ACTION_PATTERN = re.compile(
+              rf"\\b(?:upgrade|replac(?:e|ed|ing|ement)?|swap(?:ped|ping)?|chang(?:e|ed|ing)?|"
+              rf"migrat(?:e|ed|ing|ion)?)\\b(?:[ \\t]+|[ \\t]*[:\\-–—][ \\t]*)(?:from[ \\t]+)?"
+              rf"{_SIZED_ANTENNA_SOURCE_RE}",
+              re.IGNORECASE,
+          )'''
+          if old_governed not in text:
+              raise SystemExit("Expected governed-action block not found")
+          text = text.replace(old_governed, new_governed, 1)
+
+          directional_old = "(?:with|by|to|for)"
+          directional_new = "(?:with|by|to|for|using)"
+          count = text.count(directional_old)
+          if count != 3:
+              raise SystemExit(f"Expected 3 directional-word occurrences, found {count}")
+          text = text.replace(directional_old, directional_new)
+
+          old_clause = 'rf"(?:[;,\\r\\n&!?]|\\.(?=\\s|$)|\\b(?:and|then)\\b|"'
+          new_clause = 'rf"(?:[;,\\r\\n&!?]|\\.(?=\\s|$)|\\bthen\\b|\\band\\b(?={_HWS_RE}{_ACTION_INTENT_RE}\\b)|"'
+          if old_clause not in text:
+              raise SystemExit("Expected clause-separator line not found")
+          text = text.replace(old_clause, new_clause, 1)
+
+          path.write_text(text, encoding="utf-8")
+      - name: Run Issue 82 targeted regression
+        run: |
+          python -m unittest \
+            tests.test_issue_82_mw_eos_antenna \
+            tests.test_issue_82_antenna_false_positive \
+            tests.test_issue_82_codex_review \
+            tests.test_issue_82_legacy_renderer_contract \
+            tests.test_issue_82_punctuation_intent \
+            tests.test_issue_82_replacement_phrase \
+            tests.test_issue_82_direct_cidr \
+            tests.test_issue_82_directional_install_wrapper \
+            tests.test_issue_82_standalone_replacement \
+            tests.test_ti_sow_matching \
+            tests.test_human_uat_remediation_48_54 \
+            tests.test_jendela_approved_pr_model \
+            tests.test_mw_reroute \
+            tests.test_pr_safety_controls \
+            tests.test_du_profile_loader
+      - name: Commit validated resolver patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/antenna_evidence_resolver.py
+          git diff --cached --quiet && exit 0
+          git commit -m "fix(issue-82): close directional grammar review gaps"
+          git push origin HEAD:fix/mw-eos-antenna-evidence
