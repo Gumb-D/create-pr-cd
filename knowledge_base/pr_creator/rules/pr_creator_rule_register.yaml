@@ -1,9 +1,9 @@
 knowledge_base:
   id: PR-CREATOR-KB
   title: CelcomDigi TX PR Creator Knowledge Base
-  version: 0.2.0
+  version: 0.3.0
   status: BASELINE_EXTRACTED
-  scope: TSS and TI runtime; Planning business rules approved under Issue #34 but runtime-disabled; Operation Backoffice remains future scope
+  scope: TSS, TI and Planning runtime; Operation Backoffice remains future scope
   generated_from_branch: main
   governance_owner_role: TX Program / Business Rule Owner
   technical_owner_role: PR Creator Maintainer
@@ -32,13 +32,14 @@ rules:
     domain: runtime
     knowledge_status: VERIFIED
     runtime_status: ACTIVE
-    statement: "The current CLI accepts only TSS and TI scope values. Planning business logic is approved under Issue #34 but must remain runtime-disabled until its end-to-end implementation and regression gate passes. Operation Backoffice remains unsupported."
+    statement: "The official scripts/create_pr.py CLI accepts TSS, TI and Planning. Planning is enabled through the Issue #34 governed wrapper path and dedicated renderer. Operation Backoffice remains unsupported."
     inputs:
       - --scope
-    expected_outcome: "Reject unsupported scopes at argument parsing until each scope is intentionally implemented and enabled."
+    expected_outcome: "Accept only implemented scopes and reject unsupported scopes at argument parsing."
     risk: LOW
     source_references:
-      - "scripts/generate_tss_pr_ecc.py"
+      - "scripts/create_pr.py"
+      - "scripts/planning_ecc_renderer.py"
       - "README.md"
       - "docs/superpowers/specs/2026-08-11-planning-pr-all-du-design.md"
     acceptance_question_ids:
@@ -82,15 +83,19 @@ rules:
     title: Planning PR eligibility and duplicate gate
     domain: eligibility
     knowledge_status: APPROVED
-    runtime_status: DOCUMENTED_ONLY
-    statement: "For a supported DU Model, a site is Planning-eligible only when Subcon Planning is non-blank and the approved Planning PR status/number field is blank. Blank Planning subcon is ignored. Any non-blank Planning PR status/number prevents regeneration. Unknown non-blank Planning subcon fails closed to REVIEW_REQUIRED."
+    runtime_status: ACTIVE
+    statement: "For a supported DU Model, a site is Planning-eligible only when Subcon Planning is non-blank and the approved Planning PR status/number field is blank. Blank Planning subcon is ignored. Existing Planning PR blocks duplication. Explicit No PR required is ignored. Unknown non-blank Planning subcon fails closed to REVIEW_REQUIRED."
     inputs:
       - "DU Model"
       - "Subcon Planning / Subcon - Planning"
       - "Subcon PR - Planning / approved equivalent Planning PR status field"
-    expected_outcome: "Every requested Planning site reaches one terminal outcome: eligible, ignored/existing, or REVIEW_REQUIRED; no duplicate Planning PR is generated."
+    expected_outcome: "Every requested Planning site reaches one terminal outcome: eligible/generated, ignored, duplicate-blocked, REVIEW_REQUIRED, or failed reconciliation; no duplicate Planning PR is generated."
     risk: CRITICAL
     source_references:
+      - "scripts/planning_pr_runtime.py"
+      - "scripts/canonical_site_validator.py"
+      - "tests/test_issue_34_planning_eligibility.py"
+      - "tests/test_issue_34_planning_end_to_end.py"
       - "docs/superpowers/specs/2026-08-11-planning-pr-all-du-design.md"
       - "Info/reference/planning-pr/ (local business evidence; raw exports are not committed)"
     acceptance_question_ids:
@@ -116,7 +121,7 @@ rules:
     source_references:
       - "SKILL.md"
       - "README.md"
-      - "docs/superpowers/specs/2026-08-11-planning-pr-all-du-design.md"
+      - "scripts/planning_pr_runtime.py"
     acceptance_question_ids:
       - AQ-003
       - AQ-031
@@ -262,7 +267,7 @@ rules:
     title: All-DU Planning line-item selection
     domain: matching
     knowledge_status: APPROVED
-    runtime_status: DOCUMENTED_ONLY
+    runtime_status: ACTIVE
     statement: "Planning PBOM selection depends only on approved DU Model identity and the approved Planning subcontractor value. For GCI/GTSB, 2023 TX Rollout, 2023 Celcomdigi BAU, 2024 Celcomdigi BAU, Celcomdigi USP and Jendela TX Migration select 350001143904; TX Mini Project, MW EOS Swap and ZTE TX MINI select 350001143905. For GCI_AA/GTSB_AA, every supported DU selects only 350001042321. Quantity is 1 and Unit is Hop. TX Planning Remarks, Tx SOW, TX Upgrade Scope, antenna and coordinates must not influence the Planning PBOM."
     inputs:
       - "DU Model"
@@ -271,6 +276,9 @@ rules:
     exception: "The optional PBOM 350001042321 is explicitly approved for deterministic auto-selection only when Planning subcontractor is GCI_AA or GTSB_AA. It must never be combined with 350001143904 or 350001143905."
     risk: CRITICAL
     source_references:
+      - "scripts/planning_pr_selector.py"
+      - "tests/test_issue_34_planning_selector.py"
+      - "tests/test_issue_34_planning_end_to_end.py"
       - "docs/superpowers/specs/2026-08-11-planning-pr-all-du-design.md"
       - "Info/reference/planning-pr/Planning PR.xlsx (local business evidence)"
     acceptance_question_ids:
@@ -283,7 +291,7 @@ rules:
     title: Planning subcontractor contract identity normalization
     domain: mapping
     knowledge_status: APPROVED
-    runtime_status: DOCUMENTED_ONLY
+    runtime_status: ACTIVE
     statement: "Planning contract lookup uses Info/input/contract_info_reference.md. GCI_AA normalizes to contract identity GCI and GTSB_AA normalizes to GTSB. The _AA suffix is preserved as line-item-selection evidence and removed only for contract identity lookup. No Planning-specific contract table is allowed."
     inputs:
       - "Subcon Planning / Subcon - Planning"
@@ -291,7 +299,10 @@ rules:
     expected_outcome: "Planning uses the same approved GCI/GTSB contract mapping as other PR scopes without treating _AA as a different subcontractor."
     risk: CRITICAL
     source_references:
-      - "docs/superpowers/specs/2026-08-11-planning-pr-all-du-design.md"
+      - "scripts/planning_pr_runtime.py"
+      - "scripts/planning_ecc_renderer.py"
+      - "tests/test_issue_34_planning_renderer.py"
+      - "tests/test_issue_34_planning_end_to_end.py"
       - "Info/input/contract_info_reference.md"
     acceptance_question_ids:
       - AQ-028
@@ -313,7 +324,7 @@ rules:
     source_references:
       - "SKILL.md"
       - "README.md"
-      - "docs/superpowers/specs/2026-08-11-planning-pr-all-du-design.md"
+      - "scripts/planning_pr_selector.py"
     acceptance_question_ids:
       - AQ-007
       - AQ-011
@@ -387,9 +398,9 @@ rules:
     source_references:
       - "README.md"
       - "scripts/generate_tss_pr_ecc.py"
+      - "scripts/planning_pr_runtime.py"
       - "SKILL.md"
       - "Info/input/contract_info_reference.md"
-      - "docs/superpowers/specs/2026-08-11-planning-pr-all-du-design.md"
     acceptance_question_ids:
       - AQ-015
       - AQ-028
@@ -412,6 +423,7 @@ rules:
       - "SKILL.md"
       - "README.md"
       - "scripts/renderer_reconciliation.py"
+      - "scripts/planning_ecc_renderer.py"
     acceptance_question_ids:
       - AQ-016
       - AQ-032
@@ -421,7 +433,7 @@ rules:
     domain: output
     knowledge_status: EXTRACTED
     runtime_status: ACTIVE
-    statement: "Current TSS and TI outputs are grouped by scope, subcontractor and region, with at most 30 unique Site IDs per output file. Planning is approved to reuse the same grouping contract when implemented."
+    statement: "TSS, TI and Planning outputs are grouped by scope, normalized subcontractor and region, with at most 30 unique Site IDs per output file."
     inputs:
       - "Scope"
       - "Subcontractor"
@@ -432,7 +444,8 @@ rules:
     source_references:
       - "SKILL.md"
       - "README.md"
-      - "docs/superpowers/specs/2026-08-11-planning-pr-all-du-design.md"
+      - "scripts/planning_ecc_renderer.py"
+      - "tests/test_issue_34_planning_renderer.py"
     acceptance_question_ids:
       - AQ-017
 
@@ -441,7 +454,7 @@ rules:
     domain: output
     knowledge_status: EXTRACTED
     runtime_status: ACTIVE
-    statement: "Current formal TSS/TI files use <Region>-<Subcontractor> <DU Model> <Scope> PR <YYYYMMDD>.xlsx. Planning is approved to reuse this generic DU Model-aware convention when implemented."
+    statement: "Formal TSS, TI and Planning files use <Region>-<Subcontractor> <DU Model> <Scope> PR <YYYYMMDD>.xlsx, with Part N when a group exceeds the site limit."
     inputs:
       - "Region"
       - "Subcontractor"
@@ -453,6 +466,7 @@ rules:
     source_references:
       - "SKILL.md"
       - "README.md"
+      - "scripts/planning_ecc_renderer.py"
     acceptance_question_ids:
       - AQ-018
 
@@ -461,18 +475,21 @@ rules:
     domain: output
     knowledge_status: VERIFIED
     runtime_status: ACTIVE
-    statement: "ECC Column K remains the matched PR Model description. ECC Column O contains the exact original source Tx SOW for every generated TSS and TI row. ECC Column P remains the Contract Number field. Planning does not use Tx SOW to select its PBOM; any later Planning Column O behavior must be specified without changing TSS/TI semantics."
+    statement: "For TSS/TI, ECC Column K remains the matched PR Model description and ECC Column O contains the original source Tx SOW; Column P remains Contract Number. Planning does not use Tx SOW, so Planning Column K contains the governed Planning line-item description, Column O is blank, and Column P repeats the approved Contract Number."
     inputs:
-      - "Matched PR Model description"
-      - "Site Tx SOW"
+      - "Matched or selected line-item description"
+      - "Site Tx SOW where applicable"
       - "Resolved Contract Number"
-    expected_outcome: "Existing TSS/TI rows remain traceable to the original site Tx SOW without altering Column K or Column P meaning."
+    expected_outcome: "Each implemented scope preserves its approved traceability contract without changing TSS/TI semantics."
     risk: HIGH
     source_references:
       - "scripts/generate_tss_pr_ecc.py"
+      - "scripts/planning_ecc_renderer.py"
       - "tests/test_ti_sow_matching.py"
+      - "tests/test_issue_34_planning_renderer.py"
     acceptance_question_ids:
       - AQ-024
+      - AQ-032
 
   - id: PRC-REV-001
     title: Structured review-required reason
@@ -486,6 +503,7 @@ rules:
     risk: HIGH
     source_references:
       - "scripts/generate_tss_pr_ecc.py"
+      - "scripts/planning_pr_runtime.py"
       - "scripts/renderer_reconciliation.py"
       - "SKILL.md"
     acceptance_question_ids:
@@ -494,17 +512,20 @@ rules:
       - AQ-032
 
   - id: PRC-ROADMAP-001
-    title: Planning implementation and Operation Backoffice roadmap
+    title: Planning implementation and Operation Backoffice roadmap boundary
     domain: roadmap
     knowledge_status: APPROVED
-    runtime_status: DOCUMENTED_ONLY
-    statement: "Planning business logic is approved for all eight supported DU Models under Issue #34 but is not yet available in the current CLI. Operation Backoffice remains a separate undefined/unsupported future scope and is not part of Issue #34."
+    runtime_status: ACTIVE
+    statement: "Planning is implemented and active for all eight supported DU Models under Issue #34. Operation Backoffice remains a separate undefined/unsupported future scope and is not part of Issue #34."
     inputs: []
-    expected_outcome: "No production user assumes Planning is executable before Issue #34 implementation/regression/UAT is complete, and no Planning implementation accidentally enables Operation Backoffice."
+    expected_outcome: "Production users may run Planning only through the governed official entrypoint, while no Planning implementation or documentation enables Operation Backoffice."
     risk: HIGH
     source_references:
       - "README.md"
       - "SKILL.md"
+      - "scripts/create_pr.py"
+      - "scripts/planning_ecc_renderer.py"
+      - "tests/test_issue_34_planning_end_to_end.py"
       - "docs/superpowers/specs/2026-08-11-planning-pr-all-du-design.md"
       - "docs/superpowers/plans/2026-08-11-planning-pr-all-du.md"
     acceptance_question_ids:
