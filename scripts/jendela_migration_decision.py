@@ -85,11 +85,11 @@ _ANTENNA_BEFORE_POLARIZATION = re.compile(
     re.IGNORECASE,
 )
 _FREQUENCY_TOKEN = re.compile(
-    r"(?<![A-Za-z0-9])\d+(?:\.\d+)?\s*[gG](?![A-Za-z0-9])"
+    r"(?<![A-Za-z0-9])\d+(?:\.\d+)?\s*[gG](?:[hH][zZ])?(?![A-Za-z0-9])"
 )
 _RADIO_CONFIGURATION_TOKEN = re.compile(r"(?<!\d)\d+\s*\+\s*\d+(?!\d)")
 _STANDARD_MW_LINK = re.compile(
-    r"(?<![A-Za-z0-9])\d+(?:\.\d+)?\s*[gG](?![A-Za-z0-9])"
+    r"(?<![A-Za-z0-9])\d+(?:\.\d+)?\s*[gG](?:[hH][zZ])?(?![A-Za-z0-9])"
     r"(?P<body>.*?)"
     r"(?<!\d)\d+\s*\+\s*\d+(?!\d)",
     re.IGNORECASE,
@@ -155,9 +155,10 @@ def parse_jendela_before_mw_antenna_size(value: Any) -> float | None:
     represented by the approved Jendela v4.1 MW Dismantle model. When
     polarization wording is absent, the parser accepts only a standard
     GHz -> body -> N+N link shape whose body contains exactly one standalone
-    supported numeric antenna candidate. Decimal-comma notation is normalized
-    before parsing. Signed, identifier-embedded, ambiguous, unsupported,
-    missing, or conflicting evidence fails closed.
+    supported numeric antenna candidate. Both abbreviated `G` and full `GHz`
+    frequency suffixes are accepted. Decimal-comma notation is normalized before
+    parsing. Signed, identifier-embedded, unmatched polarization evidence,
+    ambiguous, unsupported, missing, or conflicting evidence fails closed.
     """
     text = " ".join(str(value or "").strip().split())
     if not text:
@@ -167,11 +168,19 @@ def parse_jendela_before_mw_antenna_size(value: Any) -> float | None:
     frequency_matches = list(_FREQUENCY_TOKEN.finditer(text))
     radio_matches = list(_RADIO_CONFIGURATION_TOKEN.finditer(text))
     link_matches = list(_STANDARD_MW_LINK.finditer(text))
+    all_polarization_markers = list(_POLARIZATION_MARKER.finditer(text))
 
     if link_matches:
         if not (
             len(link_matches) == len(frequency_matches) == len(radio_matches)
         ):
+            return None
+
+        linked_polarization_marker_count = sum(
+            len(list(_POLARIZATION_MARKER.finditer(link_match.group(0))))
+            for link_match in link_matches
+        )
+        if linked_polarization_marker_count != len(all_polarization_markers):
             return None
 
         resolved_sizes: list[float] = []
