@@ -35,6 +35,11 @@ _NON_INSTALL_INTENT_RE = (
 _ACTION_INTENT_RE = rf"(?:{_INSTALL_INTENT_RE}|{_NON_INSTALL_INTENT_RE})"
 _INSTALL_INTENT_PATTERN = re.compile(rf"\b{_INSTALL_INTENT_RE}\b", re.IGNORECASE)
 _NON_INSTALL_INTENT_PATTERN = re.compile(rf"\b{_NON_INSTALL_INTENT_RE}\b", re.IGNORECASE)
+_DIRECTIONAL_GOVERNING_ACTION_PATTERN = re.compile(
+    r"\b(?:upgrade|replac(?:e|ed|ing|ement)?|swap(?:ped|ping)?|chang(?:e|ed|ing)?|"
+    r"migrat(?:e|ed|ing|ion)?)\b",
+    re.IGNORECASE,
+)
 _SOURCE_SIDE_INTENT_PATTERN = re.compile(
     rf"\b(?:upgrade|replac(?:e|ed|ing|ement)?|swap(?:ped|ping)?|chang(?:e|ed|ing)?|"
     rf"migrat(?:e|ed|ing|ion)?|{_NON_INSTALL_INTENT_RE})\b",
@@ -209,7 +214,7 @@ def _directional_target_governing_action_is_negated(text: str, clause_start: int
     for boundary in _CLAUSE_SEPARATOR_PATTERN.finditer(text, 0, separator.start()):
         source_clause_start = boundary.end()
     source_clause = text[source_clause_start:separator.start()]
-    actions = list(_SOURCE_SIDE_INTENT_PATTERN.finditer(source_clause))
+    actions = list(_DIRECTIONAL_GOVERNING_ACTION_PATTERN.finditer(source_clause))
     if not actions:
         return False
     governing_action = actions[-1]
