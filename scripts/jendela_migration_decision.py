@@ -79,7 +79,6 @@ def _normalized(value: Any) -> str:
     return " ".join(str(value).strip().split()).casefold()
 
 
-_EXPLICIT_ANTENNA_SIZE = re.compile(r"(?<![\d.])(\d+(?:\.\d+)?)\s*[mM]\b")
 _POLARIZATION_MARKER = re.compile(r"\b(?:SP|DP|XPIC)\b", re.IGNORECASE)
 _ANTENNA_BEFORE_POLARIZATION = re.compile(
     r"(?<![\d.])(\d+(?:\.\d+)?)\s*[mM]?(?=[\s_/-]+(?:SP|DP|XPIC)\b)",
@@ -92,42 +91,36 @@ def _valid_antenna_size(value: float) -> bool:
 
 
 def parse_jendela_before_mw_antenna_size(value: Any) -> float | None:
-    """Extract existing-MW antenna size without mistaking bandwidth for antenna.
+    """Extract existing-MW antenna size from structurally qualified evidence.
 
     Jendela MW Config places antenna diameter immediately before the
     polarization token (SP/DP/XPIC). Every polarization-qualified configuration
     must have exactly one parseable, in-range antenna value immediately before
     its marker. Multiple complete configurations are accepted only when they all
     agree on one size; missing, nonnumeric, invalid, or conflicting qualified
-    values fail closed. If no polarization structure exists, a generic explicit-
-    metre fallback is accepted only when exactly one in-range token is present.
+    values fail closed. Unpolarized metre tokens are not accepted because they
+    are ambiguous with other MW Config quantities such as channel bandwidth.
     """
     text = " ".join(str(value or "").strip().split())
     if not text:
         return None
 
     polarization_markers = list(_POLARIZATION_MARKER.finditer(text))
+    if not polarization_markers:
+        return None
+
     polarized_matches = [
         float(match.group(1))
         for match in _ANTENNA_BEFORE_POLARIZATION.finditer(text)
     ]
-    if polarization_markers:
-        if len(polarized_matches) != len(polarization_markers):
-            return None
-        if any(not _valid_antenna_size(size) for size in polarized_matches):
-            return None
-        polarized_sizes = set(polarized_matches)
-        if len(polarized_sizes) == 1:
-            return next(iter(polarized_sizes))
+    if len(polarized_matches) != len(polarization_markers):
+        return None
+    if any(not _valid_antenna_size(size) for size in polarized_matches):
         return None
 
-    fallback_sizes = [
-        float(match.group(1))
-        for match in _EXPLICIT_ANTENNA_SIZE.finditer(text)
-        if _valid_antenna_size(float(match.group(1)))
-    ]
-    if len(fallback_sizes) == 1:
-        return fallback_sizes[0]
+    polarized_sizes = set(polarized_matches)
+    if len(polarized_sizes) == 1:
+        return next(iter(polarized_sizes))
     return None
 
 
