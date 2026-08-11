@@ -96,9 +96,14 @@ class TestIssue84JendelaBeforeMwAntenna(unittest.TestCase):
             parse_jendela_before_mw_antenna_size("18G 3.5M 1+0"),
         )
 
-    def test_parser_requires_polarization_structure_even_for_plausible_single_metre_token(self):
-        self.assertIsNone(
+    def test_parser_accepts_unpolarized_standard_antenna_sequence(self):
+        self.assertEqual(
+            parse_jendela_before_mw_antenna_size("18G 1.2 1+0"),
+            1.2,
+        )
+        self.assertEqual(
             parse_jendela_before_mw_antenna_size("18G 1.2M 1+0"),
+            1.2,
         )
 
     def test_mw_dismantle_is_enriched_from_mw_config_without_ne_fe_fallback(self):
