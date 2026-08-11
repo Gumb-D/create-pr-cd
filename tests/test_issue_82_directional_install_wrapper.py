@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression coverage for directional targets introduced by install verbs."""
+"""Permanent regression coverage for directional targets introduced by install verbs."""
 from __future__ import annotations
 
 import sys
