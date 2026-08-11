@@ -11,7 +11,7 @@ SCRIPTS = ROOT / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
-from create_pr_impl import _partition_records, _scope_subcontractor  # noqa: E402
+from create_pr import _partition_records, _scope_subcontractor  # noqa: E402
 from du_export_adapter import PR_STATUS_EXISTS, PR_STATUS_NONE, PR_STATUS_NOT_REQUIRED  # noqa: E402
 
 EMPTY_POLICY = {"schema_version": "1.0", "excluded_from_pr": {}}
