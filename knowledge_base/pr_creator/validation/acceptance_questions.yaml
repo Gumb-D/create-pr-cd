@@ -1,280 +1,279 @@
-acceptance_suite:
-  id: PRC-ACCEPTANCE-v0
-  status: SPECIFICATION_ONLY
-  purpose: "Business questions that will become deterministic regression fixtures before rules are moved from code to configuration."
+acceptance_set:
+  id: PR-CREATOR-ACCEPTANCE
+  version: 0.3.0
+  generated_from_branch: main
+  purpose: "Questions and expected outcomes used for business verification and regression fixture design."
 
 questions:
   - id: AQ-001
-    title: Unsupported scope is rejected
-    scenario: "Before Issue #34 runtime enablement, run the CLI with Planning or Operation Backoffice."
-    expected: "Argument parsing rejects the scope and states that only TSS and TI are currently supported. Planning may be enabled only after the Issue #34 end-to-end implementation gate; Operation Backoffice remains unsupported."
-    priority: P1
+    domain: runtime
     rule_ids:
       - PRC-CLI-001
       - PRC-ROADMAP-001
+    question: "Which PR scopes are executable through the official create-pr entrypoint?"
+    expected: "TSS, TI and Planning are accepted by scripts/create_pr.py. Planning remains subject to DU Profile lifecycle/header/canonical safety gates and Issue #34 regression coverage. Operation Backoffice is rejected as unsupported."
+    verification_type: automated_regression
 
   - id: AQ-002
-    title: TSS site with no subcontractor is not eligible
-    scenario: "A site has blank SubCon - TSS Team and no existing TSS PR."
-    expected: "No TSS ECC line is generated and the reason is traceable."
-    priority: P1
+    domain: eligibility
     rule_ids:
       - PRC-ELIG-001
+    question: "If the TSS subcontractor is blank, should a TSS line be generated?"
+    expected: "No. The site is not TSS-eligible."
+    verification_type: business_fixture
 
   - id: AQ-003
-    title: Existing PR prevents regeneration
-    scenario: "A TSS or TI eligible site already contains a PR number or status for the same scope."
-    expected: "No duplicate ECC line is generated and the processing summary records the skip."
-    priority: P0
+    domain: duplicate_prevention
     rule_ids:
       - PRC-ELIG-001
       - PRC-ELIG-002
       - PRC-DUP-001
+    question: "If the scope-specific PR status/number already exists for the same site, should the generator create another PR?"
+    expected: "No. Skip and retain a traceable duplicate-prevention reason."
+    verification_type: automated_regression
 
   - id: AQ-004
-    title: TI site with no subcontractor is not eligible
-    scenario: "A site has blank SubCon - TI Team and no existing TI PR."
-    expected: "No TI ECC line is generated and the reason is traceable."
-    priority: P1
+    domain: eligibility
     rule_ids:
       - PRC-ELIG-002
+    question: "If the TI subcontractor is blank, should a TI line be generated?"
+    expected: "No. The site is not TI-eligible."
+    verification_type: business_fixture
 
   - id: AQ-005
-    title: Multiple SOW terms select only one primary SOW
-    scenario: "Tx SOW includes MW Swap and MW Decom."
-    expected: "Exactly one approved primary SOW is used; no secondary scope line is emitted."
-    priority: P0
+    domain: classification
     rule_ids:
       - PRC-SOW-001
+    question: "When a Tx SOW contains more than one recognised SOW keyword, which one is primary?"
+    expected: "Use only the first identified SOW keyword according to the approved registry/order for scopes that consume Tx SOW. Planning does not consume Tx SOW for PBOM selection."
+    verification_type: business_fixture
 
   - id: AQ-006
-    title: Standard TSS model preserves mandatory model quantities
-    scenario: "One eligible TSS site has a single matching mandatory model group that is not subject to a SOW-specific override such as MW New Link / Reroute."
-    expected: "Generated mandatory items retain the applicable PR Model quantity; for this standard fixture the quantity is 1, and no optional item is included."
-    priority: P0
+    domain: matching
     rule_ids:
       - PRC-MODEL-001
-      - PRC-SEL-001
+    question: "Can TSS select more than one PR Model group for the same site and SOW?"
+    expected: "No. Ambiguous model matches are REVIEW_REQUIRED."
+    verification_type: automated_regression
 
   - id: AQ-007
-    title: Ambiguous mandatory model selection is review-required
-    scenario: "Two TSS or TI mandatory model groups match the same evaluated key."
-    expected: "No arbitrary model is selected; output is REVIEW_REQUIRED with a specific code."
-    priority: P0
+    domain: line_item
     rule_ids:
       - PRC-MODEL-001
-      - PRC-MODEL-002
       - PRC-SEL-001
+    question: "Which TSS model rows are auto-generated?"
+    expected: "Only deterministic approved rows according to the applicable TSS rule; unresolved optional/choose-one rows are not guessed."
+    verification_type: automated_regression
 
   - id: AQ-008
-    title: TI antenna uses the larger size when both sides are complete
-    scenario: "NE is 1.2m and FE is 1.8m."
-    expected: "The selected category is based on 1.8m and the difference is traceable."
-    priority: P0
+    domain: antenna
     rule_ids:
-      - PRC-ANT-001
-      - PRC-ANT-002
       - PRC-MODEL-002
+      - PRC-ANT-001
+    question: "When both NE and FE antenna sizes exist for an antenna-dependent TI model, which size is used for matching?"
+    expected: "Use the larger normalized size."
+    verification_type: automated_regression
 
   - id: AQ-009
-    title: Incomplete antenna data blocks only antenna-required TI models
-    scenario: "The strictly matched mandatory TI model contains an antenna-dependent choose-one group (for example MW Parallel Link) and one antenna side is blank."
-    expected: "The result is REVIEW_REQUIRED, not a normal generated TI model line. This question applies only to antenna-required TI models; antenna-independent SOWs are covered by AQ-020."
-    priority: P0
+    domain: antenna
     rule_ids:
-      - PRC-ANT-001
       - PRC-MODEL-002
+      - PRC-ANT-001
+    question: "What happens when an antenna-dependent TI model has incomplete NE/FE antenna data?"
+    expected: "REVIEW_REQUIRED; do not silently guess."
+    verification_type: automated_regression
 
   - id: AQ-010
-    title: PR Model category labels align with runtime thresholds
-    scenario: "Test antenna sizes 0.3m, 0.6m, 0.9m, 1.2m, 1.8m and 2.4m against the active PR Model."
-    expected: "Each size has exactly one approved category and compatible model mapping."
-    priority: P0
+    domain: antenna
     rule_ids:
+      - PRC-MODEL-002
       - PRC-ANT-002
+    question: "What antenna category should runtime emit for the approved numeric thresholds?"
+    expected: "Use the current governed category thresholds and labels; any model-label disagreement remains governed by KB-DIV-002."
+    verification_type: automated_regression
 
   - id: AQ-011
-    title: Unresolved choose-one groups require review
-    scenario: "A mandatory PR model group has more than one eligible alternative and no deterministic selector."
-    expected: "The generator reports REVIEW_REQUIRED and does not arbitrarily select an item."
-    priority: P0
+    domain: line_item
     rule_ids:
       - PRC-SEL-001
+    question: "May the runtime auto-select arbitrary optional PR Model rows?"
+    expected: "No. Optional rows require an explicit deterministic approval. Planning GCI_AA/GTSB_AA -> 350001042321 is one such explicit exception and does not authorize other optional rows."
+    verification_type: automated_regression
 
   - id: AQ-012
-    title: MW Reroute output contains validated install and dismantle logic
-    scenario: "A valid MW Reroute site has clear install and decom antenna information."
-    expected: "Both approved components are generated; missing or ambiguous values produce review-required."
-    priority: P0
+    domain: ti
     rule_ids:
       - PRC-TI-001
+    question: "How is MW Reroute handled for TI?"
+    expected: "Install and dismantle components are controlled separately and emitted only when safely matched."
+    verification_type: automated_regression
 
   - id: AQ-013
-    title: MW Re-engineering remains blocked from automatic generation
-    scenario: "Tx SOW is MW Re-engineering."
-    expected: "No automatic normal line is emitted; item is review-required."
-    priority: P0
+    domain: ti
     rule_ids:
       - PRC-TI-002
+    question: "Should MW Re-engineering be auto-generated?"
+    expected: "No. It remains REVIEW_REQUIRED until business rules are confirmed."
+    verification_type: automated_regression
 
   - id: AQ-014
-    title: Region mapping is deterministic and versioned
-    scenario: "Known and unknown region values are processed."
-    expected: "Known values resolve to the approved Purchasing Area; unknown values are review-required."
-    priority: P0
+    domain: mapping
     rule_ids:
       - PRC-MAP-001
+    question: "Where does Purchasing Area come from?"
+    expected: "From the controlled Region mapping in Info/input/contract_info_reference.md."
+    verification_type: mapping_fixture
 
   - id: AQ-015
-    title: Fuzzy subcontractor mapping cannot silently misassign a contract
-    scenario: "A subcontractor name is similar to more than one reference value."
-    expected: "The result follows the approved fuzzy-match policy, exposes score and matched target, and defaults to review when confidence is insufficient."
-    priority: P0
+    domain: mapping
     rule_ids:
       - PRC-MAP-002
+    question: "Where does Contract Number come from?"
+    expected: "From the controlled subcontractor mapping in Info/input/contract_info_reference.md using the applicable normalized subcontractor identity."
+    verification_type: mapping_fixture
 
   - id: AQ-016
-    title: Missing mandatory ECC value remains visible for review
-    scenario: "A required output field such as Contract Number or Purchasing Area cannot be resolved."
-    expected: "The output row is retained and Remarks identifies the missing field and action."
-    priority: P0
+    domain: output
     rule_ids:
       - PRC-OUT-001
       - PRC-REV-001
+    question: "What happens when mandatory output evidence cannot be resolved safely?"
+    expected: "The site is blocked from partial ECC output and retained through an actionable REVIEW_REQUIRED/error terminal outcome."
+    verification_type: automated_regression
 
   - id: AQ-017
-    title: Output group respects the 30 unique Site ID limit
-    scenario: "One scope, subcontractor and region group contains 31 unique Site IDs."
-    expected: "The generator creates two deterministic output files; neither contains more than 30 unique Site IDs."
-    priority: P1
+    domain: output
     rule_ids:
       - PRC-OUT-002
+    question: "How many unique Site IDs are allowed per ECC file?"
+    expected: "At most 30; split deterministically when necessary."
+    verification_type: automated_regression
 
   - id: AQ-018
-    title: Output filename identifies group and scope
-    scenario: "Generate a normal TSS or TI output."
-    expected: "Filename follows the approved Region-Subcontractor-DUModel-Scope-date format."
-    priority: P2
+    domain: output
     rule_ids:
       - PRC-OUT-003
+    question: "What naming contract applies to formal ECC files?"
+    expected: "<Region>-<Subcontractor> <DU Model> <Scope> PR <YYYYMMDD>.xlsx, with Part N when split."
+    verification_type: automated_regression
 
   - id: AQ-019
-    title: Review reason is structured and actionable
-    scenario: "Trigger a known review-required condition such as missing antenna data."
-    expected: "Reason code, description, action and technical detail are populated consistently."
-    priority: P1
+    domain: review
     rule_ids:
       - PRC-REV-001
+    question: "Must a review-required outcome carry a structured reason?"
+    expected: "Yes. Reason code, explanation and required action must be traceable."
+    verification_type: automated_regression
 
   - id: AQ-020
-    title: Antenna-independent TI models generate normally with blank or one-sided antenna input
-    scenario: "A site has Tx SOW 'BBU Patching' or 'MW IDU Patching' with MW Config Antenna Size NE and FE both blank, or only one side populated."
-    expected: "A normal TI ECC line is generated with no REVIEW_REQUIRED remark, because the strictly matched mandatory TI model has no antenna-dependent choose-one group."
-    priority: P0
+    domain: antenna
     rule_ids:
       - PRC-ANT-001
-      - PRC-MODEL-002
+    question: "Can an antenna-independent TI model be blocked solely because antenna fields are blank?"
+    expected: "No. Only models that actually require antenna selection should require antenna evidence."
+    verification_type: automated_regression
 
   - id: AQ-021
-    title: Strict TI SOW matching rejects supersets and normalizes case and whitespace
-    scenario: "Tx SOW values include exact matches with extra whitespace and case variation (for example '  bbu   patching  '), plus unsupported supersets such as 'BBU Patching Extended' and 'MW Parallel Link Extended'."
-    expected: "Case- and whitespace-normalized exact matches succeed; supersets and substrings never match and are REVIEW_REQUIRED with a matching-not-found reason."
-    priority: P0
+    domain: matching
     rule_ids:
       - PRC-MODEL-002
+    question: "Can a TI SOW substring/superset such as BBU Patching Extended match BBU Patching?"
+    expected: "No. TI model matching uses canonical exact SOW equality."
+    verification_type: automated_regression
 
   - id: AQ-022
-    title: Excel float-formatted PBOM values canonicalize through the real generator path
-    scenario: "A PR Model workbook stores a PBOM code as an Excel-derived float such as 350000062773.0."
-    expected: "The generated ECC output emits the canonical integer-form PBOM code with no residual '.0' and no digit loss."
-    priority: P0
+    domain: data
     rule_ids:
       - PRC-DATA-001
+    question: "How should Excel integer-like PBOM values ending in .0 be compared?"
+    expected: "Canonicalize to the exact integer string without precision loss."
+    verification_type: automated_regression
 
   - id: AQ-023
-    title: MW New Link / Reroute survey PBOM, quantity, and duplicate controls are deterministic
-    scenario: "Generate TSS output for MW New Link and MW Reroute sites, including a Reroute site with a '_LOS' site ID."
-    expected: "MW New Link selects PBOM 350000062773 with quantity 1.0 on controlled items; MW Reroute selects PBOM 350000062776 only for '_LOS' sites and otherwise 350000062773, with quantity 1.5 on controlled items; no PBOM code is duplicated in the output."
-    priority: P0
+    domain: tss
     rule_ids:
-      - PRC-TSS-001
       - PRC-DATA-001
+      - PRC-TSS-001
+    question: "What survey PBOM and quantity rules apply to MW New Link / Reroute?"
+    expected: "Use the governed deterministic New Link/Reroute PBOM selection, LOS exception and quantity rules."
+    verification_type: automated_regression
 
   - id: AQ-024
-    title: ECC Column O carries the source Tx SOW while Column K and Column P keep their intended values
-    scenario: "Generate a normal TSS or TI ECC row for a site with a known Tx SOW."
-    expected: "Column K contains the matched PR Model description, Column O contains the exact original site Tx SOW, and Column P contains the resolved Contract Number."
-    priority: P1
+    domain: output
     rule_ids:
       - PRC-OUT-004
+    question: "How is source Tx SOW traceability represented in ECC output?"
+    expected: "TSS/TI preserve the approved source Tx SOW traceability contract. Planning uses its governed Planning description and leaves the source-Tx-SOW column blank because Tx SOW is not a Planning decision input."
+    verification_type: automated_regression
 
   - id: AQ-025
-    title: Five full-planning DU Models select PBOM 350001143904
-    scenario: "For each of 2023 TX Rollout, 2023 Celcomdigi BAU, 2024 Celcomdigi BAU, Celcomdigi USP and Jendela TX Migration, process an eligible site with Subcon Planning GCI or GTSB and blank Planning PR status."
-    expected: "Exactly one Planning line is selected and its PBOM is 350001143904 with quantity 1 and unit Hop."
-    priority: P0
+    domain: planning
     rule_ids:
-      - PRC-PLAN-001
       - PRC-ELIG-003
+      - PRC-PLAN-001
+      - PRC-ROADMAP-001
+    question: "Which DU Models are supported for Planning PR?"
+    expected: "Exactly these eight: 2023 TX Rollout, TX Mini Project, 2023 Celcomdigi BAU, 2024 Celcomdigi BAU, Celcomdigi USP, Jendela TX Migration, MW EOS Swap, and ZTE TX MINI."
+    verification_type: automated_regression
 
   - id: AQ-026
-    title: Remaining three supported DU Models select PBOM 350001143905
-    scenario: "For each of TX Mini Project, MW EOS Swap and ZTE TX MINI, process an eligible site with Subcon Planning GCI or GTSB and blank Planning PR status."
-    expected: "Exactly one Planning line is selected and its PBOM is 350001143905 with quantity 1 and unit Hop."
-    priority: P0
+    domain: planning
     rule_ids:
       - PRC-PLAN-001
-      - PRC-ELIG-003
+    question: "What Planning PBOM is selected for GCI/GTSB on the five full-planning DU Models?"
+    expected: "350001143904, Quantity 1, Unit Hop for 2023 TX Rollout, 2023 Celcomdigi BAU, 2024 Celcomdigi BAU, Celcomdigi USP and Jendela TX Migration."
+    verification_type: automated_regression
 
   - id: AQ-027
-    title: AA Planning values select only optional PBOM 350001042321
-    scenario: "For every supported DU Model, process otherwise identical eligible sites using GCI_AA and GTSB_AA."
-    expected: "Each site generates exactly one Planning item: PBOM 350001042321. PBOM 350001143904 and 350001143905 are absent."
-    priority: P0
+    domain: planning
     rule_ids:
       - PRC-PLAN-001
       - PRC-SEL-001
+    question: "What Planning PBOM is selected for GCI_AA/GTSB_AA?"
+    expected: "For every supported DU, select only 350001042321, Quantity 1, Unit Hop; never also emit 350001143904 or 350001143905."
+    verification_type: automated_regression
 
   - id: AQ-028
-    title: AA suffix is removed only for contract identity
-    scenario: "Resolve contracts for eligible Planning sites with GCI_AA and GTSB_AA."
-    expected: "GCI_AA looks up the GCI contract and GTSB_AA looks up the GTSB contract from Info/input/contract_info_reference.md, while the original _AA value still drives PBOM 350001042321 selection."
-    priority: P0
+    domain: planning
     rule_ids:
       - PRC-PLAN-002
       - PRC-MAP-002
+    question: "How are GCI_AA and GTSB_AA mapped for contract lookup?"
+    expected: "Normalize to GCI and GTSB respectively only for contract identity; preserve the _AA source value as Planning line-item evidence."
+    verification_type: automated_regression
 
   - id: AQ-029
-    title: TX Planning Remarks never changes Planning PBOM selection
-    scenario: "Run the same eligible Planning site multiple times with blank, Design, AA-related and arbitrary TX Planning Remarks values while holding DU Model and Subcon Planning constant."
-    expected: "The selected Planning PBOM is identical in every case because TX Planning Remarks is not a Planning decision input."
-    priority: P0
+    domain: planning
     rule_ids:
       - PRC-PLAN-001
+    question: "Can Tx SOW, TX Planning Remarks, TX Upgrade Scope, antenna or coordinates change the Planning PBOM?"
+    expected: "No. Planning PBOM selection is determined only by approved DU Model identity and Planning subcontractor."
+    verification_type: automated_regression
 
   - id: AQ-030
-    title: Blank Planning subcontractor is ignored
-    scenario: "A supported DU site has blank Subcon Planning and blank Planning PR status."
-    expected: "No Planning ECC is generated and the terminal outcome records the site as not eligible/ignored rather than silently losing it."
-    priority: P0
+    domain: planning
     rule_ids:
       - PRC-ELIG-003
+    question: "What happens when Planning subcontractor is blank?"
+    expected: "No Planning PR is generated; the approved source column must still be mapped so blank is distinguishable from missing evidence."
+    verification_type: automated_regression
 
   - id: AQ-031
-    title: Existing Planning PR status prevents duplicate generation
-    scenario: "A supported DU site has an approved Planning subcontractor and a non-blank Subcon PR - Planning value, including either a PR number or controlled non-PR status text."
-    expected: "No new Planning ECC is generated; duplicate/existing-status handling is traceable in terminal reconciliation."
-    priority: P0
+    domain: planning
     rule_ids:
       - PRC-ELIG-003
       - PRC-DUP-001
+    question: "What happens when the approved Planning PR status/number field is non-blank?"
+    expected: "Do not regenerate Planning PR. Existing PR references are duplicate-blocked; explicit No PR required values are ignored."
+    verification_type: automated_regression
 
   - id: AQ-032
-    title: Unknown Planning subcontractor fails closed
-    scenario: "A supported DU site has a non-blank Planning subcontractor other than GCI, GTSB, GCI_AA or GTSB_AA and has no existing Planning PR status."
-    expected: "The site is REVIEW_REQUIRED with no partial Planning ECC and no fuzzy Planning subcontractor substitution."
-    priority: P0
+    domain: planning
     rule_ids:
       - PRC-ELIG-003
       - PRC-PLAN-002
+      - PRC-OUT-001
       - PRC-REV-001
+    question: "What safety behavior is required when Planning input, contract, purchasing area, DU identity, or selector evidence cannot be resolved safely?"
+    expected: "Fail closed with an actionable terminal review/error outcome, emit no partial Planning ECC for the blocked site, and reconcile every requested site to exactly one terminal disposition."
+    verification_type: automated_regression
