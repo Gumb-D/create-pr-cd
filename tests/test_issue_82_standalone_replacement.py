@@ -122,6 +122,39 @@ class TestIssue82StandaloneReplacement(unittest.TestCase):
                 self.assertIsNone(result["common_size"])
                 self.assertIsNone(result["selected_size"])
 
+    def test_action_punctuation_before_sized_source_multiline_target_fails_closed(self):
+        for text in (
+            "Upgrade: antenna 2.4m to\nantenna 0.6m",
+            "Replace: 2.4m dish with\n0.6m dish",
+        ):
+            with self.subTest(text=text):
+                result = self._resolve(text)
+                self.assertEqual(result["status"], "MISSING")
+                self.assertIsNone(result["common_size"])
+                self.assertIsNone(result["selected_size"])
+
+    def test_using_replacement_boundary_uses_target_size(self):
+        for text in (
+            "Replace antenna 2.4m using new antenna 0.6m",
+            "Swap antenna 2.4m using antenna 0.6m",
+        ):
+            with self.subTest(text=text):
+                result = self._resolve(text)
+                self.assertEqual(result["status"], "RESOLVED_COMMON")
+                self.assertEqual(result["common_size"], 0.6)
+                self.assertEqual(result["selected_size"], 0.6)
+
+    def test_coordinated_antenna_targets_share_install_intent(self):
+        for text in (
+            "Install antenna 0.6m and antenna 1.2m",
+            "Install antenna 1.2m and antenna 0.6m",
+        ):
+            with self.subTest(text=text):
+                result = self._resolve(text)
+                self.assertEqual(result["status"], "RESOLVED_COMMON")
+                self.assertEqual(result["common_size"], 1.2)
+                self.assertEqual(result["selected_size"], 1.2)
+
     def test_from_unrelated_antenna_port_does_not_discard_valid_size(self):
         result = self._resolve("Install antenna 0.6m. Upgrade from antenna port to\nantenna 10m away")
         self.assertEqual(result["status"], "RESOLVED_COMMON")
