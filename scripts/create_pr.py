@@ -10,6 +10,11 @@ from collections.abc import Mapping
 from pathlib import Path
 
 import create_pr_impl as _impl
+from planning_pr_runtime import (
+    partition_planning_records,
+    planning_scope_subcontractor,
+    validate_planning_candidate_contracts,
+)
 from pr_model_baseline import PrModelBaselineError, validate_pr_model_baseline
 from renderer_reconciliation import (
     collect_renderer_reconciliation,
@@ -24,6 +29,8 @@ for _name in dir(_impl):
 
 _ORIGINAL_PARTITION = _impl._partition_records
 _ORIGINAL_RENDERER_ROW = _impl._renderer_row
+_ORIGINAL_SCOPE_SUBCONTRACTOR = _impl._scope_subcontractor
+_ORIGINAL_VALIDATE_CANDIDATE_CONTRACTS = _impl.validate_candidate_contracts
 _LAST_PARTITIONS = None
 
 _ANTENNA_EVIDENCE_RENDERER_COLUMNS = (
@@ -92,6 +99,20 @@ def _renderer_row(record):
     return row
 
 
+def _scope_subcontractor(record, scope):
+    """Return the scope-specific source subcontractor without cross-scope fallback."""
+    if str(scope).strip().upper() == "PLANNING":
+        return planning_scope_subcontractor(record)
+    return _ORIGINAL_SCOPE_SUBCONTRACTOR(record, scope)
+
+
+def validate_candidate_contracts(records, scope, contract_mappings):
+    """Reuse shared contracts while normalizing Planning `_AA` only for lookup."""
+    if str(scope).strip().upper() == "PLANNING":
+        return validate_planning_candidate_contracts(records, contract_mappings)
+    return _ORIGINAL_VALIDATE_CANDIDATE_CONTRACTS(records, scope, contract_mappings)
+
+
 def _record_site_code(record):
     return str(record.get("site", {}).get("site_code", "") or "").strip()
 
@@ -138,10 +159,13 @@ def _assert_unique_project_site_codes(records):
 
 
 def _partition_records(records, scope, policy=None):
-    """Validate business identity, then delegate partitioning and retain audit sets."""
+    """Validate business identity, then apply the scope-specific partition flow."""
     global _LAST_PARTITIONS
     _assert_unique_project_site_codes(records)
-    _LAST_PARTITIONS = _ORIGINAL_PARTITION(records, scope, policy)
+    if str(scope).strip().upper() == "PLANNING":
+        _LAST_PARTITIONS = partition_planning_records(records)
+    else:
+        _LAST_PARTITIONS = _ORIGINAL_PARTITION(records, scope, policy)
     return _LAST_PARTITIONS
 
 
@@ -249,7 +273,7 @@ def _write_ignored_report(output, scope, records, run_mode=RUN_MODE_PRODUCTION):
 
 
 def _sync_dependencies() -> None:
-    """Propagate public test seams and audit wrappers."""
+    """Propagate public test seams and audit/Planning wrappers."""
     for name in (
         "resolve_du_profile",
         "build_canonical_records",
@@ -263,6 +287,7 @@ def _sync_dependencies() -> None:
     _impl.CANONICAL_RENDERER_COLUMNS = CANONICAL_RENDERER_COLUMNS
     _impl._partition_records = _partition_records
     _impl._renderer_row = _renderer_row
+    _impl._scope_subcontractor = _scope_subcontractor
 
 
 def _reconcile_summary(summary, scope, before_renderer=None):
