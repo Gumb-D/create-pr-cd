@@ -3,21 +3,8 @@
   "profile_version": "0.2.0",
   "mapping_version": "approved-2026-07-15-zte-tx-mini-v1",
   "status": "PRODUCTION",
-  "identity": {
-    "project_key": "CelcomDigi_MW",
-    "accepted_du_models": ["ZTE TX MINI"],
-    "accepted_du_model_ids": ["8638668101234290847"],
-    "accepted_view_ids": ["2279585426760368522"]
-  },
-  "export_structure": {
-    "sheet_selector": null,
-    "header_rows": [0, 1, 2, 3],
-    "header_hash_policy": "strict",
-    "observed_header_hash": "a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810",
-    "approved_header_hashes": [
-      "a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810"
-    ]
-  },
+  "identity": {"project_key": "CelcomDigi_MW", "accepted_du_models": ["ZTE TX MINI"], "accepted_du_model_ids": ["8638668101234290847"], "accepted_view_ids": ["2279585426760368522"]},
+  "export_structure": {"sheet_selector": null, "header_rows": [0, 1, 2, 3], "header_hash_policy": "strict", "observed_header_hash": "a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810", "approved_header_hashes": ["a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810"]},
   "field_mapping": {
     "site_code": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|fix00012|8638668101234290847|2279585426760368522", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "customer site code"}, "mapping_status": "APPROVED"}], "transforms": ["trim", "uppercase"]},
     "site_name": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00015", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "customer site name"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
@@ -28,7 +15,8 @@
     "state": {"required": false, "source_candidates": [], "transforms": ["trim"]},
     "subcontractor_tss": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00970153", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "Subcon - TSS"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "subcontractor_ti": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00970184", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "Subcon - TI"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
-    "subcontractor_planning": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01087327", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "Subcon - Planning"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "subcontractor_planning": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01087327", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "Subcon - Planning"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
+    "existing_planning_pr_status": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01087326", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "Subcon - PR Planning"}, "mapping_status": "APPROVED"}], "transforms": ["normalize_pr_reference_status"]},
     "existing_tss_pr_status": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00959244", "wbs_stage": "Acceptance", "task_name": "Microwave", "display_header": "Subcon PR - TSS"}, "mapping_status": "APPROVED"}], "transforms": ["normalize_pr_reference_status"]},
     "existing_ti_pr_status": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00959243", "wbs_stage": "Acceptance", "task_name": "Microwave", "display_header": "Subcon PR - TI"}, "mapping_status": "APPROVED"}], "transforms": ["normalize_pr_reference_status"]},
     "latitude": {"required": false, "source_candidates": [], "transforms": ["parse_decimal"]},
@@ -40,19 +28,5 @@
     "ne_sow_details": {"required": false, "source_candidates": [], "transforms": ["trim"]},
     "fe_sow_details": {"required": false, "source_candidates": [], "transforms": ["trim"]}
   },
-  "validation": {
-    "reject_unknown_headers": true,
-    "reject_ambiguous_source_mapping": true,
-    "require_evidence_for_every_canonical_field": true,
-    "profile_notes": [
-      "The exact ZTE TX MINI mappings and Header Hash were approved by JJ on 2026-07-15.",
-      "customer site code is the primary site_code source; FE Site ID was reviewed and rejected.",
-      "Microwave Tx SOW is the primary tx_sow_raw source; TX SOW Details remains optional evidence only.",
-      "Subcon - TSS and Subcon - TI are the approved team ownership sources for PR-input validation.",
-      "Subcon PR - TSS and Subcon PR - TI are the approved duplicate-prevention sources and both normalize via normalize_pr_reference_status.",
-      "Milestone/date fields are not approved PR-status sources.",
-      "Header-hash and required approved-field validation remain mandatory for formal production output.",
-      "Production enabled by JJ on 2026-08-06; formal production jobs are the validation surface and non-production UAT is not a release prerequisite."
-    ]
-  }
+  "validation": {"reject_unknown_headers": true, "reject_ambiguous_source_mapping": true, "require_evidence_for_every_canonical_field": true, "profile_notes": ["The exact ZTE TX MINI mappings and Header Hash were approved by JJ on 2026-07-15.", "customer site code is the primary site_code source; FE Site ID was reviewed and rejected.", "Microwave Tx SOW is the primary tx_sow_raw source; TX SOW Details remains optional evidence only.", "Subcon - TSS and Subcon - TI are the approved team ownership sources for TSS/TI PR-input validation.", "Subcon PR - TSS and Subcon PR - TI are the approved TSS/TI duplicate-prevention sources and both normalize via normalize_pr_reference_status.", "Issue #34 approves Subcon - Planning and Subcon - PR Planning as Planning-only source fields; existing_planning_pr_status normalizes independently.", "Milestone/date fields are not approved PR-status sources.", "Header-hash and required approved-field validation remain mandatory for formal production output.", "Production enabled by JJ on 2026-08-06; formal production jobs are the validation surface and non-production UAT is not a release prerequisite."]}
 }
