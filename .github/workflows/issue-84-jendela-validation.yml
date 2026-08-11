@@ -1,6 +1,9 @@
 name: Issue 84 Jendela Regression Validation
 
 on:
+  push:
+    branches:
+      - 'fix/issue-84-jendela-before-mw-antenna'
   pull_request:
     paths:
       - 'scripts/**'
