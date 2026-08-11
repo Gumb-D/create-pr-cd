@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from build_profile_rollback_readiness import build_rollback_registry
+from build_profile_rollback_readiness import build_rollback_registry, rollback_markdown
 from du_profile_loader import load_du_profile
 from jendela_migration_decision import parse_jendela_before_mw_antenna_size
 
@@ -45,6 +45,15 @@ class TestIssue84CodexFinalFollowup(unittest.TestCase):
             with self.subTest(raw=raw):
                 self.assertEqual(parse_jendela_before_mw_antenna_size(raw), expected)
 
+    def test_parser_accepts_documented_mac_omt_mw_config(self):
+        cases = {
+            "18G_1.2M(MAC)+OMT x1": 1.2,
+            "18GHz_0.6M(MAC)+OMT x1": 0.6,
+        }
+        for raw, expected in cases.items():
+            with self.subTest(raw=raw):
+                self.assertEqual(parse_jendela_before_mw_antenna_size(raw), expected)
+
     def test_duplicate_unknown_rollback_profile_id_blocks_registry_globally(self):
         profile, source = self._profile_and_source()
         stale_entry = {
@@ -77,6 +86,18 @@ class TestIssue84CodexFinalFollowup(unittest.TestCase):
         self.assertIn("ROLLBACK_HEADER_HASHES_INVALID", entry["blockers"])
         self.assertEqual(entry["rollback_target_header_hashes"], [])
 
+    def test_malformed_rollback_header_hash_member_fails_closed_and_renders(self):
+        profile, source = self._profile_and_source()
+        source["entries"][0]["rollback_header_hashes"] = [None]
+
+        registry = build_rollback_registry([profile], {"entries": []}, source)
+        entry = registry["entries"][0]
+
+        self.assertEqual(entry["rollback_readiness_status"], "ROLLBACK_BLOCKED")
+        self.assertIn("ROLLBACK_HEADER_HASHES_INVALID", entry["blockers"])
+        self.assertEqual(entry["rollback_target_header_hashes"], [])
+        self.assertIn("ROLLBACK_BLOCKED", rollback_markdown(registry))
+
     def test_null_rollback_source_collections_fail_closed_without_crashing(self):
         profile, source = self._profile_and_source()
         for collection_name in ("entries", "required_profile_ids"):
@@ -94,6 +115,18 @@ class TestIssue84CodexFinalFollowup(unittest.TestCase):
                     collection_name,
                     registry["invalid_rollback_source_collections"],
                 )
+
+    def test_malformed_rollback_source_entry_blocks_registry_globally(self):
+        profile, source = self._profile_and_source()
+        for malformed_entry in (None, {}, {"current_profile_version": "0.5.0"}):
+            malformed = json.loads(json.dumps(source))
+            malformed["entries"].append(malformed_entry)
+            with self.subTest(malformed_entry=malformed_entry):
+                registry = build_rollback_registry([profile], {"entries": []}, malformed)
+                entry = registry["entries"][0]
+                self.assertEqual(entry["rollback_readiness_status"], "ROLLBACK_BLOCKED")
+                self.assertIn("ROLLBACK_BASELINE_SOURCE_ENTRY_INVALID", entry["blockers"])
+                self.assertTrue(registry["invalid_rollback_source_entry_indexes"])
 
     def test_governed_jendela_rollback_has_resolvable_immutable_artifact(self):
         profile, source = self._profile_and_source()
