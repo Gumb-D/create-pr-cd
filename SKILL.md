@@ -116,8 +116,8 @@ Business scope catalogue:
 
 Runtime status:
 
-- Current CLI implementation supports only `TSS` and `TI`.
-- Planning business rules are approved under Issue #34 for all eight supported DU Models, but `--scope Planning` must remain disabled until Issue #34 implementation/regression/UAT is complete.
+- Official `scripts/create_pr.py` supports `--scope TSS`, `--scope TI`, and `--scope Planning`.
+- Planning is implemented under Issue #34 for all eight supported DU Models with approved profile mappings, deterministic selection, dedicated ECC rendering and terminal reconciliation.
 - Operation Backoffice remains a separate future scope and is not part of Issue #34.
 
 Do not generate any scope unless the CLI is explicitly enabled for it.
@@ -131,7 +131,7 @@ The generator accepts either selected Site Code(s) or a Generate All option befo
 - If neither option is provided, the generator exits with an error.
 - If both options are provided, the generator exits with an error.
 - Filtering occurs before evaluating PR scope triggers.
-- Until Issue #34 Task 6 is completed, current CLI implementation supports only `--scope TSS` and `--scope TI`.
+- Current official CLI supports site selection for `TSS`, `TI`, and `Planning`.
 
 ### 3.2 Implementation Status
 
@@ -144,8 +144,9 @@ Current TI logic implementation status:
 
 Current Planning status:
 
-- All-DU Planning business logic approved on 2026-08-11 under Issue #34.
-- Planning canonical-field/profile mapping, selector, entrypoint and ECC generation remain implementation work.
+- All-DU Planning business logic was approved on 2026-08-11 under Issue #34.
+- Planning canonical-field/profile mapping, selector, eligibility/duplicate prevention, contract normalization, official entrypoint, ECC renderer and terminal reconciliation are implemented.
+- Automated regression includes all eight DU Models from raw four-header export shape through ECC output.
 - Operation Backoffice is excluded from Issue #34.
 
 ## 4. Scope Trigger Logic
@@ -170,7 +171,7 @@ Generate TI PR when:
 
 If existing TI PR number/status exists, skip TI PR generation for that site.
 
-### 4.3 Planning PR Trigger — Issue #34 Approved
+### 4.3 Planning PR Trigger — Issue #34 Approved and Implemented
 
 Planning applies to these eight DU Models:
 
@@ -220,7 +221,7 @@ no partial Planning ECC
 
 ### 4.4 Operation Backoffice PR Trigger
 
-Operation Backoffice remains a future scope and is not defined by Issue #34. Do not infer or enable it while implementing Planning.
+Operation Backoffice remains a future scope and is not defined by Issue #34. Do not infer or enable it from the Planning implementation.
 
 ## 5. Duplicate PR Prevention
 
@@ -545,7 +546,7 @@ Southern-GTSB MW EOS Swap TI PR 20260515.xlsx
 Northern-GCI 2023 TX Rollout Planning PR 20260811.xlsx
 ```
 
-Planning naming becomes executable only after Issue #34 enables the Planning CLI path.
+Planning uses this convention through the dedicated Planning ECC renderer.
 
 ## 15. Review Required Handling
 
@@ -621,7 +622,7 @@ The agent/runtime must not:
 7. Treat `GCI_AA` or `GTSB_AA` as separate contracts.
 8. Combine `350001042321` with `350001143904` or `350001143905` for the same Planning site.
 9. Commit raw iEPMS reference exports.
-10. Enable Operation Backoffice while implementing Issue #34.
+10. Enable Operation Backoffice while implementing or operating Issue #34 Planning scope.
 
 ## 19. Expected Inputs from User / Business Owner
 
@@ -639,7 +640,7 @@ For implemented runtime scopes, the skill produces:
 
 ## 21. Acceptance Criteria
 
-The skill is successful for Planning only when all of the following are implemented and tested:
+Planning implementation is successful only when all of the following remain implemented and regression-tested:
 
 1. Planning supports exactly the eight approved DU Models.
 2. Planning eligibility uses Planning subcon plus Planning PR status/number, not TSS/TI fields.
@@ -652,5 +653,5 @@ The skill is successful for Planning only when all of the following are implemen
 9. Non-blank Planning PR status/number prevents regeneration.
 10. Unknown Planning subcon fails closed without fuzzy substitution or partial ECC.
 11. Existing TSS/TI behavior remains unchanged.
-12. Planning CLI remains disabled until the complete Issue #34 implementation/regression/UAT gate passes.
+12. Official `scripts/create_pr.py --scope Planning` remains protected by DU Profile lifecycle, all-DU regression and terminal reconciliation controls.
 13. Operation Backoffice remains out of scope.
