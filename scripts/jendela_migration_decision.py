@@ -181,6 +181,11 @@ def parse_jendela_before_mw_antenna_size(value: Any) -> float | None:
     if not text:
         return None
     text = _DECIMAL_COMMA.sub(".", text)
+    # iEPMS/MW tooling also emits underscore-delimited MW Config strings. Treat
+    # underscores as structural separators (equivalent to spaces), while the
+    # existing token-boundary guards still reject truly embedded values such as
+    # OD1.2 or signed numeric suffixes.
+    text = text.replace("_", " ")
 
     frequency_matches = list(_FREQUENCY_TOKEN.finditer(text))
     radio_matches = list(_RADIO_CONFIGURATION_TOKEN.finditer(text))
