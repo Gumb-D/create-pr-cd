@@ -1,6 +1,6 @@
 # create-pr-cd
 
-Generate CelcomDigi TX PR ECC output files from site PR/PO data by matching site data with the PR model and writing ECC output grouped by region, subcontractor, DU Model, and scope.
+Generate CelcomDigi TX PR ECC output files from site PR/PO data by matching site data with the PR model or approved deterministic selectors and writing ECC output grouped by region, subcontractor, DU Model, and scope.
 
 ## Purpose
 
@@ -70,17 +70,19 @@ The gate uses `profile.status`; profile notes cannot enable ECC output.
 
 ### Formal production execution
 
-Use this command only when the resolved DU Profile status is `PRODUCTION`:
+TSS example:
 
 ```bash
 python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --scope TSS --all-sites --output output
 ```
 
-A non-`PRODUCTION` profile returns:
+Planning example:
 
-```text
-PROFILE_NOT_PRODUCTION
+```bash
+python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --scope Planning --all-sites --output output
 ```
+
+Use formal execution only when the resolved DU Profile status is `PRODUCTION`. A non-`PRODUCTION` profile returns `PROFILE_NOT_PRODUCTION`.
 
 ### Explicit non-production UAT execution
 
@@ -96,10 +98,16 @@ Generate TI scope for selected sites in UAT mode:
 python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --scope TI --site-code A01073_AD --output output --non-production-uat
 ```
 
+Planning UAT uses the same lifecycle gate:
+
+```bash
+python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --scope Planning --all-sites --output output --non-production-uat
+```
+
 Override paths if needed:
 
 ```bash
-python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --pr-model Info/input/pr_model.xlsx --template Info/input/ecc_template.xls --mapping Info/input/contract_info_reference.md --scope TSS --all-sites --output output --non-production-uat
+python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --pr-model Info/input/pr_model.xlsx --template Info/input/ecc_template.xls --mapping Info/input/contract_info_reference.md --scope Planning --all-sites --output output --non-production-uat
 ```
 
 UAT output is isolated under:
@@ -108,50 +116,28 @@ UAT output is isolated under:
 <requested-output>/NON_PRODUCTION_UAT/<UTC-run-id>/
 ```
 
-The directory, ECC/review filenames, and summary filename contain `NON_PRODUCTION_UAT`. The summary records:
-
-```text
-run_mode
-profile_status
-non_production_uat
-production_ecc_allowed
-requested_output
-output_root
-run_id
-```
-
-UAT files are validation artefacts and must not be treated as production ECC.
+The directory, ECC/review filenames, and summary filename contain `NON_PRODUCTION_UAT`. UAT files are validation artefacts and must not be treated as production ECC.
 
 ## Site Selection Mode
 
 The generator supports explicit site selection or full-site generation.
 
-### Generate selected site for UAT
-
 ```bash
-python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --scope TSS --site-code B00123 --output output --non-production-uat
+python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --scope Planning --site-code B00123 --output output
 ```
 
-### Generate multiple selected sites for UAT
-
 ```bash
-python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --scope TSS --site-code B00123,B00456,K00340 --output output --non-production-uat
+python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --scope Planning --site-code B00123,B00456,K00340 --output output
 ```
 
-### Generate all eligible sites for UAT
-
 ```bash
-python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --scope TSS --all-sites --output output --non-production-uat
+python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --scope Planning --all-sites --output output
 ```
 
-Remove `--non-production-uat` only for a formally promoted `PRODUCTION` profile.
+The script requires exactly one of `--site-code` or `--all-sites`.
 
-The script requires either `--site-code` or `--all-sites`.
-Do not use both at the same time.
-
-- `--scope` currently supports only `TSS` and `TI`.
-- Planning business rules are approved under Issue #34 but the Planning CLI path is not enabled until implementation/regression/UAT are complete.
-- Operation Backoffice remains a separate future scope and is not part of Issue #34.
+- Official `--scope` supports `TSS`, `TI`, and `Planning`.
+- Operation Backoffice remains a separate unsupported future scope and is not part of Issue #34.
 
 ## Output Naming Convention
 
@@ -161,41 +147,38 @@ Generated formal ECC files follow this generic format:
 <Region>-<Subcontractor> <DU Model> <Scope> PR <YYYYMMDD>.xlsx
 ```
 
-**Examples:**
+Examples:
 
 ```text
 Northern-GCI TX Mini Project TSS PR 20260518.xlsx
 Central-GTSB TX Mini Project TSS PR 20260518.xlsx
 Sabah-Seri Pancar MW EOS Swap TI PR 20260518.xlsx
+Northern-GCI 2023 TX Rollout Planning PR 20260811.xlsx
 ```
 
-**Split files** (when >30 unique Site IDs in a group):
+Split files when a group exceeds 30 unique Site IDs:
 
 ```text
-Northern-GCI TX Mini Project TSS PR 20260518 Part 1.xlsx
-Northern-GCI TX Mini Project TSS PR 20260518 Part 2.xlsx
+Northern-GCI 2023 TX Rollout Planning PR 20260811 Part 1.xlsx
+Northern-GCI 2023 TX Rollout Planning PR 20260811 Part 2.xlsx
 ```
 
 Explicit UAT artefacts insert `_NON_PRODUCTION_UAT` before the file extension and are stored in the isolated UAT run directory.
 
-> Runtime note: the current CLI generator accepts only `--scope TSS` and `--scope TI`. Planning is business-approved but not yet executable. Operation Backoffice remains undefined/unsupported future scope.
-
 ## Supported PR Scopes
-
-### Current CLI Support
 
 | Scope | Runtime Status | Business Status | Description |
 |---|---|---|---|
 | TSS | Active | Implemented | Microwave Site Survey PR |
 | TI | Active | Implemented | Microwave Integration PR |
-| Planning | Disabled pending Issue #34 | Approved | Microwave Planning PR for all eight supported DU Models |
+| Planning | Active | Implemented / Issue #34 | Microwave Planning PR for all eight supported DU Models |
 | Operation Backoffice | Unsupported | Future / separate scope | Microwave Backoffice PR |
 
 ## Planning PR Business Rules — Issue #34
 
 ### Supported DU Models
 
-Planning PR is approved for:
+Planning PR is implemented for:
 
 1. `2023 TX Rollout`
 2. `TX Mini Project`
@@ -211,9 +194,9 @@ Planning PR is approved for:
 Planning uses:
 
 - `Subcon Planning` / `Subcon - Planning`
-- `Subcon PR - Planning` / approved equivalent Planning PR status/number field
+- `Subcon PR - Planning` / `Subcon - PR Planning`
 
-`TX Planning Remarks` is explicitly not a Planning PR decision input.
+The exact four-layer header fingerprint is controlled by each DU Profile. `TX Planning Remarks` is explicitly not a Planning PR decision input.
 
 ### Eligibility
 
@@ -223,7 +206,7 @@ AND Planning PR status/number blank
 -> evaluate Planning PBOM
 ```
 
-Blank Planning subcon is ignored. A non-blank existing Planning PR status/number prevents duplicate generation. Unknown non-blank Planning subcon is `REVIEW_REQUIRED` and must not be fuzzy-substituted.
+Blank Planning subcon is ignored. A non-blank existing Planning PR status/number prevents duplicate generation. An explicit `No PR required...` value is ignored. Unknown non-blank Planning subcon is `REVIEW_REQUIRED` and is not fuzzy-substituted.
 
 ### Planning PBOM matrix
 
@@ -233,7 +216,15 @@ Blank Planning subcon is ignored. A non-blank existing Planning PR status/number
 | `GCI` / `GTSB` | TX Mini Project; MW EOS Swap; ZTE TX MINI | `350001143905` | 1 | Hop |
 | `GCI_AA` / `GTSB_AA` | All eight supported DU Models | `350001042321` only | 1 | Hop |
 
-For `_AA`, do not also generate `350001143904` or `350001143905`. PBOM `350001042321` is an explicitly approved deterministic optional-item exception for Planning only.
+For `_AA`, do not also generate `350001143904` or `350001143905`. PBOM `350001042321` is the approved deterministic optional-item exception for Planning only.
+
+### Planning descriptions
+
+| PBOM | SOW description |
+|---:|---|
+| `350001143904` | `2026-Detailed end to end transmission planning and design` |
+| `350001143905` | `2026-Single-hop planning and design` |
+| `350001042321` | `Detailed end to end transmission planning and design (for AA modification & AA submisison sow only)` |
 
 ### Planning contract identity
 
@@ -265,7 +256,22 @@ Planning PBOM selection does not depend on:
 
 Region remains available to shared Purchasing Area/output grouping logic but does not select the Planning PBOM.
 
-Design and implementation plan:
+### Runtime architecture
+
+```text
+Project + DU Model profile routing
+-> approved four-layer Planning fields
+-> canonical Planning record
+-> duplicate/eligibility gate
+-> deterministic Planning selector
+-> shared contract/purchasing reference
+-> dedicated Planning ECC renderer
+-> shared terminal reconciliation
+```
+
+The implementation intentionally does not reuse the legacy TSS/TI line-item renderer for Planning. Existing TSS/TI behavior remains isolated.
+
+Design and implementation references:
 
 - `docs/superpowers/specs/2026-08-11-planning-pr-all-du-design.md`
 - `docs/superpowers/plans/2026-08-11-planning-pr-all-du.md`
@@ -274,7 +280,7 @@ Design and implementation plan:
 
 ## Current TI Logic Status
 
-The TI implementation is active for the current CLI `--scope TI` flow.
+The TI implementation is active for `--scope TI`.
 
 - Duplicate prevention is implemented using existing TI PR status values.
 - `REVIEW_REQUIRED` framework is implemented for unsafe or incomplete TI cases.
@@ -282,13 +288,10 @@ The TI implementation is active for the current CLI `--scope TI` flow.
 - Mandatory choose-1 logic is implemented.
 - MW Reroute dual install/decom logic is implemented.
 - MW Re-engineering intentionally remains manual review until business rules are confirmed.
-- Current CLI scope support remains `TSS` and `TI` only.
 
 ---
 
 ## Key Matching Rules
-
-### Matching Logic by Scope
 
 | Scope | Matching Logic |
 |---|---|
@@ -299,21 +302,23 @@ The TI implementation is active for the current CLI `--scope TI` flow.
 
 ### Mapping Rules
 
-- **Purchasing Area** ← derived from Region mapping in `Info/input/contract_info_reference.md`
-- **Contract Number** ← derived from Subcontractor mapping in `Info/input/contract_info_reference.md`
+- **Purchasing Area** ← Region mapping in `Info/input/contract_info_reference.md`
+- **Contract Number** ← Subcontractor mapping in `Info/input/contract_info_reference.md`
 - **Planning `_AA` contract identity** ← `GCI_AA → GCI`, `GTSB_AA → GTSB`
 - **Unknown Planning subcontractors** ← fail closed; do not fuzzy substitute
-- **Generic non-Planning unknown subcontractors** ← existing runtime fuzzy behavior remains governed separately
+- **Generic non-Planning unknown subcontractors** ← existing runtime behavior remains governed separately
 
 ### ECC Output Rules
 
 - Single sheet named `details` only
-- `SOW*` ← sourced from the applicable approved model/selector
-- `PBOM Code*` ← sourced from the applicable approved model/selector
-- `Unit*` ← sourced from the applicable approved model/selector
+- `SOW*` ← approved model/selector description
+- `PBOM Code*` ← approved model/selector
+- `Unit*` ← approved model/selector
 - `Quantity*` ← model quantity or scope-specific quantity rule
 - `SN.` ← sequential (1-based) per output file
 - Max 30 unique Site IDs per output file
+- Planning Column O/source Tx SOW is blank because Tx SOW is not a Planning decision input
+- Column P repeats the approved Contract Number
 
 ---
 
@@ -321,36 +326,32 @@ The TI implementation is active for the current CLI `--scope TI` flow.
 
 - Only one sheet named `details` is generated.
 - `SN.` starts at `1` and is sequential per file.
-- `Purchasing Area*` uses region mapping from `Info/input/contract_info_reference.md`.
-- `Contract Number*` uses subcontractor mapping from `Info/input/contract_info_reference.md`.
-- Column `P` repeats the same value as `Contract Number *` where the existing renderer contract applies.
-- PBOM/Description/Unit/Quantity come from an approved model or deterministic scope selector.
+- `Purchasing Area*` uses `Info/input/contract_info_reference.md`.
+- `Contract Number*` uses `Info/input/contract_info_reference.md`.
+- Column `P` repeats the same value as `Contract Number *` where the renderer contract applies.
+- PBOM/Description/Unit/Quantity come from an approved model or deterministic selector.
 - Output files contain no more than `30` unique Site IDs.
 - Formal output is generated only for a `PRODUCTION` profile.
 - UAT output is visibly marked and isolated under `NON_PRODUCTION_UAT/<run-id>/`.
-- Planning remains runtime-disabled until Issue #34 implementation tests pass and the CLI is intentionally enabled.
+- Planning is covered by all-eight-DU raw four-header end-to-end regression plus full repository regression.
 
 ## Troubleshooting
 
 **Profile lifecycle gate:**
-- `PROFILE_NOT_PRODUCTION`: the resolved profile is not approved for formal ECC. Use `--non-production-uat` only for approved business validation, or complete formal production promotion.
+- `PROFILE_NOT_PRODUCTION`: the resolved profile is not approved for formal ECC. Use `--non-production-uat` only for approved UAT, or complete formal production promotion.
 - `PROFILE_NOT_UAT_ELIGIBLE`: the profile has not reached `PR_INPUT_READY`, is deprecated, or is otherwise ineligible for ECC UAT.
 
 **Missing input files:**
 - If a required input file is missing, place it in `Info/input/` or pass the correct path via CLI.
 
-**ECC template validation errors:**
-- If the ECC template does not contain a `details` sheet, the script will raise a validation error.
-- Ensure `Info/input/ecc_template.xls` is valid and contains the required sheet.
-
-**Contract/subcontractor handling:**
+**Planning contract/subcontractor handling:**
 - The authoritative mapping is `Info/input/contract_info_reference.md`.
 - Planning accepts only `GCI`, `GTSB`, `GCI_AA`, and `GTSB_AA` for automatic processing.
 - Planning `_AA` values normalize only for contract lookup; they are not separate contracts.
-- Unknown Planning subcontractors must fail closed rather than use fuzzy matching.
+- Unknown Planning subcontractors fail closed rather than use fuzzy matching.
 
 **PR model / selector failures:**
 - For TSS/TI, verify the active PR Model and approved scope-specific rules.
-- For Planning after Issue #34 runtime implementation, verify the DU Model and Planning subcontractor against the approved three-PBOM matrix; Tx SOW and TX Planning Remarks are not Planning selectors.
+- For Planning, verify the DU Model and Planning subcontractor against the approved three-PBOM matrix; Tx SOW and TX Planning Remarks are not Planning selectors.
 
 ---
