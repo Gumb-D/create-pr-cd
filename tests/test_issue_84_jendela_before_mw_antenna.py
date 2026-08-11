@@ -39,6 +39,17 @@ class TestIssue84JendelaBeforeMwAntenna(unittest.TestCase):
             1.2,
         )
 
+    def test_parser_uses_structural_antenna_position_after_in_range_bandwidth(self):
+        self.assertEqual(
+            parse_jendela_before_mw_antenna_size("18G 3.5M 1.2M SP 1+0"),
+            1.2,
+        )
+
+    def test_parser_fails_closed_when_multiple_in_range_m_tokens_have_no_polarization_structure(self):
+        self.assertIsNone(
+            parse_jendela_before_mw_antenna_size("18G 3.5M 1.2M 1+0"),
+        )
+
     def test_mw_dismantle_is_enriched_from_mw_config_without_ne_fe_fallback(self):
         result = self.derive()
         self.assertEqual(result["classification"], "APPROVED")
