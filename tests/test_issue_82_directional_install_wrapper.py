@@ -71,6 +71,15 @@ class TestIssue82DirectionalInstallWrapper(unittest.TestCase):
                 self.assertIsNone(result["common_size"])
                 self.assertIsNone(result["selected_size"])
 
+    def test_later_multiline_target_cannot_hide_behind_valid_target(self):
+        result = self._resolve(
+            "Upgrade antenna 1.2m to install antenna 0.6m. "
+            "Upgrade antenna 2.4m to\ninstall antenna 0.6m"
+        )
+        self.assertEqual(result["status"], "MISSING")
+        self.assertIsNone(result["common_size"])
+        self.assertIsNone(result["selected_size"])
+
 
 if __name__ == "__main__":
     unittest.main()
