@@ -30,10 +30,6 @@ _WORK_ITEMS = {
     },
     "BBU Patching / MW IDU Patching": {
         "work_item": "BBU Patching / MW IDU Patching",
-        # v4.1 split the historical combined patching model into BBU Patching
-        # and MW IDU Patching. Their mandatory business row is identical
-        # (PBOM 350001095420), so the combined source wording resolves to the
-        # BBU Patching model while retaining an explicit PBOM invariant.
         "model_sow": "BBU Patching",
         "required_pbom_codes": ["350001095420"],
     },
@@ -100,7 +96,7 @@ _UNPOLARIZED_NUMERIC_TOKEN = re.compile(
 _DECIMAL_COMMA = re.compile(r"(?<=\d),(?=\d{1,2}(?:\D|$))")
 
 # Exact antenna diameters represented by the approved Jendela v4.1
-# `MW Dismantle` choose-one rows. The set prevents bandwidth values such as
+# `MW Dismantle` choose-one rows. This whitelist keeps bandwidth values such as
 # 3.5M from being mistaken for a dish diameter while keeping polarization
 # wording optional.
 _JENDELA_V41_DISMANTLE_ANTENNA_SIZES_M = frozenset(
@@ -126,39 +122,40 @@ def _polarized_antenna_size(text: str) -> float | None:
     if any(not _supported_dismantle_antenna_size(size) for size in polarized_matches):
         return None
 
-    polarized_sizes = set(polarized_matches)
-    if len(polarized_sizes) == 1:
-        return next(iter(polarized_sizes))
-    return None
+    # Business rule: when MW Config contains more than one valid Before antenna
+    # diameter, the dismantle selector uses the largest antenna size.
+    return max(polarized_matches)
 
 
 def _unpolarized_standard_antenna_size(body: str) -> float | None:
-    candidates = [
+    numeric_candidates = [
         float(match.group(1))
         for match in _UNPOLARIZED_NUMERIC_TOKEN.finditer(body)
     ]
-    if len(candidates) != 1:
+    supported_candidates = [
+        candidate
+        for candidate in numeric_candidates
+        if _supported_dismantle_antenna_size(candidate)
+    ]
+    if not supported_candidates:
         return None
 
-    candidate = candidates[0]
-    if not _supported_dismantle_antenna_size(candidate):
-        return None
-    return candidate
+    # Unsupported numeric tokens may represent bandwidth or other MW metadata.
+    # Across valid antenna candidates, select the largest dismantle diameter.
+    return max(supported_candidates)
 
 
 def parse_jendela_before_mw_antenna_size(value: Any) -> float | None:
-    """Extract existing-MW antenna size from unambiguous MW Config evidence.
+    """Extract the largest valid existing-MW antenna size from MW Config evidence.
 
-    Polarization wording (SP/DP/XPIC) is optional. When present, it is the
-    strongest structural hint: every marker must have one standalone parseable
-    antenna value immediately before it, and every resolved value must be
-    represented by the approved Jendela v4.1 MW Dismantle model. When
-    polarization wording is absent, the parser accepts only a standard
-    GHz -> body -> N+N link shape whose body contains exactly one standalone
-    supported numeric antenna candidate. Both abbreviated `G` and full `GHz`
-    frequency suffixes are accepted. Decimal-comma notation is normalized before
-    parsing. Signed, identifier-embedded, unmatched polarization evidence,
-    ambiguous, unsupported, missing, or conflicting evidence fails closed.
+    Polarization wording (SP/DP/XPIC) is optional. When present, every marker
+    must still have one standalone parseable antenna value immediately before it,
+    and every resolved value must be represented by the approved Jendela v4.1 MW
+    Dismantle model. When polarization wording is absent, the parser accepts a
+    standard GHz -> body -> N+N link shape and considers only supported antenna
+    diameters from the body. If multiple valid antenna diameters are identified,
+    the business rule is to return the largest. Invalid, malformed, missing, or
+    unsupported complete-link antenna evidence remains fail-closed.
     """
     text = " ".join(str(value or "").strip().split())
     if not text:
@@ -196,10 +193,7 @@ def parse_jendela_before_mw_antenna_size(value: Any) -> float | None:
                 return None
             resolved_sizes.append(link_size)
 
-        unique_sizes = set(resolved_sizes)
-        if len(unique_sizes) == 1:
-            return next(iter(unique_sizes))
-        return None
+        return max(resolved_sizes)
 
     # Preserve structurally qualified legacy formatting that may omit explicit
     # GHz or N+N tokens. Polarization remains an optional hint, not a mandatory
@@ -257,10 +251,6 @@ def derive_jendela_migration_decision(
             "work_items": [],
         }
 
-    # Blank, '-', MW by others and Cancel / Drop are explicit no-additional-work
-    # states. Cancel / Drop remains subject to the existing higher-priority
-    # partition hard stop, so the decision must not make the canonical record
-    # REVIEW_REQUIRED before that global rule is applied.
     if tx_sow not in _TX_SOW_WORK:
         return {
             "classification": "REVIEW_REQUIRED",
