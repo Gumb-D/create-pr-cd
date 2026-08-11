@@ -19,67 +19,9 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  apply-issue-84-test-alignment:
-    if: github.actor != 'github-actions[bot]'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Issue 84 branch
-        uses: actions/checkout@v4
-        with:
-          ref: fix/issue-84-jendela-before-mw-antenna
-          fetch-depth: 0
-
-      - name: Align legacy Jendela UAT fixture with before-MW evidence
-        shell: python
-        run: |
-          from pathlib import Path
-
-          path = Path("tests/test_human_uat_remediation_48_54.py")
-          text = path.read_text(encoding="utf-8")
-          old = '''    def _decision(self, *, before="Starlink", tx_sow="-", final_backhaul="ignored"):
-        record = self.factory.build(
-            {
-                "tx_before_migration": before,
-                "tx_sow_raw": tx_sow,
-                "final_backhaul": final_backhaul,
-            },
-            sow_registry=self.sow_registry,
-        )
-'''
-          new = '''    def _decision(
-        self,
-        *,
-        before="Starlink",
-        tx_sow="-",
-        final_backhaul="ignored",
-        before_mw_config_raw="18G 1.2 SP 1+0",
-    ):
-        record = self.factory.build(
-            {
-                "tx_before_migration": before,
-                "tx_sow_raw": tx_sow,
-                "final_backhaul": final_backhaul,
-                "before_mw_config_raw": before_mw_config_raw,
-            },
-            sow_registry=self.sow_registry,
-        )
-'''
-          if text.count(old) != 1:
-              raise SystemExit(f"expected one legacy helper, found {text.count(old)}")
-          path.write_text(text.replace(old, new), encoding="utf-8")
-
-      - name: Commit and push test alignment
-        shell: bash
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tests/test_human_uat_remediation_48_54.py
-          git commit -m 'test(issue-84): supply before-MW evidence to legacy Jendela cases'
-          git push origin HEAD:fix/issue-84-jendela-before-mw-antenna
-
   baseline-governance:
     runs-on: ubuntu-latest
     steps:
