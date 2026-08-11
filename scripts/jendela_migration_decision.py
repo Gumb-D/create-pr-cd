@@ -80,22 +80,41 @@ def _normalized(value: Any) -> str:
 
 
 _EXPLICIT_ANTENNA_SIZE = re.compile(r"(?<![\d.])(\d+(?:\.\d+)?)\s*[mM]\b")
-_GHZ_POLARIZATION_ANTENNA_SIZE = re.compile(
-    r"\b\d+(?:\.\d+)?\s*G(?:HZ)?\b[\s_/-]+(\d+(?:\.\d+)?)(?=\s*(?:M\b)?[\s_/-]*(?:SP|DP|XPIC)\b)",
+_ANTENNA_BEFORE_POLARIZATION = re.compile(
+    r"(?<![\d.])(\d+(?:\.\d+)?)\s*[mM]?(?=[\s_/-]+(?:SP|DP|XPIC)\b)",
     re.IGNORECASE,
 )
 
 
+def _valid_antenna_size(value: float) -> bool:
+    return 0.1 <= value <= 5.0
+
+
 def parse_jendela_before_mw_antenna_size(value: Any) -> float | None:
-    """Extract the existing-MW antenna size from approved Jendela MW Config evidence."""
+    """Extract existing-MW antenna size without mistaking bandwidth for antenna.
+
+    Jendela MW Config places antenna diameter immediately before the
+    polarization token (SP/DP/XPIC). That structural evidence takes precedence
+    over generic ``M``-suffixed tokens, which may represent channel bandwidth.
+    If polarization structure is unavailable, a generic explicit-metre fallback
+    is accepted only when it yields one unambiguous in-range value.
+    """
     text = " ".join(str(value or "").strip().split())
     if not text:
         return None
-    for pattern in (_EXPLICIT_ANTENNA_SIZE, _GHZ_POLARIZATION_ANTENNA_SIZE):
-        for match in pattern.finditer(text):
-            size = float(match.group(1))
-            if 0.1 <= size <= 5.0:
-                return size
+
+    for match in _ANTENNA_BEFORE_POLARIZATION.finditer(text):
+        size = float(match.group(1))
+        if _valid_antenna_size(size):
+            return size
+
+    fallback_sizes = {
+        float(match.group(1))
+        for match in _EXPLICIT_ANTENNA_SIZE.finditer(text)
+        if _valid_antenna_size(float(match.group(1)))
+    }
+    if len(fallback_sizes) == 1:
+        return next(iter(fallback_sizes))
     return None
 
 
