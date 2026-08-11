@@ -84,27 +84,33 @@ _ANTENNA_BEFORE_POLARIZATION = re.compile(
     r"(?<![\d.])(\d+(?:\.\d+)?)\s*[mM]?(?=[\s_/-]+(?:SP|DP|XPIC)\b)",
     re.IGNORECASE,
 )
+_FREQUENCY_TOKEN = re.compile(
+    r"(?<![A-Za-z0-9])\d+(?:\.\d+)?\s*[gG](?![A-Za-z0-9])"
+)
+_RADIO_CONFIGURATION_TOKEN = re.compile(r"(?<!\d)\d+\s*\+\s*\d+(?!\d)")
+_STANDARD_MW_LINK = re.compile(
+    r"(?<![A-Za-z0-9])\d+(?:\.\d+)?\s*[gG](?![A-Za-z0-9])"
+    r"(?P<body>.*?)"
+    r"(?<!\d)\d+\s*\+\s*\d+(?!\d)",
+    re.IGNORECASE,
+)
+_UNPOLARIZED_NUMERIC_TOKEN = re.compile(
+    r"(?<![\d.])(\d+(?:\.\d+)?)(?:\s*[mM])?(?![\w.])"
+)
+
+# Exact antenna diameters represented by the approved Jendela v4.1
+# `MW Dismantle` choose-one rows. This set is used only to disambiguate the
+# no-polarization fallback; the PR Model remains the source of PBOM selection.
+_JENDELA_V41_DISMANTLE_ANTENNA_SIZES_M = frozenset(
+    {0.3, 0.6, 0.9, 1.2, 1.8, 2.4, 3.2}
+)
 
 
 def _valid_antenna_size(value: float) -> bool:
     return 0.1 <= value <= 5.0
 
 
-def parse_jendela_before_mw_antenna_size(value: Any) -> float | None:
-    """Extract existing-MW antenna size from structurally qualified evidence.
-
-    Jendela MW Config places antenna diameter immediately before the
-    polarization token (SP/DP/XPIC). Every polarization-qualified configuration
-    must have exactly one parseable, in-range antenna value immediately before
-    its marker. Multiple complete configurations are accepted only when they all
-    agree on one size; missing, nonnumeric, invalid, or conflicting qualified
-    values fail closed. Unpolarized metre tokens are not accepted because they
-    are ambiguous with other MW Config quantities such as channel bandwidth.
-    """
-    text = " ".join(str(value or "").strip().split())
-    if not text:
-        return None
-
+def _polarized_antenna_size(text: str) -> float | None:
     polarization_markers = list(_POLARIZATION_MARKER.finditer(text))
     if not polarization_markers:
         return None
@@ -121,6 +127,72 @@ def parse_jendela_before_mw_antenna_size(value: Any) -> float | None:
     polarized_sizes = set(polarized_matches)
     if len(polarized_sizes) == 1:
         return next(iter(polarized_sizes))
+    return None
+
+
+def _unpolarized_standard_antenna_size(body: str) -> float | None:
+    candidates = [
+        float(match.group(1))
+        for match in _UNPOLARIZED_NUMERIC_TOKEN.finditer(body)
+    ]
+    if len(candidates) != 1:
+        return None
+
+    candidate = candidates[0]
+    if candidate not in _JENDELA_V41_DISMANTLE_ANTENNA_SIZES_M:
+        return None
+    return candidate
+
+
+def parse_jendela_before_mw_antenna_size(value: Any) -> float | None:
+    """Extract existing-MW antenna size from unambiguous MW Config evidence.
+
+    Polarization wording (SP/DP/XPIC) is optional. When present, it is the
+    strongest structural hint: every marker must have one parseable, in-range
+    antenna value immediately before it, and multiple links must agree on one
+    size. When polarization wording is absent, the parser accepts only a
+    standard GHz -> body -> N+N link shape whose body contains exactly one
+    numeric candidate and that candidate is an antenna diameter represented by
+    the approved Jendela v4.1 MW Dismantle model. Ambiguous, unsupported,
+    missing, or conflicting evidence fails closed.
+    """
+    text = " ".join(str(value or "").strip().split())
+    if not text:
+        return None
+
+    frequency_matches = list(_FREQUENCY_TOKEN.finditer(text))
+    radio_matches = list(_RADIO_CONFIGURATION_TOKEN.finditer(text))
+    link_matches = list(_STANDARD_MW_LINK.finditer(text))
+
+    if link_matches:
+        if not (
+            len(link_matches) == len(frequency_matches) == len(radio_matches)
+        ):
+            return None
+
+        resolved_sizes: list[float] = []
+        for link_match in link_matches:
+            link_text = link_match.group(0)
+            if _POLARIZATION_MARKER.search(link_text):
+                link_size = _polarized_antenna_size(link_text)
+            else:
+                link_size = _unpolarized_standard_antenna_size(
+                    link_match.group("body")
+                )
+            if link_size is None:
+                return None
+            resolved_sizes.append(link_size)
+
+        unique_sizes = set(resolved_sizes)
+        if len(unique_sizes) == 1:
+            return next(iter(unique_sizes))
+        return None
+
+    # Preserve structurally qualified legacy formatting that may omit explicit
+    # GHz or N+N tokens. Polarization remains an optional hint, not a mandatory
+    # prerequisite for standard MW Config values.
+    if _POLARIZATION_MARKER.search(text):
+        return _polarized_antenna_size(text)
     return None
 
 
