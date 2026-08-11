@@ -27,7 +27,7 @@ _SOURCE_STATUS_FIELDS = {
 }
 
 _ANTENNA_WORDS = ("antenna", "dish")
-_INSTALL_INTENT_RE = r"(?:install(?:ation|ed|ing)?|new|target|proposed|replacement|build|upgrade)"
+_INSTALL_INTENT_RE = r"(?:install(?:ation|ed|ing)?|replac(?:e|ed|ing)?|swap(?:ped|ping)?|new|target|proposed|replacement|build|upgrade)"
 _NON_INSTALL_INTENT_RE = (
     r"(?:dismantl(?:e|ed|ing)?|decom(?:mission(?:ed|ing)?)?|remove|removed|removal|"
     r"existing|old|reuse|reused|retain|retained)"
