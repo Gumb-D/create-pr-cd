@@ -45,11 +45,11 @@ def _normalized(value: Any) -> str:
 _POLARIZATION_MARKER = re.compile(r"\b(?:SP|DP|XPIC)\b", re.IGNORECASE)
 _ANTENNA_BEFORE_POLARIZATION = re.compile(r"(?<![A-Za-z0-9_.,+\-])(\d+(?:\.\d+)?)\s*[mM]?(?=[\s_/-]+(?:SP|DP|XPIC)\b)", re.IGNORECASE)
 _FREQUENCY_TOKEN = re.compile(r"(?<![A-Za-z0-9])\d+(?:\.\d+)?\s*[gG](?:[hH][zZ])?(?![A-Za-z0-9])")
-_RADIO_CONFIGURATION_TOKEN = re.compile(r"(?<!\d)\d+\s*\+\s*\d+(?!\d)")
+_RADIO_CONFIGURATION_TOKEN = re.compile(r"(?<![A-Za-z0-9_])\d+\s*\+\s*\d+(?![A-Za-z0-9_])")
 _STANDARD_MW_LINK = re.compile(
     r"(?<![A-Za-z0-9])\d+(?:\.\d+)?\s*[gG](?:[hH][zZ])?(?![A-Za-z0-9])"
     r"(?P<body>.*?)"
-    r"(?<!\d)\d+\s*\+\s*\d+(?!\d)",
+    r"(?<![A-Za-z0-9_])\d+\s*\+\s*\d+(?![A-Za-z0-9_])",
     re.IGNORECASE,
 )
 _UNPOLARIZED_NUMERIC_TOKEN = re.compile(r"(?<![A-Za-z0-9_.,+\-])(\d+(?:\.\d+)?)(?:\s*[mM])?(?![\w.])")
@@ -138,8 +138,6 @@ def parse_jendela_before_mw_antenna_size(value: Any) -> float | None:
         resolved_sizes.extend(_supported_standalone_sizes_outside_links(text, link_matches))
         return max(resolved_sizes)
 
-    # Repository-documented legacy format, e.g. `18G_1.2M(MAC)+OMT x1`.
-    # Require a frequency token and a structurally explicit MAC+OMT antenna token.
     mac_omt_sizes = [float(match.group(1)) for match in _MAC_OMT_ANTENNA.finditer(text)]
     if mac_omt_sizes:
         if not frequency_matches:
