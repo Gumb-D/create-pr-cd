@@ -9,15 +9,7 @@
     "accepted_du_model_ids": ["8296022438223590261"],
     "accepted_view_ids": ["3882899459299681347"]
   },
-  "export_structure": {
-    "sheet_selector": null,
-    "header_rows": [0, 1, 2, 3],
-    "header_hash_policy": "strict",
-    "observed_header_hash": "b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454",
-    "approved_header_hashes": [
-      "b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454"
-    ]
-  },
+  "export_structure": {"sheet_selector": null, "header_rows": [0, 1, 2, 3], "header_hash_policy": "strict", "observed_header_hash": "b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454", "approved_header_hashes": ["b99438cd67273e01bba5e641a494f001295125e598abe090d3d215fedd7e2454"]},
   "field_mapping": {
     "site_code": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|fix00012|8296022438223590261|3882899459299681347", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "customer site code"}, "mapping_status": "APPROVED"}], "transforms": ["trim", "uppercase"]},
     "site_name": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00015", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "customer site name"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
@@ -28,7 +20,8 @@
     "state": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00008", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "Province/State"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
     "subcontractor_tss": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ640307", "wbs_stage": "Subcon Info", "task_name": "SubCon - TSS", "display_header": "SubCon - TSS"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "subcontractor_ti": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ640242", "wbs_stage": "Subcon Info", "task_name": "SubCon - TI", "display_header": "SubCon - TI"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
-    "subcontractor_planning": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01036640", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Subcon Planning"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "subcontractor_planning": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01036640", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Subcon Planning"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
+    "existing_planning_pr_status": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01036639", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Subcon PR - Planning"}, "mapping_status": "APPROVED"}], "transforms": ["normalize_pr_reference_status"]},
     "existing_tss_pr_status": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ641766", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Subcon PR - TSS"}, "mapping_status": "APPROVED"}], "transforms": ["normalize_pr_reference_status"]},
     "existing_ti_pr_status": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ641765", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Subcon PR - TI"}, "mapping_status": "APPROVED"}], "transforms": ["normalize_pr_reference_status"]},
     "latitude": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00013", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "Latitude (North Plus South Minus)"}, "mapping_status": "UNVERIFIED"}], "transforms": ["parse_decimal"]},
@@ -40,17 +33,5 @@
     "ne_sow_details": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00969593", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "NE SOW Details"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
     "fe_sow_details": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00969594", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "FE SOW Details"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]}
   },
-  "validation": {
-    "reject_unknown_headers": true,
-    "reject_ambiguous_source_mapping": true,
-    "require_evidence_for_every_canonical_field": true,
-    "profile_notes": [
-      "The corrected TX_PRPO export and exact Header Hash were approved by JJ on 2026-07-14.",
-      "Only the seven approved PR-critical mappings are enabled for PR-input validation.",
-      "Tx SOW Details is not the primary Tx SOW mapping.",
-      "Subcon PR - Planning is not a TSS or TI duplicate-prevention source.",
-      "Header-hash and required approved-field validation remain mandatory for formal production output.",
-      "Production enabled by JJ on 2026-08-06; formal production jobs are the validation surface and non-production UAT is not a release prerequisite."
-    ]
-  }
+  "validation": {"reject_unknown_headers": true, "reject_ambiguous_source_mapping": true, "require_evidence_for_every_canonical_field": true, "profile_notes": ["The corrected TX_PRPO export and exact Header Hash were approved by JJ on 2026-07-14.", "Only the seven approved TSS/TI PR-critical mappings are enabled for TSS/TI PR-input validation.", "Tx SOW Details is not the primary Tx SOW mapping.", "Issue #34 approves Subcon Planning and Subcon PR - Planning as Planning-only source fields; they do not replace TSS/TI duplicate-prevention fields.", "Header-hash and required approved-field validation remain mandatory for formal production output.", "Production enabled by JJ on 2026-08-06; formal production jobs are the validation surface and non-production UAT is not a release prerequisite."]}
 }
