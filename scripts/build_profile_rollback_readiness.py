@@ -26,18 +26,38 @@ GOVERNED_PRIOR_ROLLBACK_REQUIREMENTS: dict[str, dict[str, Any]] = {
 }
 
 
+def _validate_governed_rollback_target(
+    profile: Mapping[str, Any],
+    rollback_target_profile_id: Any,
+    rollback_target_profile_version: Any,
+    rollback_target_header_hashes: list[str],
+    blockers: list[str],
+) -> None:
+    """Enforce an independently governed rollback target for every lifecycle path."""
+    governed_requirement = GOVERNED_PRIOR_ROLLBACK_REQUIREMENTS.get(
+        str(profile.get("profile_id", ""))
+    )
+    if governed_requirement is None:
+        return
+
+    if str(rollback_target_profile_id or "") != governed_requirement["rollback_profile_id"]:
+        blockers.append("ROLLBACK_TARGET_PROFILE_ID_MISMATCH")
+    if str(rollback_target_profile_version or "") != governed_requirement["rollback_profile_version"]:
+        blockers.append("ROLLBACK_TARGET_PROFILE_VERSION_MISMATCH")
+    if list(rollback_target_header_hashes) != list(governed_requirement["rollback_header_hashes"]):
+        blockers.append("ROLLBACK_TARGET_HEADER_HASH_MISMATCH")
+
+
 def _validate_explicit_rollback_baseline(
     profile: Mapping[str, Any],
     rollback_baseline_entry: Mapping[str, Any],
     blockers: list[str],
 ) -> tuple[Any, Any, list[str]]:
-    profile_id = str(profile.get("profile_id", ""))
     current_profile_version = str(profile.get("profile_version", ""))
     baseline_current_version = str(rollback_baseline_entry.get("current_profile_version", ""))
     rollback_target_profile_id = rollback_baseline_entry.get("rollback_profile_id")
     rollback_target_profile_version = rollback_baseline_entry.get("rollback_profile_version")
     rollback_target_header_hashes = list(rollback_baseline_entry.get("rollback_header_hashes", []))
-    governed_requirement = GOVERNED_PRIOR_ROLLBACK_REQUIREMENTS.get(profile_id)
 
     if baseline_current_version != current_profile_version:
         blockers.append("ROLLBACK_BASELINE_CURRENT_VERSION_MISMATCH")
@@ -47,16 +67,6 @@ def _validate_explicit_rollback_baseline(
         blockers.append("NO_RECORDED_ROLLBACK_HEADER_HASHES")
     if str(rollback_target_profile_version or "") == current_profile_version:
         blockers.append("ROLLBACK_TARGET_IS_CURRENT_PROFILE_VERSION")
-
-    if governed_requirement is not None:
-        if current_profile_version != governed_requirement["current_profile_version"]:
-            blockers.append("GOVERNED_ROLLBACK_CURRENT_VERSION_MISMATCH")
-        if str(rollback_target_profile_id or "") != governed_requirement["rollback_profile_id"]:
-            blockers.append("ROLLBACK_TARGET_PROFILE_ID_MISMATCH")
-        if str(rollback_target_profile_version or "") != governed_requirement["rollback_profile_version"]:
-            blockers.append("ROLLBACK_TARGET_PROFILE_VERSION_MISMATCH")
-        if rollback_target_header_hashes != list(governed_requirement["rollback_header_hashes"]):
-            blockers.append("ROLLBACK_TARGET_HEADER_HASH_MISMATCH")
 
     return rollback_target_profile_id, rollback_target_profile_version, rollback_target_header_hashes
 
@@ -110,6 +120,22 @@ def evaluate_rollback_readiness(
             rollback_target_profile_id = profile.get("profile_id")
             rollback_target_profile_version = profile.get("profile_version")
             rollback_target_header_hashes = approved_header_hashes
+
+    # The governed Jendela target is a lifecycle invariant. Validate the target
+    # after either the explicit-prior-baseline path or the deprecation path has
+    # populated it, so a future DEPRECATED record cannot bypass the 0.4.0 target.
+    if governed_requirement is not None and (
+        rollback_target_profile_id
+        or rollback_target_profile_version
+        or rollback_target_header_hashes
+    ):
+        _validate_governed_rollback_target(
+            profile,
+            rollback_target_profile_id,
+            rollback_target_profile_version,
+            rollback_target_header_hashes,
+            blockers,
+        )
 
     status = "ROLLBACK_BASELINE_RECORDED" if not blockers else "ROLLBACK_BLOCKED"
     if status == "ROLLBACK_BLOCKED":
