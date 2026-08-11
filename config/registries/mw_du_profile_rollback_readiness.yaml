@@ -85,7 +85,7 @@
       ],
       "blockers": [],
       "notes": [
-        "Rollback baseline is documented from the current approved profile identity and header-hash set."
+        "Rollback baseline is documented from an explicit prior approved profile identity and header-hash set."
       ]
     },
     {
@@ -162,6 +162,7 @@
   ],
   "notes": [
     "This rollback review is fail-closed and documents whether a profile has an approved rollback baseline.",
-    "A blocked result does not imply a defect; it can simply mean the profile has not reached an approved release state yet."
+    "A blocked result does not imply a defect; it can simply mean the profile has not reached an approved release state yet.",
+    "Explicit prior-version rollback baselines are sourced from config/registries/mw_du_profile_rollback_baselines_source.yaml."
   ]
 }
