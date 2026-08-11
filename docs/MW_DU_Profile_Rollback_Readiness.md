@@ -54,7 +54,7 @@ Discovery-only rollback-readiness review for tracked DU profiles.
 - Observed header hash: `f45c209df5ca75b333f9b590ebc01c05c097e44231d22433290f8078e57c9056`
 - Rollback target: `jendela_tx_migration_pr_v1` `0.4.0`
 - Rollback target header hashes: `f45c209df5ca75b333f9b590ebc01c05c097e44231d22433290f8078e57c9056`
-- Note: Rollback baseline is documented from the current approved profile identity and header-hash set.
+- Note: Rollback baseline is documented from an explicit prior approved profile identity and header-hash set.
 
 ## mw_eos_swap_pr_v1
 
