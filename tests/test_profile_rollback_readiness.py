@@ -62,7 +62,6 @@ class TestProfileRollbackReadiness(unittest.TestCase):
     def test_jendela_required_baseline_blocks_when_entry_is_missing(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "jendela_tx_migration_pr_v1.yaml")
         source = self._rollback_baseline_registry()
-        source["required_profile_ids"] = ["jendela_tx_migration_pr_v1"]
         source["entries"] = []
 
         registry = build_rollback_registry([profile], {"entries": []}, source)
@@ -75,9 +74,9 @@ class TestProfileRollbackReadiness(unittest.TestCase):
     def test_jendela_required_baseline_blocks_when_entry_profile_id_is_mistyped(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "jendela_tx_migration_pr_v1.yaml")
         source = self._rollback_baseline_registry()
-        source["required_profile_ids"] = ["jendela_tx_migration_pr_v1"]
         source["entries"][0] = dict(source["entries"][0])
         source["entries"][0]["profile_id"] = "jendela_tx_migration_pr_v1_typo"
+        source["required_profile_ids"] = ["jendela_tx_migration_pr_v1_typo"]
 
         registry = build_rollback_registry([profile], {"entries": []}, source)
         entry = registry["entries"][0]
@@ -85,6 +84,26 @@ class TestProfileRollbackReadiness(unittest.TestCase):
         self.assertEqual(entry["rollback_readiness_status"], "ROLLBACK_BLOCKED")
         self.assertIsNone(entry["rollback_target_profile_version"])
         self.assertIn("EXPLICIT_PRIOR_ROLLBACK_BASELINE_REQUIRED", entry["blockers"])
+
+    def test_jendela_baseline_rejects_mistyped_rollback_target_profile_id(self):
+        profile = load_du_profile(ROOT / "config" / "du_profiles" / "jendela_tx_migration_pr_v1.yaml")
+        baseline = dict(self._rollback_baseline_for("jendela_tx_migration_pr_v1"))
+        baseline["rollback_profile_id"] = "jendela_tx_migration_pr_v1_typo"
+
+        entry = evaluate_rollback_readiness(profile, None, baseline)
+
+        self.assertEqual(entry["rollback_readiness_status"], "ROLLBACK_BLOCKED")
+        self.assertIn("ROLLBACK_TARGET_PROFILE_ID_MISMATCH", entry["blockers"])
+
+    def test_jendela_baseline_rejects_wrong_prior_profile_version(self):
+        profile = load_du_profile(ROOT / "config" / "du_profiles" / "jendela_tx_migration_pr_v1.yaml")
+        baseline = dict(self._rollback_baseline_for("jendela_tx_migration_pr_v1"))
+        baseline["rollback_profile_version"] = "0.3.0"
+
+        entry = evaluate_rollback_readiness(profile, None, baseline)
+
+        self.assertEqual(entry["rollback_readiness_status"], "ROLLBACK_BLOCKED")
+        self.assertIn("ROLLBACK_TARGET_PROFILE_VERSION_MISMATCH", entry["blockers"])
 
     def test_regeneration_preserves_jendela_prior_version_rollback_target(self):
         with tempfile.TemporaryDirectory() as tmpdir:
