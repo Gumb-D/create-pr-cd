@@ -11,19 +11,27 @@ It is not a replacement for the PR generator. It records the business rules, rul
 The current PR Creator contains business knowledge across:
 - `SKILL.md`
 - `README.md`
-- `scripts/generate_tss_pr_ecc.py`
+- runtime Python modules
 - PR model workbooks, contract mappings and ECC templates
+- DU Profile / four-layer Header evidence
 
 That is workable for a script, but hard to govern when rules change, when an auditor asks why a line was generated, or when an AI Worker must explain its decision.
 
-## v0.1 boundary
+## Current boundary
 
-This first version is a **baseline extraction**, not a runtime switch.
+This knowledge base separates **business approval** from **runtime implementation**.
 
-- The current Python generator remains the runtime authority for what is actually executed.
-- The rule register records what has been extracted from the current baseline and whether it still needs business verification.
-- No rule is treated as approved merely because it exists in this folder.
-- No mapping value may be changed here as a substitute for changing the approved input mapping or PR model.
+- The current Python generator remains the runtime authority for what is actually executable.
+- The rule register records extracted, verified or business-approved intended behavior.
+- A rule may be `APPROVED` while `runtime_status` remains `DOCUMENTED_ONLY`; that does not enable ECC generation.
+- No mapping value may be changed here as a substitute for changing the approved input mapping, DU Profile, PR model, or controlled contract reference.
+- Raw iEPMS exports used as discovery/UAT evidence must not be committed.
+
+As of 2026-08-11:
+
+- TSS/TI are runtime scopes.
+- Planning business logic is approved under Issue #34 for all eight supported DU Models, but runtime implementation is still pending.
+- Operation Backoffice remains a separate future scope and is not part of Issue #34.
 
 ## Directory
 
@@ -52,15 +60,15 @@ Every rule has:
 
 ## Source-of-truth rule
 
-Until the generator is intentionally refactored to load this KB at runtime, use the following order:
+Use the following order:
 
-1. **Runtime behaviour:** current code on the released branch
-2. **Approved business decision:** signed-off rule / change record
-3. **Approved reference data:** PR Model, contract mapping and ECC template
-4. **This KB:** controlled inventory, explanation and test specification
-5. **Unapproved documentation:** reference only
+1. **Runtime behaviour:** current code on the released branch for what is executable now.
+2. **Approved business decision:** signed-off rule/change record for intended behavior.
+3. **Approved reference data:** DU Profile/fingerprint evidence, PR Model, `Info/input/contract_info_reference.md`, and ECC template.
+4. **This KB:** controlled inventory, explanation and test specification.
+5. **Unapproved/historical documentation:** reference only.
 
-If items 1–4 disagree, do not silently choose one. Register the difference in `governance/known_divergences.md`, decide an owner, and resolve it through a reviewed change.
+If runtime and approved intended behavior disagree because implementation is still pending, record that state explicitly rather than silently claiming the feature is executable.
 
 ## Rule lifecycle
 
@@ -72,10 +80,12 @@ EXTRACTED → VERIFIED → APPROVED → IMPLEMENTED → REGRESSION_TESTED
 
 - `EXTRACTED`: copied from current documentation or code, not business-confirmed.
 - `VERIFIED`: evidence and observed runtime behaviour agree.
-- `APPROVED`: business owner has confirmed the intended behaviour.
+- `APPROVED`: business owner has confirmed intended behaviour.
 - `IMPLEMENTED`: approved rule has a traceable code/config implementation.
 - `REGRESSION_TESTED`: an automated test proves the intended result.
 - `DEPRECATED`: retained for traceability only.
+
+The current YAML enum does not yet represent `IMPLEMENTED` and `REGRESSION_TESTED` directly; see `KB-DIV-006`.
 
 ## Change workflow
 
@@ -83,19 +93,20 @@ EXTRACTED → VERIFIED → APPROVED → IMPLEMENTED → REGRESSION_TESTED
 2. Link the source, owner, effective date and acceptance question.
 3. Record any conflict or unclear input as a divergence.
 4. Obtain business approval for a rule change.
-5. Change code/config in a separate implementation change.
-6. Add or update a regression fixture.
-7. Update `runtime_status` only after the implementation is merged and verified.
+5. Change code/config in a separate implementation step.
+6. Add or update regression fixtures.
+7. Update `runtime_status` only after implementation is merged and verified.
 
-## Baseline synchronization
+## Issue #34 Planning baseline
 
-This KB baseline has been synchronized with the merged behavioural evidence from:
+The approved Planning decision is recorded in:
 
-- PR #8 — safe PBOM canonicalization and TSS MW New Link/Reroute selection behaviour (`PRC-DATA-001`, `PRC-TSS-001`).
-- PR #13 — strict canonical TI SOW matching and conditional antenna validation (`PRC-MODEL-002`, `PRC-ANT-001`, resolved `KB-DIV-005`).
-- PR #14 — source Tx SOW written to ECC Column O (`PRC-OUT-004`).
+- `docs/superpowers/specs/2026-08-11-planning-pr-all-du-design.md`
+- `docs/superpowers/plans/2026-08-11-planning-pr-all-du.md`
+- `rules/pr_creator_rule_register.yaml` (`PRC-ELIG-003`, `PRC-PLAN-001`, `PRC-PLAN-002`)
+- `validation/acceptance_questions.yaml` (`AQ-025` through `AQ-032`)
 
-Current runtime code on `main`, together with its committed regression tests, remains the execution authority. This synchronization records what the runtime now does; it does not change or supersede that runtime.
+The runtime must remain fail-closed until those acceptance requirements are implemented and tested.
 
 ## First operating objective
 
@@ -111,4 +122,4 @@ Why was a row marked REVIEW_REQUIRED?
 Which contract / purchasing mapping was applied?
 ```
 
-Once this register and acceptance set are stable, the next controlled step is to move low-risk, approved rules from Python into machine-readable configuration while preserving regression coverage.
+Once a rule is stable and regression-covered, the next controlled step is to move low-risk approved decisions into machine-readable configuration without weakening safety controls.
