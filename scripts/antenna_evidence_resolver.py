@@ -48,8 +48,12 @@ _SOURCE_SIDE_INTENT_PATTERN = re.compile(
 
 _HWS_RE = r"[ \t]*"
 _HWS1_RE = r"[ \t]+"
+_MWS_RE = r"[ \t\r\n]*"
+_MWS1_RE = r"[ \t\r\n]+"
 _TARGET_MODIFIER_RE = rf"(?:(?:install(?:ed|ing)?){_HWS1_RE})?(?:(?:a|an|the){_HWS1_RE})?(?:(?:new|target|proposed|replacement){_HWS1_RE})?"
+_MULTILINE_TARGET_MODIFIER_RE = rf"(?:(?:install(?:ed|ing)?){_MWS1_RE})?(?:(?:a|an|the){_MWS1_RE})?(?:(?:new|target|proposed|replacement){_MWS1_RE})?"
 _METRE_SUFFIX_RE = rf"(?:{_HWS_RE}m(?:eters?|etres?)?\b)?"
+_MULTILINE_METRE_SUFFIX_RE = rf"(?:{_MWS_RE}m(?:eters?|etres?)?\b)?"
 _QUOTE_UNIT_RE = r'''['"′″’‘“”]'''
 _TARGET_FIRST_SOURCE_PATTERN = re.compile(
     rf"\b(?:replacing|to{_HWS1_RE}replace)\b", re.IGNORECASE
@@ -101,12 +105,17 @@ _EXPLICIT_NON_METRE_UNIT_SUFFIX_PATTERN = re.compile(
     re.IGNORECASE,
 )
 _MULTI_DOT_NUMERIC_TOKEN_PATTERN = re.compile(r"(?<![\d.])\d+(?:\.\d+){2,}(?:/\d+)?(?![\d./])")
+_MULTILINE_FORWARD_ANTENNA_SIZE_TARGET_RE = (
+    rf"{_MULTILINE_TARGET_MODIFIER_RE}(?:antenna|dish)\b{_MWS_RE}"
+    rf"(?:(?:(?:with|of){_MWS1_RE})?(?:size|diameter)\b{_MWS_RE}[:=]?{_MWS_RE})?"
+    rf"\d+(?:[.,]\d+)?{_MULTILINE_METRE_SUFFIX_RE}"
+)
+_MULTILINE_REVERSE_ANTENNA_SIZE_TARGET_RE = (
+    rf"{_MULTILINE_TARGET_MODIFIER_RE}\d+(?:[.,]\d+)?{_MULTILINE_METRE_SUFFIX_RE}{_MWS1_RE}(?:antenna|dish)\b"
+)
 _BROKEN_MULTILINE_INSTALL_TARGET_PATTERN = re.compile(
-    rf"\b(?:with|by|to|for)\b[ \t\r\n]+"
-    rf"(?:(?:install(?:ed|ing)?)[ \t\r\n]+)?"
-    rf"(?:(?:a|an|the)[ \t\r\n]+)?"
-    rf"(?:(?:new|target|proposed|replacement)[ \t\r\n]+)?"
-    rf"(?:antenna|dish)\b",
+    rf"\b(?:with|by|to|for)\b{_MWS1_RE}(?:"
+    rf"{_MULTILINE_FORWARD_ANTENNA_SIZE_TARGET_RE}|{_MULTILINE_REVERSE_ANTENNA_SIZE_TARGET_RE})",
     re.IGNORECASE,
 )
 
