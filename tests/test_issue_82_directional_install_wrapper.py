@@ -59,6 +59,18 @@ class TestIssue82DirectionalInstallWrapper(unittest.TestCase):
                 self.assertIsNone(result["common_size"])
                 self.assertIsNone(result["selected_size"])
 
+    def test_line_break_before_install_wrapper_fails_closed(self):
+        for text in (
+            "Upgrade antenna 2.4m to\ninstall antenna 0.6m",
+            "Upgrade antenna 2.4m with\r\ninstall new antenna 0.6m",
+            "Upgrade antenna 2.4m by\rinstall the replacement antenna 0.6m",
+        ):
+            with self.subTest(text=repr(text)):
+                result = self._resolve(text)
+                self.assertEqual(result["status"], "MISSING")
+                self.assertIsNone(result["common_size"])
+                self.assertIsNone(result["selected_size"])
+
 
 if __name__ == "__main__":
     unittest.main()
