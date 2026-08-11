@@ -42,6 +42,7 @@ jobs:
             tests.test_issue_34_planning_canonical \
             tests.test_issue_34_planning_eligibility \
             tests.test_issue_34_planning_renderer \
+            tests.test_issue_34_planning_entrypoint \
             tests.test_du_export_adapter \
             tests.test_du_profile_loader \
             tests.test_create_pr_entrypoint \
