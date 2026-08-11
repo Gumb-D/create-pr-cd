@@ -30,6 +30,29 @@ def _load_document(path: Path) -> Any:
         return yaml.safe_load(text)
 
 
+def _required_fields_for_scope(profile: Mapping[str, Any], scope: str) -> set[str]:
+    """Return only the source fields required by the selected PR scope.
+
+    Existing TSS/TI behavior preserves profile-level required mappings. Planning
+    is intentionally isolated because Tx SOW, TI/TSS subcontractors, antenna and
+    other existing-scope fields are explicit non-inputs for Issue #34.
+    """
+    normalized_scope = str(scope).upper()
+    mapped_scope_fields = {
+        field
+        for field in SCOPE_REQUIRED_FIELDS[normalized_scope]
+        if field != "tx_sow_normalized"
+    }
+    if normalized_scope == "PLANNING":
+        return mapped_scope_fields
+    profile_required = {
+        field
+        for field, config in profile.get("field_mapping", {}).items()
+        if config.get("required")
+    }
+    return mapped_scope_fields | profile_required
+
+
 def _select_source_sheet(
     inventory: Mapping[str, Any],
     resolved: Mapping[str, Any],
@@ -86,15 +109,7 @@ def build_canonical_records(
     sow_registry_path: Path,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     scope = str(scope).upper()
-    mapped_scope_fields = {
-        field for field in SCOPE_REQUIRED_FIELDS[scope] if field != "tx_sow_normalized"
-    }
-    profile_required = {
-        field
-        for field, config in profile.get("field_mapping", {}).items()
-        if config.get("required")
-    }
-    required_fields = mapped_scope_fields | profile_required
+    required_fields = _required_fields_for_scope(profile, scope)
     resolved = resolve_profile_field_mappings(
         inventory,
         profile,
