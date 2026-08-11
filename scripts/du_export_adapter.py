@@ -256,6 +256,7 @@ def build_canonical_site_record(
         profile_id=str(profile.get("profile_id", "")),
         scope=scope,
         pr_context=record["pr_context"],
+        technical_context=record["technical_context"],
     )
     if migration_decision is not None:
         record["pr_context"]["migration_decision"] = migration_decision

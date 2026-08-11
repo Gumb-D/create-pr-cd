@@ -60,6 +60,7 @@ class CanonicalRecordFactory:
             "antenna_size_fe": "0.6m",
             "tx_before_migration": "Starlink",
             "final_backhaul": "ignored",
+            "before_mw_config_raw": "18G 1.2 SP 1+0",
         }
         defaults.update(values)
         raw = {}

@@ -439,6 +439,13 @@ def _renderer_rows(record: Mapping[str, Any]) -> list[dict[str, Any]]:
         row["Migration Work Item"] = work_item.get("work_item", "")
         required_codes = work_item.get("required_pbom_codes", [])
         row["Required PBOM Codes"] = "|".join(str(code) for code in required_codes)
+        if (
+            work_item.get("work_item") == "Dismantle MW"
+            and work_item.get("before_mw_antenna_size_m") not in (None, "")
+        ):
+            before_size = work_item["before_mw_antenna_size_m"]
+            row["MW Config Antenna Size NE"] = before_size
+            row["MW Config Antenna Size FE"] = before_size
         rendered.append(row)
     return rendered
 
