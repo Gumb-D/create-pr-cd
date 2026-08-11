@@ -48,6 +48,30 @@ class TestIssue84CodexFinalFollowup(unittest.TestCase):
         self.assertIn("DUPLICATE_ROLLBACK_BASELINE_ENTRIES", entry["blockers"])
         self.assertIn("stale_profile_typo", registry["duplicate_rollback_profile_ids"])
 
+    def test_null_rollback_header_hashes_fail_closed_without_crashing(self):
+        profile = load_du_profile(
+            ROOT / "config" / "du_profiles" / "jendela_tx_migration_pr_v1.yaml"
+        )
+        source = json.loads(
+            (
+                ROOT
+                / "config"
+                / "registries"
+                / "mw_du_profile_rollback_baselines_source.yaml"
+            ).read_text(encoding="utf-8")
+        )
+        for entry in source["entries"]:
+            if entry.get("profile_id") == "jendela_tx_migration_pr_v1":
+                entry["rollback_header_hashes"] = None
+                break
+
+        registry = build_rollback_registry([profile], {"entries": []}, source)
+        entry = registry["entries"][0]
+
+        self.assertEqual(entry["rollback_readiness_status"], "ROLLBACK_BLOCKED")
+        self.assertIn("ROLLBACK_HEADER_HASHES_INVALID", entry["blockers"])
+        self.assertEqual(entry["rollback_target_header_hashes"], [])
+
 
 if __name__ == "__main__":
     unittest.main()
