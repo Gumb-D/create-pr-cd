@@ -193,6 +193,29 @@ def _intent_is_negated(clause: str, intent_start: int) -> bool:
     return _NEGATED_INTENT_PREFIX_PATTERN.search(prefix) is not None
 
 
+def _directional_target_governing_action_is_negated(text: str, clause_start: int) -> bool:
+    separator = next(
+        (
+            match
+            for match in _DIRECTIONAL_ANTENNA_SEPARATOR_PATTERN.finditer(text)
+            if match.end() == clause_start
+        ),
+        None,
+    )
+    if separator is None:
+        return False
+
+    source_clause_start = 0
+    for boundary in _CLAUSE_SEPARATOR_PATTERN.finditer(text, 0, separator.start()):
+        source_clause_start = boundary.end()
+    source_clause = text[source_clause_start:separator.start()]
+    actions = list(_SOURCE_SIDE_INTENT_PATTERN.finditer(source_clause))
+    if not actions:
+        return False
+    governing_action = actions[-1]
+    return _intent_is_negated(source_clause, governing_action.start())
+
+
 def _has_installation_intent(text: str, start: int, end: int) -> bool:
     clause_start, clause_end = _clause_bounds(text, start, end)
     clause = text[clause_start:clause_end]
@@ -204,7 +227,7 @@ def _has_installation_intent(text: str, start: int, end: int) -> bool:
     if _is_target_first_source(text, start, clause_start):
         return False
     if _is_directional_target_clause(text, clause_start):
-        return True
+        return not _directional_target_governing_action_is_negated(text, clause_start)
     positive = [
         match for match in _INSTALL_INTENT_PATTERN.finditer(clause)
         if not _intent_is_negated(clause, match.start())
