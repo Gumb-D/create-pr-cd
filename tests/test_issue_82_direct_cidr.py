@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression coverage for direct antenna fields containing CIDR-like values."""
+"""Permanent regression coverage for direct antenna fields containing CIDR-like values."""
 from __future__ import annotations
 
 import sys
