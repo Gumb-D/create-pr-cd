@@ -33,6 +33,12 @@ class TestIssue84JendelaBeforeMwAntenna(unittest.TestCase):
     def test_4034r_mw_config_parses_before_antenna_size(self):
         self.assertEqual(parse_jendela_before_mw_antenna_size("18G 1.2 SP 1+0"), 1.2)
 
+    def test_parser_continues_past_bandwidth_token_to_valid_antenna_size(self):
+        self.assertEqual(
+            parse_jendela_before_mw_antenna_size("18G 112M 1.2M SP 1+0"),
+            1.2,
+        )
+
     def test_mw_dismantle_is_enriched_from_mw_config_without_ne_fe_fallback(self):
         result = self.derive()
         self.assertEqual(result["classification"], "APPROVED")
