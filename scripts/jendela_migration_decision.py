@@ -8,6 +8,7 @@ combined into one atomic work plan. Final Backhaul remains audit evidence only.
 from __future__ import annotations
 
 from copy import deepcopy
+import re
 from typing import Any, Mapping
 
 
@@ -78,8 +79,34 @@ def _normalized(value: Any) -> str:
     return " ".join(str(value).strip().split()).casefold()
 
 
+_EXPLICIT_ANTENNA_SIZE = re.compile(r"(?<![\d.])(\d+(?:\.\d+)?)\s*[mM]\b")
+_GHZ_POLARIZATION_ANTENNA_SIZE = re.compile(
+    r"\b\d+(?:\.\d+)?\s*G(?:HZ)?\b[\s_/-]+(\d+(?:\.\d+)?)(?=\s*(?:M\b)?[\s_/-]*(?:SP|DP|XPIC)\b)",
+    re.IGNORECASE,
+)
+
+
+def parse_jendela_before_mw_antenna_size(value: Any) -> float | None:
+    """Extract the existing-MW antenna size from approved Jendela MW Config evidence."""
+    text = " ".join(str(value or "").strip().split())
+    if not text:
+        return None
+    for pattern in (_EXPLICIT_ANTENNA_SIZE, _GHZ_POLARIZATION_ANTENNA_SIZE):
+        match = pattern.search(text)
+        if not match:
+            continue
+        size = float(match.group(1))
+        if 0.1 <= size <= 5.0:
+            return size
+    return None
+
+
 def derive_jendela_migration_decision(
-    *, profile_id: str, scope: str, pr_context: Mapping[str, Any]
+    *,
+    profile_id: str,
+    scope: str,
+    pr_context: Mapping[str, Any],
+    technical_context: Mapping[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     """Return the Issue #77 atomic TI work plan for Jendela only.
 
@@ -93,6 +120,8 @@ def derive_jendela_migration_decision(
     before_raw = pr_context.get("tx_before_migration")
     tx_sow_raw = pr_context.get("tx_sow_raw")
     final_backhaul_raw = pr_context.get("final_backhaul")
+    technical_context = technical_context or {}
+    before_mw_config_raw = technical_context.get("before_mw_config_raw")
 
     before = _normalized(before_raw)
     tx_sow = _normalized(tx_sow_raw)
@@ -100,6 +129,7 @@ def derive_jendela_migration_decision(
         "tx_before_migration": before_raw,
         "tx_sow_raw": tx_sow_raw,
         "final_backhaul": final_backhaul_raw,
+        "before_mw_config_raw": before_mw_config_raw,
     }
 
     if not before:
@@ -149,10 +179,32 @@ def derive_jendela_migration_decision(
             "work_items": [],
         }
 
+    work_items = [deepcopy(_WORK_ITEMS[name]) for name in work_item_names]
+    if dismantle_work == "Dismantle MW":
+        before_mw_antenna_size = parse_jendela_before_mw_antenna_size(before_mw_config_raw)
+        if before_mw_antenna_size is None:
+            missing = before_mw_config_raw is None or not str(before_mw_config_raw).strip()
+            return {
+                "classification": "REVIEW_REQUIRED",
+                "reason_code": (
+                    "JENDELA_BEFORE_MW_ANTENNA_MISSING"
+                    if missing
+                    else "JENDELA_BEFORE_MW_ANTENNA_UNRESOLVED"
+                ),
+                "decision_code": "",
+                "source_values": source_values,
+                "work_items": [],
+            }
+        for item in work_items:
+            if item.get("work_item") == "Dismantle MW":
+                item["before_mw_config_raw"] = before_mw_config_raw
+                item["before_mw_antenna_size_m"] = before_mw_antenna_size
+                break
+
     return {
         "classification": "APPROVED",
         "reason_code": "JENDELA_TI_WORK_PLAN_APPROVED",
         "decision_code": "JENDELA_TI_WORK_PLAN",
         "source_values": source_values,
-        "work_items": [deepcopy(_WORK_ITEMS[name]) for name in work_item_names],
+        "work_items": work_items,
     }

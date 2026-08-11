@@ -9,7 +9,7 @@ from jendela_migration_decision import JENDELA_PROFILE_ID, derive_jendela_migrat
 
 
 class TestIssue77JendelaRedesign(unittest.TestCase):
-    def derive(self, *, before, tx_sow, final_backhaul="IGNORED"):
+    def derive(self, *, before, tx_sow, final_backhaul="IGNORED", before_mw_config_raw="18G 1.2 SP 1+0"):
         return derive_jendela_migration_decision(
             profile_id=JENDELA_PROFILE_ID,
             scope="TI",
@@ -18,6 +18,7 @@ class TestIssue77JendelaRedesign(unittest.TestCase):
                 "tx_sow_raw": tx_sow,
                 "final_backhaul": final_backhaul,
             },
+            technical_context={"before_mw_config_raw": before_mw_config_raw},
         )
 
     def work_items(self, result):
