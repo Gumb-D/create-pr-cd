@@ -26,17 +26,26 @@ class TestIssue82DirectionalInstallWrapper(unittest.TestCase):
             }
         )
 
-    def test_to_install_antenna_uses_target_size(self):
-        result = self._resolve("Upgrade antenna 2.4m to install antenna 0.6m")
+    def _assert_target_size(self, text: str, expected: float = 0.6):
+        result = self._resolve(text)
         self.assertEqual(result["status"], "RESOLVED_COMMON")
-        self.assertEqual(result["common_size"], 0.6)
-        self.assertEqual(result["selected_size"], 0.6)
+        self.assertEqual(result["common_size"], expected)
+        self.assertEqual(result["selected_size"], expected)
+
+    def test_to_install_antenna_uses_target_size(self):
+        self._assert_target_size("Upgrade antenna 2.4m to install antenna 0.6m")
 
     def test_to_install_new_antenna_uses_target_size(self):
-        result = self._resolve("Upgrade antenna 2.4m to install new antenna 0.6m")
-        self.assertEqual(result["status"], "RESOLVED_COMMON")
-        self.assertEqual(result["common_size"], 0.6)
-        self.assertEqual(result["selected_size"], 0.6)
+        self._assert_target_size("Upgrade antenna 2.4m to install new antenna 0.6m")
+
+    def test_to_install_a_new_antenna_uses_target_size(self):
+        self._assert_target_size("Upgrade antenna 2.4m to install a new antenna 0.6m")
+
+    def test_to_install_an_antenna_uses_target_size(self):
+        self._assert_target_size("Upgrade antenna 2.4m to install an antenna 0.6m")
+
+    def test_to_install_the_replacement_antenna_uses_target_size(self):
+        self._assert_target_size("Upgrade antenna 2.4m to install the replacement antenna 0.6m")
 
 
 if __name__ == "__main__":
