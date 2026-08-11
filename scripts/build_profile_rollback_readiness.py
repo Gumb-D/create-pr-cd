@@ -57,7 +57,12 @@ def _validate_explicit_rollback_baseline(
     baseline_current_version = str(rollback_baseline_entry.get("current_profile_version", ""))
     rollback_target_profile_id = rollback_baseline_entry.get("rollback_profile_id")
     rollback_target_profile_version = rollback_baseline_entry.get("rollback_profile_version")
-    rollback_target_header_hashes = list(rollback_baseline_entry.get("rollback_header_hashes", []))
+    raw_rollback_header_hashes = rollback_baseline_entry.get("rollback_header_hashes", [])
+    if not isinstance(raw_rollback_header_hashes, list):
+        blockers.append("ROLLBACK_HEADER_HASHES_INVALID")
+        rollback_target_header_hashes: list[str] = []
+    else:
+        rollback_target_header_hashes = list(raw_rollback_header_hashes)
 
     if baseline_current_version != current_profile_version:
         blockers.append("ROLLBACK_BASELINE_CURRENT_VERSION_MISMATCH")
