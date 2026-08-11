@@ -34,7 +34,8 @@
     "state": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00008", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "Province/State"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
     "subcontractor_tss": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ640307", "wbs_stage": "Subcon Info", "task_name": "SubCon - TSS", "display_header": "SubCon - TSS"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
     "subcontractor_ti": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ640242", "wbs_stage": "Subcon Info", "task_name": "SubCon - TI", "display_header": "SubCon - TI"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
-    "subcontractor_planning": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01027586", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "Subcon - Planning"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
+    "subcontractor_planning": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01027586", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "Subcon - Planning"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
+    "existing_planning_pr_status": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01027605", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "Subcon PR - Planning"}, "mapping_status": "APPROVED"}], "transforms": ["normalize_pr_reference_status"]},
     "existing_tss_pr_status": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ641766", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Subcon PR - TSS"}, "mapping_status": "APPROVED"}], "transforms": ["normalize_pr_reference_status"]},
     "existing_ti_pr_status": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ641765", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Subcon PR - TI"}, "mapping_status": "APPROVED"}], "transforms": ["normalize_pr_reference_status"]},
     "latitude": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00013", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "Latitude (North Plus South Minus)"}, "mapping_status": "UNVERIFIED"}], "transforms": ["parse_decimal"]},
@@ -53,6 +54,7 @@
     "profile_notes": [
       "Only the six human-approved PR-critical mappings are promoted for PR input review; all other fields remain discovery-only or optional.",
       "TX SOW uses the approved LLD override columns in fail-closed priority order: Post MOCN TX SOW (LLD), then TX SOW (LLD).",
+      "Issue #34 approves Subcon - Planning and Subcon PR - Planning as Planning-only source fields; they do not change TSS/TI eligibility or duplicate prevention.",
       "Header-hash and required approved-field validation remain mandatory for formal production output.",
       "The 2026-07-28 header hash e61b834994eeef30e7d8249f87616cb04d60598eea323feea50178fc4292c162 was revalidated with all seven TSS/TI PR-critical mappings resolved; no canonical mapping changed.",
       "Antenna fields are currently absent from the discovery shortlist and must not be inferred from unrelated columns.",
