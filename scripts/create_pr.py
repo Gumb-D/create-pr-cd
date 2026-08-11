@@ -2,6 +2,7 @@
 """Official create-pr entrypoint with audit-complete reporting."""
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 import re
@@ -31,6 +32,8 @@ _ORIGINAL_PARTITION = _impl._partition_records
 _ORIGINAL_RENDERER_ROW = _impl._renderer_row
 _ORIGINAL_SCOPE_SUBCONTRACTOR = _impl._scope_subcontractor
 _ORIGINAL_VALIDATE_CANDIDATE_CONTRACTS = _impl.validate_candidate_contracts
+_ORIGINAL_RENDERER = Path(_impl.RENDERER)
+PLANNING_RENDERER = Path(_impl.ROOT) / "scripts" / "planning_ecc_renderer.py"
 _LAST_PARTITIONS = None
 
 _ANTENNA_EVIDENCE_RENDERER_COLUMNS = (
@@ -41,11 +44,52 @@ _ANTENNA_EVIDENCE_RENDERER_COLUMNS = (
     "NE SOW Details Mapping Status",
     "FE SOW Details Mapping Status",
 )
+_PLANNING_RENDERER_COLUMNS = (
+    "Subcon - Planning",
+    "Planning Contract Subcontractor",
+    "Planning PBOM Code",
+    "Planning SOW",
+    "Planning Unit",
+    "Planning Quantity",
+)
 CANONICAL_RENDERER_COLUMNS = tuple(_impl.CANONICAL_RENDERER_COLUMNS) + tuple(
     column
-    for column in _ANTENNA_EVIDENCE_RENDERER_COLUMNS
+    for column in (*_ANTENNA_EVIDENCE_RENDERER_COLUMNS, *_PLANNING_RENDERER_COLUMNS)
     if column not in _impl.CANONICAL_RENDERER_COLUMNS
 )
+
+
+def parse_args() -> argparse.Namespace:
+    """Official CLI parser; Planning is enabled only through this governed wrapper."""
+    parser = argparse.ArgumentParser(description="Identify DU Profile, canonicalize iEPMS data, and generate ECC.")
+    parser.add_argument("--site-data", required=True, type=Path, help="Original four-header iEPMS export")
+    parser.add_argument("--output", required=True, type=Path, help="ECC output directory")
+    parser.add_argument("--scope", required=True, choices=["TSS", "TI", "PLANNING"], type=str.upper)
+    parser.add_argument("--site-code", help="Comma-separated site codes")
+    parser.add_argument("--all-sites", action="store_true")
+    parser.add_argument("--pr-model", type=Path, default=Path(_impl.ROOT) / "Info" / "input" / "pr_model.xlsx")
+    parser.add_argument("--template", type=Path, default=Path(_impl.ROOT) / "Info" / "input" / "ecc_template.xls")
+    parser.add_argument("--mapping", type=Path, default=Path(_impl.ROOT) / "Info" / "input" / "contract_info_reference.md")
+    parser.add_argument(
+        "--subcontractor-policy",
+        type=Path,
+        default=_impl.PR_POLICY_PATH,
+        help="Approved fail-closed subcontractor PR policy JSON",
+    )
+    parser.add_argument(
+        "--non-production-uat",
+        action="store_true",
+        help=(
+            "Explicitly generate visibly isolated non-production UAT ECC output "
+            "for PR_INPUT_READY or PRODUCTION profiles."
+        ),
+    )
+    return parser.parse_args()
+
+
+def _renderer_for_scope(scope):
+    """Route Planning only to the deterministic Planning renderer."""
+    return PLANNING_RENDERER if str(scope).strip().upper() == "PLANNING" else _ORIGINAL_RENDERER
 
 
 def _canonical_relocate_site_id(value):
@@ -81,6 +125,9 @@ def _source_mapping_status(record, canonical_field):
 def _renderer_row(record):
     row = _ORIGINAL_RENDERER_ROW(record)
     canonical_fields = _canonical_source_fields(record)
+    planning_selection = record.get("planning_selection", {})
+    if not isinstance(planning_selection, Mapping):
+        planning_selection = {}
     row.update(
         {
             "Antenna Evidence Governance": (
@@ -91,6 +138,12 @@ def _renderer_row(record):
             "TX SOW Details Mapping Status": _source_mapping_status(record, "tx_sow_details"),
             "NE SOW Details Mapping Status": _source_mapping_status(record, "ne_sow_details"),
             "FE SOW Details Mapping Status": _source_mapping_status(record, "fe_sow_details"),
+            "Subcon - Planning": record.get("pr_context", {}).get("subcontractor_planning", ""),
+            "Planning Contract Subcontractor": planning_selection.get("contract_subcontractor", ""),
+            "Planning PBOM Code": planning_selection.get("pbom_code", ""),
+            "Planning SOW": planning_selection.get("description", ""),
+            "Planning Unit": planning_selection.get("unit", ""),
+            "Planning Quantity": planning_selection.get("quantity", ""),
         }
     )
     sow = str(record.get("pr_context", {}).get("tx_sow_normalized", "") or "").strip().upper()
@@ -343,6 +396,7 @@ def run(parsed):
     if not hasattr(parsed, "pr_model"):
         parsed.pr_model = baseline["path"]
     _sync_dependencies()
+    _impl.RENDERER = _renderer_for_scope(parsed.scope)
     before_renderer = snapshot_renderer_artifacts(Path(parsed.output))
     summary = _impl.run(parsed)
     summary["pr_model_baseline"] = {
