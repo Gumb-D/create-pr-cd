@@ -96,23 +96,26 @@ def parse_jendela_before_mw_antenna_size(value: Any) -> float | None:
     Jendela MW Config places antenna diameter immediately before the
     polarization token (SP/DP/XPIC). That structural evidence takes precedence
     over generic ``M``-suffixed tokens, which may represent channel bandwidth.
-    Multiple complete polarized configurations are accepted only when they agree
-    on one antenna size; conflicting sizes fail closed. If polarization structure
-    is unavailable, a generic explicit-metre fallback is accepted only when
-    exactly one in-range token is present.
+    Every polarization-qualified configuration must contain an in-range antenna
+    size. Multiple complete configurations are accepted only when they all agree
+    on one size; invalid or conflicting qualified values fail closed. If no
+    polarization structure exists, a generic explicit-metre fallback is accepted
+    only when exactly one in-range token is present.
     """
     text = " ".join(str(value or "").strip().split())
     if not text:
         return None
 
-    polarized_sizes = {
+    polarized_matches = [
         float(match.group(1))
         for match in _ANTENNA_BEFORE_POLARIZATION.finditer(text)
-        if _valid_antenna_size(float(match.group(1)))
-    }
-    if len(polarized_sizes) == 1:
-        return next(iter(polarized_sizes))
-    if len(polarized_sizes) > 1:
+    ]
+    if polarized_matches:
+        if any(not _valid_antenna_size(size) for size in polarized_matches):
+            return None
+        polarized_sizes = set(polarized_matches)
+        if len(polarized_sizes) == 1:
+            return next(iter(polarized_sizes))
         return None
 
     fallback_sizes = [
