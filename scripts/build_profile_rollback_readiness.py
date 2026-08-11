@@ -174,9 +174,7 @@ def write_rollback_outputs(
 ) -> None:
     profiles = [load_du_profile(path) for path in profile_paths]
     deprecation_registry = json.loads(deprecation_registry_path.read_text(encoding="utf-8"))
-    rollback_baseline_registry: Mapping[str, Any] = {"entries": []}
-    if rollback_baseline_source_path.exists():
-        rollback_baseline_registry = json.loads(rollback_baseline_source_path.read_text(encoding="utf-8"))
+    rollback_baseline_registry = json.loads(rollback_baseline_source_path.read_text(encoding="utf-8"))
     registry = build_rollback_registry(profiles, deprecation_registry, rollback_baseline_registry)
     registry_path.parent.mkdir(parents=True, exist_ok=True)
     markdown_path.parent.mkdir(parents=True, exist_ok=True)
