@@ -28,6 +28,9 @@ import create_pr  # noqa: E402
 CONTRACT_VERSION = "1.0"
 SKILL_ID = "create-pr-cd"
 SKILL_VERSION = "4.0.0"
+SAFE_DOMAIN_ERROR_DETAIL_FIELDS = {
+    "SITE_CODES_NOT_FOUND": ("missing_site_codes",),
+}
 
 
 class ContractError(Exception):
@@ -176,6 +179,52 @@ def safe_metrics(summary: dict[str, Any]) -> dict[str, Any]:
     return {field: summary[field] for field in fields if field in summary}
 
 
+def safe_domain_error(stderr_path: Path, exit_code: int) -> ContractError | None:
+    """Translate only explicitly allow-listed domain errors into public contract errors."""
+    try:
+        stderr_text = stderr_path.read_text(encoding="utf-8", errors="replace").strip()
+    except OSError:
+        return None
+    if not stderr_text:
+        return None
+
+    decoder = json.JSONDecoder()
+    payload = None
+    for start in range(len(stderr_text) - 1, -1, -1):
+        if stderr_text[start] != "{":
+            continue
+        try:
+            candidate, end = decoder.raw_decode(stderr_text, start)
+        except json.JSONDecodeError:
+            continue
+        if stderr_text[end:].strip():
+            continue
+        if isinstance(candidate, dict):
+            payload = candidate
+            break
+
+    if not payload or str(payload.get("status") or "").strip().upper() != "ERROR":
+        return None
+    code = str(payload.get("code") or "").strip()
+    allowed_fields = SAFE_DOMAIN_ERROR_DETAIL_FIELDS.get(code)
+    if not allowed_fields:
+        return None
+
+    raw_details = payload.get("details") if isinstance(payload.get("details"), dict) else {}
+    details = {
+        field: raw_details[field]
+        for field in allowed_fields
+        if field in raw_details
+    }
+    if code == "SITE_CODES_NOT_FOUND":
+        missing = details.get("missing_site_codes")
+        if not isinstance(missing, list) or not all(isinstance(value, str) for value in missing):
+            return None
+    details["exitCode"] = exit_code
+    message = str(payload.get("message") or "create-pr-cd rejected the input.")[:500]
+    return ContractError(code, message, "domain_processing", details)
+
+
 def run_domain(parsed: argparse.Namespace, cancellation: Path) -> dict[str, Any]:
     command = [
         sys.executable, str(SKILL_ROOT / "scripts" / "create_pr.py"),
@@ -211,6 +260,9 @@ def run_domain(parsed: argparse.Namespace, cancellation: Path) -> dict[str, Any]
                 raise CancelledError()
             time.sleep(0.2)
     if process.returncode != 0:
+        domain_error = safe_domain_error(stderr_path, process.returncode)
+        if domain_error:
+            raise domain_error
         raise ContractError(
             "CREATE_PR_FAILED",
             "create-pr-cd rejected the input or failed during domain processing.",
