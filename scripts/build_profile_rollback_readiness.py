@@ -11,17 +11,30 @@ from du_profile_loader import discover_du_profile_paths, load_du_profile
 RELEASED_STATUSES = {"PR_INPUT_READY", "PRODUCTION", "DEPRECATED"}
 DEFAULT_ROLLBACK_BASELINE_SOURCE = Path("config/registries/mw_du_profile_rollback_baselines_source.yaml")
 
+# Independently governed prior-version requirements. These invariants deliberately
+# do not live in the editable rollback-baseline evidence source, so malformed
+# source data cannot disable the fail-closed guard it is meant to satisfy.
+GOVERNED_PRIOR_ROLLBACK_REQUIREMENTS: dict[str, dict[str, str]] = {
+    "jendela_tx_migration_pr_v1": {
+        "current_profile_version": "0.5.0",
+        "rollback_profile_id": "jendela_tx_migration_pr_v1",
+        "rollback_profile_version": "0.4.0",
+    }
+}
+
 
 def _validate_explicit_rollback_baseline(
     profile: Mapping[str, Any],
     rollback_baseline_entry: Mapping[str, Any],
     blockers: list[str],
 ) -> tuple[Any, Any, list[str]]:
+    profile_id = str(profile.get("profile_id", ""))
     current_profile_version = str(profile.get("profile_version", ""))
     baseline_current_version = str(rollback_baseline_entry.get("current_profile_version", ""))
     rollback_target_profile_id = rollback_baseline_entry.get("rollback_profile_id")
     rollback_target_profile_version = rollback_baseline_entry.get("rollback_profile_version")
     rollback_target_header_hashes = list(rollback_baseline_entry.get("rollback_header_hashes", []))
+    governed_requirement = GOVERNED_PRIOR_ROLLBACK_REQUIREMENTS.get(profile_id)
 
     if baseline_current_version != current_profile_version:
         blockers.append("ROLLBACK_BASELINE_CURRENT_VERSION_MISMATCH")
@@ -32,6 +45,14 @@ def _validate_explicit_rollback_baseline(
     if str(rollback_target_profile_version or "") == current_profile_version:
         blockers.append("ROLLBACK_TARGET_IS_CURRENT_PROFILE_VERSION")
 
+    if governed_requirement is not None:
+        if current_profile_version != governed_requirement["current_profile_version"]:
+            blockers.append("GOVERNED_ROLLBACK_CURRENT_VERSION_MISMATCH")
+        if str(rollback_target_profile_id or "") != governed_requirement["rollback_profile_id"]:
+            blockers.append("ROLLBACK_TARGET_PROFILE_ID_MISMATCH")
+        if str(rollback_target_profile_version or "") != governed_requirement["rollback_profile_version"]:
+            blockers.append("ROLLBACK_TARGET_PROFILE_VERSION_MISMATCH")
+
     return rollback_target_profile_id, rollback_target_profile_version, rollback_target_header_hashes
 
 
@@ -41,13 +62,19 @@ def evaluate_rollback_readiness(
     rollback_baseline_entry: Mapping[str, Any] | None = None,
     explicit_prior_baseline_required: bool = False,
 ) -> Dict[str, Any]:
+    profile_id = str(profile.get("profile_id", ""))
     approved_header_hashes = list(profile.get("export_structure", {}).get("approved_header_hashes", []))
     blockers: list[str] = []
+    governed_prior_baseline_required = profile_id in GOVERNED_PRIOR_ROLLBACK_REQUIREMENTS
 
     if not approved_header_hashes:
         blockers.append("NO_APPROVED_HEADER_HASH_BASELINE")
     if str(profile.get("status", "")) not in RELEASED_STATUSES:
         blockers.append("PROFILE_NOT_RELEASED")
+
+    governed_requirement = GOVERNED_PRIOR_ROLLBACK_REQUIREMENTS.get(profile_id)
+    if governed_requirement is not None and str(profile.get("profile_version", "")) != governed_requirement["current_profile_version"]:
+        blockers.append("GOVERNED_ROLLBACK_CURRENT_VERSION_MISMATCH")
 
     rollback_target_profile_id = None
     rollback_target_profile_version = None
@@ -72,7 +99,7 @@ def evaluate_rollback_readiness(
                 rollback_target_profile_version,
                 rollback_target_header_hashes,
             ) = _validate_explicit_rollback_baseline(profile, rollback_baseline_entry, blockers)
-        elif explicit_prior_baseline_required:
+        elif governed_prior_baseline_required or explicit_prior_baseline_required:
             blockers.append("EXPLICIT_PRIOR_ROLLBACK_BASELINE_REQUIRED")
         elif approved_header_hashes:
             rollback_target_profile_id = profile.get("profile_id")
@@ -117,7 +144,7 @@ def build_rollback_registry(
         for entry in (rollback_baseline_registry or {}).get("entries", [])
         if isinstance(entry, Mapping) and entry.get("profile_id") is not None
     }
-    required_profile_ids = {
+    source_required_profile_ids = {
         str(profile_id)
         for profile_id in (rollback_baseline_registry or {}).get("required_profile_ids", [])
         if profile_id is not None
@@ -127,7 +154,7 @@ def build_rollback_registry(
             profile,
             deprecation_by_profile.get(str(profile["profile_id"])),
             rollback_baseline_by_profile.get(str(profile["profile_id"])),
-            str(profile["profile_id"]) in required_profile_ids,
+            str(profile["profile_id"]) in source_required_profile_ids,
         )
         for profile in profiles
     ]
@@ -138,7 +165,8 @@ def build_rollback_registry(
         "notes": [
             "This rollback review is fail-closed and documents whether a profile has an approved rollback baseline.",
             "A blocked result does not imply a defect; it can simply mean the profile has not reached an approved release state yet.",
-            "Explicit prior-version rollback baselines are sourced from config/registries/mw_du_profile_rollback_baselines_source.yaml.",
+            "Explicit prior-version rollback baseline evidence is sourced from config/registries/mw_du_profile_rollback_baselines_source.yaml.",
+            "Profiles that require an explicit prior baseline are independently governed in build_profile_rollback_readiness.py.",
         ],
     }
 
