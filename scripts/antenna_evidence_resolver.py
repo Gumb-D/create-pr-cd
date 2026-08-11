@@ -48,7 +48,7 @@ _SOURCE_SIDE_INTENT_PATTERN = re.compile(
 
 _HWS_RE = r"[ \t]*"
 _HWS1_RE = r"[ \t]+"
-_TARGET_MODIFIER_RE = rf"(?:(?:new|target|proposed|replacement){_HWS1_RE})?"
+_TARGET_MODIFIER_RE = rf"(?:(?:install(?:ed|ing)?){_HWS1_RE})?(?:(?:new|target|proposed|replacement){_HWS1_RE})?"
 _METRE_SUFFIX_RE = rf"(?:{_HWS_RE}m(?:eters?|etres?)?\b)?"
 _QUOTE_UNIT_RE = r'''['"′″’‘“”]'''
 _TARGET_FIRST_SOURCE_PATTERN = re.compile(
