@@ -101,6 +101,13 @@ _EXPLICIT_NON_METRE_UNIT_SUFFIX_PATTERN = re.compile(
     re.IGNORECASE,
 )
 _MULTI_DOT_NUMERIC_TOKEN_PATTERN = re.compile(r"(?<![\d.])\d+(?:\.\d+){2,}(?:/\d+)?(?![\d./])")
+_BROKEN_MULTILINE_INSTALL_TARGET_PATTERN = re.compile(
+    rf"\b(?:with|by|to)\b{_HWS1_RE}install(?:ed|ing)?"
+    rf"(?:{_HWS1_RE}(?:a|an|the|new|target|proposed|replacement)){{0,2}}{_HWS_RE}"
+    rf"(?:\r\n|\r|\n)"
+    rf"(?={_HWS_RE}(?:(?:a|an|the|new|target|proposed|replacement){_HWS1_RE}){{0,2}}(?:antenna|dish)\b)",
+    re.IGNORECASE,
+)
 
 
 def _is_blank(value: Any) -> bool:
@@ -273,6 +280,8 @@ def _parse_detail_sizes(value: Any, *, require_antenna_context: bool) -> list[fl
     if _is_blank(value):
         return []
     text = re.sub(r"(?<=\d),(?=\d)", ".", str(value))
+    if _BROKEN_MULTILINE_INSTALL_TARGET_PATTERN.search(text):
+        return []
     candidates: list[float] = []
     consumed: list[tuple[int, int]] = []
     for match in re.finditer(
