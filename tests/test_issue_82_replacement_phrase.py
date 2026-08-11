@@ -178,6 +178,27 @@ class TestIssue82ReplacementPhrase(unittest.TestCase):
                     self.assertIsNone(result["common_size"])
                     self.assertIsNone(result["selected_size"])
 
+    def test_question_and_exclamation_split_action_clauses(self):
+        for marker in ("!", "?"):
+            text = f"Dismantle antenna 2.4m{marker} Install antenna 0.6m"
+            with self.subTest(marker=marker):
+                result = self._resolve_common(text)
+                self.assertEqual(result["status"], "RESOLVED_COMMON")
+                self.assertEqual(result["common_size"], 0.6)
+                self.assertEqual(result["selected_size"], 0.6)
+
+    def test_invalid_reverse_target_with_descriptor_fails_closed(self):
+        for text in (
+            "Upgrade antenna 2.4m to 0.6-inch diameter antenna",
+            "Upgrade antenna 2.4m to 0.6' diameter antenna",
+            "Upgrade antenna 2.4m to 0.6mm diameter antenna",
+        ):
+            with self.subTest(text=text):
+                result = self._resolve_common(text)
+                self.assertEqual(result["status"], "MISSING")
+                self.assertIsNone(result["common_size"])
+                self.assertIsNone(result["selected_size"])
+
 
 if __name__ == "__main__":
     unittest.main()
