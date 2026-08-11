@@ -60,15 +60,13 @@ _ANTENNA_SIZE_TARGET_RE = (
 )
 
 # Generic reverse target detection is intentionally broader than accepted size
-# grammar. It exists only to identify the old/source side of a directional
-# change. Invalid explicit units and a small number of descriptive words before
-# antenna/dish therefore suppress the old size and fail closed rather than
-# falling back to an existing antenna PBOM. Strict target acceptance below is
-# unchanged and does not consume these descriptive/invalid forms.
+# grammar and is used only to suppress the old/source side of a directional
+# change. Bounded punctuation, unit text, brackets and descriptors may appear
+# between the numeric token and antenna/dish; strict target acceptance below is
+# unchanged, so invalid targets still fail closed rather than becoming evidence.
 _GENERIC_REVERSE_ANTENNA_TARGET_RE = (
-    rf"{_TARGET_MODIFIER_RE}\d+(?:[.,]\d+)?"
-    rf"(?:\s*(?:(?:[-–—/:|]\s*)|(?:[\(\[]\s*))?(?:[A-Za-z]+|{_QUOTE_UNIT_RE}))?"
-    rf"(?:\s+[A-Za-z][A-Za-z-]*){{0,3}}\s+(?:antenna|dish)\b"
+    rf"{_TARGET_MODIFIER_RE}(?:[\(\[]\s*)?\d+(?:[.,]\d+)?"
+    rf"[^;,\n&!?]{{0,48}}?\b(?:antenna|dish)\b"
 )
 
 # Generic directional transition is used to identify the source side even when
