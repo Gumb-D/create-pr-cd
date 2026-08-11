@@ -40,12 +40,16 @@ _DIRECTIONAL_GOVERNING_ACTION_PATTERN = re.compile(
     r"migrat(?:e|ed|ing|ion)?)\b",
     re.IGNORECASE,
 )
+_SOURCE_MODIFIERS_RE = r"(?:(?:the|a|an|existing|old|current|new|target|proposed|replacement|mw|microwave)[ \t]+)*"
+_SOURCE_SIZE_RE = r"\d+(?:[.,]\d+)?(?:[ \t]*m(?:eters?|etres?)?\b)?"
+_SIZED_ANTENNA_SOURCE_RE = (
+    rf"(?:{_SOURCE_MODIFIERS_RE}(?:antenna|dish)\b[ \t]+"
+    rf"(?:(?:size|diameter)\b[ \t]*[:=]?[ \t]*)?{_SOURCE_SIZE_RE}|"
+    rf"{_SOURCE_MODIFIERS_RE}{_SOURCE_SIZE_RE}[ \t]+(?:antenna|dish)\b)"
+)
 _ANTENNA_GOVERNED_DIRECTIONAL_ACTION_PATTERN = re.compile(
-    r"\b(?:upgrade|replac(?:e|ed|ing|ement)?|swap(?:ped|ping)?|chang(?:e|ed|ing)?|"
-    r"migrat(?:e|ed|ing|ion)?)\b[ \t]+(?:from[ \t]+)?"
-    r"(?:(?:the|a|an|existing|old|current|new|target|proposed|replacement|mw|microwave)[ \t]+)*"
-    r"(?:(?:antenna|dish)\b|"
-    r"\d+(?:[.,]\d+)?(?:[ \t]*m(?:eters?|etres?)?\b)?[ \t]+(?:antenna|dish)\b)",
+    rf"\b(?:upgrade|replac(?:e|ed|ing|ement)?|swap(?:ped|ping)?|chang(?:e|ed|ing)?|"
+    rf"migrat(?:e|ed|ing|ion)?)\b[ \t]+(?:from[ \t]+)?{_SIZED_ANTENNA_SOURCE_RE}",
     re.IGNORECASE,
 )
 _SOURCE_SIDE_INTENT_PATTERN = re.compile(
