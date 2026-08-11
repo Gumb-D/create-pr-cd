@@ -45,6 +45,30 @@ class TestIssue82ReplacementPhrase(unittest.TestCase):
         self.assertEqual(result["status"], "MISSING")
         self.assertIsNone(result["selected_size"])
 
+    def test_bare_decimal_sentence_boundary_excludes_dismantle_size(self):
+        result = self._resolve_common(
+            "Dismantle antenna 2.4. Install antenna 0.6."
+        )
+        self.assertEqual(result["status"], "RESOLVED_COMMON")
+        self.assertEqual(result["common_size"], 0.6)
+        self.assertEqual(result["selected_size"], 0.6)
+
+    def test_upgrade_direction_excludes_source_size(self):
+        result = self._resolve_common(
+            "Upgrade antenna 2.4m to new antenna 0.6m"
+        )
+        self.assertEqual(result["status"], "RESOLVED_COMMON")
+        self.assertEqual(result["common_size"], 0.6)
+        self.assertEqual(result["selected_size"], 0.6)
+
+    def test_replacement_marker_is_installation_intent(self):
+        result = self._resolve_common(
+            "Replace existing antenna 2.4m with replacement antenna 0.6m"
+        )
+        self.assertEqual(result["status"], "RESOLVED_COMMON")
+        self.assertEqual(result["common_size"], 0.6)
+        self.assertEqual(result["selected_size"], 0.6)
+
 
 if __name__ == "__main__":
     unittest.main()
