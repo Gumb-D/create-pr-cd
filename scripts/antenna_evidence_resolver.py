@@ -49,7 +49,8 @@ _SIZED_ANTENNA_SOURCE_RE = (
 )
 _ANTENNA_GOVERNED_DIRECTIONAL_ACTION_PATTERN = re.compile(
     rf"\b(?:upgrade|replac(?:e|ed|ing|ement)?|swap(?:ped|ping)?|chang(?:e|ed|ing)?|"
-    rf"migrat(?:e|ed|ing|ion)?)\b[ \t]+(?:from[ \t]+)?{_SIZED_ANTENNA_SOURCE_RE}",
+    rf"migrat(?:e|ed|ing|ion)?)\b(?:[ \t]+|[ \t]*[:\-–—][ \t]*)(?:from[ \t]+)?"
+    rf"{_SIZED_ANTENNA_SOURCE_RE}",
     re.IGNORECASE,
 )
 _SOURCE_SIDE_INTENT_PATTERN = re.compile(
@@ -91,20 +92,20 @@ _GENERIC_REVERSE_ANTENNA_TARGET_RE = (
     rf"[^;,\r\n&!?]{{0,48}}?\b(?:antenna|dish)\b"
 )
 _DIRECTIONAL_ANTENNA_TRANSITION_RE = (
-    rf"\b(?:with|by|to|for)\b(?={_HWS1_RE}(?:"
+    rf"\b(?:with|by|to|for|using)\b(?={_HWS1_RE}(?:"
     rf"{_TARGET_MODIFIER_RE}(?:antenna|dish)\b|{_GENERIC_REVERSE_ANTENNA_TARGET_RE}))"
 )
 _DIRECTIONAL_ANTENNA_TRANSITION_PATTERN = re.compile(
     _DIRECTIONAL_ANTENNA_TRANSITION_RE, re.IGNORECASE
 )
 _DIRECTIONAL_ANTENNA_SEPARATOR_RE = (
-    rf"\b(?:with|by|to|for)\b(?={_HWS1_RE}{_ANTENNA_SIZE_TARGET_RE})"
+    rf"\b(?:with|by|to|for|using)\b(?={_HWS1_RE}{_ANTENNA_SIZE_TARGET_RE})"
 )
 _DIRECTIONAL_ANTENNA_SEPARATOR_PATTERN = re.compile(
     _DIRECTIONAL_ANTENNA_SEPARATOR_RE, re.IGNORECASE
 )
 _CLAUSE_SEPARATOR_PATTERN = re.compile(
-    rf"(?:[;,\r\n&!?]|\.(?=\s|$)|\b(?:and|then)\b|"
+    rf"(?:[;,\r\n&!?]|\.(?=\s|$)|\bthen\b|\band\b(?={_HWS_RE}{_ACTION_INTENT_RE}\b)|"
     rf"(?:[:/|]|[-–—])(?={_HWS_RE}{_ACTION_INTENT_RE}\b)|{_DIRECTIONAL_ANTENNA_SEPARATOR_RE})",
     re.IGNORECASE,
 )
@@ -130,7 +131,7 @@ _MULTILINE_GENERIC_REVERSE_ANTENNA_TARGET_RE = (
     rf"[^;,&!?]{{0,48}}?\b(?:antenna|dish)\b"
 )
 _BROKEN_MULTILINE_DIRECTIONAL_TARGET_PATTERN = re.compile(
-    rf"\b(?:with|by|to|for)\b{_ML_WS1_RE}(?:"
+    rf"\b(?:with|by|to|for|using)\b{_ML_WS1_RE}(?:"
     rf"{_MULTILINE_FORWARD_ANTENNA_SIZE_TARGET_RE}|{_MULTILINE_GENERIC_REVERSE_ANTENNA_TARGET_RE})",
     re.IGNORECASE,
 )
