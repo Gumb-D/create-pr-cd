@@ -121,9 +121,6 @@ def evaluate_rollback_readiness(
             rollback_target_profile_version = profile.get("profile_version")
             rollback_target_header_hashes = approved_header_hashes
 
-    # The governed Jendela target is a lifecycle invariant. Validate the target
-    # after either the explicit-prior-baseline path or the deprecation path has
-    # populated it, so a future DEPRECATED record cannot bypass the 0.4.0 target.
     if governed_requirement is not None and (
         rollback_target_profile_id
         or rollback_target_profile_version
@@ -224,7 +221,6 @@ def build_rollback_registry(
             "A blocked result does not imply a defect; it can simply mean the profile has not reached an approved release state yet.",
             "Explicit prior-version rollback baseline evidence is sourced from config/registries/mw_du_profile_rollback_baselines_source.yaml.",
             "Profiles that require an explicit prior baseline are independently governed in build_profile_rollback_readiness.py.",
-            "Duplicate rollback baseline entries for one profile are rejected rather than resolved by last-entry-wins behavior.",
         ],
     }
 
