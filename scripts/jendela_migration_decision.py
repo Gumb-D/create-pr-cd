@@ -97,17 +97,19 @@ _STANDARD_MW_LINK = re.compile(
 _UNPOLARIZED_NUMERIC_TOKEN = re.compile(
     r"(?<![\d.])(\d+(?:\.\d+)?)(?:\s*[mM])?(?![\w.])"
 )
+_DECIMAL_COMMA = re.compile(r"(?<=\d),(?=\d{1,2}(?:\D|$))")
 
 # Exact antenna diameters represented by the approved Jendela v4.1
-# `MW Dismantle` choose-one rows. This set is used only to disambiguate the
-# no-polarization fallback; the PR Model remains the source of PBOM selection.
+# `MW Dismantle` choose-one rows. The set prevents bandwidth values such as
+# 3.5M from being mistaken for a dish diameter while keeping polarization
+# wording optional.
 _JENDELA_V41_DISMANTLE_ANTENNA_SIZES_M = frozenset(
     {0.3, 0.6, 0.9, 1.2, 1.8, 2.4, 3.2}
 )
 
 
-def _valid_antenna_size(value: float) -> bool:
-    return 0.1 <= value <= 5.0
+def _supported_dismantle_antenna_size(value: float) -> bool:
+    return value in _JENDELA_V41_DISMANTLE_ANTENNA_SIZES_M
 
 
 def _polarized_antenna_size(text: str) -> float | None:
@@ -121,7 +123,7 @@ def _polarized_antenna_size(text: str) -> float | None:
     ]
     if len(polarized_matches) != len(polarization_markers):
         return None
-    if any(not _valid_antenna_size(size) for size in polarized_matches):
+    if any(not _supported_dismantle_antenna_size(size) for size in polarized_matches):
         return None
 
     polarized_sizes = set(polarized_matches)
@@ -139,7 +141,7 @@ def _unpolarized_standard_antenna_size(body: str) -> float | None:
         return None
 
     candidate = candidates[0]
-    if candidate not in _JENDELA_V41_DISMANTLE_ANTENNA_SIZES_M:
+    if not _supported_dismantle_antenna_size(candidate):
         return None
     return candidate
 
@@ -148,17 +150,18 @@ def parse_jendela_before_mw_antenna_size(value: Any) -> float | None:
     """Extract existing-MW antenna size from unambiguous MW Config evidence.
 
     Polarization wording (SP/DP/XPIC) is optional. When present, it is the
-    strongest structural hint: every marker must have one parseable, in-range
-    antenna value immediately before it, and multiple links must agree on one
-    size. When polarization wording is absent, the parser accepts only a
-    standard GHz -> body -> N+N link shape whose body contains exactly one
-    numeric candidate and that candidate is an antenna diameter represented by
-    the approved Jendela v4.1 MW Dismantle model. Ambiguous, unsupported,
+    strongest structural hint: every marker must have one parseable antenna
+    value immediately before it, and every resolved value must be represented
+    by the approved Jendela v4.1 MW Dismantle model. When polarization wording
+    is absent, the parser accepts only a standard GHz -> body -> N+N link shape
+    whose body contains exactly one supported numeric antenna candidate.
+    Decimal-comma notation is normalized before parsing. Ambiguous, unsupported,
     missing, or conflicting evidence fails closed.
     """
     text = " ".join(str(value or "").strip().split())
     if not text:
         return None
+    text = _DECIMAL_COMMA.sub(".", text)
 
     frequency_matches = list(_FREQUENCY_TOKEN.finditer(text))
     radio_matches = list(_RADIO_CONFIGURATION_TOKEN.finditer(text))
