@@ -49,3 +49,16 @@ jobs:
             tests.test_create_pr_entrypoint \
             tests.test_create_pr_safety_integration \
             tests.test_issue_74_reconciliation
+
+  full-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -r requirements.txt
+      - name: Run full repository unittest suite
+        run: python -m unittest discover -s tests
