@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - "scripts/planning_pr_selector.py"
+      - "scripts/planning_pr_runtime.py"
+      - "scripts/planning_ecc_renderer.py"
       - "scripts/du_export_adapter.py"
       - "scripts/canonical_site_validator.py"
       - "scripts/canonical_input_pipeline.py"
@@ -39,6 +41,7 @@ jobs:
             tests.test_issue_34_planning_profile_fields \
             tests.test_issue_34_planning_canonical \
             tests.test_issue_34_planning_eligibility \
+            tests.test_issue_34_planning_renderer \
             tests.test_du_export_adapter \
             tests.test_du_profile_loader \
             tests.test_create_pr_entrypoint \
