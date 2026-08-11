@@ -76,6 +76,21 @@ class TestProfileRollbackReadiness(unittest.TestCase):
         self.assertIn("Rollback target: `jendela_tx_migration_pr_v1` `0.4.0`", markdown)
         self.assertNotIn("Rollback target: `jendela_tx_migration_pr_v1` `0.5.0`", markdown)
 
+    def test_regeneration_fails_closed_if_rollback_baseline_source_is_missing(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            registry_path = Path(tmpdir) / "rollback.json"
+            markdown_path = Path(tmpdir) / "rollback.md"
+            missing_source = Path(tmpdir) / "missing-rollback-source.json"
+
+            with self.assertRaises(FileNotFoundError):
+                write_rollback_outputs(
+                    [ROOT / "config" / "du_profiles" / "jendela_tx_migration_pr_v1.yaml"],
+                    ROOT / "config" / "registries" / "mw_du_profile_deprecation_review.yaml",
+                    registry_path,
+                    markdown_path,
+                    missing_source,
+                )
+
     def test_explicit_rollback_baseline_fails_closed_if_it_targets_current_version(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "jendela_tx_migration_pr_v1.yaml")
         invalid_baseline = dict(self._rollback_baseline_for("jendela_tx_migration_pr_v1"))
