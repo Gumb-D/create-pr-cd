@@ -283,6 +283,22 @@ class TestIssue82ReplacementPhrase(unittest.TestCase):
                 self.assertIsNone(result["common_size"])
                 self.assertIsNone(result["selected_size"])
 
+    def test_direct_multi_dot_values_fail_closed(self):
+        for value in ("10.0.0.6", "192.168.1.2"):
+            with self.subTest(value=value):
+                result = resolve_installation_antenna_evidence(
+                    {
+                        "MW Config Antenna Size NE": value,
+                        "MW Config Antenna Size FE": "",
+                        "NE SOW Details": "",
+                        "FE SOW Details": "",
+                        "TX SOW Details": "",
+                    }
+                )
+                self.assertEqual(result["status"], "MISSING")
+                self.assertIsNone(result["ne_size"])
+                self.assertIsNone(result["selected_size"])
+
 
 if __name__ == "__main__":
     unittest.main()
