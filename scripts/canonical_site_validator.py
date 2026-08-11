@@ -60,6 +60,7 @@ FIELD_PATHS = {
     "longitude": ("technical_context", "longitude"),
     "antenna_size_ne": ("technical_context", "antenna_size_ne"),
     "antenna_size_fe": ("technical_context", "antenna_size_fe"),
+    "before_mw_config_raw": ("technical_context", "before_mw_config_raw"),
     "boq_configuration": ("technical_context", "boq_configuration"),
     "tx_sow_details": ("technical_context", "tx_sow_details"),
     "ne_sow_details": ("technical_context", "ne_sow_details"),
@@ -103,6 +104,7 @@ def empty_canonical_site_record() -> Dict[str, Any]:
             "longitude": None,
             "antenna_size_ne": "",
             "antenna_size_fe": "",
+            "before_mw_config_raw": "",
             "boq_configuration": "",
             "tx_sow_details": "",
             "ne_sow_details": "",
@@ -173,8 +175,6 @@ def validate_canonical_site_record(record: Mapping[str, Any], scope: str) -> Dic
     required_fields = list(SCOPE_REQUIRED_FIELDS[scope])
     profile_id = str(validation.get("profile_id", ""))
     if profile_id == JENDELA_PROFILE_ID and scope == "TI":
-        # Issue #77: Tx SOW may be blank as an intentional no-additional-work
-        # value. Final Backhaul is optional audit evidence only.
         required_fields = [field for field in required_fields if field not in {"tx_sow_raw", "tx_sow_normalized"}]
         required_fields.append("tx_before_migration")
 
@@ -184,16 +184,10 @@ def validate_canonical_site_record(record: Mapping[str, Any], scope: str) -> Dic
         "existing_planning_pr_status",
     }
     if scope == "PLANNING":
-        # A blank Planning subcontractor is a valid business terminal state
-        # (no Planning PR). Its approved source column must still be present so
-        # blank is distinguishable from a missing/ambiguous header mapping.
         blank_value_allowed_fields.add("subcontractor_planning")
 
     for field in required_fields:
         value = _get_path(record, FIELD_PATHS[field])
-        # Existing PR status is allowed to be blank, but its source must remain
-        # mapped for duplicate prevention to be trustworthy. Planning also
-        # permits a blank subcontractor as an intentional no-PR input.
         if field not in blank_value_allowed_fields and _is_blank(value):
             blocking_reasons.append(f"MISSING_PR_CRITICAL_FIELD:{field}")
         evidence = evidence_fields.get(field) if isinstance(evidence_fields, Mapping) else None
@@ -201,9 +195,6 @@ def validate_canonical_site_record(record: Mapping[str, Any], scope: str) -> Dic
             blocking_reasons.append(f"MISSING_SOURCE_EVIDENCE:{field}")
 
     if profile_id == JENDELA_PROFILE_ID and scope == "TI":
-        # The Tx SOW value may be blank, but its approved source column must
-        # still be present so blank means intentional no-additional-work rather
-        # than a missing field in the export.
         tx_sow_evidence = evidence_fields.get("tx_sow_raw") if isinstance(evidence_fields, Mapping) else None
         if not isinstance(tx_sow_evidence, Mapping) or not tx_sow_evidence.get("source_header_fingerprint"):
             blocking_reasons.append("MISSING_SOURCE_EVIDENCE:tx_sow_raw")
@@ -211,11 +202,7 @@ def validate_canonical_site_record(record: Mapping[str, Any], scope: str) -> Dic
         decision = record.get("pr_context", {}).get("migration_decision", {})
         approved_decision_classes = {"APPROVED", "APPROVED_NO_OUTPUT"}
         if not isinstance(decision, Mapping) or decision.get("classification") not in approved_decision_classes:
-            reason_code = (
-                decision.get("reason_code")
-                if isinstance(decision, Mapping)
-                else "JENDELA_MIGRATION_DECISION_MISSING"
-            )
+            reason_code = decision.get("reason_code") if isinstance(decision, Mapping) else "JENDELA_MIGRATION_DECISION_MISSING"
             blocking_reasons.append(str(reason_code or "JENDELA_MIGRATION_DECISION_MISSING"))
 
     raw_warnings = validation.get("warnings", [])
@@ -235,7 +222,6 @@ def validate_canonical_site_record(record: Mapping[str, Any], scope: str) -> Dic
 
 
 def apply_validation_result(record: Mapping[str, Any], result: Mapping[str, Any]) -> Dict[str, Any]:
-    """Return a copied record with validation fields updated; never mutates source evidence."""
     updated = deepcopy(dict(record))
     updated["validation"] = dict(updated.get("validation", {}))
     updated["validation"]["pr_input_classification"] = result["classification"]
