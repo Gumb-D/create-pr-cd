@@ -85,9 +85,10 @@ class TestIssue84JendelaBeforeMwAntenna(unittest.TestCase):
             with self.subTest(raw=raw):
                 self.assertIsNone(parse_jendela_before_mw_antenna_size(raw))
 
-    def test_parser_fails_closed_when_multiple_polarized_antenna_sizes_disagree(self):
-        self.assertIsNone(
+    def test_parser_selects_largest_when_multiple_polarized_antenna_sizes_differ(self):
+        self.assertEqual(
             parse_jendela_before_mw_antenna_size("18G 0.6 SP 1+0 / 23G 1.2 SP 1+0"),
+            1.2,
         )
 
     def test_parser_fails_closed_when_any_polarized_config_has_invalid_antenna_size(self):
@@ -129,15 +130,29 @@ class TestIssue84JendelaBeforeMwAntenna(unittest.TestCase):
             1.2,
         )
 
-    def test_parser_fails_closed_when_multiple_in_range_m_tokens_have_no_polarization_structure(self):
-        self.assertIsNone(
+    def test_parser_selects_largest_supported_antenna_from_unpolarized_link_body(self):
+        self.assertEqual(
+            parse_jendela_before_mw_antenna_size("18G 0.6 1.2 1+0"),
+            1.2,
+        )
+        self.assertEqual(
             parse_jendela_before_mw_antenna_size("18G 3.5M 1.2M 1+0"),
+            1.2,
         )
 
-    def test_parser_fails_closed_when_duplicate_numeric_m_tokens_are_structurally_ambiguous(self):
-        self.assertIsNone(
+    def test_parser_accepts_duplicate_equivalent_supported_antenna_tokens(self):
+        self.assertEqual(
             parse_jendela_before_mw_antenna_size("18G 1.2M 1.20M 1+0"),
+            1.2,
         )
+
+    def test_parser_ignores_non_link_standalone_smaller_candidate_when_link_has_larger_antenna(self):
+        for raw in (
+            "18G 1.2 1+0 / 0.6",
+            "0.6 / 18G 1.2 1+0",
+        ):
+            with self.subTest(raw=raw):
+                self.assertEqual(parse_jendela_before_mw_antenna_size(raw), 1.2)
 
     def test_parser_fails_closed_on_unpolarized_bandwidth_only_token(self):
         self.assertIsNone(
