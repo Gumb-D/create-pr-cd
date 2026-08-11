@@ -44,13 +44,17 @@ _SOURCE_SIDE_INTENT_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-# Size phrases must stay inside one action line. Newlines are already clause
+# Size phrases must stay inside one action line. CR, CRLF and LF are hard
 # boundaries, so all internal grammar uses horizontal whitespace only.
 _HWS_RE = r"[ \t]*"
 _HWS1_RE = r"[ \t]+"
 _TARGET_MODIFIER_RE = rf"(?:(?:new|target|proposed|replacement){_HWS1_RE})?"
 _METRE_SUFFIX_RE = rf"(?:{_HWS_RE}m(?:eters?|etres?)?\b)?"
 _QUOTE_UNIT_RE = r'''['"′″’‘“”]'''
+_TARGET_FIRST_SOURCE_PATTERN = re.compile(
+    rf"\b(?:replacing|to{_HWS1_RE}replace)\b",
+    re.IGNORECASE,
+)
 _FORWARD_ANTENNA_SIZE_TARGET_RE = (
     rf"{_TARGET_MODIFIER_RE}(?:antenna|dish)\b{_HWS_RE}"
     rf"(?:(?:(?:with|of){_HWS1_RE})?(?:size|diameter)\b{_HWS_RE}[:=]?{_HWS_RE})?"
@@ -70,7 +74,7 @@ _ANTENNA_SIZE_TARGET_RE = (
 # unchanged, so invalid targets still fail closed rather than becoming evidence.
 _GENERIC_REVERSE_ANTENNA_TARGET_RE = (
     rf"{_TARGET_MODIFIER_RE}(?:[\(\[]{_HWS_RE})?\d+(?:[.,]\d+)?"
-    rf"[^;,\n&!?]{{0,48}}?\b(?:antenna|dish)\b"
+    rf"[^;,\r\n&!?]{{0,48}}?\b(?:antenna|dish)\b"
 )
 
 # Generic directional transition is used to identify the source side even when
@@ -97,12 +101,12 @@ _DIRECTIONAL_ANTENNA_SEPARATOR_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-# All sentence terminators are clause boundaries. Other punctuation remains
-# action-aware and uses the same action vocabulary as the intent resolver.
-# Therefore `antenna size: 0.6m` remains one valid size phrase while
-# `Dismantle ...: install ...` splits deterministically.
+# All line endings and sentence terminators are clause boundaries. Other
+# punctuation remains action-aware and uses the same action vocabulary as the
+# intent resolver. Therefore `antenna size: 0.6m` remains one valid size phrase
+# while `Dismantle ...: install ...` splits deterministically.
 _CLAUSE_SEPARATOR_PATTERN = re.compile(
-    rf"(?:[;,\n&!?]|\.(?=\s|$)|\b(?:and|then)\b|"
+    rf"(?:[;,\r\n&!?]|\.(?=\s|$)|\b(?:and|then)\b|"
     rf"(?:[:/|]|[-–—])(?={_HWS_RE}{_ACTION_INTENT_RE}\b)|{_DIRECTIONAL_ANTENNA_SEPARATOR_RE})",
     re.IGNORECASE,
 )
@@ -151,9 +155,6 @@ def _parse_direct_size(value: Any) -> float | None:
         return None
     text = str(value).strip().replace(",", ".")
     candidates: list[float] = []
-
-    # Dedicated fields commonly contain `0.6`, `0.6m`, `0.6 meter/metre`, or
-    # compact strings such as `18G_1.2M(MAC)`. Values above 5m are rejected.
     for match in re.finditer(
         r"(?<![A-Za-z0-9])(\d+(?:\.\d+)?)(?=[ \t]*(?:m(?:eters?|etres?)?\b|$|[_/;,)]))",
         text,
@@ -168,7 +169,6 @@ def _parse_direct_size(value: Any) -> float | None:
 
 
 def _clause_bounds(text: str, start: int, end: int) -> tuple[int, int]:
-    """Return action-clause bounds around one candidate size token."""
     clause_start = 0
     clause_end = len(text)
     for match in _CLAUSE_SEPARATOR_PATTERN.finditer(text):
@@ -182,13 +182,11 @@ def _clause_bounds(text: str, start: int, end: int) -> tuple[int, int]:
 
 
 def _intent_clause(text: str, start: int, end: int) -> tuple[str, int]:
-    """Return the local action clause containing one candidate size token."""
     clause_start, clause_end = _clause_bounds(text, start, end)
     return text[clause_start:clause_end], clause_start
 
 
 def _is_directional_target_clause(text: str, clause_start: int) -> bool:
-    """Return True when this clause begins immediately after an explicit sized antenna target."""
     return any(
         match.end() == clause_start
         for match in _DIRECTIONAL_ANTENNA_SEPARATOR_PATTERN.finditer(text)
@@ -196,21 +194,14 @@ def _is_directional_target_clause(text: str, clause_start: int) -> bool:
 
 
 def _candidate_is_antenna_size_phrase(text: str, start: int, end: int) -> bool:
-    """Bind one numeric token to an antenna/dish size expression, not a nearby measurement."""
     left = text[max(0, start - 72):start]
     right = text[end:min(len(text), end + 40)]
-
-    # Forward forms: `antenna 0.6m`, `dish size 1.2`,
-    # `antenna with size: 0.6m`, `antenna diameter 1.2m`.
     if re.search(
         r"\b(?:antenna|dish)\b[ \t]*(?:(?:(?:with|of)[ \t]+)?(?:size|diameter)\b[ \t]*[:=]?[ \t]*)?$",
         left,
         re.IGNORECASE,
     ):
         return True
-
-    # Reverse forms: `0.6m antenna` / `1.2 metre dish`. These nouns must stay on
-    # the same action line as the candidate; newline is a hard clause boundary.
     reverse = right
     unit = re.match(r"[ \t]*m(?:eters?|etres?)?\b", reverse, re.IGNORECASE)
     if unit:
@@ -219,7 +210,6 @@ def _candidate_is_antenna_size_phrase(text: str, start: int, end: int) -> bool:
 
 
 def _has_source_side_transition(text: str, start: int, end: int, clause_start: int, clause_end: int) -> bool:
-    """Reject an old/source antenna size before a directional antenna transition."""
     for transition in _DIRECTIONAL_ANTENNA_TRANSITION_PATTERN.finditer(text):
         if transition.start() < end:
             continue
@@ -230,24 +220,27 @@ def _has_source_side_transition(text: str, start: int, end: int, clause_start: i
     return False
 
 
+def _is_target_first_source(text: str, start: int, clause_start: int) -> bool:
+    prefix = text[clause_start:start]
+    return _TARGET_FIRST_SOURCE_PATTERN.search(prefix) is not None
+
+
 def _has_installation_intent(text: str, start: int, end: int) -> bool:
-    """Accept only sizes governed by an installation/new/target action."""
     clause_start, clause_end = _clause_bounds(text, start, end)
     clause = text[clause_start:clause_end]
     token_center = ((start + end) / 2) - clause_start
-
     if clause_end < len(text) and _DIRECTIONAL_ANTENNA_SEPARATOR_PATTERN.match(text, clause_end):
         return False
     if _has_source_side_transition(text, start, end, clause_start, clause_end):
         return False
+    if _is_target_first_source(text, start, clause_start):
+        return False
     if _is_directional_target_clause(text, clause_start):
         return True
-
     positive = list(_INSTALL_INTENT_PATTERN.finditer(clause))
     if not positive:
         return False
     negative = list(_NON_INSTALL_INTENT_PATTERN.finditer(clause))
-
     nearest_positive = min(
         abs(((match.start() + match.end()) / 2) - token_center)
         for match in positive
@@ -262,12 +255,10 @@ def _has_installation_intent(text: str, start: int, end: int) -> bool:
 
 
 def _has_antenna_specific_context(text: str, start: int, end: int) -> bool:
-    """Require both antenna-size syntax and installation/target intent."""
     if not _candidate_is_antenna_size_phrase(text, start, end):
         return False
     if not _has_installation_intent(text, start, end):
         return False
-
     suffix = text[end:min(len(text), end + 16)].casefold()
     if re.match(r"[ \t]*(?:ghz|mhz|mbps|gbps|kbps)\b", suffix):
         return False
@@ -275,15 +266,11 @@ def _has_antenna_specific_context(text: str, start: int, end: int) -> bool:
 
 
 def _parse_detail_sizes(value: Any, *, require_antenna_context: bool) -> list[float]:
-    """Extract supported installation antenna sizes from governed SOW details."""
     if _is_blank(value):
         return []
-    # Convert only decimal commas; preserve ordinary comma punctuation so it
-    # remains an intent-clause boundary.
     text = re.sub(r"(?<=\d),(?=\d)", ".", str(value))
     candidates: list[float] = []
     consumed: list[tuple[int, int]] = []
-
     for match in re.finditer(
         r"(?<![A-Za-z0-9])(\d+(?:\.\d+)?)[ \t]*m(?:eters?|etres?)?\b",
         text,
@@ -298,12 +285,6 @@ def _parse_detail_sizes(value: Any, *, require_antenna_context: bool) -> list[fl
         if _supported_size(size):
             candidates.append(size)
             consumed.append((match.start(), match.end()))
-
-    # Bare decimals are accepted only when they form an explicit antenna-size
-    # phrase. Supported metre spellings are consumed above. A bare reverse
-    # `0.6 antenna` / `1.2 dish` is a valid size phrase, so the antenna noun is
-    # exempt from the non-metre-unit guard only on the same action line; all
-    # other alphabetic/quote units continue to fail closed.
     for match in re.finditer(r"(?<![\d.])(\d+\.\d+)(?!\d)(?!\.\d)", text):
         if any(consumed_start <= match.start() < consumed_end for consumed_start, consumed_end in consumed):
             continue
@@ -319,15 +300,10 @@ def _parse_detail_sizes(value: Any, *, require_antenna_context: bool) -> list[fl
             continue
         if _supported_size(size):
             candidates.append(size)
-
     return _unique_sorted(candidates)
 
 
-def _endpoint_resolution(
-    row: Mapping[str, Any],
-    direct_field: str,
-    detail_field: str,
-) -> dict[str, Any]:
+def _endpoint_resolution(row: Mapping[str, Any], direct_field: str, detail_field: str) -> dict[str, Any]:
     direct_raw = row.get(direct_field, "")
     if _source_is_approved(row, direct_field):
         direct_size = _parse_direct_size(direct_raw)
@@ -339,12 +315,8 @@ def _endpoint_resolution(
                 "priority": "DIRECT",
                 "mapping_status": _mapping_status(row, direct_field) or None,
             }
-
     detail_raw = row.get(detail_field, "")
     if _source_is_approved(row, detail_field):
-        # SOW-detail fields are free text. Even though endpoint-specific, they
-        # must prove antenna installation intent so old/dismantle/cable values
-        # cannot select the installation PBOM.
         detail_sizes = _parse_detail_sizes(detail_raw, require_antenna_context=True)
         if detail_sizes:
             return {
@@ -354,33 +326,18 @@ def _endpoint_resolution(
                 "priority": "ENDPOINT_SOW_DETAIL",
                 "mapping_status": _mapping_status(row, detail_field) or None,
             }
-    return {
-        "size": None,
-        "source": None,
-        "raw_value": None,
-        "priority": None,
-        "mapping_status": None,
-    }
+    return {"size": None, "source": None, "raw_value": None, "priority": None, "mapping_status": None}
 
 
 def resolve_installation_antenna_evidence(row: Mapping[str, Any]) -> dict[str, Any]:
-    """Resolve NE/FE installation evidence and one governed PR-model group size.
-
-    Canonical rows consume only APPROVED mappings. Legacy direct-generator rows
-    have no governance marker and retain their historical direct-field contract.
-    SOW-detail fallbacks remain fail-closed unless the value is both antenna-
-    specific and governed by installation intent.
-    """
     ne = _endpoint_resolution(row, DIRECT_NE, DETAIL_NE)
     fe = _endpoint_resolution(row, DIRECT_FE, DETAIL_FE)
     endpoint_sizes = [value for value in (ne["size"], fe["size"]) if value is not None]
-
     common_raw = row.get(COMMON_DETAIL, "")
     common_sizes: list[float] = []
     if _source_is_approved(row, COMMON_DETAIL):
         common_sizes = _parse_detail_sizes(common_raw, require_antenna_context=True)
     common_size = max(common_sizes) if common_sizes else None
-
     if ne["size"] is not None and fe["size"] is not None:
         status = "RESOLVED"
         selected_size = max(endpoint_sizes)
@@ -397,32 +354,26 @@ def resolve_installation_antenna_evidence(row: Mapping[str, Any]) -> dict[str, A
         status = "MISSING"
         selected_size = None
         group_source = None
-
     evidence = []
     for endpoint, resolved in (("NE", ne), ("FE", fe)):
         if resolved["size"] is not None:
-            evidence.append(
-                {
-                    "endpoint": endpoint,
-                    "source": resolved["source"],
-                    "raw_value": resolved["raw_value"],
-                    "size": resolved["size"],
-                    "priority": resolved["priority"],
-                    "mapping_status": resolved["mapping_status"],
-                }
-            )
+            evidence.append({
+                "endpoint": endpoint,
+                "source": resolved["source"],
+                "raw_value": resolved["raw_value"],
+                "size": resolved["size"],
+                "priority": resolved["priority"],
+                "mapping_status": resolved["mapping_status"],
+            })
     if common_size is not None:
-        evidence.append(
-            {
-                "endpoint": "GROUP",
-                "source": COMMON_DETAIL,
-                "raw_value": common_raw,
-                "size": common_size,
-                "priority": "COMMON_SOW_DETAIL",
-                "mapping_status": _mapping_status(row, COMMON_DETAIL) or None,
-            }
-        )
-
+        evidence.append({
+            "endpoint": "GROUP",
+            "source": COMMON_DETAIL,
+            "raw_value": common_raw,
+            "size": common_size,
+            "priority": "COMMON_SOW_DETAIL",
+            "mapping_status": _mapping_status(row, COMMON_DETAIL) or None,
+        })
     return {
         "status": status,
         "ne_size": ne["size"],
