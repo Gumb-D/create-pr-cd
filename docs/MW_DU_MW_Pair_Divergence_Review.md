@@ -4,7 +4,7 @@ Discovery-only comparison between the MW EOS Swap and ZTE TX MINI DRAFT profiles
 
 ## mw_eos_swap_pr_v1 vs zte_tx_mini_pr_v1
 
-- Left profile version: `0.1.0`
+- Left profile version: `0.1.1`
 - Right profile version: `0.2.0`
 - Left observed header hash: `46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a`
 - Right observed header hash: `a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810`

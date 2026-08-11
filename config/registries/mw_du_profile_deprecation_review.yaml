@@ -94,7 +94,7 @@
     },
     {
       "profile_id": "mw_eos_swap_pr_v1",
-      "profile_version": "0.1.0",
+      "profile_version": "0.1.1",
       "mapping_version": "approved-2026-07-10-mw-eos-swap-v2",
       "current_status": "PRODUCTION",
       "observed_header_hash": "46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a",

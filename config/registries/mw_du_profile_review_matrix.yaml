@@ -73,15 +73,15 @@
     },
     {
       "profile_id": "mw_eos_swap_pr_v1",
-      "profile_version": "0.1.0",
+      "profile_version": "0.1.1",
       "du_model_name": "MW EOS Swap",
       "mapping_version": "approved-2026-07-10-mw-eos-swap-v2",
       "observed_header_hash": "46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a",
       "readiness_status": "PRODUCTION_READY",
-      "action_count": 5,
+      "action_count": 3,
       "action_type_counts": {
         "CONFIRM_COMPETING_CANDIDATE": 2,
-        "VERIFY_SINGLE_CANDIDATE": 3
+        "VERIFY_SINGLE_CANDIDATE": 1
       }
     },
     {
@@ -274,7 +274,7 @@
         "celcomdigi_cd_consolidation_2023_pr_v1:07",
         "celcomdigi_usp_pr_v1:05",
         "jendela_tx_migration_pr_v1:05",
-        "mw_eos_swap_pr_v1:05",
+        "mw_eos_swap_pr_v1:03",
         "tx_rollout_2023_pr_v1:02",
         "zte_tx_mini_pr_v1:05"
       ],
@@ -293,7 +293,6 @@
         "celcomdigi_bau_2024_pr_v1",
         "celcomdigi_usp_pr_v1",
         "jendela_tx_migration_pr_v1",
-        "mw_eos_swap_pr_v1",
         "zte_tx_mini_pr_v1"
       ],
       "profile_priority_ids": [
@@ -301,13 +300,12 @@
         "celcomdigi_bau_2024_pr_v1:02",
         "celcomdigi_usp_pr_v1:03",
         "jendela_tx_migration_pr_v1:03",
-        "mw_eos_swap_pr_v1:03",
         "zte_tx_mini_pr_v1:03"
       ],
       "evidence_hints": [
         "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
       ],
-      "profile_count": 6,
+      "profile_count": 5,
       "batch_priority": 9
     },
     {
@@ -319,7 +317,6 @@
         "celcomdigi_bau_2024_pr_v1",
         "celcomdigi_usp_pr_v1",
         "jendela_tx_migration_pr_v1",
-        "mw_eos_swap_pr_v1",
         "zte_tx_mini_pr_v1"
       ],
       "profile_priority_ids": [
@@ -327,13 +324,12 @@
         "celcomdigi_bau_2024_pr_v1:03",
         "celcomdigi_usp_pr_v1:04",
         "jendela_tx_migration_pr_v1:04",
-        "mw_eos_swap_pr_v1:04",
         "zte_tx_mini_pr_v1:04"
       ],
       "evidence_hints": [
         "Confirm the four-layer fingerprint and business meaning before changing mapping_status."
       ],
-      "profile_count": 6,
+      "profile_count": 5,
       "batch_priority": 10
     },
     {

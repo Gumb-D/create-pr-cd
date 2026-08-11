@@ -1,0 +1,54 @@
+name: Issue 82 Regression
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "scripts/generate_tss_pr_ecc.py"
+      - "scripts/antenna_evidence_resolver.py"
+      - "scripts/create_pr.py"
+      - "config/du_profiles/mw_eos_swap_pr_v1.yaml"
+      - "tests/test_issue_82_mw_eos_antenna.py"
+      - "tests/test_issue_82_antenna_false_positive.py"
+      - "tests/test_issue_82_codex_review.py"
+      - "tests/test_issue_82_legacy_renderer_contract.py"
+      - "tests/test_issue_82_punctuation_intent.py"
+      - "tests/test_issue_82_replacement_phrase.py"
+      - "tests/test_issue_82_direct_cidr.py"
+      - "tests/test_issue_82_directional_install_wrapper.py"
+      - "tests/test_issue_82_standalone_replacement.py"
+      - ".github/workflows/issue-82-regression.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  targeted-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -r requirements.txt
+      - name: Run Issue 82 and related regressions
+        run: |
+          python -m unittest \
+            tests.test_issue_82_mw_eos_antenna \
+            tests.test_issue_82_antenna_false_positive \
+            tests.test_issue_82_codex_review \
+            tests.test_issue_82_legacy_renderer_contract \
+            tests.test_issue_82_punctuation_intent \
+            tests.test_issue_82_replacement_phrase \
+            tests.test_issue_82_direct_cidr \
+            tests.test_issue_82_directional_install_wrapper \
+            tests.test_issue_82_standalone_replacement \
+            tests.test_ti_sow_matching \
+            tests.test_human_uat_remediation_48_54 \
+            tests.test_jendela_approved_pr_model \
+            tests.test_mw_reroute \
+            tests.test_pr_safety_controls \
+            tests.test_du_profile_loader

@@ -266,7 +266,7 @@
     },
     {
       "profile_id": "mw_eos_swap_pr_v1",
-      "profile_version": "0.1.0",
+      "profile_version": "0.1.1",
       "mapping_version": "approved-2026-07-10-mw-eos-swap-v2",
       "profile_status": "PRODUCTION",
       "du_model_name": "MW EOS Swap",
@@ -287,8 +287,6 @@
         ],
         "required_competing_candidate_fields": [],
         "single_candidate_unverified_fields": [
-          "antenna_size_fe",
-          "antenna_size_ne",
           "du_key"
         ],
         "required_single_candidate_unverified_fields": [],
@@ -322,7 +320,8 @@
       "approved_header_hashes": [
         "167645031ac3ebb90da748c42fe3188ef4a67604eb0ce2c3df446df1142b5221",
         "1a466e31d3c25ca73f059123d4cc33280761746ea3dca61d25a384acad5c9fde",
-        "830864906f3e69041995bec10b0a5840d5f8c6fa5defa2cfaef30b868b91a921"
+        "830864906f3e69041995bec10b0a5840d5f8c6fa5defa2cfaef30b868b91a921",
+        "99645657ed5177bed3f0af673f141dc700fb7b486743cb830d5350a473c007ff"
       ],
       "readiness_status": "PRODUCTION_READY",
       "blocker_summary": {

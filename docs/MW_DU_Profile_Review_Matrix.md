@@ -37,15 +37,15 @@ Discovery-only cross-profile review matrix for the current DRAFT profiles.
   hint: Use the unresolved review packet to compare the currently selected source against alternates.
 - Batch priority `08` `VERIFY_SINGLE_CANDIDATE` `du_key`: Verify the current single shortlist-aligned source for `du_key`.
   profiles (8): celcomdigi_bau_2023_pr_v1, celcomdigi_bau_2024_pr_v1, celcomdigi_cd_consolidation_2023_pr_v1, celcomdigi_usp_pr_v1, jendela_tx_migration_pr_v1, mw_eos_swap_pr_v1, tx_rollout_2023_pr_v1, zte_tx_mini_pr_v1
-  priority ids: celcomdigi_bau_2023_pr_v1:04, celcomdigi_bau_2024_pr_v1:04, celcomdigi_cd_consolidation_2023_pr_v1:07, celcomdigi_usp_pr_v1:05, jendela_tx_migration_pr_v1:05, mw_eos_swap_pr_v1:05, tx_rollout_2023_pr_v1:02, zte_tx_mini_pr_v1:05
+  priority ids: celcomdigi_bau_2023_pr_v1:04, celcomdigi_bau_2024_pr_v1:04, celcomdigi_cd_consolidation_2023_pr_v1:07, celcomdigi_usp_pr_v1:05, jendela_tx_migration_pr_v1:05, mw_eos_swap_pr_v1:03, tx_rollout_2023_pr_v1:02, zte_tx_mini_pr_v1:05
   hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
 - Batch priority `09` `VERIFY_SINGLE_CANDIDATE` `antenna_size_fe`: Verify the current single shortlist-aligned source for `antenna_size_fe`.
-  profiles (6): celcomdigi_bau_2023_pr_v1, celcomdigi_bau_2024_pr_v1, celcomdigi_usp_pr_v1, jendela_tx_migration_pr_v1, mw_eos_swap_pr_v1, zte_tx_mini_pr_v1
-  priority ids: celcomdigi_bau_2023_pr_v1:02, celcomdigi_bau_2024_pr_v1:02, celcomdigi_usp_pr_v1:03, jendela_tx_migration_pr_v1:03, mw_eos_swap_pr_v1:03, zte_tx_mini_pr_v1:03
+  profiles (5): celcomdigi_bau_2023_pr_v1, celcomdigi_bau_2024_pr_v1, celcomdigi_usp_pr_v1, jendela_tx_migration_pr_v1, zte_tx_mini_pr_v1
+  priority ids: celcomdigi_bau_2023_pr_v1:02, celcomdigi_bau_2024_pr_v1:02, celcomdigi_usp_pr_v1:03, jendela_tx_migration_pr_v1:03, zte_tx_mini_pr_v1:03
   hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
 - Batch priority `10` `VERIFY_SINGLE_CANDIDATE` `antenna_size_ne`: Verify the current single shortlist-aligned source for `antenna_size_ne`.
-  profiles (6): celcomdigi_bau_2023_pr_v1, celcomdigi_bau_2024_pr_v1, celcomdigi_usp_pr_v1, jendela_tx_migration_pr_v1, mw_eos_swap_pr_v1, zte_tx_mini_pr_v1
-  priority ids: celcomdigi_bau_2023_pr_v1:03, celcomdigi_bau_2024_pr_v1:03, celcomdigi_usp_pr_v1:04, jendela_tx_migration_pr_v1:04, mw_eos_swap_pr_v1:04, zte_tx_mini_pr_v1:04
+  profiles (5): celcomdigi_bau_2023_pr_v1, celcomdigi_bau_2024_pr_v1, celcomdigi_usp_pr_v1, jendela_tx_migration_pr_v1, zte_tx_mini_pr_v1
+  priority ids: celcomdigi_bau_2023_pr_v1:03, celcomdigi_bau_2024_pr_v1:03, celcomdigi_usp_pr_v1:04, jendela_tx_migration_pr_v1:04, zte_tx_mini_pr_v1:04
   hint: Confirm the four-layer fingerprint and business meaning before changing mapping_status.
 - Batch priority `11` `VERIFY_SINGLE_CANDIDATE` `site_name`: Verify the current single shortlist-aligned source for `site_name`.
   profiles (3): celcomdigi_bau_2023_pr_v1, celcomdigi_bau_2024_pr_v1, tx_rollout_2023_pr_v1
@@ -127,13 +127,13 @@ Discovery-only cross-profile review matrix for the current DRAFT profiles.
 ### mw_eos_swap_pr_v1 (MW EOS Swap)
 
 - Readiness status: `PRODUCTION_READY`
-- Profile version: `0.1.0`
+- Profile version: `0.1.1`
 - Mapping version: `approved-2026-07-10-mw-eos-swap-v2`
 - Observed header hash: `46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a`
-- Action count: `5`
+- Action count: `3`
 - Action type counts:
   - `CONFIRM_COMPETING_CANDIDATE`: `2`
-  - `VERIFY_SINGLE_CANDIDATE`: `3`
+  - `VERIFY_SINGLE_CANDIDATE`: `1`
 
 ### tx_mini_pr_v1 (TX Mini Project)
 

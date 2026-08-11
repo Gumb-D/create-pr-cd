@@ -94,7 +94,7 @@ class TestMissingFieldBridgeReview(unittest.TestCase):
         bridge_entry = build_bridge_entry(mw_entry, grouping, discovery)
 
         self.assertEqual(bridge_entry["profile_id"], "mw_eos_swap_pr_v1")
-        self.assertEqual(bridge_entry["profile_version"], "0.1.0")
+        self.assertEqual(bridge_entry["profile_version"], "0.1.1")
         self.assertEqual(bridge_entry["mapping_version"], "approved-2026-07-10-mw-eos-swap-v2")
         self.assertEqual(bridge_entry["field_bridges"], {})
 

@@ -6,6 +6,7 @@ import csv
 import json
 import re
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 
 import create_pr_impl as _impl
@@ -25,6 +26,20 @@ _ORIGINAL_PARTITION = _impl._partition_records
 _ORIGINAL_RENDERER_ROW = _impl._renderer_row
 _LAST_PARTITIONS = None
 
+_ANTENNA_EVIDENCE_RENDERER_COLUMNS = (
+    "Antenna Evidence Governance",
+    "Antenna Size NE Mapping Status",
+    "Antenna Size FE Mapping Status",
+    "TX SOW Details Mapping Status",
+    "NE SOW Details Mapping Status",
+    "FE SOW Details Mapping Status",
+)
+CANONICAL_RENDERER_COLUMNS = tuple(_impl.CANONICAL_RENDERER_COLUMNS) + tuple(
+    column
+    for column in _ANTENNA_EVIDENCE_RENDERER_COLUMNS
+    if column not in _impl.CANONICAL_RENDERER_COLUMNS
+)
+
 
 def _canonical_relocate_site_id(value):
     """Render the approved Decom - Relo Site ID without changing source identity."""
@@ -36,8 +51,41 @@ def _canonical_relocate_site_id(value):
     return f"{base}_Relocate" if base else text
 
 
+def _canonical_source_fields(record):
+    """Return canonical source evidence only when the record carries that contract."""
+    source_evidence = record.get("source_evidence")
+    if not isinstance(source_evidence, Mapping):
+        return None
+    fields = source_evidence.get("fields")
+    return fields if isinstance(fields, Mapping) else None
+
+
+def _source_mapping_status(record, canonical_field):
+    """Return canonical mapping approval state for renderer-side evidence gates."""
+    fields = _canonical_source_fields(record)
+    if fields is None:
+        return ""
+    evidence = fields.get(canonical_field, {})
+    if not isinstance(evidence, Mapping):
+        return ""
+    return str(evidence.get("mapping_status", "") or "").strip().upper()
+
+
 def _renderer_row(record):
     row = _ORIGINAL_RENDERER_ROW(record)
+    canonical_fields = _canonical_source_fields(record)
+    row.update(
+        {
+            "Antenna Evidence Governance": (
+                "CANONICAL_MAPPING_STATUS" if canonical_fields is not None else ""
+            ),
+            "Antenna Size NE Mapping Status": _source_mapping_status(record, "antenna_size_ne"),
+            "Antenna Size FE Mapping Status": _source_mapping_status(record, "antenna_size_fe"),
+            "TX SOW Details Mapping Status": _source_mapping_status(record, "tx_sow_details"),
+            "NE SOW Details Mapping Status": _source_mapping_status(record, "ne_sow_details"),
+            "FE SOW Details Mapping Status": _source_mapping_status(record, "fe_sow_details"),
+        }
+    )
     sow = str(record.get("pr_context", {}).get("tx_sow_normalized", "") or "").strip().upper()
     if sow == "DECOM - RELO":
         row["customer site code"] = _canonical_relocate_site_id(row.get("customer site code", ""))
@@ -212,6 +260,7 @@ def _sync_dependencies() -> None:
         public_value = globals().get(name)
         if public_value is not None:
             setattr(_impl, name, public_value)
+    _impl.CANONICAL_RENDERER_COLUMNS = CANONICAL_RENDERER_COLUMNS
     _impl._partition_records = _partition_records
     _impl._renderer_row = _renderer_row
 

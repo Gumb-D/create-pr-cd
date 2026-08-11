@@ -18,7 +18,7 @@ class TestMwPairDivergenceReview(unittest.TestCase):
 
         self.assertEqual(review["left_profile_id"], "mw_eos_swap_pr_v1")
         self.assertEqual(review["right_profile_id"], "zte_tx_mini_pr_v1")
-        self.assertEqual(review["left_profile_version"], "0.1.0")
+        self.assertEqual(review["left_profile_version"], "0.1.1")
         self.assertEqual(review["right_profile_version"], "0.2.0")
         self.assertEqual(review["left_observed_header_hash"], "46e50e91db7b29f9e875fabfffdd170c75739aaa39b19542a42eecf1e3d88a1a")
         self.assertEqual(review["right_observed_header_hash"], "a1b2f9d28ca32e38c7dbd0064602a30b9727548dfce1f1f583a961781c9be810")
