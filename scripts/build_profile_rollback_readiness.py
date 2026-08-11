@@ -39,6 +39,7 @@ def evaluate_rollback_readiness(
     profile: Mapping[str, Any],
     deprecation_entry: Mapping[str, Any] | None,
     rollback_baseline_entry: Mapping[str, Any] | None = None,
+    explicit_prior_baseline_required: bool = False,
 ) -> Dict[str, Any]:
     approved_header_hashes = list(profile.get("export_structure", {}).get("approved_header_hashes", []))
     blockers: list[str] = []
@@ -71,6 +72,8 @@ def evaluate_rollback_readiness(
                 rollback_target_profile_version,
                 rollback_target_header_hashes,
             ) = _validate_explicit_rollback_baseline(profile, rollback_baseline_entry, blockers)
+        elif explicit_prior_baseline_required:
+            blockers.append("EXPLICIT_PRIOR_ROLLBACK_BASELINE_REQUIRED")
         elif approved_header_hashes:
             rollback_target_profile_id = profile.get("profile_id")
             rollback_target_profile_version = profile.get("profile_version")
@@ -114,11 +117,17 @@ def build_rollback_registry(
         for entry in (rollback_baseline_registry or {}).get("entries", [])
         if isinstance(entry, Mapping) and entry.get("profile_id") is not None
     }
+    required_profile_ids = {
+        str(profile_id)
+        for profile_id in (rollback_baseline_registry or {}).get("required_profile_ids", [])
+        if profile_id is not None
+    }
     entries = [
         evaluate_rollback_readiness(
             profile,
             deprecation_by_profile.get(str(profile["profile_id"])),
             rollback_baseline_by_profile.get(str(profile["profile_id"])),
+            str(profile["profile_id"]) in required_profile_ids,
         )
         for profile in profiles
     ]
