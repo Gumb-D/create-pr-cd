@@ -9,11 +9,36 @@ from du_profile_loader import discover_du_profile_paths, load_du_profile
 
 
 RELEASED_STATUSES = {"PR_INPUT_READY", "PRODUCTION", "DEPRECATED"}
+DEFAULT_ROLLBACK_BASELINE_SOURCE = Path("config/registries/mw_du_profile_rollback_baselines_source.yaml")
+
+
+def _validate_explicit_rollback_baseline(
+    profile: Mapping[str, Any],
+    rollback_baseline_entry: Mapping[str, Any],
+    blockers: list[str],
+) -> tuple[Any, Any, list[str]]:
+    current_profile_version = str(profile.get("profile_version", ""))
+    baseline_current_version = str(rollback_baseline_entry.get("current_profile_version", ""))
+    rollback_target_profile_id = rollback_baseline_entry.get("rollback_profile_id")
+    rollback_target_profile_version = rollback_baseline_entry.get("rollback_profile_version")
+    rollback_target_header_hashes = list(rollback_baseline_entry.get("rollback_header_hashes", []))
+
+    if baseline_current_version != current_profile_version:
+        blockers.append("ROLLBACK_BASELINE_CURRENT_VERSION_MISMATCH")
+    if not rollback_target_profile_id or not rollback_target_profile_version:
+        blockers.append("NO_RECORDED_ROLLBACK_TARGET")
+    if not rollback_target_header_hashes:
+        blockers.append("NO_RECORDED_ROLLBACK_HEADER_HASHES")
+    if str(rollback_target_profile_version or "") == current_profile_version:
+        blockers.append("ROLLBACK_TARGET_IS_CURRENT_PROFILE_VERSION")
+
+    return rollback_target_profile_id, rollback_target_profile_version, rollback_target_header_hashes
 
 
 def evaluate_rollback_readiness(
     profile: Mapping[str, Any],
     deprecation_entry: Mapping[str, Any] | None,
+    rollback_baseline_entry: Mapping[str, Any] | None = None,
 ) -> Dict[str, Any]:
     approved_header_hashes = list(profile.get("export_structure", {}).get("approved_header_hashes", []))
     blockers: list[str] = []
@@ -27,6 +52,7 @@ def evaluate_rollback_readiness(
     rollback_target_profile_version = None
     rollback_target_header_hashes: list[str] = []
     review_notes: list[str] = []
+    used_explicit_prior_baseline = False
 
     if str(profile.get("status", "")) == "DEPRECATED":
         if not isinstance(deprecation_entry, Mapping) or str(deprecation_entry.get("deprecation_status", "")) != "DEPRECATION_RECORDED":
@@ -38,7 +64,14 @@ def evaluate_rollback_readiness(
             if not rollback_target_profile_id or not rollback_target_profile_version:
                 blockers.append("NO_RECORDED_ROLLBACK_TARGET")
     else:
-        if approved_header_hashes:
+        if isinstance(rollback_baseline_entry, Mapping):
+            used_explicit_prior_baseline = True
+            (
+                rollback_target_profile_id,
+                rollback_target_profile_version,
+                rollback_target_header_hashes,
+            ) = _validate_explicit_rollback_baseline(profile, rollback_baseline_entry, blockers)
+        elif approved_header_hashes:
             rollback_target_profile_id = profile.get("profile_id")
             rollback_target_profile_version = profile.get("profile_version")
             rollback_target_header_hashes = approved_header_hashes
@@ -46,6 +79,8 @@ def evaluate_rollback_readiness(
     status = "ROLLBACK_BASELINE_RECORDED" if not blockers else "ROLLBACK_BLOCKED"
     if status == "ROLLBACK_BLOCKED":
         review_notes.append("Rollback remains blocked until an approved profile/header-hash baseline exists.")
+    elif used_explicit_prior_baseline:
+        review_notes.append("Rollback baseline is documented from an explicit prior approved profile identity and header-hash set.")
     else:
         review_notes.append("Rollback baseline is documented from the current approved profile identity and header-hash set.")
 
@@ -67,14 +102,24 @@ def evaluate_rollback_readiness(
 def build_rollback_registry(
     profiles: Iterable[Mapping[str, Any]],
     deprecation_registry: Mapping[str, Any],
+    rollback_baseline_registry: Mapping[str, Any] | None = None,
 ) -> Dict[str, Any]:
     deprecation_by_profile = {
         str(entry["profile_id"]): entry
         for entry in deprecation_registry.get("entries", [])
         if isinstance(entry, Mapping) and entry.get("profile_id") is not None
     }
+    rollback_baseline_by_profile = {
+        str(entry["profile_id"]): entry
+        for entry in (rollback_baseline_registry or {}).get("entries", [])
+        if isinstance(entry, Mapping) and entry.get("profile_id") is not None
+    }
     entries = [
-        evaluate_rollback_readiness(profile, deprecation_by_profile.get(str(profile["profile_id"])))
+        evaluate_rollback_readiness(
+            profile,
+            deprecation_by_profile.get(str(profile["profile_id"])),
+            rollback_baseline_by_profile.get(str(profile["profile_id"])),
+        )
         for profile in profiles
     ]
     return {
@@ -84,6 +129,7 @@ def build_rollback_registry(
         "notes": [
             "This rollback review is fail-closed and documents whether a profile has an approved rollback baseline.",
             "A blocked result does not imply a defect; it can simply mean the profile has not reached an approved release state yet.",
+            "Explicit prior-version rollback baselines are sourced from config/registries/mw_du_profile_rollback_baselines_source.yaml.",
         ],
     }
 
@@ -124,10 +170,14 @@ def write_rollback_outputs(
     deprecation_registry_path: Path,
     registry_path: Path,
     markdown_path: Path,
+    rollback_baseline_source_path: Path = DEFAULT_ROLLBACK_BASELINE_SOURCE,
 ) -> None:
     profiles = [load_du_profile(path) for path in profile_paths]
     deprecation_registry = json.loads(deprecation_registry_path.read_text(encoding="utf-8"))
-    registry = build_rollback_registry(profiles, deprecation_registry)
+    rollback_baseline_registry: Mapping[str, Any] = {"entries": []}
+    if rollback_baseline_source_path.exists():
+        rollback_baseline_registry = json.loads(rollback_baseline_source_path.read_text(encoding="utf-8"))
+    registry = build_rollback_registry(profiles, deprecation_registry, rollback_baseline_registry)
     registry_path.parent.mkdir(parents=True, exist_ok=True)
     markdown_path.parent.mkdir(parents=True, exist_ok=True)
     registry_path.write_text(json.dumps(registry, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
