@@ -171,6 +171,28 @@ def _index_unique_registry_entries(entries: Iterable[Any]) -> tuple[dict[str, Ma
     return indexed, duplicate_profile_ids
 
 
+def _block_entries_for_duplicate_source_ids(
+    entries: list[Dict[str, Any]],
+    duplicate_profile_ids: set[str],
+) -> None:
+    if not duplicate_profile_ids:
+        return
+
+    duplicate_ids = sorted(duplicate_profile_ids)
+    duplicate_note = (
+        "Rollback remains blocked because the baseline source contains duplicate "
+        f"profile IDs: {', '.join(duplicate_ids)}."
+    )
+    for entry in entries:
+        if "DUPLICATE_ROLLBACK_BASELINE_ENTRIES" not in entry["blockers"]:
+            entry["blockers"].append("DUPLICATE_ROLLBACK_BASELINE_ENTRIES")
+        entry["rollback_readiness_status"] = "ROLLBACK_BLOCKED"
+        entry["rollback_target_profile_id"] = None
+        entry["rollback_target_profile_version"] = None
+        entry["rollback_target_header_hashes"] = []
+        entry["notes"] = [duplicate_note]
+
+
 def build_rollback_registry(
     profiles: Iterable[Mapping[str, Any]],
     deprecation_registry: Mapping[str, Any],
@@ -200,19 +222,14 @@ def build_rollback_registry(
             None if duplicate_baseline else rollback_baseline_by_profile.get(profile_id),
             profile_id in source_required_profile_ids,
         )
-        if duplicate_baseline:
-            if "DUPLICATE_ROLLBACK_BASELINE_ENTRIES" not in entry["blockers"]:
-                entry["blockers"].append("DUPLICATE_ROLLBACK_BASELINE_ENTRIES")
-            entry["rollback_readiness_status"] = "ROLLBACK_BLOCKED"
-            entry["rollback_target_profile_id"] = None
-            entry["rollback_target_profile_version"] = None
-            entry["rollback_target_header_hashes"] = []
-            entry["notes"] = [
-                "Rollback remains blocked because the baseline source contains duplicate entries for this profile."
-            ]
         entries.append(entry)
 
-    return {
+    # Duplicate IDs make the rollback evidence source itself ambiguous. Block
+    # the complete generated registry even when a duplicated ID is stale or
+    # mistyped and therefore does not correspond to any currently loaded profile.
+    _block_entries_for_duplicate_source_ids(entries, duplicate_rollback_profile_ids)
+
+    registry: Dict[str, Any] = {
         "schema_version": "1.0",
         "registry_type": "discovery_profile_rollback_readiness",
         "entries": entries,
@@ -223,6 +240,9 @@ def build_rollback_registry(
             "Profiles that require an explicit prior baseline are independently governed in build_profile_rollback_readiness.py.",
         ],
     }
+    if duplicate_rollback_profile_ids:
+        registry["duplicate_rollback_profile_ids"] = sorted(duplicate_rollback_profile_ids)
+    return registry
 
 
 def rollback_markdown(registry: Mapping[str, Any]) -> str:
