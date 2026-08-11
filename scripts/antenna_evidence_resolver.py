@@ -42,7 +42,7 @@ _DIRECTIONAL_GOVERNING_ACTION_PATTERN = re.compile(
 )
 _ANTENNA_GOVERNED_DIRECTIONAL_ACTION_PATTERN = re.compile(
     r"\b(?:upgrade|replac(?:e|ed|ing|ement)?|swap(?:ped|ping)?|chang(?:e|ed|ing)?|"
-    r"migrat(?:e|ed|ing|ion)?)\b[ \t]+"
+    r"migrat(?:e|ed|ing|ion)?)\b[ \t]+(?:from[ \t]+)?"
     r"(?:(?:the|a|an|existing|old|current|new|target|proposed|replacement|mw|microwave)[ \t]+)*"
     r"(?:(?:antenna|dish)\b|"
     r"\d+(?:[.,]\d+)?(?:[ \t]*m(?:eters?|etres?)?\b)?[ \t]+(?:antenna|dish)\b)",
