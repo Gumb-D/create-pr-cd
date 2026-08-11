@@ -6,6 +6,18 @@ Generate CelcomDigi TX PR ECC output files from site PR/PO data by matching site
 
 This repository provides a daily workflow for refreshing site PR/PO data and producing CelcomDigi TX PR ECC files in the required template format.
 
+## Standard Skill Contract
+
+The platform and standalone contract entrypoint is:
+
+```text
+python src/main.py --input-manifest <workspace>/input.json
+```
+
+`skill.json` declares version `4.0.0`, one `site_data` `.xlsx` input, TSS/TI and site-selection parameters, timeout, cancellation, and result contract `1.0`. The command emits NDJSON progress and writes authoritative `result.json`. PR model, template, mappings, profiles, and policies remain internal approved-package assets rather than public platform inputs.
+
+The existing `scripts/create_pr.py` command remains the direct domain CLI.
+
 Input files are placed at fixed placeholder paths (`Info/input/*`), allowing daily refresh without code changes.
 
 ## Folder Structure

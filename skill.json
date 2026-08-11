@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "skillId": "create-pr-cd",
+  "displayName": "Create PR CD",
+  "version": "4.0.0",
+  "runtime": {
+    "type": "python",
+    "entrypoint": "src/main.py",
+    "minimumPython": "3.11"
+  },
+  "inputs": {
+    "files": [
+      {
+        "name": "site_data",
+        "required": true,
+        "multiple": false,
+        "acceptedExtensions": [".xlsx"],
+        "maximumBytes": 104857600
+      }
+    ],
+    "parametersSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope"],
+      "properties": {
+        "scope": { "type": "string", "enum": ["TSS", "TI"] },
+        "allSites": { "type": "boolean", "default": false },
+        "siteCodes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "nonProductionUat": { "type": "boolean", "default": false }
+      }
+    }
+  },
+  "execution": {
+    "timeoutSeconds": 3600,
+    "supportsCancellation": true,
+    "cancellation": { "type": "sentinelFile", "path": "control/cancel.requested" }
+  },
+  "resultContractVersion": "1.0",
+  "release": {
+    "packageIdentity": "git-commit-plus-runtime-sha256",
+    "domainBaseline": "config/pr_model_baseline.yaml",
+    "notes": "Platform package approval and the Python PR-model baseline are independent fail-closed gates."
+  }
+}
