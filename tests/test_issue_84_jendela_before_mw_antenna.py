@@ -50,6 +50,11 @@ class TestIssue84JendelaBeforeMwAntenna(unittest.TestCase):
             parse_jendela_before_mw_antenna_size("18G 3.5M 1.2M 1+0"),
         )
 
+    def test_parser_fails_closed_when_duplicate_numeric_m_tokens_are_structurally_ambiguous(self):
+        self.assertIsNone(
+            parse_jendela_before_mw_antenna_size("18G 1.2M 1.20M 1+0"),
+        )
+
     def test_mw_dismantle_is_enriched_from_mw_config_without_ne_fe_fallback(self):
         result = self.derive()
         self.assertEqual(result["classification"], "APPROVED")
