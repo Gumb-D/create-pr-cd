@@ -107,6 +107,28 @@ jobs:
                   text = text.replace(OLD_MAPPING, NEW_MAPPING)
                   path.write_text(text, encoding='utf-8')
 
+          assertion_updates = {
+              Path('tests/test_profile_rollback_readiness.py'): [
+                  ('self.assertEqual(entry["rollback_target_profile_version"], "0.4.0")',
+                   'self.assertEqual(entry["rollback_target_profile_version"], "0.5.0")'),
+              ],
+              Path('tests/test_du_profile_loader.py'): [
+                  ('self.assertEqual(profile["profile_version"], "0.4.0")',
+                   'self.assertEqual(profile["profile_version"], "0.5.0")'),
+              ],
+              Path('tests/test_missing_field_bridge_review.py'): [
+                  ('self.assertEqual(bridge_entry["profile_version"], "0.4.0")',
+                   'self.assertEqual(bridge_entry["profile_version"], "0.5.0")'),
+              ],
+          }
+          for path, replacements in assertion_updates.items():
+              text = path.read_text(encoding='utf-8')
+              for old, new in replacements:
+                  if old not in text:
+                      raise SystemExit(f'{path}: expected current-snapshot assertion not found: {old}')
+                  text = text.replace(old, new, 1)
+              path.write_text(text, encoding='utf-8')
+
           subprocess.run([
               sys.executable, '-m', 'unittest',
               'tests.test_discovery_packet_consistency',
