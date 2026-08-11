@@ -38,19 +38,32 @@ _NON_INSTALL_INTENT_PATTERN = re.compile(
     r"\b(?:dismantl(?:e|ed|ing)?|decom(?:mission(?:ed|ing)?)?|remove|removed|removal|existing|old|reuse|reused|retain|retained)\b",
     re.IGNORECASE,
 )
-_REPLACEMENT_SEPARATOR_PATTERN = re.compile(
-    r"\b(?:with|by|to)\b(?=\s+(?:new|target|proposed|replacement)\s+(?:antenna|dish)\b)",
+_ACTION_AFTER_SLASH_RE = (
+    r"(?:install(?:ation|ed|ing)?|new|target|proposed|replacement|upgrade|"
+    r"dismantl(?:e|ed|ing)?|decom(?:mission(?:ed|ing)?)?|remove|removed|removal|"
+    r"reuse|reused|retain|retained)"
+)
+# Directional replacement is recognized only when the target is explicitly an
+# antenna/dish phrase that also contains a numeric size nearby. This keeps
+# ordinary wording such as `antenna with size 0.6m` or `to antenna mount` from
+# being split as a replacement transition.
+_DIRECTIONAL_ANTENNA_SEPARATOR_RE = (
+    r"\b(?:with|by|to)\b(?=\s+(?:(?:new|target|proposed|replacement)\s+)?"
+    r"(?:antenna|dish)\b[^;,\n&/]{0,40}\d+(?:[.,]\d+)?)"
+)
+_DIRECTIONAL_ANTENNA_SEPARATOR_PATTERN = re.compile(
+    _DIRECTIONAL_ANTENNA_SEPARATOR_RE,
     re.IGNORECASE,
 )
 # Treat normal action punctuation as a clause boundary without splitting the
 # decimal point inside values such as 0.6 or 2.4. A period followed by
 # whitespace/end is a sentence boundary, including after a bare decimal token.
-# Replacement transitions are boundaries only when they explicitly introduce
-# a new/target/replacement antenna, so phrases such as `antenna with size 0.6m`
-# remain one installation clause.
+# Slash is a boundary only when it introduces another explicit action, avoiding
+# accidental splitting of compact value notation. Directional transitions are
+# bounded by an explicit sized antenna/dish target.
 _CLAUSE_SEPARATOR_PATTERN = re.compile(
-    r"(?:[;,\n&]|\.(?=\s|$)|\b(?:and|then)\b|"
-    r"\b(?:with|by|to)\b(?=\s+(?:new|target|proposed|replacement)\s+(?:antenna|dish)\b))",
+    rf"(?:[;,\n&]|\.(?=\s|$)|\b(?:and|then)\b|"
+    rf"/(?=\s*{_ACTION_AFTER_SLASH_RE}\b)|{_DIRECTIONAL_ANTENNA_SEPARATOR_RE})",
     re.IGNORECASE,
 )
 
@@ -136,21 +149,31 @@ def _intent_clause(text: str, start: int, end: int) -> tuple[str, int]:
     return text[clause_start:clause_end], clause_start
 
 
+def _is_directional_target_clause(text: str, clause_start: int) -> bool:
+    """Return True when this clause begins immediately after a sized antenna target transition."""
+    return any(
+        match.end() == clause_start
+        for match in _DIRECTIONAL_ANTENNA_SEPARATOR_PATTERN.finditer(text)
+    )
+
+
 def _has_installation_intent(text: str, start: int, end: int) -> bool:
     """Accept only sizes governed by an installation/new/target action.
 
     A SOW-detail cell can describe both old and new equipment. The decision is
     made per numeric token inside its local clause so a larger dismantle size
     cannot win the installation largest-size rule. A clause immediately before
-    an explicit directional replacement is always the source side, even when it
-    contains a generic verb such as `upgrade`.
+    an explicit directional antenna target is the source side; the clause after
+    that transition is the target side even when the target uses no adjective.
     """
     clause_start, clause_end = _clause_bounds(text, start, end)
     clause = text[clause_start:clause_end]
     token_center = ((start + end) / 2) - clause_start
 
-    if clause_end < len(text) and _REPLACEMENT_SEPARATOR_PATTERN.match(text, clause_end):
+    if clause_end < len(text) and _DIRECTIONAL_ANTENNA_SEPARATOR_PATTERN.match(text, clause_end):
         return False
+    if _is_directional_target_clause(text, clause_start):
+        return True
 
     positive = list(_INSTALL_INTENT_PATTERN.finditer(clause))
     if not positive:
@@ -233,9 +256,14 @@ def _parse_detail_sizes(value: Any, *, require_antenna_context: bool) -> list[fl
     # Bare decimals are accepted only when the number itself has explicit
     # antenna-installation context. A trailing sentence period is allowed, but
     # a following `.digit` still blocks the match so IP/multi-dot values cannot
-    # be consumed as antenna sizes.
+    # be consumed as antenna sizes. Any alphabetic suffix means the token has an
+    # explicit unit/qualifier; supported metre spellings have already been
+    # consumed above, so all remaining such suffixes fail closed.
     for match in re.finditer(r"(?<![\d.])(\d+\.\d+)(?!\d)(?!\.\d)", text):
         if any(consumed_start <= match.start() < consumed_end for consumed_start, consumed_end in consumed):
+            continue
+        suffix = text[match.end():min(len(text), match.end() + 16)]
+        if re.match(r"\s*[A-Za-z]", suffix):
             continue
         if not _has_antenna_specific_context(text, match.start(), match.end()):
             continue
