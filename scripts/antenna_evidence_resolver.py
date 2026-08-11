@@ -297,14 +297,16 @@ def _parse_detail_sizes(value: Any, *, require_antenna_context: bool) -> list[fl
             consumed.append((match.start(), match.end()))
 
     # Bare decimals are accepted only when they form an explicit antenna-size
-    # phrase. Supported metre spellings are consumed above. Any remaining
-    # alphabetic or quote-style unit suffix, including a unit introduced by
-    # punctuation or brackets, fails closed instead of being treated as metres.
+    # phrase. Supported metre spellings are consumed above. A bare reverse
+    # `0.6 antenna` / `1.2 dish` is a valid size phrase, so the antenna noun is
+    # exempt from the non-metre-unit guard; all other alphabetic/quote units,
+    # including punctuation or bracket prefixes, continue to fail closed.
     for match in re.finditer(r"(?<![\d.])(\d+\.\d+)(?!\d)(?!\.\d)", text):
         if any(consumed_start <= match.start() < consumed_end for consumed_start, consumed_end in consumed):
             continue
         suffix = text[match.end():min(len(text), match.end() + 24)]
-        if _EXPLICIT_NON_METRE_UNIT_SUFFIX_PATTERN.match(suffix):
+        reverse_antenna_noun = re.match(r"\s*(?:antenna|dish)\b", suffix, re.IGNORECASE)
+        if not reverse_antenna_noun and _EXPLICIT_NON_METRE_UNIT_SUFFIX_PATTERN.match(suffix):
             continue
         if not _has_antenna_specific_context(text, match.start(), match.end()):
             continue
