@@ -101,6 +101,12 @@ class TestIssue82StandaloneReplacement(unittest.TestCase):
         self.assertEqual(result["common_size"], 0.6)
         self.assertEqual(result["selected_size"], 0.6)
 
+    def test_unrelated_upgrade_cable_route_does_not_discard_valid_size(self):
+        result = self._resolve("Install antenna 0.6m. Upgrade cable route to\nantenna 10m away")
+        self.assertEqual(result["status"], "RESOLVED_COMMON")
+        self.assertEqual(result["common_size"], 0.6)
+        self.assertEqual(result["selected_size"], 0.6)
+
 
 if __name__ == "__main__":
     unittest.main()
