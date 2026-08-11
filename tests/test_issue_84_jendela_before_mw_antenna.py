@@ -45,6 +45,24 @@ class TestIssue84JendelaBeforeMwAntenna(unittest.TestCase):
             1.2,
         )
 
+    def test_parser_fails_closed_when_polarized_bandwidth_token_is_not_antenna(self):
+        self.assertIsNone(
+            parse_jendela_before_mw_antenna_size("18G 3.5M SP 1+0"),
+        )
+        self.assertIsNone(
+            parse_jendela_before_mw_antenna_size("18G 3,5M SP 1+0"),
+        )
+
+    def test_parser_normalizes_decimal_comma_antenna_size(self):
+        self.assertEqual(
+            parse_jendela_before_mw_antenna_size("18G 1,2 SP 1+0"),
+            1.2,
+        )
+        self.assertEqual(
+            parse_jendela_before_mw_antenna_size("18G 1,2 1+0"),
+            1.2,
+        )
+
     def test_parser_fails_closed_when_multiple_polarized_antenna_sizes_disagree(self):
         self.assertIsNone(
             parse_jendela_before_mw_antenna_size("18G 0.6 SP 1+0 / 23G 1.2 SP 1+0"),
