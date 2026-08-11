@@ -44,20 +44,38 @@ _SOURCE_SIDE_INTENT_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-# Generic directional transition is used only to identify the source side of a
-# replacement/upgrade phrase. The stricter separator below is used to split a
-# target clause only when the target immediately expresses antenna/dish size.
+_TARGET_MODIFIER_RE = r"(?:(?:new|target|proposed|replacement)\s+)?"
+_METRE_SUFFIX_RE = r"(?:\s*m(?:eters?|etres?)?\b)?"
+_FORWARD_ANTENNA_SIZE_TARGET_RE = (
+    rf"{_TARGET_MODIFIER_RE}(?:antenna|dish)\b\s*"
+    rf"(?:(?:(?:with|of)\s+)?(?:size|diameter)\b\s*[:=]?\s*)?"
+    rf"\d+(?:[.,]\d+)?{_METRE_SUFFIX_RE}"
+)
+_REVERSE_ANTENNA_SIZE_TARGET_RE = (
+    rf"{_TARGET_MODIFIER_RE}\d+(?:[.,]\d+)?{_METRE_SUFFIX_RE}\s+(?:antenna|dish)\b"
+)
+_ANTENNA_SIZE_TARGET_RE = (
+    rf"(?:{_FORWARD_ANTENNA_SIZE_TARGET_RE}|{_REVERSE_ANTENNA_SIZE_TARGET_RE})"
+)
+
+# Generic directional transition is used to identify the source side even when
+# the following antenna phrase is invalid as a size target (for example a height
+# statement). Reverse targets are inherently size phrases, so their numeric form
+# is included explicitly here as well.
 _DIRECTIONAL_ANTENNA_TRANSITION_RE = (
-    r"\b(?:with|by|to)\b(?=\s+(?:(?:new|target|proposed|replacement)\s+)?(?:antenna|dish)\b)"
+    rf"\b(?:with|by|to)\b(?=\s+(?:"
+    rf"{_TARGET_MODIFIER_RE}(?:antenna|dish)\b|{_REVERSE_ANTENNA_SIZE_TARGET_RE}))"
 )
 _DIRECTIONAL_ANTENNA_TRANSITION_PATTERN = re.compile(
     _DIRECTIONAL_ANTENNA_TRANSITION_RE,
     re.IGNORECASE,
 )
+
+# Strict directional separator is shared by forward and reverse accepted target
+# grammar. This keeps source/target binding aligned with the same size forms the
+# candidate parser accepts.
 _DIRECTIONAL_ANTENNA_SEPARATOR_RE = (
-    r"\b(?:with|by|to)\b(?=\s+(?:(?:new|target|proposed|replacement)\s+)?"
-    r"(?:antenna|dish)\b\s*(?:(?:(?:with|of)\s+)?(?:size|diameter)\b\s*[:=]?\s*)?"
-    r"\d+(?:[.,]\d+)?(?:\s*m(?:eters?|etres?)?\b)?)"
+    rf"\b(?:with|by|to)\b(?=\s+{_ANTENNA_SIZE_TARGET_RE})"
 )
 _DIRECTIONAL_ANTENNA_SEPARATOR_PATTERN = re.compile(
     _DIRECTIONAL_ANTENNA_SEPARATOR_RE,
@@ -65,11 +83,16 @@ _DIRECTIONAL_ANTENNA_SEPARATOR_PATTERN = re.compile(
 )
 
 # All action-aware punctuation uses the same action vocabulary as the intent
-# resolver. This prevents a supported verb (for example `build`) from being
-# accepted as installation intent but omitted from slash/dash clause splitting.
+# resolver. Colon, slash, pipe and dashes split only when they introduce a real
+# action; therefore `antenna size: 0.6m` remains one valid size phrase.
 _CLAUSE_SEPARATOR_PATTERN = re.compile(
     rf"(?:[;,\n&]|\.(?=\s|$)|\b(?:and|then)\b|"
-    rf"(?:/|[-–—])(?=\s*{_ACTION_INTENT_RE}\b)|{_DIRECTIONAL_ANTENNA_SEPARATOR_RE})",
+    rf"(?:[:/|]|[-–—])(?=\s*{_ACTION_INTENT_RE}\b)|{_DIRECTIONAL_ANTENNA_SEPARATOR_RE})",
+    re.IGNORECASE,
+)
+
+_EXPLICIT_NON_METRE_UNIT_SUFFIX_PATTERN = re.compile(
+    r"\s*(?:(?:[-–—/:|]\s*)|(?:[\(\[]\s*))?(?:[A-Za-z]|[\"′″])",
     re.IGNORECASE,
 )
 
@@ -263,15 +286,13 @@ def _parse_detail_sizes(value: Any, *, require_antenna_context: bool) -> list[fl
 
     # Bare decimals are accepted only when they form an explicit antenna-size
     # phrase. Supported metre spellings are consumed above. Any remaining
-    # alphabetic or quote-style unit suffix, including a unit introduced by a
-    # hyphen/slash/parenthesis, fails closed instead of being treated as metres.
+    # alphabetic or quote-style unit suffix, including a unit introduced by
+    # punctuation or brackets, fails closed instead of being treated as metres.
     for match in re.finditer(r"(?<![\d.])(\d+\.\d+)(?!\d)(?!\.\d)", text):
         if any(consumed_start <= match.start() < consumed_end for consumed_start, consumed_end in consumed):
             continue
         suffix = text[match.end():min(len(text), match.end() + 24)]
-        if re.match(r"\s*(?:(?:[-–—/]\s*)|\(\s*)?[A-Za-z]", suffix):
-            continue
-        if re.match(r"\s*[\"′″]", suffix):
+        if _EXPLICIT_NON_METRE_UNIT_SUFFIX_PATTERN.match(suffix):
             continue
         if not _has_antenna_specific_context(text, match.start(), match.end()):
             continue
