@@ -166,6 +166,18 @@ class TestIssue82ReplacementPhrase(unittest.TestCase):
                 self.assertIsNone(result["common_size"])
                 self.assertIsNone(result["selected_size"])
 
+    def test_ascii_and_unicode_foot_units_fail_closed(self):
+        for marker in ("'", "′", "’", "‘"):
+            for text in (
+                f"Install antenna diameter 0.6{marker}",
+                f"Upgrade antenna 2.4m to 0.6{marker} antenna",
+            ):
+                with self.subTest(marker=marker, text=text):
+                    result = self._resolve_common(text)
+                    self.assertEqual(result["status"], "MISSING")
+                    self.assertIsNone(result["common_size"])
+                    self.assertIsNone(result["selected_size"])
+
 
 if __name__ == "__main__":
     unittest.main()
