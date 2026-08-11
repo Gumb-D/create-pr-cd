@@ -8,6 +8,7 @@ on:
       - "scripts/planning_pr_selector.py"
       - "scripts/du_export_adapter.py"
       - "scripts/canonical_site_validator.py"
+      - "scripts/canonical_input_pipeline.py"
       - "scripts/create_pr.py"
       - "scripts/create_pr_impl.py"
       - "scripts/pr_input_guard.py"
@@ -35,6 +36,7 @@ jobs:
           python -m unittest \
             tests.test_issue_34_planning_selector \
             tests.test_issue_34_planning_profile_fields \
+            tests.test_issue_34_planning_canonical \
             tests.test_du_export_adapter \
             tests.test_du_profile_loader \
             tests.test_create_pr_entrypoint \
