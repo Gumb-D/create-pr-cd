@@ -427,6 +427,60 @@ class TestCreatePrEntrypoint(unittest.TestCase):
             self.assertEqual(len(summary["created_files"]), 1)
             self.assertNotIn("NON_PRODUCTION_UAT", Path(summary["created_files"][0]).name)
 
+    def test_renderer_stdout_with_zero_width_space_is_safe_on_cp1252_console(self):
+        class CP1252Writer:
+            encoding = "cp1252"
+
+            def __init__(self):
+                self._buffer = []
+
+            def write(self, value):
+                value.encode(self.encoding)
+                self._buffer.append(value)
+
+            def flush(self):
+                pass
+
+            def getvalue(self):
+                return "".join(self._buffer)
+
+        resolution = {
+            "profile": {"profile_id": "production_profile", "status": "PRODUCTION"},
+            "inventory": [],
+            "header_hash": "abc",
+        }
+
+        def unicode_renderer(command, **_kwargs):
+            output = Path(command[command.index("--output") + 1])
+            _write_fake_ecc(output / "Central-GTSB Production DU TSS PR 20260729.xlsx", "PROD-1")
+            return SimpleNamespace(returncode=0, stdout="[OK] \u200bPROD-1\n", stderr="")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            parsed = argparse.Namespace(
+                site_data=Path("input.xlsx"),
+                output=Path(temp_dir),
+                scope="TSS",
+                site_code=None,
+                all_sites=True,
+                pr_model=Path("pr_model.xlsx"),
+                template=Path("template.xls"),
+                mapping=CONTRACT_PATH,
+                subcontractor_policy=POLICY_PATH,
+                non_production_uat=False,
+            )
+            writer = CP1252Writer()
+            with mock.patch.object(create_pr, "resolve_du_profile", return_value=resolution), mock.patch.object(
+                create_pr,
+                "build_canonical_records",
+                return_value=([_candidate_record("PROD-1")], _metadata("production_profile")),
+            ), mock.patch.object(create_pr.subprocess, "run", side_effect=unicode_renderer), mock.patch.object(
+                sys, "stdout", writer
+            ):
+                summary = create_pr.run(parsed)
+
+            self.assertEqual(summary["status"], "SUCCESS")
+            self.assertIn("\\u200b", writer.getvalue())
+
     def test_uat_renderer_failure_marks_partial_artifacts_before_raising(self):
         resolution = {
             "profile": {"profile_id": "uat_profile", "status": "PR_INPUT_READY"},

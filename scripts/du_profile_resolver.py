@@ -5,6 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Mapping
 
+from canonical_site_validator import SCOPE_REQUIRED_FIELDS
+
 from du_export_adapter import resolve_profile_field_mappings
 from du_profile_loader import load_du_profile
 from iepms_export_source_resolver import (
@@ -64,6 +66,7 @@ def resolve_du_profile(
     *,
     profile_root: Path,
     identity_registry_path: Path,
+    scope: str | None = None,
 ) -> dict[str, Any]:
     input_path = Path(input_path)
     inventory = build_header_inventory(input_path)
@@ -147,11 +150,22 @@ def resolve_du_profile(
     required_field_approval = None
     if not header_validation["approved"]:
         mappings = resolve_profile_field_mappings(inventory, profile)
-        required_fields = {
-            name: config
-            for name, config in profile.get("field_mapping", {}).items()
-            if config.get("required")
-        }
+        if str(scope or "").strip().upper() == "PLANNING":
+            required_names = {
+                field
+                for field in SCOPE_REQUIRED_FIELDS["PLANNING"]
+                if field != "tx_sow_normalized"
+            }
+            required_fields = {
+                name: profile.get("field_mapping", {}).get(name, {})
+                for name in required_names
+            }
+        else:
+            required_fields = {
+                name: config
+                for name, config in profile.get("field_mapping", {}).items()
+                if config.get("required")
+            }
         failures = {}
         for name in required_fields:
             resolution = mappings.get(name, {"status": "MISSING", "matches": []})

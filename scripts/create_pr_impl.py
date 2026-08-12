@@ -44,6 +44,26 @@ RUN_MODE_NON_PRODUCTION_UAT = "NON_PRODUCTION_UAT"
 UAT_MARKER = RUN_MODE_NON_PRODUCTION_UAT
 UAT_ELIGIBLE_PROFILE_STATUSES = {"PR_INPUT_READY", "PRODUCTION"}
 
+
+def _console_safe_text(value: object, encoding: str | None = None) -> str:
+    text = str(value)
+    encoding = encoding or getattr(sys.stdout, "encoding", None)
+    if not encoding:
+        return text
+    try:
+        text.encode(encoding)
+        return text
+    except UnicodeEncodeError:
+        return text.encode(encoding, errors="backslashreplace").decode(encoding)
+
+
+def _safe_print(*args, file=None, **kwargs) -> None:
+    if file is None:
+        file = sys.stdout
+    encoding = getattr(file, "encoding", None) or getattr(sys.stdout, "encoding", None)
+    safe_args = tuple(_console_safe_text(arg, encoding) for arg in args)
+    print(*safe_args, file=file, **kwargs)
+
 CANONICAL_RENDERER_COLUMNS = (
     "customer site code",
     "customer site name",
@@ -527,6 +547,7 @@ def run(parsed: argparse.Namespace) -> dict[str, Any]:
         parsed.site_data,
         profile_root=PROFILE_ROOT,
         identity_registry_path=IDENTITY_REGISTRY,
+        scope=parsed.scope,
     )
     profile_status = str(resolution["profile"].get("status", "")).strip().upper()
     run_mode = _resolve_run_mode(
@@ -586,9 +607,9 @@ def run(parsed: argparse.Namespace) -> dict[str, Any]:
             ]
             result = subprocess.run(command, cwd=ROOT, text=True, capture_output=True, check=False)
             if result.stdout:
-                print(result.stdout, end="")
+                _safe_print(result.stdout, end="")
             if result.stderr:
-                print(result.stderr, file=sys.stderr, end="")
+                _safe_print(result.stderr, file=sys.stderr, end="")
             if result.returncode != 0:
                 partial_artifacts = _new_output_artifacts(output, before_renderer)
                 if run_mode == RUN_MODE_NON_PRODUCTION_UAT:

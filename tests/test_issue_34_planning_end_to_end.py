@@ -161,5 +161,28 @@ class PlanningAllDuEndToEndTest(unittest.TestCase):
                     self.assertEqual(by_site[aa_site][7], "S1MY2024071002WBF1")
 
 
+    def test_planning_scope_accepts_only_planning_approved_fields(self) -> None:
+        profile = _load_profile("celcomdigi_bau_2023_pr_v1")
+        fields = {"site_code", "region", "subcontractor_planning", "existing_planning_pr_status"}
+        fingerprints = _selected_fingerprints(profile)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "planning-only.xlsx"
+            output = root / "output"
+            workbook = Workbook()
+            sheet = workbook.active
+            sheet.title = "data"
+            for column, field in enumerate(sorted(fields), start=1):
+                fingerprint = fingerprints[field]
+                sheet.cell(1, column, fingerprint["field_code"])
+                sheet.cell(2, column, fingerprint["wbs_stage"])
+                sheet.cell(3, column, fingerprint["task_name"])
+                sheet.cell(4, column, fingerprint["display_header"])
+                sheet.cell(5, column, _field_value(field, "PBAU001", "GCI"))
+            workbook.save(source)
+            workbook.close()
+            result = subprocess.run([sys.executable, str(CREATE_PR), "--site-data", str(source), "--output", str(output), "--scope", "Planning", "--all-sites"], cwd=ROOT, text=True, capture_output=True, check=False)
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+
 if __name__ == "__main__":
     unittest.main()

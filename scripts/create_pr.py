@@ -430,7 +430,7 @@ def run(parsed):
 def main() -> int:
     try:
         result = run(parse_args())
-        print(json.dumps(result, ensure_ascii=False, indent=2))
+        _safe_print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
     except PrModelBaselineError as error:
         payload = {"status": "ERROR", "code": error.code, "message": str(error), "details": error.details}
@@ -440,7 +440,7 @@ def main() -> int:
         payload = {"status": "ERROR", "code": error.code, "message": str(error), "details": error.details}
     except Exception as error:
         payload = {"status": "ERROR", "code": "CREATE_PR_FAILED", "message": str(error)}
-    print(json.dumps(payload, ensure_ascii=False, indent=2), file=sys.stderr)
+    _safe_print(json.dumps(payload, ensure_ascii=False, indent=2), file=sys.stderr)
     return 1
 
 
