@@ -1,0 +1,125 @@
+{
+  "schemaVersion": "1.0",
+  "skillId": "create-pr-cd",
+  "displayName": "Create PR CD",
+  "version": "4.0.0",
+  "runtime": {
+    "type": "python",
+    "entrypoint": "src/main.py",
+    "minimumPython": "3.11"
+  },
+  "inputs": {
+    "files": [
+      {
+        "name": "site_data",
+        "required": true,
+        "multiple": false,
+        "acceptedExtensions": [".xlsx"],
+        "maximumBytes": 104857600
+      }
+    ],
+    "parametersSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope"],
+      "properties": {
+        "scope": { "type": "string", "enum": ["TSS", "TI"] },
+        "allSites": { "type": "boolean", "default": false },
+        "siteCodes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "nonProductionUat": { "type": "boolean", "default": false }
+      }
+    }
+  },
+  "ui": {
+    "schemaVersion": "1.0",
+    "workerLabel": "MW PR Worker",
+    "hero": {
+      "title": "Launch PR Creator jobs with MW PR and RAN PR modes.",
+      "subtitle": "Launch MW PR or RAN PR jobs with validated inputs, live progress, and controlled result delivery from one dedicated PR Creator route.",
+      "chips": ["MW PR Worker", "Validate"],
+      "includeModeChip": true
+    },
+    "workbench": { "title": "PR Creator" },
+    "actions": {
+      "primaryLabel": "Create Job",
+      "readyLabel": "Ready to create Job",
+      "missingFilesMessage": "Upload the source workbook to start.",
+      "validationMessage": "Validate the source workbook before creating a Job.",
+      "missingParametersMessage": "Enter at least one site code for Single site mode."
+    },
+    "uploads": {
+      "site_data": {
+        "title": "Upload & Validate",
+        "label": "Source file (iEPMS export)",
+        "hint": "Accepted file type: .xlsx. Maximum size: 100 MB.",
+        "actionLabel": "Validate File",
+        "validationRequired": true
+      }
+    },
+    "configuration": {
+      "mode": {
+        "field": "allSites",
+        "labels": { "false": "Single site", "true": "All sites" }
+      },
+      "switcher": {
+        "label": "PR Creator Mode",
+        "options": [
+          { "skillId": "create-pr-cd", "label": "MW PR", "routeName": "pr-creator" },
+          { "skillId": "create-pr-cd-ran", "label": "RAN PR", "routeName": "ran-pr-creator" }
+        ]
+      },
+      "fieldOrder": ["allSites", "scope"],
+      "emptyStates": [
+        {
+          "visibleWhen": { "field": "allSites", "equals": true },
+          "text": "All sites mode is selected."
+        }
+      ]
+    },
+    "parameters": {
+      "scope": {
+        "label": "Task Type",
+        "control": "segmented",
+        "options": [
+          { "value": "TSS", "label": "TSS" },
+          { "value": "TI", "label": "TI" }
+        ]
+      },
+      "allSites": {
+        "label": "Site mode",
+        "control": "segmented",
+        "options": [
+          { "value": false, "label": "Single site" },
+          { "value": true, "label": "All sites" }
+        ]
+      },
+      "siteCodes": {
+        "label": "Sites",
+        "placement": "detail",
+        "control": "textarea",
+        "rows": 5,
+        "placeholder": "Paste site codes, comma or line separated",
+        "summaryLabel": "site(s)",
+        "visibleWhen": { "field": "allSites", "equals": false },
+        "requiredWhenVisible": true,
+        "omitWhenHidden": true
+      },
+      "nonProductionUat": { "hidden": true, "default": false }
+    }
+  },
+  "execution": {
+    "timeoutSeconds": 3600,
+    "supportsCancellation": true,
+    "cancellation": { "type": "sentinelFile", "path": "control/cancel.requested" }
+  },
+  "resultContractVersion": "1.0",
+  "release": {
+    "packageIdentity": "git-commit-plus-runtime-sha256",
+    "domainBaseline": "config/pr_model_baseline.yaml",
+    "notes": "Platform package approval and the Python PR-model baseline are independent fail-closed gates."
+  }
+}

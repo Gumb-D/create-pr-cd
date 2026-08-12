@@ -428,6 +428,10 @@ def run(parsed):
 
 
 def main() -> int:
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure:
+            reconfigure(errors="backslashreplace")
     try:
         result = run(parse_args())
         _safe_print(json.dumps(result, ensure_ascii=False, indent=2))

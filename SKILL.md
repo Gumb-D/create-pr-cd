@@ -5,6 +5,10 @@ description: Create CelcomDigi TX PR ECC output from site PR/PO data by matching
 
 # create-pr-cd Skill
 
+## Platform Contract
+
+For contract execution, use `python src/main.py --input-manifest <workspace>/input.json`. The public interface is declared in `skill.json`; all business rules in this document remain skill-owned.
+
 ## 1. Purpose
 
 This skill generates CelcomDigi TX PR ECC files from site-level PR/PO data.
