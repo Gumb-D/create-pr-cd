@@ -140,6 +140,39 @@ class SkillContractTests(unittest.TestCase):
             self.assertEqual(caught.exception.code, "SITE_CODES_NOT_FOUND")
             self.assertEqual(caught.exception.details["missing_site_codes"], ["QA15_UNMATCHED"])
 
+    def test_domain_error_preserves_header_hash_revalidation_with_safe_details_only(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            parsed, cancellation = self.domain_failure_context(root)
+            domain_error = {
+                "status": "ERROR",
+                "code": "HEADER_HASH_REVALIDATION_REQUIRED",
+                "message": "The export structure does not match an approved header layout for jendela_tx_migration_pr_v1.",
+                "details": {
+                    "profile_id": "jendela_tx_migration_pr_v1",
+                    "actual_header_hash": "af03e909ff0476a91396efd0f4d735ed85a2af37b1c308bf5849d38d7e629149",
+                    "structural_header_hash": "f9a30138c3d7ac088ad19d73aac66cf64d7dda7b337b8da48bebb52b1ae02e9f",
+                    "approval_basis": "UNAPPROVED_STRUCTURE",
+                    "source_path": "/sensitive/workspace/input.xlsx",
+                    "raw_workbook_value": "must-not-leak",
+                },
+            }
+
+            with patch.object(contract.subprocess, "Popen", side_effect=self.failed_process(domain_error)):
+                with self.assertRaises(contract.ContractError) as caught:
+                    contract.run_domain(parsed, cancellation)
+
+            self.assertEqual(caught.exception.code, "HEADER_HASH_REVALIDATION_REQUIRED")
+            self.assertEqual(
+                caught.exception.details,
+                {
+                    "profile_id": "jendela_tx_migration_pr_v1",
+                    "actual_header_hash": "af03e909ff0476a91396efd0f4d735ed85a2af37b1c308bf5849d38d7e629149",
+                    "structural_header_hash": "f9a30138c3d7ac088ad19d73aac66cf64d7dda7b337b8da48bebb52b1ae02e9f",
+                    "approval_basis": "UNAPPROVED_STRUCTURE",
+                    "exitCode": 1,
+                },
+            )
     def test_unknown_domain_error_remains_generic_without_raw_details(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

@@ -30,6 +30,12 @@ SKILL_ID = "create-pr-cd"
 SKILL_VERSION = "4.0.0"
 SAFE_DOMAIN_ERROR_DETAIL_FIELDS = {
     "SITE_CODES_NOT_FOUND": ("missing_site_codes",),
+    "HEADER_HASH_REVALIDATION_REQUIRED": (
+        "profile_id",
+        "actual_header_hash",
+        "structural_header_hash",
+        "approval_basis",
+    ),
 }
 
 
