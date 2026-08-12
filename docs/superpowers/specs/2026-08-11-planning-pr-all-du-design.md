@@ -1,7 +1,7 @@
 # Issue #34 — All-DU Planning PR Design
 
-**Date:** 2026-08-11  
-**Status:** Business-approved design baseline  
+**Date:** 2026-08-11
+**Status:** Business-approved design baseline
 **Issue:** #34
 
 ## 1. Goal
