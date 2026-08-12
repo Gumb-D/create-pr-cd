@@ -1,6 +1,6 @@
 ---
 name: create-pr-cd
-description: Create CelcomDigi TX PR ECC output from site PR/PO data by matching the correct PR model, subcontractor, contract information, and mandatory line items.
+description: Create CelcomDigi TX PR ECC output from site PR/PO data by matching the correct PR model, subcontractor, contract information, and approved line-item rules.
 ---
 
 # create-pr-cd Skill
@@ -17,8 +17,8 @@ The skill must:
 
 1. Read the site data reference.
 2. Determine which PR scopes are required per site.
-3. Match each site to the correct PR model or fixed PR line item.
-4. Retrieve contract and purchasing information.
+3. Match each site to the correct PR model or approved deterministic fixed line item.
+4. Retrieve contract and purchasing information from the controlled mapping reference.
 5. Generate ECC output files using the ECC Template format.
 6. Prevent duplicate PR generation when PR already exists.
 7. Flag incomplete or ambiguous cases as `REVIEW_REQUIRED` instead of silently guessing.
@@ -29,10 +29,10 @@ The skill uses these input references:
 
 ### 2.1 PR Model Reference
 
-File name pattern:
+Current governed production path:
 
 ```text
-Celcomdigi TX PR Model & Line Item 20250416 Rev 2.0
+Info/input/pr_model.xlsx
 ```
 
 Used for:
@@ -42,22 +42,18 @@ Used for:
 - PBOM Code
 - SOW description
 - Unit
-- Mandatory line item identification
-- Contract information sheet: `contract infor`
-- Purchasing Area
-- Contract No
+- Quantity
+- Mandatory/optional/choose-group line-item evidence
+
+The PR Model is **not** the authoritative contract/purchasing mapping source.
 
 ### 2.2 Site Data Reference
 
-File name pattern:
+The runtime consumes site data through the approved DU Profile/canonical input path. Source iEPMS exports differ by Project and DU Model.
 
-```text
-A-P202202168750_D002-TX Mini Project-Mira's PR_PO View-YYYYMMDDHHMMSS
-```
+Used for fields such as:
 
-Used for:
-
-- Site ID
+- Site ID / Site Code
 - Site Name
 - DU Code
 - Region
@@ -66,29 +62,46 @@ Used for:
 - MW Config Antenna Size FE
 - SubCon - TSS Team
 - SubCon - TI Team
-- Subcon - Planning
-- TX Integrated actual end date
+- Subcon Planning / Subcon - Planning
+- Subcon PR - Planning / approved equivalent Planning PR status field
 - Existing PR status / PR number columns
+
+For Issue #34 Planning discovery/UAT, business reference exports may be stored locally under:
+
+```text
+Info/reference/planning-pr/
+```
+
+Raw iEPMS exports are reference evidence only and must not be committed.
 
 ### 2.3 ECC Template
 
-File name pattern:
+Current path:
 
 ```text
-ECC Template
+Info/input/ecc_template.xls
 ```
 
 Used as the required output format.
 
-### 2.4 ECC Sample Reference
+### 2.4 Contract and Purchasing Reference
 
-Example output file:
+Authoritative path:
 
 ```text
-Northern-GCI TX Mini Project TSS PR 20260515.xlsx
+Info/input/contract_info_reference.md
 ```
 
-Use this sample to understand:
+Used for:
+
+- Region → Purchasing Area
+- Normalized Subcontractor → Contract Number
+
+Do not use the historical PR Model `contract infor` sheet as the active mapping authority.
+
+### 2.5 ECC Sample Reference
+
+Example output files may be used to understand:
 
 - Expected file naming style
 - ECC column order
@@ -98,14 +111,20 @@ Use this sample to understand:
 
 ## 3. Supported PR Scopes
 
-The skill supports the following PR scopes:
+Business scope catalogue:
 
 1. TSS
 2. TI
 3. Planning
 4. Operation Backoffice
 
-Do not generate other scopes unless the CLI is explicitly extended. Current CLI implementation supports only `TSS` and `TI`.
+Runtime status:
+
+- Official `scripts/create_pr.py` supports `--scope TSS`, `--scope TI`, and `--scope Planning`.
+- Planning is implemented under Issue #34 for all eight supported DU Models with approved profile mappings, deterministic selection, dedicated ECC rendering and terminal reconciliation.
+- Operation Backoffice remains a separate future scope and is not part of Issue #34.
+
+Do not generate any scope unless the CLI is explicitly enabled for it.
 
 ### 3.1 Site Selection Layer
 
@@ -116,7 +135,7 @@ The generator accepts either selected Site Code(s) or a Generate All option befo
 - If neither option is provided, the generator exits with an error.
 - If both options are provided, the generator exits with an error.
 - Filtering occurs before evaluating PR scope triggers.
-- Current CLI implementation supports only `--scope TSS` and `--scope TI`; Planning and Operation Backoffice are documented skill targets but are not implemented in this script.
+- Current official CLI supports site selection for `TSS`, `TI`, and `Planning`.
 
 ### 3.2 Implementation Status
 
@@ -127,28 +146,12 @@ Current TI logic implementation status:
 - TI Phase 2B1 is complete: silent 0-row prevention through `REVIEW_REQUIRED` output.
 - TI Phase 2B2 is complete: MW Reroute dual install/decom logic.
 
-Current stable baseline:
+Current Planning status:
 
-| Scope / Metric | Current Result |
-|---|---:|
-| TSS output | 78 files / 2727 rows |
-| TI output | 14 files / 234 rows |
-| TI `REVIEW_REQUIRED` | 163 |
-| TI duplicates skipped | 1741 |
-
-Known limitations:
-
-- MW Re-engineering remains `REVIEW_REQUIRED`.
-- MW Reroute decom antenna size is unreliable and requires manual review when missing or ambiguous.
-- Planning CLI is not implemented.
-- Operation Backoffice CLI is not implemented.
-
-Next recommended scope:
-
-1. Add regression test framework.
-2. Implement Planning scope CLI.
-3. Implement Operation Backoffice CLI.
-4. Define MW Re-engineering rules after business confirmation.
+- All-DU Planning business logic was approved on 2026-08-11 under Issue #34.
+- Planning canonical-field/profile mapping, selector, eligibility/duplicate prevention, contract normalization, official entrypoint, ECC renderer and terminal reconciliation are implemented.
+- Automated regression includes all eight DU Models from raw four-header export shape through ECC output.
+- Operation Backoffice is excluded from Issue #34.
 
 ## 4. Scope Trigger Logic
 
@@ -172,44 +175,70 @@ Generate TI PR when:
 
 If existing TI PR number/status exists, skip TI PR generation for that site.
 
-### 4.3 Planning PR Trigger
+### 4.3 Planning PR Trigger — Issue #34 Approved and Implemented
+
+Planning applies to these eight DU Models:
+
+1. `2023 TX Rollout`
+2. `TX Mini Project`
+3. `2023 Celcomdigi BAU`
+4. `2024 Celcomdigi BAU`
+5. `Celcomdigi USP`
+6. `Jendela TX Migration`
+7. `MW EOS Swap`
+8. `ZTE TX MINI`
 
 Generate Planning PR when:
 
-- `Subcon - Planning` is not blank; and
-- the related Planning PR status / PR number field is blank.
+- `Subcon Planning` / `Subcon - Planning` is non-blank; and
+- the approved `Subcon PR - Planning` / equivalent Planning PR status or PR-number field is blank.
 
-If `Subcon - Planning` is blank, ignore the site for Planning PR.
+If Planning subcon is blank:
 
-If `Subcon - Planning` contains an unknown non-blank value, output the row with `REVIEW_REQUIRED`.
+```text
+ignore / no Planning PR
+```
+
+If the Planning PR status/number field is non-blank:
+
+```text
+skip duplicate / existing Planning PR
+```
+
+If Planning subcon is non-blank but not one of:
+
+```text
+GCI
+GTSB
+GCI_AA
+GTSB_AA
+```
+
+then:
+
+```text
+REVIEW_REQUIRED
+no partial Planning ECC
+```
+
+`TX Planning Remarks` is explicitly **not involved** in Planning eligibility, PBOM selection, contract selection, or duplicate prevention.
 
 ### 4.4 Operation Backoffice PR Trigger
 
-Generate Operation Backoffice PR when:
-
-- `TX Integrated actual end date` is populated; and
-- the related Operation Backoffice PR status / PR number field is blank.
-
-Operation Backoffice subcon is fixed:
-
-```text
-Allstar
-```
-
-Operation Backoffice output does not need region-based or scope-based grouping.
+Operation Backoffice remains a future scope and is not defined by Issue #34. Do not infer or enable it from the Planning implementation.
 
 ## 5. Duplicate PR Prevention
 
 Default rule:
 
-- If a PR number/status already exists for the same site and same scope, do not generate again.
+- If a PR number or controlled status already exists for the same site and same scope, do not generate again.
 
-The skill does not force regenerate duplicate PRs.
+For Planning, use the approved `Subcon PR - Planning` / equivalent Planning PR control field from the resolved DU Profile.
 
-If duplicate exists:
+If duplicate/existing status exists:
 
 - Skip the site-scope combination.
-- Record the skip reason in the processing summary.
+- Record the terminal skip reason in the processing summary/reconciliation evidence.
 
 ## 6. Subcontractor Mapping
 
@@ -219,38 +248,47 @@ Use these fields by scope:
 |---|---|
 | TSS | `SubCon - TSS Team` |
 | TI | `SubCon - TI Team` |
-| Planning | `Subcon - Planning` |
-| Operation Backoffice | Fixed value: `Allstar` |
+| Planning | `Subcon Planning` / `Subcon - Planning` |
+| Operation Backoffice | Future scope; not defined by Issue #34 |
 
-Normalize subcontractor names before matching:
+Normalize ordinary subcontractor names before matching according to existing shared behavior.
 
-- Trim leading/trailing spaces.
-- Treat repeated spaces as one space.
-- Preserve original display value for ECC output where possible.
-- Use normalized value for lookup matching.
+### 6.1 Planning-specific subcontractor normalization
+
+Planning permits exactly:
+
+```text
+GCI
+GTSB
+GCI_AA
+GTSB_AA
+```
+
+Contract identity normalization:
+
+```text
+GCI       -> GCI
+GTSB      -> GTSB
+GCI_AA    -> GCI
+GTSB_AA   -> GTSB
+```
+
+The `_AA` suffix is **not** a separate subcontractor and must not use a separate contract. `_AA` is preserved only as evidence for Planning line-item selection.
+
+Unknown Planning subcontractors must fail closed. Do not fuzzy-substitute an unknown Planning value into GCI/GTSB.
 
 ## 7. Primary SOW Logic
 
-Use `Tx SOW` as the source field for SOW detection.
+Use `Tx SOW` as the source field for SOW detection for scopes that require SOW matching.
 
 If one site has multiple SOW keywords in the same `Tx SOW` string:
 
-- Use the first SOW keyword found in the text.
-- Do not generate PR for secondary SOWs.
+- Use the approved primary-SOW behavior for TSS/TI.
+- Do not generate PR for secondary SOWs unless a scope-specific rule explicitly requires it.
 
-Example:
+**Planning exception:** Planning PBOM selection does not use `Tx SOW` at all.
 
-```text
-MW Swap + MW Decom
-```
-
-Primary SOW is:
-
-```text
-MW Swap
-```
-
-## 8. PR Model Matching Logic
+## 8. PR Model / Fixed Selector Logic
 
 ### 8.1 TSS Model Matching
 
@@ -266,121 +304,151 @@ TSS PR model matching key:
 
 Steps:
 1. Read primary SOW from `Tx SOW`.
-2. For MW New Link / Reroute SOW (exact pattern: "MW New Link / Reroute"), read `TX Upgrade Scope`. If the field contains "dismantle" (case insensitive), it is a MW Reroute; otherwise, it is a MW New Link. **This classification only applies to TSS MW New Link / Reroute**.
-3. Match mandatory line items from the TSS model section where the item's `SOW` matches the site's `Tx SOW` (case-insensitive partial match).
-4. For MW New Link / Reroute, apply **model-driven filtering** using the PR model's `Remarks` column:
-   - Items with Remarks "Reroute" are only selected for MW Reroute projects.
-   - Items with Remarks "New Link" are only selected for MW New Link projects.
-   - Items without Remarks (e.g., LOS Survey items) are subject to an additional selection rule below.
-5. **LOS Survey exception**: For PBOMs 350000062773 and 350000062776 (which typically have empty Remarks), selection depends on both `is_mw_reroute` and Site ID pattern:
-   - If MW New Link: always select **350000062773** (ignore _LOS pattern).
-   - If MW Reroute:
-     - Site ID contains "_LOS" (case-insensitive) → select **350000062776**.
-     - Site ID does NOT contain "_LOS" → select **350000062773**.
-6. For additional safety, verify quantity consistency (optional):
-   - For PBOMs 350000589343 and 350000589344, the quantity must be 1.5 hop if `is_mw_reroute` is True, otherwise 1.0 hop.
-7. If multiple mandatory items with identical SOW still match after filtering, mark as `REVIEW_REQUIRED`.
-
-**Important**: The `Remarks` column in the PR model is the primary filter for distinguishing Reroute vs New Link items (except the LOS Survey items). Do not rely on hardcoded PBOM checks alone.
-
-If multiple TSS models match the same SOW:
-
-- Do not choose automatically.
-- Mark as `REVIEW_REQUIRED`.
+2. For MW New Link / Reroute SOW (exact pattern: `MW New Link / Reroute`), read `TX Upgrade Scope`. If the field contains `dismantle` (case insensitive), it is a MW Reroute; otherwise, it is a MW New Link. **This classification only applies to TSS MW New Link / Reroute**.
+3. Match mandatory line items from the TSS model section using the approved TSS matching behavior.
+4. For MW New Link / Reroute, apply model-driven filtering using the PR model `Remarks` column.
+5. LOS Survey exception remains governed by the approved TSS MW New Link/Reroute rule.
+6. Preserve the approved quantity behavior.
+7. If mandatory model selection is ambiguous, mark `REVIEW_REQUIRED` and block partial ECC.
 
 ### 8.2 TI Model Matching
 
-TI requires SOW plus antenna size category.
+TI uses the approved strict Tx SOW and scope-specific technical evidence/matching rules implemented in the current runtime.
 
-TI PR model matching key:
+Antenna-dependent TI models must use the governed antenna resolver behavior. Antenna-independent SOWs must not be blocked solely by absent antenna evidence when the current approved runtime says antenna is not required.
+
+If no safe TI match or multiple mandatory groups match:
 
 ```text
-Tx SOW + antenna size category
+REVIEW_REQUIRED
+no partial ECC
 ```
 
-Antenna source fields:
+### 8.3 Planning Model Logic — Issue #34 Approved
 
-- `MW Config Antenna Size NE`
-- `MW Config Antenna Size FE`
+Planning is generated per eligible site and does **not** use Tx SOW or TX Planning Remarks for PBOM selection.
 
-Antenna selection rule:
+Planning selection key:
 
-1. If NE and FE antenna sizes are both populated and different, use the larger antenna size.
-2. If NE and FE antenna sizes are both populated and same, use that size.
-3. If one side is blank, mark as `REVIEW_REQUIRED`.
-4. If both sides are blank, mark as `REVIEW_REQUIRED`.
+```text
+DU Model + Subcon Planning
+```
 
-Antenna category matching:
+Quantity and unit for all approved Planning items:
 
-| Antenna Size | Category |
-|---|---|
-| 0.3m | Small antenna model |
-| 0.6m | Small antenna model |
-| 1.2m | 1.2m model |
-| 1.8m | 1.8m model |
-| 2.4m | 2.4m model |
+```text
+Quantity = 1
+Unit = Hop
+```
 
-Steps:
+#### 8.3.1 `_AA` branch — highest precedence, all supported DUs
 
-1. Read primary SOW from `Tx SOW`.
-2. Determine antenna category using NE and FE antenna size.
-3. Match the primary SOW and antenna category against the TI model section in the PR model reference.
-4. Select only mandatory line items.
-5. Quantity is always `1` per site per matched mandatory line item.
+If:
 
-If multiple TI models match the same SOW and antenna category:
+```text
+Subcon Planning = GCI_AA or GTSB_AA
+```
 
-- Do not choose automatically.
-- Mark as `REVIEW_REQUIRED`.
+then generate only:
 
-### 8.3 Planning Model Logic
-
-The Planning PR model is not available in the PR model reference file.
-
-Planning is generated per site basis regardless of SOW and region.
-
-Use `Subcon - Planning` to determine the Planning line item.
-
-Planning item rule:
-
-| `Subcon - Planning` Value | PBOM Code | SOW | Unit | Qty |
-|---|---:|---|---|---:|
-| `GCI` or `GTSB` | `350001000403` | `Detailed end to end transmission planning and design` | `Hop` | `1` |
-| Any value ending with `_AA` | `350001042321` | `Detailed end to end transmission planning and design (for AA modification & AA submisison sow only` | `Hop` | `1` |
+```text
+PBOM 350001042321
+```
 
 Rules:
 
-- If `Subcon - Planning` is blank, ignore and do not generate Planning PR.
-- If `Subcon - Planning` contains an unknown non-blank value, mark as `REVIEW_REQUIRED`.
+- Applies to all eight supported DU Models.
+- Do not also generate `350001143904`.
+- Do not also generate `350001143905`.
+- Normalize `_AA` to GCI/GTSB only for contract lookup.
+- PBOM `350001042321` is an explicitly approved deterministic optional-item exception for Planning.
+
+#### 8.3.2 Standard branch — five full-planning DU Models
+
+For:
+
+- `2023 TX Rollout`
+- `2023 Celcomdigi BAU`
+- `2024 Celcomdigi BAU`
+- `Celcomdigi USP`
+- `Jendela TX Migration`
+
+if:
+
+```text
+Subcon Planning = GCI or GTSB
+```
+
+select:
+
+```text
+PBOM 350001143904
+```
+
+This is the default under all normal Planning conditions for these five DU Models. No SOW, TX Planning Remarks, antenna, coordinates, or TX Upgrade Scope changes this selection.
+
+#### 8.3.3 Standard branch — remaining three supported DU Models
+
+For:
+
+- `TX Mini Project`
+- `MW EOS Swap`
+- `ZTE TX MINI`
+
+if:
+
+```text
+Subcon Planning = GCI or GTSB
+```
+
+select:
+
+```text
+PBOM 350001143905
+```
+
+#### 8.3.4 Planning decision table
+
+| `Subcon Planning` | DU Model group | PBOM Code | Unit | Qty |
+|---|---|---:|---|---:|
+| `GCI` or `GTSB` | 2023 TX Rollout; 2023 Celcomdigi BAU; 2024 Celcomdigi BAU; Celcomdigi USP; Jendela TX Migration | `350001143904` | Hop | 1 |
+| `GCI` or `GTSB` | TX Mini Project; MW EOS Swap; ZTE TX MINI | `350001143905` | Hop | 1 |
+| `GCI_AA` or `GTSB_AA` | All supported DU Models | `350001042321` only | Hop | 1 |
+
+Exactly one Planning PBOM may be selected per eligible site.
+
+The previous Planning PBOM `350001000403` is obsolete and must not be used.
 
 ### 8.4 Operation Backoffice Logic
 
-Operation Backoffice is generated when `TX Integrated actual end date` is populated.
+Operation Backoffice remains separate future scope. Do not reuse Issue #34 Planning logic to infer Operation Backoffice triggers, line items, subcontractor, or output behavior.
 
-Subcon is fixed:
+## 9. Mandatory / Optional Line Item Rule
+
+Default rule:
+
+- Generate only deterministic approved line items automatically.
+- Do not auto-select optional line items merely because they exist in the PR Model.
+- Do not guess between unresolved choose-one alternatives.
+
+### Approved Planning exception
+
+The only Issue #34 optional auto-selection exception is:
 
 ```text
-Allstar
+Planning + (GCI_AA or GTSB_AA)
+-> PBOM 350001042321
 ```
 
-The skill must retrieve the Operation Backoffice PBOM Code, SOW, Unit, and mandatory line item logic from the PR model reference if available.
+This exception is deterministic and approved. It does not authorize any other optional item.
 
-If the Operation Backoffice line item cannot be found in the PR model reference:
+If a mandatory or approved deterministic group cannot be resolved uniquely:
 
-- Output the site with `REVIEW_REQUIRED` in Remarks.
-- Do not invent PBOM Code or SOW.
-
-## 9. Mandatory Line Item Rule
-
-Generate only mandatory line items automatically.
-
-Do not generate optional line items.
-
-Do not auto-select choose-one optional or transportation items unless they are explicitly marked mandatory and unambiguous.
-
-If a mandatory group contains multiple possible choices and no deterministic rule exists:
-
-- Mark as `REVIEW_REQUIRED`.
+```text
+REVIEW_REQUIRED
+whole site blocked
+no partial ECC
+```
 
 ## 10. Quantity Rule
 
@@ -388,224 +456,206 @@ Default quantity rules:
 
 | Scope | Quantity Rule |
 |---|---|
-| TSS | Always `1` per site per mandatory line item |
-| TI | Always `1` per site per mandatory line item |
-| Planning | Always `1` per site |
-| Operation Backoffice | Use matched mandatory line item quantity; if unclear, default to `1` with `REVIEW_REQUIRED` remark |
+| TSS | Use approved TSS model/scope-specific rule |
+| TI | Use approved TI rule |
+| Planning | Always `1` per selected Planning line item |
+| Operation Backoffice | Future scope; not defined here |
 
 ## 11. Contract and Purchasing Area Logic
 
-Use the `contract infor` sheet from the PR model reference.
+Authoritative source:
+
+```text
+Info/input/contract_info_reference.md
+```
 
 ### 11.1 Contract No
 
-Match contract number by subcontractor.
+Resolve contract number by normalized subcontractor identity from the controlled mapping reference.
 
 Rules:
 
-- Same subcontractor uses the same contract number for all regions.
-- Region is not used for contract number matching.
-- Scope is not used unless the `contract infor` sheet explicitly requires it.
+- Same approved subcontractor identity uses the mapped contract according to the reference.
+- Planning `GCI_AA` uses GCI contract identity.
+- Planning `GTSB_AA` uses GTSB contract identity.
+- `_AA` is stripped only for contract lookup; it still controls Planning PBOM selection.
+- Do not invent a Planning-specific contract.
 
 ### 11.2 Purchasing Area
 
-Retrieve `Purchasing Area` from the `contract infor` sheet.
+Resolve `Purchasing Area` using the Region mapping in:
 
-Match by subcontractor.
+```text
+Info/input/contract_info_reference.md
+```
 
-If purchasing area cannot be found:
+If purchasing area cannot be resolved safely:
 
-- Fill `REVIEW_REQUIRED` where applicable.
-- Add explanation in Remarks.
+- fail closed according to the shared review policy;
+- preserve actionable review evidence;
+- do not emit partial ECC for a blocked site.
 
 ## 12. ECC Output Columns
 
-The skill must output using the ECC Template format.
+The skill must output using the ECC Template format and current shared renderer contract.
 
-Mandatory ECC fields:
+Mandatory ECC fields include the applicable:
 
 | ECC Field | Source / Logic |
 |---|---|
-| `Purchasing Area*` | From `contract infor` sheet by subcontractor |
-| `Region*` | From site data field `Region` |
-| `Site ID*` | From site data |
-| `Site Name*` | From site data |
-| `DU Code*` | From site data |
-| `Contract No*` | From `contract infor` sheet by subcontractor |
-| `Subcontractor*` | Scope-based subcon mapping |
-| `PBOM Code*` | Matched PR model or fixed Planning logic |
-| `SOW*` | Matched PR model or fixed Planning logic |
-| `Unit*` | Matched PR model or fixed Planning logic |
+| `Purchasing Area*` | `Info/input/contract_info_reference.md` Region mapping |
+| `Region*` | Canonical site data |
+| `Site ID*` | Canonical site data |
+| `Site Name*` | Canonical site data |
+| `DU Code*` | Canonical site data |
+| `Contract No*` | `Info/input/contract_info_reference.md` normalized subcontractor mapping |
+| `Subcontractor*` | Scope-based subcontractor mapping |
+| `PBOM Code*` | Matched PR model or approved deterministic Planning selector |
+| `SOW*` | Matched PR model / approved Planning line-item description according to renderer contract |
+| `Unit*` | Matched model / approved selector |
 | `Quantity*` | Scope quantity rule |
-| `Remarks` | Blank if normal; otherwise use `REVIEW_REQUIRED: <reason>` |
+| `Remarks` | Blank if normal; otherwise review evidence as governed by current renderer/reconciliation flow |
 
-If any mandatory ECC field is missing:
-
-- Still output the row.
-- Put `REVIEW_REQUIRED: missing <field_name>` in Remarks.
-
-Do not skip the row solely because of missing mandatory data.
+Blocked sites must not leak partial ECC rows.
 
 ## 13. ECC Output Grouping
 
 ### 13.1 TSS / TI / Planning
 
-Generate one ECC file per:
+Approved grouping contract:
 
 ```text
-Scope + Subcon + Region
+Scope + normalized Subcontractor + Region
 ```
+
+Output filename must include the actual resolved DU Model, not hardcode TX Mini Project.
 
 ### 13.2 Operation Backoffice
 
-Generate one ECC file only:
-
-```text
-Allstar TX Mini Project Operation PR <YYYYMMDD>.xlsx
-```
-
-No region-based grouping is required for Operation Backoffice.
+Future scope. Do not define or enable its grouping as part of Issue #34.
 
 ## 14. ECC File Naming Convention
 
-Use this file naming format for TSS / TI / Planning:
+Use this generic format for supported runtime scopes:
 
 ```text
-<Region>-<Subcon> TX Mini Project <Scope> PR <YYYYMMDD>.xlsx
+<Region>-<Subcontractor> <DU Model> <Scope> PR <YYYYMMDD>.xlsx
 ```
 
 Examples:
 
 ```text
 Northern-GCI TX Mini Project TSS PR 20260515.xlsx
-Southern-GTSB TX Mini Project TI PR 20260515.xlsx
-Northern-GCI TX Mini Project Planning PR 20260515.xlsx
+Southern-GTSB MW EOS Swap TI PR 20260515.xlsx
+Northern-GCI 2023 TX Rollout Planning PR 20260811.xlsx
 ```
 
-Operation Backoffice file name:
-
-```text
-Allstar TX Mini Project Operation PR <YYYYMMDD>.xlsx
-```
-
-Use the execution date for `<YYYYMMDD>` unless the user provides a specific date.
+Planning uses this convention through the dedicated Planning ECC renderer.
 
 ## 15. Review Required Handling
 
 Use `REVIEW_REQUIRED` when the skill cannot safely determine the correct output.
 
-Common cases:
+Planning-specific cases include:
 
-1. Missing mandatory ECC field.
-2. Missing contract number.
-3. Missing purchasing area.
-4. Multiple PR models match the same SOW.
-5. Multiple TI models match the same SOW and antenna category.
-6. TI antenna size has one side blank.
-7. TI antenna size has both sides blank.
-8. Unknown non-blank Planning subcon.
-9. Operation Backoffice line item cannot be found.
-10. Mandatory choose-one line item cannot be selected deterministically.
+1. Unknown non-blank Planning subcontractor.
+2. Planning PR duplicate/status field cannot be resolved when required for safe duplicate prevention.
+3. Contract identity cannot be resolved from `contract_info_reference.md`.
+4. Purchasing Area / mandatory ECC data cannot be resolved.
+5. DU Model is outside the approved Planning support set.
+6. More than one Planning PBOM would otherwise be selected.
+7. Required DU Profile/header evidence is unapproved or ambiguous.
 
-Remarks format:
+Global rule:
 
 ```text
-REVIEW_REQUIRED: <clear reason>
-```
-
-Example:
-
-```text
-REVIEW_REQUIRED: TI antenna size incomplete; NE populated but FE blank
+REVIEW_REQUIRED
+-> whole site blocked where the condition is blocking
+-> no partial ECC
+-> terminal outcome remains traceable
 ```
 
 ## 16. Processing Steps
 
-The agent must execute the skill in this order:
+The agent/runtime must execute in this order:
 
-1. Load PR model reference.
-2. Load `contract infor` sheet.
-3. Load site data reference.
-4. Load ECC Template structure.
-5. Normalize column names and subcontractor names.
-6. Identify existing PR status / PR number columns for duplicate prevention.
-7. For each site row:
-   - Evaluate TSS trigger.
-   - Evaluate TI trigger.
-   - Evaluate Planning trigger.
-   - Evaluate Operation Backoffice trigger.
-8. For each triggered scope:
-   - Determine subcontractor.
-   - Determine contract number.
-   - Determine purchasing area.
-   - Match PR model or fixed line item.
-   - Generate mandatory line items only.
-   - Validate ECC mandatory fields.
-   - Add `REVIEW_REQUIRED` remarks where needed.
-9. Group output rows into ECC files.
-10. Save files using required naming convention.
-11. Produce a processing summary.
+1. Resolve Project + DU Model profile identity.
+2. Resolve approved source fields through the canonical adapter.
+3. Load `Info/input/contract_info_reference.md`.
+4. Load PR Model only for scopes/rules that require it.
+5. Load ECC Template structure.
+6. Apply site selection.
+7. Evaluate the requested scope eligibility and duplicate gate.
+8. For an eligible scope:
+   - determine/normalize subcontractor;
+   - determine contract number;
+   - determine purchasing area;
+   - match PR model or execute an approved deterministic selector;
+   - validate mandatory output data;
+   - create review evidence when needed.
+9. Apply whole-site blocking/no-partial-output rules.
+10. Group passed rows into ECC files.
+11. Reconcile every requested site to exactly one terminal outcome.
+12. Save files and processing summary.
+
+For Planning specifically:
+
+```text
+DU Model + Subcon Planning
+-> one approved Planning PBOM
+```
+
+Do not read `TX Planning Remarks` for this decision.
 
 ## 17. Output Summary Requirement
 
-After generating ECC files, the agent must provide a summary table:
+After generating ECC files, provide a summary equivalent to the current governed runtime summary, including scope, subcon, region, output file, site/line counts, review count and duplicate/ignored count.
 
-| Scope | Subcon | Region | Output File | Site Count | Line Count | Review Required Count | Skipped Duplicate Count |
-|---|---|---|---|---:|---:|---:|---:|
-
-For Operation Backoffice, Region may be shown as:
-
-```text
-ALL
-```
-
-Also provide a separate issue list for all `REVIEW_REQUIRED` rows:
-
-| Site ID | Scope | Subcon | Region | Issue |
-|---|---|---|---|---|
+Every requested site must be terminally reconciled.
 
 ## 18. Do Not Do
 
-The agent must not:
+The agent/runtime must not:
 
-1. Generate optional PR line items automatically.
-2. Guess between multiple matched PR models.
-3. Use secondary SOW if multiple SOW keywords exist.
-4. Generate duplicate PR when PR already exists.
-5. Invent contract number, purchasing area, PBOM code, or SOW.
-6. Skip rows with missing mandatory fields without reporting.
-7. Modify source reference files unless explicitly requested.
+1. Auto-generate optional PR line items **except** the explicit Planning `GCI_AA/GTSB_AA -> 350001042321` rule.
+2. Guess between multiple matched PR models/selector outcomes.
+3. Use `TX Planning Remarks` to choose a Planning PBOM.
+4. Use Tx SOW to choose a Planning PBOM.
+5. Generate duplicate PR when the applicable PR status/number field is non-blank.
+6. Invent contract number, purchasing area, PBOM code, or SOW/description.
+7. Treat `GCI_AA` or `GTSB_AA` as separate contracts.
+8. Combine `350001042321` with `350001143904` or `350001143905` for the same Planning site.
+9. Commit raw iEPMS reference exports.
+10. Enable Operation Backoffice while implementing or operating Issue #34 Planning scope.
 
-## 19. Expected Inputs from User
+## 19. Expected Inputs from User / Business Owner
 
-The user should provide:
-
-1. PR model reference file.
-2. Site data reference file.
-3. ECC template file.
-4. Optional ECC sample file.
-5. Optional output date if different from execution date.
+Controlled production inputs remain the governed runtime inputs. Business discovery may additionally use local reference exports under `Info/reference/planning-pr/` to verify four-layer field fingerprints and golden outcomes.
 
 ## 20. Expected Outputs
 
-The skill must output:
+For implemented runtime scopes, the skill produces:
 
-1. ECC `.xlsx` files grouped by required naming convention.
+1. ECC `.xlsx` files grouped by the approved naming convention.
 2. Processing summary.
-3. `REVIEW_REQUIRED` issue list.
-4. Skipped duplicate summary.
+3. `REVIEW_REQUIRED` issue list/evidence.
+4. Skipped duplicate/ignored summary.
+5. Terminal reconciliation evidence.
 
 ## 21. Acceptance Criteria
 
-The skill is successful when:
+Planning implementation is successful only when all of the following remain implemented and regression-tested:
 
-1. ECC output follows the provided ECC Template format.
-2. TSS PR is matched by `Tx SOW` only.
-3. TI PR is matched by `Tx SOW + antenna size category`.
-4. Planning PR uses fixed Planning PBOM logic based on `Subcon - Planning`.
-5. Operation Backoffice uses fixed Allstar subcon and is triggered by `TX Integrated actual end date`.
-6. Contract No and Purchasing Area are matched from `contract infor` by subcontractor.
-7. Only mandatory line items are generated.
-8. Existing PR records are not regenerated.
-9. Review-required cases are visible and traceable.
-10. Output files are grouped and named correctly.
+1. Planning supports exactly the eight approved DU Models.
+2. Planning eligibility uses Planning subcon plus Planning PR status/number, not TSS/TI fields.
+3. Five full-planning DU Models select `350001143904` for `GCI/GTSB`.
+4. TX Mini Project, MW EOS Swap and ZTE TX MINI select `350001143905` for `GCI/GTSB`.
+5. Every supported DU selects **only** `350001042321` for `GCI_AA/GTSB_AA`.
+6. `GCI_AA/GTSB_AA` use GCI/GTSB contract identities from `Info/input/contract_info_reference.md`.
+7. `TX Planning Remarks` cannot change Planning eligibility or PBOM selection.
+8. Blank Planning subcon generates no Planning PR.
+9. Non-blank Planning PR status/number prevents regeneration.
+10. Unknown Planning subcon fails closed without fuzzy substitution or partial ECC.
+11. Existing TSS/TI behavior remains unchanged.
+12. Official `scripts/create_pr.py --scope Planning` remains protected by DU Profile lifecycle, all-DU regression and terminal reconciliation controls.
+13. Operation Backoffice remains out of scope.

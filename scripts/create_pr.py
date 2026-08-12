@@ -2,6 +2,7 @@
 """Official create-pr entrypoint with audit-complete reporting."""
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 import re
@@ -10,6 +11,11 @@ from collections.abc import Mapping
 from pathlib import Path
 
 import create_pr_impl as _impl
+from planning_pr_runtime import (
+    partition_planning_records,
+    planning_scope_subcontractor,
+    validate_planning_candidate_contracts,
+)
 from pr_model_baseline import PrModelBaselineError, validate_pr_model_baseline
 from renderer_reconciliation import (
     collect_renderer_reconciliation,
@@ -24,6 +30,10 @@ for _name in dir(_impl):
 
 _ORIGINAL_PARTITION = _impl._partition_records
 _ORIGINAL_RENDERER_ROW = _impl._renderer_row
+_ORIGINAL_SCOPE_SUBCONTRACTOR = _impl._scope_subcontractor
+_ORIGINAL_VALIDATE_CANDIDATE_CONTRACTS = _impl.validate_candidate_contracts
+_ORIGINAL_RENDERER = Path(_impl.RENDERER)
+PLANNING_RENDERER = Path(_impl.ROOT) / "scripts" / "planning_ecc_renderer.py"
 _LAST_PARTITIONS = None
 
 _ANTENNA_EVIDENCE_RENDERER_COLUMNS = (
@@ -34,11 +44,52 @@ _ANTENNA_EVIDENCE_RENDERER_COLUMNS = (
     "NE SOW Details Mapping Status",
     "FE SOW Details Mapping Status",
 )
+_PLANNING_RENDERER_COLUMNS = (
+    "Subcon - Planning",
+    "Planning Contract Subcontractor",
+    "Planning PBOM Code",
+    "Planning SOW",
+    "Planning Unit",
+    "Planning Quantity",
+)
 CANONICAL_RENDERER_COLUMNS = tuple(_impl.CANONICAL_RENDERER_COLUMNS) + tuple(
     column
-    for column in _ANTENNA_EVIDENCE_RENDERER_COLUMNS
+    for column in (*_ANTENNA_EVIDENCE_RENDERER_COLUMNS, *_PLANNING_RENDERER_COLUMNS)
     if column not in _impl.CANONICAL_RENDERER_COLUMNS
 )
+
+
+def parse_args() -> argparse.Namespace:
+    """Official CLI parser; Planning is enabled only through this governed wrapper."""
+    parser = argparse.ArgumentParser(description="Identify DU Profile, canonicalize iEPMS data, and generate ECC.")
+    parser.add_argument("--site-data", required=True, type=Path, help="Original four-header iEPMS export")
+    parser.add_argument("--output", required=True, type=Path, help="ECC output directory")
+    parser.add_argument("--scope", required=True, choices=["TSS", "TI", "PLANNING"], type=str.upper)
+    parser.add_argument("--site-code", help="Comma-separated site codes")
+    parser.add_argument("--all-sites", action="store_true")
+    parser.add_argument("--pr-model", type=Path, default=Path(_impl.ROOT) / "Info" / "input" / "pr_model.xlsx")
+    parser.add_argument("--template", type=Path, default=Path(_impl.ROOT) / "Info" / "input" / "ecc_template.xls")
+    parser.add_argument("--mapping", type=Path, default=Path(_impl.ROOT) / "Info" / "input" / "contract_info_reference.md")
+    parser.add_argument(
+        "--subcontractor-policy",
+        type=Path,
+        default=_impl.PR_POLICY_PATH,
+        help="Approved fail-closed subcontractor PR policy JSON",
+    )
+    parser.add_argument(
+        "--non-production-uat",
+        action="store_true",
+        help=(
+            "Explicitly generate visibly isolated non-production UAT ECC output "
+            "for PR_INPUT_READY or PRODUCTION profiles."
+        ),
+    )
+    return parser.parse_args()
+
+
+def _renderer_for_scope(scope):
+    """Route Planning only to the deterministic Planning renderer."""
+    return PLANNING_RENDERER if str(scope).strip().upper() == "PLANNING" else _ORIGINAL_RENDERER
 
 
 def _canonical_relocate_site_id(value):
@@ -74,6 +125,9 @@ def _source_mapping_status(record, canonical_field):
 def _renderer_row(record):
     row = _ORIGINAL_RENDERER_ROW(record)
     canonical_fields = _canonical_source_fields(record)
+    planning_selection = record.get("planning_selection", {})
+    if not isinstance(planning_selection, Mapping):
+        planning_selection = {}
     row.update(
         {
             "Antenna Evidence Governance": (
@@ -84,12 +138,32 @@ def _renderer_row(record):
             "TX SOW Details Mapping Status": _source_mapping_status(record, "tx_sow_details"),
             "NE SOW Details Mapping Status": _source_mapping_status(record, "ne_sow_details"),
             "FE SOW Details Mapping Status": _source_mapping_status(record, "fe_sow_details"),
+            "Subcon - Planning": record.get("pr_context", {}).get("subcontractor_planning", ""),
+            "Planning Contract Subcontractor": planning_selection.get("contract_subcontractor", ""),
+            "Planning PBOM Code": planning_selection.get("pbom_code", ""),
+            "Planning SOW": planning_selection.get("description", ""),
+            "Planning Unit": planning_selection.get("unit", ""),
+            "Planning Quantity": planning_selection.get("quantity", ""),
         }
     )
     sow = str(record.get("pr_context", {}).get("tx_sow_normalized", "") or "").strip().upper()
     if sow == "DECOM - RELO":
         row["customer site code"] = _canonical_relocate_site_id(row.get("customer site code", ""))
     return row
+
+
+def _scope_subcontractor(record, scope):
+    """Return the scope-specific source subcontractor without cross-scope fallback."""
+    if str(scope).strip().upper() == "PLANNING":
+        return planning_scope_subcontractor(record)
+    return _ORIGINAL_SCOPE_SUBCONTRACTOR(record, scope)
+
+
+def validate_candidate_contracts(records, scope, contract_mappings):
+    """Reuse shared contracts while normalizing Planning `_AA` only for lookup."""
+    if str(scope).strip().upper() == "PLANNING":
+        return validate_planning_candidate_contracts(records, contract_mappings)
+    return _ORIGINAL_VALIDATE_CANDIDATE_CONTRACTS(records, scope, contract_mappings)
 
 
 def _record_site_code(record):
@@ -138,10 +212,13 @@ def _assert_unique_project_site_codes(records):
 
 
 def _partition_records(records, scope, policy=None):
-    """Validate business identity, then delegate partitioning and retain audit sets."""
+    """Validate business identity, then apply the scope-specific partition flow."""
     global _LAST_PARTITIONS
     _assert_unique_project_site_codes(records)
-    _LAST_PARTITIONS = _ORIGINAL_PARTITION(records, scope, policy)
+    if str(scope).strip().upper() == "PLANNING":
+        _LAST_PARTITIONS = partition_planning_records(records)
+    else:
+        _LAST_PARTITIONS = _ORIGINAL_PARTITION(records, scope, policy)
     return _LAST_PARTITIONS
 
 
@@ -249,7 +326,7 @@ def _write_ignored_report(output, scope, records, run_mode=RUN_MODE_PRODUCTION):
 
 
 def _sync_dependencies() -> None:
-    """Propagate public test seams and audit wrappers."""
+    """Propagate public test seams and audit/Planning wrappers."""
     for name in (
         "resolve_du_profile",
         "build_canonical_records",
@@ -263,6 +340,7 @@ def _sync_dependencies() -> None:
     _impl.CANONICAL_RENDERER_COLUMNS = CANONICAL_RENDERER_COLUMNS
     _impl._partition_records = _partition_records
     _impl._renderer_row = _renderer_row
+    _impl._scope_subcontractor = _scope_subcontractor
 
 
 def _reconcile_summary(summary, scope, before_renderer=None):
@@ -318,6 +396,7 @@ def run(parsed):
     if not hasattr(parsed, "pr_model"):
         parsed.pr_model = baseline["path"]
     _sync_dependencies()
+    _impl.RENDERER = _renderer_for_scope(parsed.scope)
     before_renderer = snapshot_renderer_artifacts(Path(parsed.output))
     summary = _impl.run(parsed)
     summary["pr_model_baseline"] = {
@@ -355,7 +434,7 @@ def main() -> int:
             reconfigure(errors="backslashreplace")
     try:
         result = run(parse_args())
-        print(json.dumps(result, ensure_ascii=False, indent=2))
+        _safe_print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
     except PrModelBaselineError as error:
         payload = {"status": "ERROR", "code": error.code, "message": str(error), "details": error.details}
@@ -365,7 +444,7 @@ def main() -> int:
         payload = {"status": "ERROR", "code": error.code, "message": str(error), "details": error.details}
     except Exception as error:
         payload = {"status": "ERROR", "code": "CREATE_PR_FAILED", "message": str(error)}
-    print(json.dumps(payload, ensure_ascii=False, indent=2), file=sys.stderr)
+    _safe_print(json.dumps(payload, ensure_ascii=False, indent=2), file=sys.stderr)
     return 1
 
 

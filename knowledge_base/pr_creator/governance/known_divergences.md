@@ -4,17 +4,51 @@ This register is deliberately small. A divergence is not automatically a defect;
 
 | ID | Severity | Topic | Evidence | Current risk | Required decision |
 |---|---|---|---|---|---|
-| KB-DIV-001 | Critical | Contract and Purchasing Area source | The Skill states that `contract infor` in the PR Model is the source. The CLI loads `Info/input/contract_info_reference.md` for Region → Purchasing Area and Subcontractor → Contract. | PR output may be generated from a mapping source that differs from the documented source. | Select the authoritative source, define synchronisation ownership, and record a version/effective date. |
 | KB-DIV-002 | High | TI antenna category vocabulary | The Skill lists 0.3m/0.6m as small and separate 1.2m / 1.8m / 2.4m groups. Runtime categories are `0.3/0.6m`, `0.9/1.2m`, `1.8m`, `2.4m`, or an explicit size. | A PR Model might use labels that do not match runtime category values. | Confirm the approved PR Model category labels and add fixtures for every allowed antenna size. |
-| KB-DIV-003 | Critical | Fuzzy subcontractor matching | README says fuzzy matching is enabled. Runtime returns the closest match when similarity is above 0.6. The Skill instructs REVIEW_REQUIRED for missing reference values but does not approve silent fuzzy contract selection. | An incorrect subcontractor could receive another subcontractor's contract number. | Decide whether fuzzy matching is allowed only as a suggestion, or can directly generate ECC output. Require score, matched value and reviewer trace if retained. |
-| KB-DIV-004 | High | Implemented scope versus documented scope | Skill documents TSS, TI, Planning and Operation Backoffice. CLI argument validation supports only TSS and TI. | Users may plan an operational workflow around a scope that cannot run. | Keep external user guidance at TSS/TI only until a tested implementation exists. |
-| KB-DIV-006 | Medium | Rule lifecycle values not represented in the YAML `knowledge_status` enum | The README lifecycle (`README.md`, "Rule lifecycle" section) lists `IMPLEMENTED` and `REGRESSION_TESTED` as later lifecycle states. The `knowledge_status` enum in `rules/pr_creator_rule_register.yaml` currently permits only `EXTRACTED`, `VERIFIED`, `APPROVED`, `DEPRECATED`. | Rules with merged, regression-tested behaviour (for example `PRC-MODEL-002`, `PRC-DATA-001`, `PRC-TSS-001`, `PRC-OUT-004`) have no enum value that records "implemented and regression-tested" without changing the schema. This KB intentionally does not silently add enum values to close the gap. | Business/technical owners must confirm whether lifecycle evidence beyond `VERIFIED` should be added as new `knowledge_status` enum values, or represented as separate fields (for example `runtime_status: ACTIVE` plus an explicit `regression_evidence` field) so the schema change is deliberate and reviewed, not incidental to a documentation-only update. |
+| KB-DIV-003 | Critical | Fuzzy subcontractor matching | Generic non-Planning runtime behavior may use fuzzy subcontractor matching, while Planning explicitly permits only GCI/GTSB/GCI_AA/GTSB_AA and fails closed otherwise. | Outside Planning, an incorrect subcontractor could receive another subcontractor's contract number if fuzzy matching is not sufficiently governed. | Decide whether generic fuzzy matching is allowed only as a suggestion, or can directly generate ECC output. Require score, matched value and reviewer trace if retained. |
+| KB-DIV-006 | Medium | Rule lifecycle values not represented in the YAML `knowledge_status` enum | The README lifecycle lists `IMPLEMENTED` and `REGRESSION_TESTED` as later lifecycle states. The `knowledge_status` enum in `rules/pr_creator_rule_register.yaml` permits only `EXTRACTED`, `VERIFIED`, `APPROVED`, `DEPRECATED`. | Implemented and regression-tested rules have no single knowledge-status value representing that final lifecycle without changing the schema. | Decide whether to extend `knowledge_status`, or continue representing implementation through `runtime_status: ACTIVE` plus explicit regression evidence. |
 
 ## Resolved divergences
 
 | ID | Severity | Topic | Evidence | Resolution | Related PR / commit |
 |---|---|---|---|---|---|
-| KB-DIV-005 | High | Incomplete TI antenna input handling | Skill required REVIEW_REQUIRED when one size is blank. Runtime previously computed a category from the available side and carried a review remark. | PR #13 (`c3ccb22`, `8b538cc`) verified end-to-end that: (1) antenna-independent TI SOWs, `BBU Patching` and `MW IDU Patching`, do not require antenna data and generate normally with blank or one-sided antenna input (`scripts/generate_tss_pr_ecc.py:678-716`, `scripts/generate_tss_pr_ecc.py:1279-1321`); (2) antenna-dependent TI models (for example `MW Parallel Link`) still fail closed to REVIEW_REQUIRED on incomplete NE/FE data; (3) regression coverage exists proving both outcomes in `tests/test_ti_sow_matching.py:120-255` (`TestProductionTiSowMatching.test_ti_generator_requires_exact_sow_matches`). See `PRC-ANT-001` and `PRC-MODEL-002`. | PR #13, commits `c3ccb22`, `8b538cc`, `79bb5ba` |
+| KB-DIV-001 | Critical | Contract and Purchasing Area source | Runtime loads `Info/input/contract_info_reference.md`; Issue #34 confirmed Planning uses the same contract reference and `_AA` normalizes to base GCI/GTSB contract identity. | `Info/input/contract_info_reference.md` is the authoritative controlled source for Region → Purchasing Area and Subcontractor → Contract Number. | Issue #34 business-rule baseline, 2026-08-11 |
+| KB-DIV-004 | High | Implemented scope versus documented scope | Issue #34 implemented `--scope Planning` through `scripts/create_pr.py`, eight approved DU Profiles, deterministic selector, Planning-specific renderer, shared contract mapping and terminal reconciliation. Targeted all-DU raw four-header E2E, full repository regression and existing-scope regressions pass on the Issue #34 branch. | Planning is an active implemented runtime scope. Operation Backoffice remains a separate undefined/unsupported future scope and must not be inferred from Planning. | Issue #34 / PR #86 |
+| KB-DIV-005 | High | Incomplete TI antenna input handling | Regression coverage verifies antenna-independent TI SOWs are not blocked by missing antenna input while antenna-dependent models remain fail closed. | Existing approved TI behavior remains active and regression protected. | PR #13 and subsequent regressions |
+
+## Planning Issue #34 approved and implemented decision record
+
+```text
+Decision ID: ISSUE-34-PLANNING-ALL-DU
+Decision date: 2026-08-11
+Business owner: TX Program / Business Rule Owner
+Technical owner: PR Creator Maintainer
+Chosen policy:
+  - Planning applies to all eight supported DU Models.
+  - GCI/GTSB use 350001143904 for five full-planning DUs.
+  - GCI/GTSB use 350001143905 for TX Mini Project, MW EOS Swap and ZTE TX MINI.
+  - GCI_AA/GTSB_AA use only optional line item 350001042321 for every supported DU.
+  - _AA normalizes to GCI/GTSB only for contract identity.
+  - TX Planning Remarks is not a Planning PR decision input.
+  - contract_info_reference.md is authoritative for contract/purchasing mapping.
+Effective date: 2026-08-11
+Implementation:
+  - scripts/planning_pr_selector.py
+  - scripts/planning_pr_runtime.py
+  - scripts/planning_ecc_renderer.py
+  - scripts/create_pr.py official Planning entrypoint
+  - Planning canonical scope in canonical_site_validator.py / canonical_input_pipeline.py
+Regression evidence:
+  - tests/test_issue_34_planning_selector.py
+  - tests/test_issue_34_planning_profile_fields.py
+  - tests/test_issue_34_planning_canonical.py
+  - tests/test_issue_34_planning_eligibility.py
+  - tests/test_issue_34_planning_renderer.py
+  - tests/test_issue_34_planning_entrypoint.py
+  - tests/test_issue_34_planning_end_to_end.py
+  - full repository unittest regression
+Related PR / commit: PR #86 / Issue #34
+```
 
 ## Decision logging format
 
