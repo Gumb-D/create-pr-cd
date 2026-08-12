@@ -66,6 +66,11 @@ class SkillContractTests(unittest.TestCase):
                     "duplicate_blocked_count": 0,
                     "failed_count": 0,
                     "unaccounted_count": 0,
+                    "site_dispositions": [{
+                        "site_code": "SITE-001",
+                        "disposition": "GENERATED",
+                        "reason_code": "",
+                    }],
                 }
 
             with patch.object(contract, "run_domain", side_effect=lambda parsed, _cancellation: fake_run(parsed)):
@@ -74,8 +79,19 @@ class SkillContractTests(unittest.TestCase):
             result = json.loads((root / "result.json").read_text(encoding="utf-8"))
             self.assertEqual(result["status"], "succeeded")
             self.assertEqual(result["reconciliation"]["requestedCount"], 1)
-            self.assertEqual({item["path"] for item in result["outputs"]}, {"output/result.xlsx", "output/summary.json"})
+            self.assertEqual(result["reconciliation"]["siteDispositions"], [{
+                "siteCode": "SITE-001",
+                "disposition": "GENERATED",
+                "reasonCode": "",
+            }])
+            self.assertEqual(
+                {item["path"] for item in result["outputs"]},
+                {"output/result.xlsx", "output/summary.json", "output/CREATE_PR_DELIVERY_TSS.zip"},
+            )
             self.assertTrue(all(item["sha256"] for item in result["outputs"]))
+            archive = root / "output" / "CREATE_PR_DELIVERY_TSS.zip"
+            with contract.zipfile.ZipFile(archive) as bundle:
+                self.assertEqual(set(bundle.namelist()), {"result.xlsx", "summary.json"})
 
     def test_cancellation_is_terminal_and_does_not_start_domain_pipeline(self):
         with tempfile.TemporaryDirectory() as temp:

@@ -641,6 +641,9 @@ For implemented runtime scopes, the skill produces:
 3. `REVIEW_REQUIRED` issue list/evidence.
 4. Skipped duplicate/ignored summary.
 5. Terminal reconciliation evidence.
+6. `CREATE_PR_DELIVERY_<scope>.zip` containing every declared workbook and report.
+
+The platform contract also returns one terminal disposition for every selected source Site ID. These reconciliation Site IDs preserve the exact canonical source identity even where a separately approved renderer rule changes a workbook-facing display value.
 
 ## 21. Acceptance Criteria
 
