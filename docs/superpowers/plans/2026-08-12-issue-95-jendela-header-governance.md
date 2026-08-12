@@ -88,4 +88,3 @@
 - [ ] Request Codex PR review only after implementation is complete.
 - [ ] Resolve any actionable review blocker with local development and rerun verification.
 - [ ] Squash-merge only when checks and review are clean.
-
