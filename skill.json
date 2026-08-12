@@ -51,6 +51,10 @@
       "validationMessage": "Validate the source workbook before creating a Job.",
       "missingParametersMessage": "Enter at least one site code for Single site mode."
     },
+    "delivery": {
+      "archiveLabel": "Download ZIP",
+      "archivePattern": "CREATE_PR_DELIVERY_{scope}.zip"
+    },
     "uploads": {
       "site_data": {
         "title": "Upload & Validate",

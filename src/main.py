@@ -12,6 +12,7 @@ import subprocess
 import sys
 import threading
 import time
+import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -161,7 +162,25 @@ def output_item(path: Path, workspace: Path) -> dict[str, Any]:
     }
 
 
-def reconciliation(summary: dict[str, Any]) -> dict[str, int]:
+def create_delivery_archive(output: Path, scope: str, candidates: list[Path]) -> Path:
+    archive = output / f"CREATE_PR_DELIVERY_{scope}.zip"
+    with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as bundle:
+        for path in candidates:
+            bundle.write(path, path.relative_to(output).as_posix())
+    return archive
+
+
+def reconciliation(summary: dict[str, Any]) -> dict[str, Any]:
+    site_dispositions = []
+    for item in summary.get("site_dispositions", []):
+        site_code = str(item.get("site_code") or "").strip()
+        disposition = str(item.get("disposition") or "").strip().upper()
+        if site_code and disposition:
+            site_dispositions.append({
+                "siteCode": site_code,
+                "disposition": disposition,
+                "reasonCode": str(item.get("reason_code") or "").strip(),
+            })
     return {
         "requestedCount": int(summary.get("requested_count", 0) or 0),
         "generatedCount": int(summary.get("generated_count", 0) or 0),
@@ -170,6 +189,7 @@ def reconciliation(summary: dict[str, Any]) -> dict[str, int]:
         "duplicateBlockedCount": int(summary.get("duplicate_blocked_count", 0) or 0),
         "failedCount": int(summary.get("failed_count", 0) or 0),
         "unaccountedCount": int(summary.get("unaccounted_count", 0) or 0),
+        "siteDispositions": site_dispositions,
     }
 
 
@@ -340,6 +360,7 @@ def run(input_manifest: Path) -> int:
                 if path.is_file() and path not in candidates:
                     path.relative_to(output.resolve())
                     candidates.append(path)
+        candidates.append(create_delivery_archive(output.resolve(), scope, candidates).resolve())
         rec = reconciliation(summary)
         warning_count = rec["reviewRequiredCount"] + rec["approvedIgnoredCount"] + rec["duplicateBlockedCount"]
         status = "succeeded_with_warning" if warning_count else "succeeded"
