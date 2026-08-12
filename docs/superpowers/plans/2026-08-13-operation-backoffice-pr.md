@@ -38,7 +38,7 @@
 - `BackofficeTriggerDecision` carries `status`, `event_code`, `trigger_field`, `warning_codes`, and `reason_code`.
 - Produces constants for supported DU Models, event codes, PBOMs and the 800-hop boundary.
 
-- [ ] **Step 1: Write failing tests** for all fixed DU triggers, TX Rollout Decom/Integration groups, TX unknown-SOW Integrated fallback warning, CD consolidation MOCN/Decom groups, unknown CD SOW review, and exact-800 PBOM selection.
+- [ ] **Step 1: Write failing tests** for all fixed DU triggers, TX Rollout Decom/Integration groups, TX unknown-SOW and unavailable-L1 Integrated fallback warning, CD consolidation MOCN/Decom groups, unknown CD SOW review, and exact-800 PBOM selection.
 - [ ] **Step 2: Run** `python -m unittest tests.test_issue_94_backoffice_rules -v` and verify failures are feature-missing failures.
 - [ ] **Step 3: Implement minimal pure rule module** with dataclasses/constants and deterministic normalization.
 - [ ] **Step 4: Re-run targeted tests** and verify PASS.
@@ -177,3 +177,4 @@
 - [ ] **Step 6: Re-run current-head validation** after any review changes.
 - [ ] **Step 7: Squash merge with expected head SHA** only when current-head checks are clean and no actionable review blocker remains.
 - [ ] **Step 8: Confirm Issue #94 is closed completed and main contains the merge commit**.
+

@@ -209,7 +209,7 @@ Vendor/contract configuration must support effective dates and be resolved by Ba
 - Tracker duplicate identity cannot be resolved deterministically.
 - Required Backoffice PBOM missing from current production PR Model.
 - No valid Operation Backoffice vendor/contract for trigger date.
-- Governed SOW says one special flow but only the incompatible completion milestone is populated.
+- For `2023 TX Rollout`, when the SOW-selected milestone is unavailable but TX Integrated evidence is available, default to TX Integrated flow and record `BACKOFFICE_TX_SOW_DEFAULTED_TO_INTEGRATED`; do not block.\n- For `CD consolidation 2023`, incompatible MOCN/Decom evidence remains `REVIEW_REQUIRED` because no fallback was approved.
 
 Non-blocking warning:
 
@@ -268,3 +268,4 @@ Planning/TSS/TI selectors remain separate. Shared infrastructure may be reused, 
 - Reference files may remain local-only under `Info/reference/backoffice-pr`.
 - Project + DU Model remains DU Profile routing identity; View ID is evidence only.
 - Existing TSS/TI/Planning behavior must remain regression protected.
+
