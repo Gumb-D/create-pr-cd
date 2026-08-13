@@ -82,6 +82,19 @@ class TestBackofficeEntrypoint(unittest.TestCase):
                 create_pr._canonicalize_backoffice_sources([Path('a.xlsx')])
         self.assertEqual('BACKOFFICE_PROFILE_SCOPE_NOT_PRODUCTION',cm.exception.code)
 
+    def test_run_syncs_backoffice_writer_dependencies_before_orchestration(self):
+        parsed=Namespace(scope='BACKOFFICE',pr_model=Path('Info/input/pr_model.xlsx'))
+        baseline={'path':Path('Info/input/pr_model.xlsx'),'baseline_id':'x','version':'4.1','actual_sha256':'abc'}
+        observed={}
+        def fake_runner(parsed, baseline):
+            observed['columns']=tuple(create_pr._impl.CANONICAL_RENDERER_COLUMNS)
+            observed['row_fn']=create_pr._impl._renderer_row
+            return {'status':'SUCCESS'}
+        with patch.object(create_pr,'validate_pr_model_baseline',return_value=baseline), patch.object(create_pr,'_run_backoffice',side_effect=fake_runner):
+            create_pr.run(parsed)
+        self.assertIn('Backoffice PBOM Code',observed['columns'])
+        self.assertIs(create_pr._renderer_row,observed['row_fn'])
+
     def test_run_routes_backoffice_to_dedicated_orchestrator(self):
         parsed=Namespace(scope='BACKOFFICE',pr_model=Path('Info/input/pr_model.xlsx'))
         baseline={'path':Path('Info/input/pr_model.xlsx'),'baseline_id':'x','version':'4.1','actual_sha256':'abc'}
@@ -103,5 +116,41 @@ class TestBackofficeEntrypoint(unittest.TestCase):
         self.assertEqual('TX_MINI_INTEGRATION',row['Backoffice Event Code'])
         self.assertEqual(LOW,row['Backoffice PBOM Code'])
         self.assertEqual('W',row['Backoffice Warnings'])
+
+    def test_main_requires_all_sites_for_complete_monthly_tier(self):
+        parsed=Namespace(scope='BACKOFFICE',non_production_uat=False,backoffice_tracker=Path('tracker.xls'),billing_month='2026-07',site_data=Path('input'),site_code='S1',all_sites=False,output=Path('out'))
+        with patch.object(create_pr,'load_backoffice_tracker',return_value=tracker()), patch.object(create_pr,'_validate_backoffice_cadence',return_value='MAIN'), patch.object(create_pr,'_backoffice_source_files') as sources:
+            with self.assertRaises(create_pr.CreatePrError) as cm:
+                create_pr._run_backoffice(parsed,{'baseline_id':'x','version':'4.1','actual_sha256':'abc'})
+        self.assertEqual('BACKOFFICE_MAIN_REQUIRES_ALL_SITES',cm.exception.code)
+        sources.assert_not_called()
+
+    def test_review_required_fails_closed_before_renderer(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            parsed=Namespace(scope='BACKOFFICE',non_production_uat=False,backoffice_tracker=root/'tracker.xls',billing_month='2026-07',site_data=root/'input',site_code=None,all_sites=True,output=root/'out',pr_model=Path('Info/input/pr_model.xlsx'),template=Path('Info/input/ecc_template.xls'),mapping=Path('Info/input/contract_info_reference.md'))
+            review={'site':{'site_code':'S1','du_key':'DU1'},'identity':{'du_model_name':'CD consolidation 2023'},'pr_generation_decision':{'reason_code':'BACKOFFICE_CD_SOW_NOT_APPROVED','reason':'x'}}
+            partitions={'candidates':[{'site':{'site_code':'S2','du_key':'DU2'}}],'duplicates':[],'ignored':[],'review_required':[review],'summary':{'issue_type':'MAIN','pbom_code':LOW}}
+            with patch.object(create_pr,'load_backoffice_tracker',return_value=tracker()), patch.object(create_pr,'_validate_backoffice_cadence',return_value='MAIN'), patch.object(create_pr,'_backoffice_source_files',return_value=[root/'a.xlsx']), patch.object(create_pr,'_canonicalize_backoffice_sources',return_value=([review],[])), patch.object(create_pr._impl,'_select_records',return_value=[review]), patch.object(create_pr,'load_service_registry',return_value={}), patch.object(create_pr,'build_backoffice_entitlements',return_value=partitions), patch.object(create_pr._impl,'_write_review_report',return_value=root/'out'/'CANONICAL_REVIEW_REQUIRED_BACKOFFICE.csv'), patch.object(create_pr,'_write_ignored_report',return_value=None), patch.object(create_pr,'snapshot_renderer_artifacts') as snapshot:
+                with self.assertRaises(create_pr.CreatePrError) as cm:
+                    create_pr._run_backoffice(parsed,{'baseline_id':'x','version':'4.1','actual_sha256':'abc'})
+            self.assertEqual('BACKOFFICE_REVIEW_REQUIRED',cm.exception.code)
+            snapshot.assert_not_called()
+            self.assertFalse(any((root/'out').glob('* PR *.xlsx')))
+
+    def test_backoffice_reconciliation_uses_delivery_unit_plus_event_record_identity(self):
+        a={'site':{'site_code':'SAME','du_key':'DU1'},'backoffice_selection':{'event_code':'EVENT_A'},'pr_generation_decision':{'reason_code':'ELIGIBLE'}}
+        b={'site':{'site_code':'SAME','du_key':'DU2'},'backoffice_selection':{'event_code':'EVENT_B'},'pr_generation_decision':{'reason_code':'ELIGIBLE'}}
+        partitions={'candidates':[a,b],'duplicates':[],'ignored':[],'review_required':[]}
+        renderer={'record_dispositions':[
+            {'identity_key':'DU1|EVENT_A','disposition':'GENERATED','reason_code':'ECC_GENERATED'},
+            {'identity_key':'DU2|EVENT_B','disposition':'GENERATED','reason_code':'ECC_GENERATED'},
+        ]}
+        result=create_pr._build_backoffice_reconciliation([a,b],partitions,renderer)
+        self.assertEqual(2,result['requested_count'])
+        self.assertEqual(2,result['generated_count'])
+        self.assertEqual(0,result['review_required_count'])
+        self.assertEqual(0,result['unaccounted_count'])
+        self.assertEqual(2,len(result['record_dispositions']))
 
 if __name__=='__main__': unittest.main()

@@ -53,7 +53,7 @@
             "task_name": "Site Basic Info",
             "display_header": "customer site code"
           },
-          "mapping_status": "UNVERIFIED"
+          "mapping_status": "APPROVED"
         }
       ],
       "transforms": [
@@ -114,7 +114,7 @@
             "task_name": "Wireless RAN",
             "display_header": "TX SOW"
           },
-          "mapping_status": "UNVERIFIED"
+          "mapping_status": "APPROVED"
         }
       ],
       "transforms": [
@@ -347,6 +347,23 @@
             "wbs_stage": "Site DECOMM",
             "task_name": "Decomm",
             "display_header": "actual end time"
+          },
+          "mapping_status": "APPROVED"
+        }
+      ],
+      "transforms": [
+        "trim"
+      ]
+    },
+    "backoffice_sow_raw": {
+      "required": false,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "docata|ZDCSZ631062",
+            "wbs_stage": "Installation",
+            "task_name": "Wireless RAN",
+            "display_header": "SOW"
           },
           "mapping_status": "APPROVED"
         }
@@ -617,7 +634,7 @@
                 "task_name": "Site Basic Info",
                 "display_header": "customer site code"
               },
-              "mapping_status": "UNVERIFIED"
+              "mapping_status": "APPROVED"
             }
           ],
           "transforms": [
@@ -669,7 +686,7 @@
                 "task_name": "Wireless RAN",
                 "display_header": "TX SOW"
               },
-              "mapping_status": "UNVERIFIED"
+              "mapping_status": "APPROVED"
             }
           ],
           "transforms": [
@@ -842,9 +859,14 @@
   "scope_required_fields": {
     "BACKOFFICE": [
       "delivery_unit_code",
-      "tx_sow_raw",
+      "backoffice_sow_raw",
       "mocn_actual_end",
       "decom_actual_end"
+    ]
+  },
+  "review": {
+    "profile_notes": [
+      "BACKOFFICE scope is production-governed under Issue #94 using only APPROVED scope-required field fingerprints; overall profile remains DRAFT for unrelated scopes."
     ]
   }
 }

@@ -3,6 +3,7 @@ import tempfile
 import unittest
 from argparse import Namespace
 from pathlib import Path
+from unittest.mock import patch
 from openpyxl import Workbook, load_workbook
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 from backoffice_ecc_renderer import BackofficeRendererError, load_backoffice_model_item, render
@@ -71,5 +72,16 @@ class TestBackofficeRenderer(unittest.TestCase):
             make_model(model); make_input(inp,contract='WRONG'); make_mapping(mapping)
             with self.assertRaises(BackofficeRendererError): render(Namespace(site_data=inp,pr_model=model,mapping=mapping,output=out,scope='BACKOFFICE',du_model_name='TX Mini Project',all_sites=True,site_code=None))
             self.assertFalse(out.exists() and any(out.iterdir()))
+
+    def test_filename_uses_validated_provider_not_hardcoded_allstar(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d); model=root/'m.xlsx'; inp=root/'i.xlsx'; mapping=root/'map.md'; out=root/'out'
+            make_model(model); make_input(inp,contract='FUTURE-CONTRACT'); make_mapping(mapping)
+            wb=load_workbook(inp); ws=wb['data']; headers=[ws.cell(4,c).value for c in range(1,ws.max_column+1)]; ws.cell(5,headers.index('Backoffice Subcontractor')+1,'FutureVendor'); wb.save(inp); wb.close()
+            registry={'services':[{'effective_from':'2020-01-01','effective_to':None,'subcontractor':'FutureVendor','contract_number':'FUTURE-CONTRACT'}]}
+            with patch('backoffice_ecc_renderer.load_service_registry',return_value=registry):
+                paths=render(Namespace(site_data=inp,pr_model=model,mapping=mapping,output=out,scope='BACKOFFICE',du_model_name='TX Mini Project',all_sites=True,site_code=None))
+            self.assertIn('TX Outsource-FutureVendor Backoffice MAIN 2026-07 PR ',paths[0].name)
+            self.assertNotIn('Allstar',paths[0].name)
 
 if __name__=='__main__': unittest.main()

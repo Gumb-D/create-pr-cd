@@ -178,9 +178,9 @@ def _filter_sites(rows: list[dict[str, Any]], all_sites: bool, raw_site_codes: s
     return [row for row in rows if _text(row.get("customer site code")).upper() in wanted]
 
 
-def _validated_ecc_rows(rows: list[dict[str, Any]], pr_model: Path, mapping: Path) -> tuple[list[dict[str, Any]], str, str]:
+def _validated_ecc_rows(rows: list[dict[str, Any]], pr_model: Path, mapping: Path) -> tuple[list[dict[str, Any]], str, str, str]:
     if not rows:
-        return [], "", ""
+        return [], "", "", ""
     months = {_text(row.get("Backoffice Billing Month")) for row in rows}
     pboms = {_pbom(row.get("Backoffice PBOM Code")) for row in rows}
     issue_types = {_text(row.get("Backoffice Issue Type")).upper() for row in rows}
@@ -236,7 +236,10 @@ def _validated_ecc_rows(rows: list[dict[str, Any]], pr_model: Path, mapping: Pat
             "Remarks": f"{_text(row.get('Backoffice Event Code'))}; Trigger={trigger.isoformat()}; Billing={billing_month}; {issue_type}",
             "Source_Tx_SOW": _text(row.get("Backoffice Warnings")),
         })
-    return rendered, billing_month, issue_type
+    providers = {_text(row.get("Subcontractor")) for row in rendered}
+    if len(providers) != 1 or not next(iter(providers), ""):
+        raise BackofficeRendererError("BACKOFFICE_BATCH_MIXED_PROVIDER", "One Backoffice ECC batch must contain exactly one validated provider.")
+    return rendered, billing_month, issue_type, next(iter(providers))
 
 
 def _safe_filename(value: str) -> str:
@@ -268,11 +271,11 @@ def render(args: argparse.Namespace) -> list[Path]:
     if _text(args.scope).upper() != "BACKOFFICE":
         raise BackofficeRendererError("INVALID_SCOPE", "Backoffice renderer accepts only --scope BACKOFFICE.")
     rows = _filter_sites(_load_rows(args.site_data), args.all_sites, args.site_code)
-    ecc_rows, billing_month, issue_type = _validated_ecc_rows(rows, args.pr_model, args.mapping)
+    ecc_rows, billing_month, issue_type, provider = _validated_ecc_rows(rows, args.pr_model, args.mapping)
     if not ecc_rows:
         return []
     output = Path(args.output)
-    filename = _safe_filename(f"TX Outsource-Allstar Backoffice {issue_type} {billing_month} PR {datetime.now().strftime('%Y%m%d')}.xlsx")
+    filename = _safe_filename(f"TX Outsource-{provider} Backoffice {issue_type} {billing_month} PR {datetime.now().strftime('%Y%m%d')}.xlsx")
     path = output / filename
     output.mkdir(parents=True, exist_ok=True)
     _write_workbook(path, ecc_rows)

@@ -45,6 +45,7 @@ FIELD_PATHS = {
     "site_name": ("site", "site_name"),
     "du_key": ("site", "du_key"),
     "delivery_unit_code": ("site", "delivery_unit_code"),
+    "backoffice_sow_raw": ("pr_context", "backoffice_sow_raw"),
     "microwave_tx_cutover_date": ("pr_context", "microwave_tx_cutover_date"),
     "tx_integrated_actual_end": ("pr_context", "tx_integrated_actual_end"),
     "cut_over_actual_end": ("pr_context", "cut_over_actual_end"),
@@ -95,6 +96,7 @@ def empty_canonical_site_record() -> Dict[str, Any]:
         "site": {"site_code": "", "site_name": "", "du_key": "", "delivery_unit_code": ""},
         "pr_context": {
             "tx_sow_raw": "",
+            "backoffice_sow_raw": "",
             "tx_sow_normalized": "",
             "tx_upgrade_scope_raw": "",
             "tx_before_migration": "",

@@ -120,9 +120,9 @@ Business scope catalogue:
 
 Runtime status:
 
-- Official `scripts/create_pr.py` supports `--scope TSS`, `--scope TI`, and `--scope Planning`.
+- Official `scripts/create_pr.py` supports `--scope TSS`, `--scope TI`, `--scope Planning`, and `--scope BACKOFFICE`.
 - Planning is implemented under Issue #34 for all eight supported DU Models with approved profile mappings, deterministic selection, dedicated ECC rendering and terminal reconciliation.
-- Operation Backoffice remains a separate future scope and is not part of Issue #34.
+- Operation Backoffice is implemented independently under Issue #94 with milestone entitlement, monthly tier governance, external-tracker duplicate prevention, dedicated rendering, and Delivery Unit + Event reconciliation.
 
 Do not generate any scope unless the CLI is explicitly enabled for it.
 
@@ -135,7 +135,7 @@ The generator accepts either selected Site Code(s) or a Generate All option befo
 - If neither option is provided, the generator exits with an error.
 - If both options are provided, the generator exits with an error.
 - Filtering occurs before evaluating PR scope triggers.
-- Current official CLI supports site selection for `TSS`, `TI`, and `Planning`.
+- Current official CLI supports site selection for `TSS`, `TI`, `Planning`, and `BACKOFFICE`. Backoffice Main additionally requires `--all-sites` and a complete source directory so monthly tier aggregation cannot be undercounted.
 
 ### 3.2 Implementation Status
 
@@ -151,7 +151,7 @@ Current Planning status:
 - All-DU Planning business logic was approved on 2026-08-11 under Issue #34.
 - Planning canonical-field/profile mapping, selector, eligibility/duplicate prevention, contract normalization, official entrypoint, ECC renderer and terminal reconciliation are implemented.
 - Automated regression includes all eight DU Models from raw four-header export shape through ECC output.
-- Operation Backoffice is excluded from Issue #34.
+- Operation Backoffice remains excluded from Issue #34 Planning logic, but is implemented separately under Issue #94.
 
 ## 4. Scope Trigger Logic
 
@@ -225,7 +225,9 @@ no partial Planning ECC
 
 ### 4.4 Operation Backoffice PR Trigger
 
-Operation Backoffice remains a future scope and is not defined by Issue #34. Do not infer or enable it from the Planning implementation.
+Operation Backoffice is implemented under Issue #94. One eligible DU record equals one Hop and is triggered by the approved DU-specific completion milestone. `2023 TX Rollout` is SOW-driven between TX Integrated and L1 Approved; unknown TX SOW defaults to TX Integrated with `BACKOFFICE_TX_SOW_DEFAULTED_TO_INTEGRATED`. `CD consolidation 2023` is SOW-driven between MOCN and Decom. Unknown CD SOW blocks only when a governed CD milestone could affect the requested billing month; otherwise historical/not-yet-complete records are normal ignored outcomes.
+
+Any Backoffice `REVIEW_REQUIRED` result blocks the entire ECC run; partial Backoffice ECC output is prohibited.
 
 ## 5. Duplicate PR Prevention
 
@@ -249,7 +251,7 @@ Use these fields by scope:
 | TSS | `SubCon - TSS Team` |
 | TI | `SubCon - TI Team` |
 | Planning | `Subcon Planning` / `Subcon - Planning` |
-| Operation Backoffice | Future scope; not defined by Issue #34 |
+| Operation Backoffice | Effective-dated provider from `config/backoffice_service_registry.yaml` |
 
 Normalize ordinary subcontractor names before matching according to existing shared behavior.
 
@@ -421,7 +423,14 @@ The previous Planning PBOM `350001000403` is obsolete and must not be used.
 
 ### 8.4 Operation Backoffice Logic
 
-Operation Backoffice remains separate future scope. Do not reuse Issue #34 Planning logic to infer Operation Backoffice triggers, line items, subcontractor, or output behavior.
+Backoffice uses monthly volume tiering across all supported DU Models:
+
+```text
+<=800 Hops -> 350000592793
+>800 Hops  -> 350000592794
+```
+
+Exactly 800 uses `350000592793`. Main issuance is only for the immediately previous closed month and freezes the monthly PBOM. Supplementary issuance reuses the frozen Main PBOM from the authoritative `TX Outsource Details` tracker history. Duplicate identity is `Delivery Unit Code + Canonical Backoffice Event`, never Site ID. Do not reuse Issue #34 Planning logic for Backoffice.
 
 ## 9. Mandatory / Optional Line Item Rule
 
@@ -459,7 +468,7 @@ Default quantity rules:
 | TSS | Use approved TSS model/scope-specific rule |
 | TI | Use approved TI rule |
 | Planning | Always `1` per selected Planning line item |
-| Operation Backoffice | Future scope; not defined here |
+| Operation Backoffice | Always `1` Hop per eligible DU entitlement |
 
 ## 11. Contract and Purchasing Area Logic
 
@@ -532,7 +541,7 @@ Output filename must include the actual resolved DU Model, not hardcode TX Mini 
 
 ### 13.2 Operation Backoffice
 
-Future scope. Do not define or enable its grouping as part of Issue #34.
+Backoffice Main aggregates all supported DU Models for one billing month before tier selection. Supplementary uses the frozen Main tier. ECC reconciliation is by normalized `Delivery Unit Code + Canonical Backoffice Event`. Provider/contract are effective-dated by trigger date. Backoffice remains isolated from Issue #34 Planning grouping rules.
 
 ## 14. ECC File Naming Convention
 
@@ -626,11 +635,13 @@ The agent/runtime must not:
 7. Treat `GCI_AA` or `GTSB_AA` as separate contracts.
 8. Combine `350001042321` with `350001143904` or `350001143905` for the same Planning site.
 9. Commit raw iEPMS reference exports.
-10. Enable Operation Backoffice while implementing or operating Issue #34 Planning scope.
+10. Reuse or infer Issue #34 Planning eligibility, PBOM, duplicate, or subcontractor rules for Operation Backoffice.
 
 ## 19. Expected Inputs from User / Business Owner
 
 Controlled production inputs remain the governed runtime inputs. Business discovery may additionally use local reference exports under `Info/reference/planning-pr/` to verify four-layer field fingerprints and golden outcomes.
+
+Operation Backoffice production additionally requires `--backoffice-tracker` pointing to the authoritative tracker and `--billing-month YYYY-MM`. Backoffice Main requires `--all-sites` and a source directory containing the complete supported DU exports for monthly aggregation.
 
 ## 20. Expected Outputs
 
@@ -661,4 +672,4 @@ Planning implementation is successful only when all of the following remain impl
 10. Unknown Planning subcon fails closed without fuzzy substitution or partial ECC.
 11. Existing TSS/TI behavior remains unchanged.
 12. Official `scripts/create_pr.py --scope Planning` remains protected by DU Profile lifecycle, all-DU regression and terminal reconciliation controls.
-13. Operation Backoffice remains out of scope.
+13. Operation Backoffice remains isolated from Planning and is governed separately by Issue #94 regression coverage.

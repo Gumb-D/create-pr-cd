@@ -102,7 +102,7 @@ Use `Decom actual end` for:
 - `Maintain USP MOCN(Dismantle Passive)`
 - `Decomm, MOCN By Other Vendor`
 
-Unknown CD consolidation SOW is not approved for automatic fallback and must be `REVIEW_REQUIRED`.
+Unknown CD consolidation SOW is not approved for automatic fallback. It is `REVIEW_REQUIRED` when either governed CD milestone could place the entitlement in the requested billing month. If neither milestone is complete, the record is `NOT_YET_ELIGIBLE`; if all completed governed CD milestones are outside the requested billing month, the record is ignored as `BACKOFFICE_OUTSIDE_BILLING_MONTH`.
 
 ## Entitlement and billing month
 
@@ -209,7 +209,8 @@ Vendor/contract configuration must support effective dates and be resolved by Ba
 - Tracker duplicate identity cannot be resolved deterministically.
 - Required Backoffice PBOM missing from current production PR Model.
 - No valid Operation Backoffice vendor/contract for trigger date.
-- For `2023 TX Rollout`, when the SOW-selected milestone is unavailable but TX Integrated evidence is available, default to TX Integrated flow and record `BACKOFFICE_TX_SOW_DEFAULTED_TO_INTEGRATED`; do not block.\n- For `CD consolidation 2023`, incompatible MOCN/Decom evidence remains `REVIEW_REQUIRED` because no fallback was approved.
+- For `2023 TX Rollout`, when the SOW-selected milestone is unavailable but TX Integrated evidence is available, default to TX Integrated flow and record `BACKOFFICE_TX_SOW_DEFAULTED_TO_INTEGRATED`; do not block.
+- For `CD consolidation 2023`, incompatible MOCN/Decom evidence remains `REVIEW_REQUIRED` because no fallback was approved.
 
 Non-blocking warning:
 

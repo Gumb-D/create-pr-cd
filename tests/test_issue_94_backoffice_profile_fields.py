@@ -27,7 +27,7 @@ def load(pid):
 class TestBackofficeProfileFields(unittest.TestCase):
     def test_backoffice_base_scope_is_canonical(self):
         self.assertEqual(('site_code','delivery_unit_code'), SCOPE_REQUIRED_FIELDS['BACKOFFICE'])
-        for name in ('delivery_unit_code','microwave_tx_cutover_date','tx_integrated_actual_end','cut_over_actual_end','site_integrated_actual_end','l1_approved_actual_end','mocn_actual_end','decom_actual_end'):
+        for name in ('delivery_unit_code','backoffice_sow_raw','microwave_tx_cutover_date','tx_integrated_actual_end','cut_over_actual_end','site_integrated_actual_end','l1_approved_actual_end','mocn_actual_end','decom_actual_end'):
             self.assertIn(name,FIELD_PATHS)
 
     def test_fixed_trigger_profiles_have_approved_real_fingerprints(self):
@@ -58,7 +58,12 @@ class TestBackofficeProfileFields(unittest.TestCase):
     def test_cd_consolidation_maps_mocn_and_decom(self):
         p=load('celcomdigi_cd_consolidation_2023_pr_v1')
         self.assertEqual('PRODUCTION',p['scope_status']['BACKOFFICE'])
-        self.assertEqual(['delivery_unit_code','tx_sow_raw','mocn_actual_end','decom_actual_end'],p['scope_required_fields']['BACKOFFICE'])
+        self.assertEqual(['delivery_unit_code','backoffice_sow_raw','mocn_actual_end','decom_actual_end'],p['scope_required_fields']['BACKOFFICE'])
+        site=next(c for c in p['field_mapping']['site_code']['source_candidates'] if c['fingerprint']['field_code']=='site|fix00012|8359047522524182050|8359047522524230651')
+        self.assertEqual('APPROVED',site['mapping_status'])
+        tx=next(c for c in p['field_mapping']['backoffice_sow_raw']['source_candidates'] if c['fingerprint']['wbs_stage']=='Installation' and c['fingerprint']['task_name']=='Wireless RAN')
+        self.assertEqual('APPROVED',tx['mapping_status'])
+        self.assertEqual(('docata|ZDCSZ631062','Installation','Wireless RAN','SOW'),(tx['fingerprint']['field_code'],tx['fingerprint']['wbs_stage'],tx['fingerprint']['task_name'],tx['fingerprint']['display_header']))
         expected={
             'mocn_actual_end':('WPC000011434|AC0000084313|actual_end_date','MOCN Consolidation','CD consolidation (CD MOCN)','actual end time'),
             'decom_actual_end':('WPC000011433|AC0000084312|actual_end_date','Site DECOMM','Decomm','actual end time'),

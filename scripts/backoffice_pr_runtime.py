@@ -133,9 +133,45 @@ def build_backoffice_entitlements(
         identity = record.get("identity", {})
         context = record.get("pr_context", {})
         du_model = _text(identity.get("du_model_name"))
-        sow = _text(context.get("tx_sow_raw") or context.get("tx_sow_normalized"))
+        if du_model == "CD consolidation 2023":
+            sow = _text(context.get("backoffice_sow_raw"))
+        else:
+            sow = _text(context.get("tx_sow_raw") or context.get("tx_sow_normalized"))
         decision = resolve_backoffice_trigger(du_model, sow)
         if decision.status != "RESOLVED":
+            if du_model == "CD consolidation 2023":
+                possible_dates = []
+                invalid_fields = []
+                for field_name in ("mocn_actual_end", "decom_actual_end"):
+                    raw_possible = context.get(field_name)
+                    if not _text(raw_possible):
+                        continue
+                    try:
+                        parsed_possible = _parse_trigger_date(raw_possible)
+                    except ValueError:
+                        invalid_fields.append(field_name)
+                        continue
+                    if parsed_possible is not None:
+                        possible_dates.append(parsed_possible)
+                if invalid_fields:
+                    _review(
+                        record, partitions, "BACKOFFICE_TRIGGER_DATE_INVALID",
+                        "CD consolidation contains an invalid governed milestone date while SOW classification is unresolved.",
+                    )
+                    continue
+                if not possible_dates:
+                    _ignored(
+                        record, partitions, "NOT_YET_ELIGIBLE",
+                        "Neither governed CD consolidation Backoffice milestone has an Actual End Date.",
+                    )
+                    continue
+                possible_months = {_month(value) for value in possible_dates}
+                if billing_month not in possible_months:
+                    _ignored(
+                        record, partitions, "BACKOFFICE_OUTSIDE_BILLING_MONTH",
+                        "Completed governed CD consolidation milestones are outside the requested billing month.",
+                    )
+                    continue
             _review(record, partitions, _text(decision.reason_code) or "BACKOFFICE_TRIGGER_UNRESOLVED", "Backoffice trigger could not be resolved from the approved DU/SOW rules.")
             continue
 

@@ -72,6 +72,12 @@ class TestBackofficeRuntime(unittest.TestCase):
         self.assertEqual('TX_ROLLOUT_INTEGRATION',sel['event_code'])
         self.assertIn('BACKOFFICE_TX_SOW_DEFAULTED_TO_INTEGRATED',sel['warnings'])
 
+    def test_cd_uses_dedicated_backoffice_sow_not_tx_sow(self):
+        r=rec('CD consolidation 2023',sow='Decom',backoffice_sow_raw='Modernization',mocn_actual_end='2026-07-10',decom_actual_end='2026-06-10')
+        out=build_backoffice_entitlements([r],'2026-07',empty_tracker(),REG)
+        self.assertEqual(1,len(out['candidates']))
+        self.assertEqual('CD_CONSOLIDATION_MOCN',out['candidates'][0]['backoffice_selection']['event_code'])
+
     def test_invalid_trigger_date_requires_review(self):
         r=rec(tx_integrated_actual_end='not-a-date')
         out=build_backoffice_entitlements([r],'2026-07',empty_tracker(),REG)
@@ -99,5 +105,49 @@ class TestBackofficeRuntime(unittest.TestCase):
     def test_registry_file_loads_current_backoffice_service(self):
         reg=load_service_registry(Path('config/backoffice_service_registry.yaml'))
         self.assertTrue(any(x['subcontractor']=='Allstar' and x['contract_number']=='S1MY2024042501WBF1' for x in reg['services']))
+
+    def test_cd_unknown_sow_with_only_historical_milestones_is_ignored_not_reviewed(self):
+        r=rec('CD consolidation 2023',sow='',mocn_actual_end='2024-05-10',decom_actual_end='2025-02-11')
+        r['pr_context']['backoffice_sow_raw']=''
+        out=build_backoffice_entitlements([r],'2026-07',empty_tracker(),REG)
+        self.assertEqual(0,len(out['review_required']))
+        self.assertEqual(1,len(out['ignored']))
+        self.assertEqual('BACKOFFICE_OUTSIDE_BILLING_MONTH',out['ignored'][0]['pr_generation_decision']['reason_code'])
+
+    def test_cd_unknown_sow_with_no_completed_milestone_is_not_yet_eligible(self):
+        r=rec('CD consolidation 2023',sow='')
+        r['pr_context']['backoffice_sow_raw']=''
+        out=build_backoffice_entitlements([r],'2026-07',empty_tracker(),REG)
+        self.assertEqual(0,len(out['review_required']))
+        self.assertEqual(1,len(out['ignored']))
+        self.assertEqual('NOT_YET_ELIGIBLE',out['ignored'][0]['pr_generation_decision']['reason_code'])
+
+    def test_cd_unknown_sow_with_possible_current_month_milestone_requires_review(self):
+        r=rec('CD consolidation 2023',sow='',mocn_actual_end='2026-07-10',decom_actual_end='2025-02-11')
+        r['pr_context']['backoffice_sow_raw']=''
+        out=build_backoffice_entitlements([r],'2026-07',empty_tracker(),REG)
+        self.assertEqual(1,len(out['review_required']))
+        self.assertEqual('BACKOFFICE_CD_SOW_NOT_APPROVED',out['review_required'][0]['pr_generation_decision']['reason_code'])
+
+    def test_all_eleven_governed_event_paths_resolve_to_current_month_candidates(self):
+        cases = [
+            (rec('2023 Celcomdigi BAU',du='D1',site='S1',microwave_tx_cutover_date='2026-07-01'), 'BAU_2023_CUTOVER'),
+            (rec('2024 Celcomdigi BAU',du='D2',site='S2',microwave_tx_cutover_date='2026-07-02'), 'BAU_2024_CUTOVER'),
+            (rec('Celcomdigi USP',du='D3',site='S3',microwave_tx_cutover_date='2026-07-03'), 'USP_CUTOVER'),
+            (rec('TX Mini Project',du='D4',site='S4',tx_integrated_actual_end='2026-07-04'), 'TX_MINI_INTEGRATION'),
+            (rec('Jendela TX Migration',du='D5',site='S5',cut_over_actual_end='2026-07-05'), 'JENDELA_CUTOVER'),
+            (rec('MW EOS Swap',du='D6',site='S6',site_integrated_actual_end='2026-07-06'), 'MW_EOS_INTEGRATION'),
+            (rec('ZTE TX MINI',du='D7',site='S7',site_integrated_actual_end='2026-07-07'), 'ZTE_TX_MINI_INTEGRATION'),
+            (rec('2023 TX Rollout',du='D8',site='S8',sow='MW Swap',tx_integrated_actual_end='2026-07-08'), 'TX_ROLLOUT_INTEGRATION'),
+            (rec('2023 TX Rollout',du='D9',site='S9',sow='Decom',l1_approved_actual_end='2026-07-09'), 'TX_ROLLOUT_DECOM'),
+            (rec('CD consolidation 2023',du='D10',site='S10',backoffice_sow_raw='Modernization',mocn_actual_end='2026-07-10'), 'CD_CONSOLIDATION_MOCN'),
+            (rec('CD consolidation 2023',du='D11',site='S11',backoffice_sow_raw='Decomm',decom_actual_end='2026-07-11'), 'CD_CONSOLIDATION_DECOM'),
+        ]
+        out=build_backoffice_entitlements([row for row,_ in cases],'2026-07',empty_tracker(),REG)
+        self.assertEqual(11,len(out['candidates']))
+        self.assertEqual(
+            [event for _,event in cases],
+            [row['backoffice_selection']['event_code'] for row in out['candidates']],
+        )
 
 if __name__=='__main__': unittest.main()
