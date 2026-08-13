@@ -7,10 +7,13 @@ import csv
 import json
 import re
 import sys
+from datetime import date, datetime
 from collections.abc import Mapping
 from pathlib import Path
 
 import create_pr_impl as _impl
+from backoffice_tracker import BackofficeTrackerError, load_backoffice_tracker
+from backoffice_pr_runtime import build_backoffice_entitlements, load_service_registry
 from planning_pr_runtime import (
     partition_planning_records,
     planning_scope_subcontractor,
@@ -34,6 +37,8 @@ _ORIGINAL_SCOPE_SUBCONTRACTOR = _impl._scope_subcontractor
 _ORIGINAL_VALIDATE_CANDIDATE_CONTRACTS = _impl.validate_candidate_contracts
 _ORIGINAL_RENDERER = Path(_impl.RENDERER)
 PLANNING_RENDERER = Path(_impl.ROOT) / "scripts" / "planning_ecc_renderer.py"
+BACKOFFICE_RENDERER = Path(_impl.ROOT) / "scripts" / "backoffice_ecc_renderer.py"
+BACKOFFICE_SERVICE_REGISTRY = Path(_impl.ROOT) / "config" / "backoffice_service_registry.yaml"
 _LAST_PARTITIONS = None
 
 _ANTENNA_EVIDENCE_RENDERER_COLUMNS = (
@@ -52,9 +57,22 @@ _PLANNING_RENDERER_COLUMNS = (
     "Planning Unit",
     "Planning Quantity",
 )
+
+_BACKOFFICE_RENDERER_COLUMNS = (
+    "Backoffice Event Code",
+    "Backoffice Trigger Date",
+    "Backoffice Billing Month",
+    "Backoffice PBOM Code",
+    "Backoffice Unit",
+    "Backoffice Quantity",
+    "Backoffice Subcontractor",
+    "Backoffice Contract Number",
+    "Backoffice Issue Type",
+    "Backoffice Warnings",
+)
 CANONICAL_RENDERER_COLUMNS = tuple(_impl.CANONICAL_RENDERER_COLUMNS) + tuple(
     column
-    for column in (*_ANTENNA_EVIDENCE_RENDERER_COLUMNS, *_PLANNING_RENDERER_COLUMNS)
+    for column in (*_ANTENNA_EVIDENCE_RENDERER_COLUMNS, *_PLANNING_RENDERER_COLUMNS, *_BACKOFFICE_RENDERER_COLUMNS)
     if column not in _impl.CANONICAL_RENDERER_COLUMNS
 )
 
@@ -64,7 +82,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Identify DU Profile, canonicalize iEPMS data, and generate ECC.")
     parser.add_argument("--site-data", required=True, type=Path, help="Original four-header iEPMS export")
     parser.add_argument("--output", required=True, type=Path, help="ECC output directory")
-    parser.add_argument("--scope", required=True, choices=["TSS", "TI", "PLANNING"], type=str.upper)
+    parser.add_argument("--scope", required=True, choices=["TSS", "TI", "PLANNING", "BACKOFFICE"], type=str.upper)
     parser.add_argument("--site-code", help="Comma-separated site codes")
     parser.add_argument("--all-sites", action="store_true")
     parser.add_argument("--pr-model", type=Path, default=Path(_impl.ROOT) / "Info" / "input" / "pr_model.xlsx")
@@ -76,6 +94,8 @@ def parse_args() -> argparse.Namespace:
         default=_impl.PR_POLICY_PATH,
         help="Approved fail-closed subcontractor PR policy JSON",
     )
+    parser.add_argument("--backoffice-tracker", type=Path, help="Authoritative TX Outsource & NOC Database.xls for BACKOFFICE duplicate/tier governance")
+    parser.add_argument("--billing-month", help="BACKOFFICE billing month in YYYY-MM")
     parser.add_argument(
         "--non-production-uat",
         action="store_true",
@@ -89,8 +109,48 @@ def parse_args() -> argparse.Namespace:
 
 def _renderer_for_scope(scope):
     """Route Planning only to the deterministic Planning renderer."""
-    return PLANNING_RENDERER if str(scope).strip().upper() == "PLANNING" else _ORIGINAL_RENDERER
+    scope_name = str(scope).strip().upper()
+    if scope_name == "PLANNING":
+        return PLANNING_RENDERER
+    if scope_name == "BACKOFFICE":
+        return BACKOFFICE_RENDERER
+    return _ORIGINAL_RENDERER
 
+
+
+def _validate_backoffice_cadence(billing_month, tracker_snapshot, today=None):
+    current = today or date.today()
+    try:
+        month = datetime.strptime(str(billing_month), "%Y-%m").date().replace(day=1)
+    except ValueError as error:
+        raise CreatePrError("BACKOFFICE_BILLING_MONTH_INVALID", "Backoffice billing month must use YYYY-MM.") from error
+    current_month = current.replace(day=1)
+    if month >= current_month:
+        raise CreatePrError("BACKOFFICE_BILLING_MONTH_NOT_CLOSED", "Backoffice production issuance requires a closed billing month.")
+    if str(billing_month) in tracker_snapshot.month_pbom:
+        return "SUPPLEMENTARY"
+    if current_month.month == 1:
+        previous = date(current_month.year - 1, 12, 1)
+    else:
+        previous = date(current_month.year, current_month.month - 1, 1)
+    if month != previous:
+        raise CreatePrError("BACKOFFICE_MAIN_BILLING_MONTH_NOT_PREVIOUS", "A Backoffice Main PR can only be issued for the immediately previous calendar month.")
+    return "MAIN"
+
+
+def _backoffice_source_files(path, issue_type):
+    source = Path(path)
+    if source.is_file():
+        if str(issue_type).upper() == "MAIN":
+            raise CreatePrError("BACKOFFICE_MAIN_REQUIRES_SOURCE_DIRECTORY", "Backoffice Main PR requires a source directory so all supported DU exports can be aggregated before tier selection.")
+        return [source]
+    if not source.is_dir():
+        raise CreatePrError("BACKOFFICE_SOURCE_NOT_FOUND", f"Backoffice source path not found: {source}")
+    allowed = {".xlsx", ".xlsm", ".csv"}
+    files = sorted(p for p in source.iterdir() if p.is_file() and p.suffix.lower() in allowed and not p.name.startswith("~$"))
+    if not files:
+        raise CreatePrError("BACKOFFICE_SOURCE_DIRECTORY_EMPTY", "Backoffice source directory contains no supported iEPMS exports.")
+    return files
 
 def _canonical_relocate_site_id(value):
     """Render the approved Decom - Relo Site ID without changing source identity."""
@@ -144,6 +204,16 @@ def _renderer_row(record):
             "Planning SOW": planning_selection.get("description", ""),
             "Planning Unit": planning_selection.get("unit", ""),
             "Planning Quantity": planning_selection.get("quantity", ""),
+            "Backoffice Event Code": record.get("backoffice_selection", {}).get("event_code", ""),
+            "Backoffice Trigger Date": record.get("backoffice_selection", {}).get("trigger_date", ""),
+            "Backoffice Billing Month": record.get("backoffice_selection", {}).get("billing_month", ""),
+            "Backoffice PBOM Code": record.get("backoffice_selection", {}).get("pbom_code", ""),
+            "Backoffice Unit": record.get("backoffice_selection", {}).get("unit", ""),
+            "Backoffice Quantity": record.get("backoffice_selection", {}).get("quantity", ""),
+            "Backoffice Subcontractor": record.get("backoffice_selection", {}).get("subcontractor", ""),
+            "Backoffice Contract Number": record.get("backoffice_selection", {}).get("contract_number", ""),
+            "Backoffice Issue Type": record.get("backoffice_selection", {}).get("issue_type", ""),
+            "Backoffice Warnings": " | ".join(record.get("backoffice_selection", {}).get("warnings", []) or []),
         }
     )
     sow = str(record.get("pr_context", {}).get("tx_sow_normalized", "") or "").strip().upper()
@@ -221,6 +291,143 @@ def _partition_records(records, scope, policy=None):
         _LAST_PARTITIONS = _ORIGINAL_PARTITION(records, scope, policy)
     return _LAST_PARTITIONS
 
+
+
+def _validate_backoffice_source_identity(records):
+    """Backoffice duplicate identity is governed later as Delivery Unit Code + canonical event.
+
+    Site ID is intentionally not a uniqueness key for this scope.
+    """
+    return None
+
+
+def _canonicalize_backoffice_sources(sources):
+    all_records = []
+    metadata = []
+    for source in sources:
+        resolution = resolve_du_profile(
+            Path(source),
+            profile_root=_impl.PROFILE_ROOT,
+            identity_registry_path=_impl.IDENTITY_REGISTRY,
+            scope="BACKOFFICE",
+        )
+        scope_status = str(resolution["profile"].get("scope_status", {}).get("BACKOFFICE", "")).strip().upper()
+        if scope_status != "PRODUCTION":
+            raise CreatePrError(
+                "BACKOFFICE_PROFILE_SCOPE_NOT_PRODUCTION",
+                f"DU Profile Backoffice scope is {scope_status or '(blank)'}; production Backoffice generation is blocked.",
+                {"source": str(source), "scope_status": scope_status},
+            )
+        records, item_metadata = build_canonical_records(
+            input_path=Path(source),
+            profile=resolution["profile"],
+            inventory=resolution["inventory"],
+            header_hash=resolution["header_hash"],
+            scope="BACKOFFICE",
+            sow_registry_path=_impl.SOW_REGISTRY,
+        )
+        all_records.extend(records)
+        metadata.append(item_metadata)
+    return all_records, metadata
+
+
+def _run_backoffice(parsed, baseline):
+    global _LAST_PARTITIONS
+    if bool(getattr(parsed, "non_production_uat", False)):
+        raise CreatePrError("BACKOFFICE_PRODUCTION_ONLY", "Operation Backoffice PR is governed as production-only in Issue #94.")
+    tracker_path = getattr(parsed, "backoffice_tracker", None)
+    billing_month = str(getattr(parsed, "billing_month", "") or "").strip()
+    if not tracker_path:
+        raise CreatePrError("BACKOFFICE_TRACKER_REQUIRED", "--backoffice-tracker is required for Backoffice duplicate and tier governance.")
+    if not billing_month:
+        raise CreatePrError("BACKOFFICE_BILLING_MONTH_REQUIRED", "--billing-month YYYY-MM is required for Backoffice generation.")
+    try:
+        tracker_snapshot = load_backoffice_tracker(Path(tracker_path))
+    except BackofficeTrackerError as error:
+        raise CreatePrError(error.code, str(error)) from error
+    issue_type = _validate_backoffice_cadence(billing_month, tracker_snapshot)
+    sources = _backoffice_source_files(parsed.site_data, issue_type)
+    records, metadata = _canonicalize_backoffice_sources(sources)
+    selected = _impl._select_records(records, _impl._parse_site_codes(parsed.site_code), parsed.all_sites)
+    _validate_backoffice_source_identity(selected)
+    service_registry = load_service_registry(BACKOFFICE_SERVICE_REGISTRY)
+    partitions = build_backoffice_entitlements(selected, billing_month, tracker_snapshot, service_registry)
+    _LAST_PARTITIONS = partitions
+
+    requested_output = Path(parsed.output).resolve()
+    requested_output.mkdir(parents=True, exist_ok=True)
+    review_path = _impl._write_review_report(requested_output, "BACKOFFICE", partitions["review_required"], RUN_MODE_PRODUCTION)
+    duplicate_path = _write_ignored_report(requested_output, "BACKOFFICE_DUPLICATES", partitions["duplicates"], RUN_MODE_PRODUCTION)
+    ignored_path = _write_ignored_report(requested_output, "BACKOFFICE", partitions["ignored"], RUN_MODE_PRODUCTION)
+    before_renderer = snapshot_renderer_artifacts(requested_output)
+
+    if partitions["candidates"]:
+        import subprocess
+        import tempfile
+        with tempfile.TemporaryDirectory(prefix="create-pr-backoffice-") as temp_dir:
+            canonical_input = Path(temp_dir) / "canonical_backoffice_input.xlsx"
+            _impl._write_renderer_input(canonical_input, partitions["candidates"])
+            command = [
+                sys.executable, str(BACKOFFICE_RENDERER),
+                "--site-data", str(canonical_input),
+                "--pr-model", str(parsed.pr_model),
+                "--template", str(parsed.template),
+                "--mapping", str(parsed.mapping),
+                "--output", str(requested_output),
+                "--scope", "BACKOFFICE",
+                "--all-sites",
+                "--du-model-name", "MULTI_DU_BACKOFFICE",
+            ]
+            result = subprocess.run(command, cwd=_impl.ROOT, text=True, encoding="utf-8", errors="replace", capture_output=True, check=False)
+            if result.stdout:
+                _safe_print(result.stdout, end="")
+            if result.stderr:
+                _safe_print(result.stderr, file=sys.stderr, end="")
+            if result.returncode != 0:
+                raise CreatePrError("ECC_RENDERER_FAILED", "Validated Backoffice candidates could not be rendered to ECC.", {"exit_code": result.returncode})
+
+    touched = touched_renderer_artifacts(requested_output, before_renderer)
+    renderer = collect_renderer_reconciliation(
+        requested_output,
+        partitions["candidates"],
+        "BACKOFFICE",
+        lambda record: _renderer_row(record).get("customer site code", ""),
+        created_paths=touched,
+    )
+    reconciliation = _build_site_reconciliation(selected, partitions, renderer)
+    _assert_reconciliation_success(reconciliation)
+    summary = {
+        "status": "SUCCESS",
+        "entrypoint": "create_pr.py",
+        "run_mode": RUN_MODE_PRODUCTION,
+        "scope": "BACKOFFICE",
+        "billing_month": billing_month,
+        "issue_type": partitions["summary"]["issue_type"],
+        "pbom_code": partitions["summary"]["pbom_code"],
+        "source_files": [str(path.resolve()) for path in sources],
+        "source_file_count": len(sources),
+        "source_record_count": len(records),
+        "selected_record_count": len(selected),
+        "candidate_count": len(partitions["candidates"]),
+        "duplicate_count": len(partitions["duplicates"]),
+        "ignored_count": len(partitions["ignored"]),
+        "review_required_count": len(partitions["review_required"]),
+        "review_required_reason_distribution": reason_distribution(partitions["review_required"]),
+        "review_report": str(review_path.resolve()) if review_path else None,
+        "duplicate_report": str(duplicate_path.resolve()) if duplicate_path else None,
+        "ignored_report": str(ignored_path.resolve()) if ignored_path else None,
+        "tracker": str(Path(tracker_path).resolve()),
+        "service_registry": str(BACKOFFICE_SERVICE_REGISTRY.resolve()),
+        "output_root": str(requested_output),
+        "created_files": [str(path.resolve()) for path in touched if path.suffix.lower() == ".xlsx"],
+        "profiles": metadata,
+        "pr_model_baseline": {"baseline_id": baseline["baseline_id"], "version": baseline["version"], "sha256": baseline["actual_sha256"]},
+        **reconciliation,
+    }
+    summary_path = requested_output / "CREATE_PR_SUMMARY_BACKOFFICE.json"
+    summary["summary_path"] = str(summary_path.resolve())
+    summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    return summary
 
 def _build_site_reconciliation(selected, partitions, renderer_reconciliation=None):
     """Assign exactly one terminal engine disposition to every selected site."""
@@ -395,6 +602,8 @@ def run(parsed):
     baseline = validate_pr_model_baseline(getattr(parsed, "pr_model", None))
     if not hasattr(parsed, "pr_model"):
         parsed.pr_model = baseline["path"]
+    if str(parsed.scope).strip().upper() == "BACKOFFICE":
+        return _run_backoffice(parsed, baseline)
     _sync_dependencies()
     _impl.RENDERER = _renderer_for_scope(parsed.scope)
     before_renderer = snapshot_renderer_artifacts(Path(parsed.output))

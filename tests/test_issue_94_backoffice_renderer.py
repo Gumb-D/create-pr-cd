@@ -51,6 +51,13 @@ class TestBackofficeRenderer(unittest.TestCase):
             wb=load_workbook(paths[0],read_only=True,data_only=True); ws=wb['details']; row=[ws.cell(2,c).value for c in range(1,17)]; wb.close()
             self.assertEqual('DU1',row[5]); self.assertEqual('S1MY2024042501WBF1',row[7]); self.assertEqual('Allstar',row[8]); self.assertEqual(LOW,str(row[9])); self.assertIn('Less Than 800 Hops',row[10]); self.assertEqual('Hop',row[11]); self.assertEqual(1,row[12])
 
+    def test_filename_contains_pr_marker_for_terminal_reconciliation(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d); model=root/'m.xlsx'; inp=root/'i.xlsx'; mapping=root/'map.md'; out=root/'out'
+            make_model(model); make_input(inp); make_mapping(mapping)
+            paths=render(Namespace(site_data=inp,pr_model=model,mapping=mapping,output=out,scope='BACKOFFICE',du_model_name='TX Mini Project',all_sites=True,site_code=None))
+            self.assertIn(' PR ',paths[0].name)
+
     def test_supplementary_name_is_auditable(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d); model=root/'m.xlsx'; inp=root/'i.xlsx'; mapping=root/'map.md'; out=root/'out'

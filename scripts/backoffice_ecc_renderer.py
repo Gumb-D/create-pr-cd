@@ -272,7 +272,7 @@ def render(args: argparse.Namespace) -> list[Path]:
     if not ecc_rows:
         return []
     output = Path(args.output)
-    filename = _safe_filename(f"TX Outsource-Allstar Backoffice {issue_type} {billing_month} {datetime.now().strftime('%Y%m%d')}.xlsx")
+    filename = _safe_filename(f"TX Outsource-Allstar Backoffice {issue_type} {billing_month} PR {datetime.now().strftime('%Y%m%d')}.xlsx")
     path = output / filename
     output.mkdir(parents=True, exist_ok=True)
     _write_workbook(path, ecc_rows)

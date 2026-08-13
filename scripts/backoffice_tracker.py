@@ -141,3 +141,7 @@ def build_tracker_index(rows: Iterable[Mapping[str, object]]) -> TrackerIndex:
 def frozen_pbom_for_month(index: TrackerIndex, billing_month: str) -> str | None:
     return index.month_pbom.get(str(billing_month))
 
+
+def load_backoffice_tracker(path: Path) -> TrackerIndex:
+    """Load the authoritative TX Outsource Details sheet into a governed snapshot."""
+    return build_tracker_index(read_tracker_rows(Path(path)))
