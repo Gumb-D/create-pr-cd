@@ -198,10 +198,11 @@ def _validated_ecc_rows(rows: list[dict[str, Any]], pr_model: Path, mapping: Pat
     rendered: list[dict[str, Any]] = []
     for row in rows:
         site = _text(row.get("customer site code"))
+        site_name = _text(row.get("customer site name"))
         du = _text(row.get("du code"))
         region = _text(row.get("region"))
-        if not site or not du or not region:
-            raise BackofficeRendererError("BACKOFFICE_CANDIDATE_IDENTITY_MISSING", "Site ID, Delivery Unit Code and Region are required.")
+        if not site or not site_name or not du or not region:
+            raise BackofficeRendererError("BACKOFFICE_CANDIDATE_IDENTITY_MISSING", "Site ID, Site Name, Delivery Unit Code and Region are required.")
         purchasing_area = region_mapping.get(region.casefold())
         if not purchasing_area:
             raise BackofficeRendererError("PURCHASING_AREA_NOT_FOUND", f"No Purchasing Area mapping exists for Region {region!r}.")
@@ -225,9 +226,9 @@ def _validated_ecc_rows(rows: list[dict[str, Any]], pr_model: Path, mapping: Pat
             "Purchasing_Area": purchasing_area,
             "Region": region,
             "Site_ID": site,
-            "Site_Name": _text(row.get("customer site name")),
+            "Site_Name": site_name,
             "Delivery_Unit_Code": du,
-            "Logical_Site_Name": _text(row.get("customer site name")),
+            "Logical_Site_Name": site_name,
             "Contract_Number": pipeline_contract,
             "Subcontractor": pipeline_subcon,
             "PBOM_Code": pbom,

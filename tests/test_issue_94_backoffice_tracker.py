@@ -31,6 +31,15 @@ class TestBackofficeTracker(unittest.TestCase):
         self.assertEqual('2026-04',billing_month_from_filename('TX Outsource-Allstar PR CD 20260505 Batch 1'))
         self.assertIsNone(billing_month_from_filename('No Date'))
 
+    def test_new_backoffice_filename_uses_explicit_billing_month(self):
+        self.assertEqual(
+            '2026-05',
+            billing_month_from_filename('TX Outsource-Allstar Backoffice SUPPLEMENTARY 2026-05 PR 20260813.xlsx'),
+        )
+        self.assertEqual(
+            '2026-07',
+            billing_month_from_filename('TX Outsource-Allstar Backoffice MAIN 2026-07 PR 20260813 Part 1.xlsx'),
+        )
     def test_index_blocks_duplicate_and_freezes_month_pbom_from_earliest_issue(self):
         rows=[
             {'Delivery Unit Code':'DU1','SOW':'2023 TX Rollout','PBOM Code':'350000592793','File Name':'TX Outsource-Allstar PR CD 20240815 Batch 1'},

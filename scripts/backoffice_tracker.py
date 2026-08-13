@@ -30,6 +30,7 @@ _TRACKER_SOW_EVENTS = {
     "zte tx mini": "ZTE_TX_MINI_INTEGRATION",
 }
 _DATE_RE = re.compile(r"(?<!\d)(20\d{6})(?!\d)")
+_BACKOFFICE_BILLING_MONTH_RE = re.compile(r"\bBackoffice\s+(?:MAIN|SUPPLEMENTARY)\s+(20\d{2}-(?:0[1-9]|1[0-2]))\s+PR\b", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -89,7 +90,11 @@ def issue_date_from_filename(file_name: object) -> date | None:
 
 
 def billing_month_from_filename(file_name: object) -> str | None:
-    issued = issue_date_from_filename(file_name)
+    text = _text(file_name)
+    explicit = _BACKOFFICE_BILLING_MONTH_RE.search(text)
+    if explicit:
+        return explicit.group(1)
+    issued = issue_date_from_filename(text)
     if issued is None:
         return None
     year, month = issued.year, issued.month - 1

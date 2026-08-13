@@ -149,6 +149,23 @@ class TestBackofficeEntrypoint(unittest.TestCase):
             snapshot.assert_not_called()
             self.assertFalse(any((root/'out').glob('* PR *.xlsx')))
 
+    def test_backoffice_governance_summary_preserves_tier_and_warning_audit(self):
+        partitions={
+            'candidates':[
+                {'backoffice_selection':{'warnings':['BACKOFFICE_TX_SOW_DEFAULTED_TO_INTEGRATED']}},
+                {'backoffice_selection':{'warnings':[]}},
+            ],
+            'summary':{
+                'issue_type':'SUPPLEMENTARY',
+                'pbom_code':LOW,
+                'eligible_hops':812,
+                'tier_source':'TRACKER_MAIN_FREEZE',
+            },
+        }
+        audit=create_pr._backoffice_governance_summary(partitions)
+        self.assertEqual(812,audit['eligible_hops'])
+        self.assertEqual('TRACKER_MAIN_FREEZE',audit['tier_source'])
+        self.assertEqual(1,audit['warning_count'])
     def test_backoffice_reconciliation_uses_delivery_unit_plus_event_record_identity(self):
         a={'site':{'site_code':'SAME','du_key':'DU1'},'backoffice_selection':{'event_code':'EVENT_A'},'pr_generation_decision':{'reason_code':'ELIGIBLE'}}
         b={'site':{'site_code':'SAME','du_key':'DU2'},'backoffice_selection':{'event_code':'EVENT_B'},'pr_generation_decision':{'reason_code':'ELIGIBLE'}}

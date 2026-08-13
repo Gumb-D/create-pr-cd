@@ -89,6 +89,18 @@ class TestBackofficeRenderer(unittest.TestCase):
             self.assertEqual(31,total_rows)
             self.assertEqual(31,len(seen))
 
+    def test_renderer_rejects_blank_required_site_name(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d); model=root/'m.xlsx'; inp=root/'i.xlsx'; mapping=root/'map.md'; out=root/'out'
+            make_model(model); make_input(inp); make_mapping(mapping)
+            wb=load_workbook(inp); ws=wb['data']
+            headers=[ws.cell(4,c).value for c in range(1,ws.max_column+1)]
+            ws.cell(5,headers.index('customer site name')+1,'')
+            wb.save(inp); wb.close()
+            with self.assertRaises(BackofficeRendererError) as cm:
+                render(Namespace(site_data=inp,pr_model=model,mapping=mapping,output=out,scope='BACKOFFICE',du_model_name='TX Mini Project',all_sites=True,site_code=None))
+            self.assertEqual('BACKOFFICE_CANDIDATE_IDENTITY_MISSING',cm.exception.code)
+            self.assertFalse(out.exists() and any(out.iterdir()))
     def test_pipeline_pbom_or_contract_mismatch_leaves_no_output(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d); model=root/'m.xlsx'; inp=root/'i.xlsx'; mapping=root/'map.md'; out=root/'out'

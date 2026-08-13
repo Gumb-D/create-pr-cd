@@ -483,6 +483,28 @@ def _collect_backoffice_renderer_reconciliation(output, candidates, created_path
     return {"record_dispositions": dispositions}
 
 
+def _backoffice_governance_summary(partitions):
+    runtime_summary = partitions.get("summary", {}) if isinstance(partitions, Mapping) else {}
+    candidates = partitions.get("candidates", []) if isinstance(partitions, Mapping) else []
+    warning_distribution = {}
+    warning_count = 0
+    for record in candidates:
+        selection = record.get("backoffice_selection", {}) if isinstance(record, Mapping) else {}
+        warnings = selection.get("warnings", []) if isinstance(selection, Mapping) else []
+        for warning in warnings if isinstance(warnings, (list, tuple, set)) else []:
+            code = str(warning or "").strip()
+            if not code:
+                continue
+            warning_count += 1
+            warning_distribution[code] = warning_distribution.get(code, 0) + 1
+    return {
+        "eligible_hops": runtime_summary.get("eligible_hops", len(candidates)),
+        "tier_source": runtime_summary.get("tier_source", ""),
+        "warning_count": warning_count,
+        "warning_distribution": dict(sorted(warning_distribution.items())),
+    }
+
+
 def _run_backoffice(parsed, baseline):
     global _LAST_PARTITIONS
     if bool(getattr(parsed, "non_production_uat", False)):
@@ -571,6 +593,7 @@ def _run_backoffice(parsed, baseline):
         "billing_month": billing_month,
         "issue_type": partitions["summary"]["issue_type"],
         "pbom_code": partitions["summary"]["pbom_code"],
+        **_backoffice_governance_summary(partitions),
         "source_files": [str(path.resolve()) for path in sources],
         "source_file_count": len(sources),
         "source_record_count": len(records),
