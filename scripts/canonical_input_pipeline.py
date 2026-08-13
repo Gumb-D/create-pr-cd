@@ -45,6 +45,9 @@ def _required_fields_for_scope(profile: Mapping[str, Any], scope: str) -> set[st
     }
     if normalized_scope == "PLANNING":
         return mapped_scope_fields
+    if normalized_scope == "BACKOFFICE":
+        configured = set(profile.get("scope_required_fields", {}).get("BACKOFFICE", []))
+        return mapped_scope_fields | configured
     profile_required = {
         field
         for field, config in profile.get("field_mapping", {}).items()
