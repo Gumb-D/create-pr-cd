@@ -119,6 +119,7 @@ def build_backoffice_entitlements(
         "ignored": [],
         "review_required": [],
     }
+    accepted_current_run_keys: set[tuple[str, str]] = set()
 
     for record in records:
         if record.get("validation", {}).get("pr_input_classification") != PR_INPUT_READY:
@@ -214,6 +215,15 @@ def build_backoffice_entitlements(
             set_generation_decision(record, "DUPLICATE_BLOCKED", "BACKOFFICE_TRACKER_DUPLICATE", "The Delivery Unit Code + canonical Backoffice event is already present in the authoritative tracker.")
             partitions["duplicates"].append(record)
             continue
+        if key in accepted_current_run_keys:
+            _review(
+                record,
+                partitions,
+                "BACKOFFICE_CURRENT_RUN_DUPLICATE_ENTITLEMENT",
+                "The current Backoffice input contains the same Delivery Unit Code + canonical event more than once.",
+            )
+            continue
+        accepted_current_run_keys.add(key)
 
         record["backoffice_selection"] = {
             "event_code": event_code,

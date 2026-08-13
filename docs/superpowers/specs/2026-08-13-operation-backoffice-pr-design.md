@@ -269,3 +269,6 @@ Planning/TSS/TI selectors remain separate. Shared infrastructure may be reused, 
 - Reference files may remain local-only under `Info/reference/backoffice-pr`.
 - Project + DU Model remains DU Profile routing identity; View ID is evidence only.
 - Existing TSS/TI/Planning behavior must remain regression protected.
+## ECC output partitioning
+
+Each Backoffice ECC workbook may contain at most 30 unique Site IDs. Larger validated batches are partitioned into deterministic numbered `Part N` workbooks without changing entitlement, PBOM, provider, contract, or reconciliation identity.

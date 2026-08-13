@@ -46,6 +46,14 @@ class TestBackofficeRuntime(unittest.TestCase):
         out=build_backoffice_entitlements([r],'2026-07',empty_tracker(keys=(key,)),REG)
         self.assertEqual('DUPLICATE_BLOCKED',out['duplicates'][0]['pr_generation_decision']['classification'])
 
+    def test_same_run_duplicate_delivery_unit_event_requires_review(self):
+        first=rec(du='DU1',site='S1',tx_integrated_actual_end='2026-07-15')
+        repeated=rec(du='DU1',site='S2',tx_integrated_actual_end='2026-07-16')
+        out=build_backoffice_entitlements([first,repeated],'2026-07',empty_tracker(),REG)
+        self.assertEqual(1,len(out['candidates']))
+        self.assertEqual(1,len(out['review_required']))
+        self.assertEqual('BACKOFFICE_CURRENT_RUN_DUPLICATE_ENTITLEMENT',out['review_required'][0]['pr_generation_decision']['reason_code'])
+
     def test_main_month_800_uses_low_pbom(self):
         rows=[rec(du=f'DU{i}',site=f'S{i}',tx_integrated_actual_end='2026-07-15') for i in range(800)]
         out=build_backoffice_entitlements(rows,'2026-07',empty_tracker(),REG)

@@ -17,6 +17,7 @@ from backoffice_pr_runtime import load_service_registry
 ROOT = Path(__file__).resolve().parent.parent
 SERVICE_REGISTRY = ROOT / "config" / "backoffice_service_registry.yaml"
 BACKOFFICE_PBOMS = {"350000592793", "350000592794"}
+MAX_SITES_PER_FILE = 30
 ECC_HEADERS = [
     "SN.", "Purchasing Area*", "Region*", "Site ID*", "Site Name*",
     "Delivery Unit Code*", "Logical Site Name", "Contract Number *",
@@ -246,6 +247,15 @@ def _safe_filename(value: str) -> str:
     return re.sub(r'[<>:"/\\|?*]+', " ", value).strip().strip(".")
 
 
+def _split_rows_by_unique_site(rows: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
+    site_ids = sorted({_text(row.get("Site_ID")) for row in rows if _text(row.get("Site_ID"))})
+    parts: list[list[dict[str, Any]]] = []
+    for offset in range(0, len(site_ids), MAX_SITES_PER_FILE):
+        selected_sites = set(site_ids[offset : offset + MAX_SITES_PER_FILE])
+        parts.append([row for row in rows if _text(row.get("Site_ID")) in selected_sites])
+    return parts
+
+
 def _write_workbook(path: Path, rows: list[dict[str, Any]]) -> None:
     workbook = Workbook()
     worksheet = workbook.active
@@ -275,11 +285,19 @@ def render(args: argparse.Namespace) -> list[Path]:
     if not ecc_rows:
         return []
     output = Path(args.output)
-    filename = _safe_filename(f"TX Outsource-{provider} Backoffice {issue_type} {billing_month} PR {datetime.now().strftime('%Y%m%d')}.xlsx")
-    path = output / filename
     output.mkdir(parents=True, exist_ok=True)
-    _write_workbook(path, ecc_rows)
-    return [path]
+    date_stamp = datetime.now().strftime("%Y%m%d")
+    parts = _split_rows_by_unique_site(ecc_rows)
+    created: list[Path] = []
+    for part_number, part_rows in enumerate(parts, 1):
+        suffix = f" Part {part_number}" if len(parts) > 1 else ""
+        filename = _safe_filename(
+            f"TX Outsource-{provider} Backoffice {issue_type} {billing_month} PR {date_stamp}{suffix}.xlsx"
+        )
+        path = output / filename
+        _write_workbook(path, part_rows)
+        created.append(path)
+    return created
 
 
 def parse_args() -> argparse.Namespace:

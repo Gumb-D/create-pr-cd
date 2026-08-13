@@ -39,6 +39,17 @@ _ORIGINAL_RENDERER = Path(_impl.RENDERER)
 PLANNING_RENDERER = Path(_impl.ROOT) / "scripts" / "planning_ecc_renderer.py"
 BACKOFFICE_RENDERER = Path(_impl.ROOT) / "scripts" / "backoffice_ecc_renderer.py"
 BACKOFFICE_SERVICE_REGISTRY = Path(_impl.ROOT) / "config" / "backoffice_service_registry.yaml"
+BACKOFFICE_REQUIRED_DU_MODELS = frozenset({
+    "2023 Celcomdigi BAU",
+    "2024 Celcomdigi BAU",
+    "CD consolidation 2023",
+    "Celcomdigi USP",
+    "Jendela TX Migration",
+    "MW EOS Swap",
+    "TX Mini Project",
+    "2023 TX Rollout",
+    "ZTE TX MINI",
+})
 _LAST_PARTITIONS = None
 
 _ANTENNA_EVIDENCE_RENDERER_COLUMNS = (
@@ -151,6 +162,21 @@ def _backoffice_source_files(path, issue_type):
     if not files:
         raise CreatePrError("BACKOFFICE_SOURCE_DIRECTORY_EMPTY", "Backoffice source directory contains no supported iEPMS exports.")
     return files
+
+def _validate_backoffice_main_du_coverage(metadata):
+    observed = {
+        str(item.get("du_model_name", "") or "").strip()
+        for item in metadata
+        if isinstance(item, Mapping)
+    }
+    missing = sorted(BACKOFFICE_REQUIRED_DU_MODELS - observed)
+    if missing:
+        raise CreatePrError(
+            "BACKOFFICE_MAIN_DU_SET_INCOMPLETE",
+            "Backoffice Main issuance requires the complete supported DU-model export set before the monthly PBOM tier is calculated.",
+            {"missing_du_models": missing, "observed_du_models": sorted(observed)},
+        )
+
 
 def _canonical_relocate_site_id(value):
     """Render the approved Decom - Relo Site ID without changing source identity."""
@@ -479,6 +505,8 @@ def _run_backoffice(parsed, baseline):
         )
     sources = _backoffice_source_files(parsed.site_data, issue_type)
     records, metadata = _canonicalize_backoffice_sources(sources)
+    if issue_type == "MAIN":
+        _validate_backoffice_main_du_coverage(metadata)
     selected = _impl._select_records(records, _impl._parse_site_codes(parsed.site_code), parsed.all_sites)
     _validate_backoffice_source_identity(selected)
     service_registry = load_service_registry(BACKOFFICE_SERVICE_REGISTRY)

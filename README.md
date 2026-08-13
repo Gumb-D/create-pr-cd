@@ -188,7 +188,7 @@ Explicit UAT artefacts insert `_NON_PRODUCTION_UAT` before the file extension an
 
 ## Operation Backoffice PR Business Rules — Issue #94
 
-Operation Backoffice uses the official `scripts/create_pr.py --scope BACKOFFICE` entrypoint. Main issuance requires a directory containing the complete supported DU export set and `--all-sites`, because all eligible DUs for the closed billing month must be aggregated before the monthly tier is selected. Supplementary issuance may use a narrower source after the Main PBOM has been frozen in the authoritative tracker.
+Operation Backoffice uses the official `scripts/create_pr.py --scope BACKOFFICE` entrypoint. Main issuance requires `--all-sites` and a source directory that resolves to the complete nine governed DU-model export set, because all eligible DUs for the closed billing month must be aggregated before the monthly tier is selected. Supplementary issuance may use a narrower source after the Main PBOM has been frozen in the authoritative tracker.
 
 Example Main run:
 
@@ -203,14 +203,14 @@ Governed rules:
 - All supported DU Models aggregate into the same monthly tier.
 - `<=800` Hops uses PBOM `350000592793`; `>800` uses `350000592794`. Exactly 800 uses the lower tier.
 - Main PR is issued only for the immediately previous closed month and freezes that month's PBOM. Supplementary PR reuses the frozen Main PBOM.
-- Duplicate identity is `Delivery Unit Code + Canonical Backoffice Event`; Site ID is not the duplicate or reconciliation key.
+- Duplicate identity is `Delivery Unit Code + Canonical Backoffice Event`; Site ID is not the duplicate or reconciliation key. Historical duplicates are blocked from the tracker, while repeated entitlement identity inside the same current run fails closed for review.
 - The authoritative issued-history source is `TX Outsource & NOC Database.xls`, sheet `TX Outsource Details`; NOC scope is excluded.
 - Provider/contract are effective-dated and resolved from `config/backoffice_service_registry.yaml` using the trigger date.
 - Current configured Backoffice provider is Allstar / `S1MY2024042501WBF1`, but the renderer derives the provider from validated runtime data rather than hard-coding it.
 - Unknown TX Rollout SOW defaults to TX Integrated and records `BACKOFFICE_TX_SOW_DEFAULTED_TO_INTEGRATED`.
 - Unknown CD consolidation SOW requires review only when a governed MOCN/Decom milestone could affect the requested billing month; clearly historical or not-yet-complete records are ignored with an approved reason.
 - Any `REVIEW_REQUIRED` record blocks the entire Backoffice ECC run; partial ECC output is not allowed.
-- Backoffice ECC filenames use `TX Outsource-<Provider> Backoffice <MAIN|SUPPLEMENTARY> <YYYY-MM> PR <YYYYMMDD>.xlsx`.
+- Backoffice ECC filenames use `TX Outsource-<Provider> Backoffice <MAIN|SUPPLEMENTARY> <YYYY-MM> PR <YYYYMMDD>.xlsx`; batches above 30 unique Site IDs are emitted as numbered `Part N` files with at most 30 unique Site IDs per workbook.
 
 ## Planning PR Business Rules — Issue #34
 

@@ -66,6 +66,29 @@ class TestBackofficeRenderer(unittest.TestCase):
             paths=render(Namespace(site_data=inp,pr_model=model,mapping=mapping,output=out,scope='BACKOFFICE',du_model_name='TX Mini Project',all_sites=True,site_code=None))
             self.assertIn('Backoffice SUPPLEMENTARY 2026-07',paths[0].name)
 
+    def test_renderer_splits_more_than_30_unique_sites_into_parts(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d); model=root/'m.xlsx'; inp=root/'i.xlsx'; mapping=root/'map.md'; out=root/'out'
+            make_model(model); make_input(inp); make_mapping(mapping)
+            wb=load_workbook(inp); ws=wb['data']
+            base=[ws.cell(5,c).value for c in range(1,ws.max_column+1)]
+            for i in range(2,32):
+                row=list(base); row[0]=f'S{i}'; row[1]=f'Site {i}'; row[2]=f'DU{i}'
+                ws.append(row)
+            wb.save(inp); wb.close()
+            paths=render(Namespace(site_data=inp,pr_model=model,mapping=mapping,output=out,scope='BACKOFFICE',du_model_name='TX Mini Project',all_sites=True,site_code=None))
+            self.assertEqual(2,len(paths))
+            self.assertTrue(any(' Part 1.xlsx' in p.name for p in paths))
+            self.assertTrue(any(' Part 2.xlsx' in p.name for p in paths))
+            seen=set(); total_rows=0
+            for path in paths:
+                wb=load_workbook(path,read_only=True,data_only=True); ws=wb['details']
+                ids={str(ws.cell(r,4).value) for r in range(2,ws.max_row+1)}
+                total_rows += ws.max_row-1; seen.update(ids); wb.close()
+                self.assertLessEqual(len(ids),30)
+            self.assertEqual(31,total_rows)
+            self.assertEqual(31,len(seen))
+
     def test_pipeline_pbom_or_contract_mismatch_leaves_no_output(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d); model=root/'m.xlsx'; inp=root/'i.xlsx'; mapping=root/'map.md'; out=root/'out'

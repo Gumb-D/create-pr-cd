@@ -51,6 +51,16 @@ class TestBackofficeEntrypoint(unittest.TestCase):
             files=create_pr._backoffice_source_files(root,issue_type='MAIN')
             self.assertEqual(['a.xlsx','b.xlsm','c.csv'],[p.name for p in files])
 
+    def test_main_rejects_incomplete_supported_du_model_set(self):
+        metadata=[{'du_model_name':'TX Mini Project'}]
+        with self.assertRaises(create_pr.CreatePrError) as cm:
+            create_pr._validate_backoffice_main_du_coverage(metadata)
+        self.assertEqual('BACKOFFICE_MAIN_DU_SET_INCOMPLETE',cm.exception.code)
+
+    def test_main_accepts_complete_supported_du_model_set(self):
+        metadata=[{'du_model_name':name} for name in sorted(create_pr.BACKOFFICE_REQUIRED_DU_MODELS)]
+        create_pr._validate_backoffice_main_du_coverage(metadata)
+
     def test_supplementary_can_use_single_export_because_tier_is_frozen(self):
         with tempfile.TemporaryDirectory() as d:
             p=Path(d)/'one.xlsx'; p.write_bytes(b'x')
@@ -131,7 +141,8 @@ class TestBackofficeEntrypoint(unittest.TestCase):
             parsed=Namespace(scope='BACKOFFICE',non_production_uat=False,backoffice_tracker=root/'tracker.xls',billing_month='2026-07',site_data=root/'input',site_code=None,all_sites=True,output=root/'out',pr_model=Path('Info/input/pr_model.xlsx'),template=Path('Info/input/ecc_template.xls'),mapping=Path('Info/input/contract_info_reference.md'))
             review={'site':{'site_code':'S1','du_key':'DU1'},'identity':{'du_model_name':'CD consolidation 2023'},'pr_generation_decision':{'reason_code':'BACKOFFICE_CD_SOW_NOT_APPROVED','reason':'x'}}
             partitions={'candidates':[{'site':{'site_code':'S2','du_key':'DU2'}}],'duplicates':[],'ignored':[],'review_required':[review],'summary':{'issue_type':'MAIN','pbom_code':LOW}}
-            with patch.object(create_pr,'load_backoffice_tracker',return_value=tracker()), patch.object(create_pr,'_validate_backoffice_cadence',return_value='MAIN'), patch.object(create_pr,'_backoffice_source_files',return_value=[root/'a.xlsx']), patch.object(create_pr,'_canonicalize_backoffice_sources',return_value=([review],[])), patch.object(create_pr._impl,'_select_records',return_value=[review]), patch.object(create_pr,'load_service_registry',return_value={}), patch.object(create_pr,'build_backoffice_entitlements',return_value=partitions), patch.object(create_pr._impl,'_write_review_report',return_value=root/'out'/'CANONICAL_REVIEW_REQUIRED_BACKOFFICE.csv'), patch.object(create_pr,'_write_ignored_report',return_value=None), patch.object(create_pr,'snapshot_renderer_artifacts') as snapshot:
+            complete_metadata=[{'du_model_name':name} for name in sorted(create_pr.BACKOFFICE_REQUIRED_DU_MODELS)]
+            with patch.object(create_pr,'load_backoffice_tracker',return_value=tracker()), patch.object(create_pr,'_validate_backoffice_cadence',return_value='MAIN'), patch.object(create_pr,'_backoffice_source_files',return_value=[root/'a.xlsx']), patch.object(create_pr,'_canonicalize_backoffice_sources',return_value=([review],complete_metadata)), patch.object(create_pr._impl,'_select_records',return_value=[review]), patch.object(create_pr,'load_service_registry',return_value={}), patch.object(create_pr,'build_backoffice_entitlements',return_value=partitions), patch.object(create_pr._impl,'_write_review_report',return_value=root/'out'/'CANONICAL_REVIEW_REQUIRED_BACKOFFICE.csv'), patch.object(create_pr,'_write_ignored_report',return_value=None), patch.object(create_pr,'snapshot_renderer_artifacts') as snapshot:
                 with self.assertRaises(create_pr.CreatePrError) as cm:
                     create_pr._run_backoffice(parsed,{'baseline_id':'x','version':'4.1','actual_sha256':'abc'})
             self.assertEqual('BACKOFFICE_REVIEW_REQUIRED',cm.exception.code)

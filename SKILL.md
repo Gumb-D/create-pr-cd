@@ -135,7 +135,7 @@ The generator accepts either selected Site Code(s) or a Generate All option befo
 - If neither option is provided, the generator exits with an error.
 - If both options are provided, the generator exits with an error.
 - Filtering occurs before evaluating PR scope triggers.
-- Current official CLI supports site selection for `TSS`, `TI`, `Planning`, and `BACKOFFICE`. Backoffice Main additionally requires `--all-sites` and a complete source directory so monthly tier aggregation cannot be undercounted.
+- Current official CLI supports site selection for `TSS`, `TI`, `Planning`, and `BACKOFFICE`. Backoffice Main additionally requires `--all-sites` and a source directory resolving to all nine governed Backoffice DU models so monthly tier aggregation cannot be undercounted.
 
 ### 3.2 Implementation Status
 
@@ -430,7 +430,7 @@ Backoffice uses monthly volume tiering across all supported DU Models:
 >800 Hops  -> 350000592794
 ```
 
-Exactly 800 uses `350000592793`. Main issuance is only for the immediately previous closed month and freezes the monthly PBOM. Supplementary issuance reuses the frozen Main PBOM from the authoritative `TX Outsource Details` tracker history. Duplicate identity is `Delivery Unit Code + Canonical Backoffice Event`, never Site ID. Do not reuse Issue #34 Planning logic for Backoffice.
+Exactly 800 uses `350000592793`. Main issuance is only for the immediately previous closed month and freezes the monthly PBOM. Supplementary issuance reuses the frozen Main PBOM from the authoritative `TX Outsource Details` tracker history. Duplicate identity is `Delivery Unit Code + Canonical Backoffice Event`, never Site ID; duplicate identity repeated inside the same current run is review-required. Backoffice ECC output is split at 30 unique Site IDs per workbook. Do not reuse Issue #34 Planning logic for Backoffice.
 
 ## 9. Mandatory / Optional Line Item Rule
 
