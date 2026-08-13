@@ -177,4 +177,3 @@
 - [ ] **Step 6: Re-run current-head validation** after any review changes.
 - [ ] **Step 7: Squash merge with expected head SHA** only when current-head checks are clean and no actionable review blocker remains.
 - [ ] **Step 8: Confirm Issue #94 is closed completed and main contains the merge commit**.
-

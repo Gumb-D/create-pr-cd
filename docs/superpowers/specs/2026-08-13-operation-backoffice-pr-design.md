@@ -1,8 +1,8 @@
 # Operation Backoffice PR Design
 
-**Issue:** #94  
-**Scope:** Operation Backoffice PR only  
-**Status:** Business logic approved for implementation  
+**Issue:** #94
+**Scope:** Operation Backoffice PR only
+**Status:** Business logic approved for implementation
 **Production PR Model baseline:** v4.1 via `config/pr_model_baseline.yaml`
 
 ## Purpose
@@ -269,4 +269,3 @@ Planning/TSS/TI selectors remain separate. Shared infrastructure may be reused, 
 - Reference files may remain local-only under `Info/reference/backoffice-pr`.
 - Project + DU Model remains DU Profile routing identity; View ID is evidence only.
 - Existing TSS/TI/Planning behavior must remain regression protected.
-

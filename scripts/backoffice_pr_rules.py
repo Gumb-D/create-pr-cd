@@ -94,4 +94,3 @@ def select_backoffice_pbom(monthly_hops: int) -> str:
     if monthly_hops < 0:
         raise ValueError("monthly_hops must be non-negative")
     return BACKOFFICE_PBOM_LE_800 if monthly_hops <= 800 else BACKOFFICE_PBOM_GT_800
-
