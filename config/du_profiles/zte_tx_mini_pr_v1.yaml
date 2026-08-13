@@ -318,23 +318,6 @@
         "trim"
       ]
     },
-    "delivery_unit_code": {
-      "required": false,
-      "source_candidates": [
-        {
-          "fingerprint": {
-            "field_code": "du|du_code",
-            "wbs_stage": "Du",
-            "task_name": "Du",
-            "display_header": "du code"
-          },
-          "mapping_status": "APPROVED"
-        }
-      ],
-      "transforms": [
-        "trim"
-      ]
-    },
     "site_integrated_actual_end": {
       "required": false,
       "source_candidates": [
@@ -374,8 +357,13 @@
   },
   "scope_required_fields": {
     "BACKOFFICE": [
-      "delivery_unit_code",
+      "du_key",
       "site_integrated_actual_end"
     ]
+  },
+  "scope_mapping_status": {
+    "BACKOFFICE": {
+      "du_key": "APPROVED"
+    }
   }
 }

@@ -26,8 +26,8 @@ def load(pid):
 
 class TestBackofficeProfileFields(unittest.TestCase):
     def test_backoffice_base_scope_is_canonical(self):
-        self.assertEqual(('site_code','delivery_unit_code'), SCOPE_REQUIRED_FIELDS['BACKOFFICE'])
-        for name in ('delivery_unit_code','backoffice_sow_raw','microwave_tx_cutover_date','tx_integrated_actual_end','cut_over_actual_end','site_integrated_actual_end','l1_approved_actual_end','mocn_actual_end','decom_actual_end'):
+        self.assertEqual(('site_code','du_key'), SCOPE_REQUIRED_FIELDS['BACKOFFICE'])
+        for name in ('du_key','backoffice_sow_raw','microwave_tx_cutover_date','tx_integrated_actual_end','cut_over_actual_end','site_integrated_actual_end','l1_approved_actual_end','mocn_actual_end','decom_actual_end'):
             self.assertIn(name,FIELD_PATHS)
 
     def test_fixed_trigger_profiles_have_approved_real_fingerprints(self):
@@ -35,18 +35,19 @@ class TestBackofficeProfileFields(unittest.TestCase):
             with self.subTest(profile=pid):
                 p=load(pid)
                 self.assertEqual('PRODUCTION',p['scope_status']['BACKOFFICE'])
-                self.assertEqual(['delivery_unit_code',field],p['scope_required_fields']['BACKOFFICE'])
+                self.assertEqual(['du_key',field],p['scope_required_fields']['BACKOFFICE'])
                 m=p['field_mapping'][field]
                 self.assertEqual('APPROVED',m['source_candidates'][0]['mapping_status'])
                 fp=m['source_candidates'][0]['fingerprint']
                 self.assertEqual((code,task,header),(fp['field_code'],fp['task_name'],fp['display_header']))
-                d=p['field_mapping']['delivery_unit_code']['source_candidates'][0]
-                self.assertEqual('APPROVED',d['mapping_status'])
+                d=p['field_mapping']['du_key']['source_candidates'][0]
                 self.assertEqual('du|du_code',d['fingerprint']['field_code'])
+                self.assertEqual('APPROVED', p['scope_mapping_status']['BACKOFFICE']['du_key'])
+                self.assertNotIn('delivery_unit_code', p['field_mapping'])
 
     def test_tx_rollout_maps_both_governed_milestones(self):
         p=load('tx_rollout_2023_pr_v1')
-        self.assertEqual(['delivery_unit_code','tx_sow_raw','tx_integrated_actual_end','l1_approved_actual_end'],p['scope_required_fields']['BACKOFFICE'])
+        self.assertEqual(['du_key','tx_sow_raw','tx_integrated_actual_end','l1_approved_actual_end'],p['scope_required_fields']['BACKOFFICE'])
         expected={
             'tx_integrated_actual_end':('WP11400|AC0000079301|actual_end_date','Software Commissioning','TX Integrated','actual end time'),
             'l1_approved_actual_end':('WPC000011222|AC0000079322|actual_end_date','Q&EHS','L1 Approved','actual end time'),
@@ -58,7 +59,7 @@ class TestBackofficeProfileFields(unittest.TestCase):
     def test_cd_consolidation_maps_mocn_and_decom(self):
         p=load('celcomdigi_cd_consolidation_2023_pr_v1')
         self.assertEqual('PRODUCTION',p['scope_status']['BACKOFFICE'])
-        self.assertEqual(['delivery_unit_code','backoffice_sow_raw','mocn_actual_end','decom_actual_end'],p['scope_required_fields']['BACKOFFICE'])
+        self.assertEqual(['du_key','backoffice_sow_raw','mocn_actual_end','decom_actual_end'],p['scope_required_fields']['BACKOFFICE'])
         site=next(c for c in p['field_mapping']['site_code']['source_candidates'] if c['fingerprint']['field_code']=='site|fix00012|8359047522524182050|8359047522524230651')
         self.assertEqual('APPROVED',site['mapping_status'])
         tx=next(c for c in p['field_mapping']['backoffice_sow_raw']['source_candidates'] if c['fingerprint']['wbs_stage']=='Installation' and c['fingerprint']['task_name']=='Wireless RAN')
@@ -74,6 +75,6 @@ class TestBackofficeProfileFields(unittest.TestCase):
 
     def test_pipeline_uses_scope_specific_required_fields(self):
         p=load('tx_rollout_2023_pr_v1')
-        self.assertEqual({'site_code','delivery_unit_code','tx_sow_raw','tx_integrated_actual_end','l1_approved_actual_end'},_required_fields_for_scope(p,'BACKOFFICE'))
+        self.assertEqual({'site_code','du_key','tx_sow_raw','tx_integrated_actual_end','l1_approved_actual_end'},_required_fields_for_scope(p,'BACKOFFICE'))
 
 if __name__=='__main__': unittest.main()

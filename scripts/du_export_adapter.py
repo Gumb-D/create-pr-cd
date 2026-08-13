@@ -85,6 +85,25 @@ def _apply_geography_correction(record: Dict[str, Any]) -> None:
     )
 
 
+def apply_scope_mapping_status(resolved: Mapping[str, Any], profile: Mapping[str, Any], scope: str) -> Dict[str, Any]:
+    """Return a scoped copy of resolved mappings with explicit scope-only approvals applied.
+
+    Global candidate mapping_status remains authoritative for all other scopes.
+    This prevents a Backoffice-only approval from changing TSS/TI/Planning field-review governance.
+    """
+    scoped = deepcopy(resolved)
+    overrides = profile.get("scope_mapping_status", {}).get(str(scope).strip().upper(), {})
+    for field, status in overrides.items():
+        if status not in _MAPPING_STATUS_RANK:
+            raise ValueError(f"Unsupported scope mapping status for {field}: {status}")
+        entry = scoped.get(field)
+        if not entry or entry.get("status") != "RESOLVED":
+            continue
+        for match in entry.get("matches", []):
+            match["mapping_status"] = status
+    return scoped
+
+
 def _stronger_mapping_status(first: str, second: str) -> str:
     return max(
         (first, second),

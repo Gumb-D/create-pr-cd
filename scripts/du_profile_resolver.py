@@ -7,7 +7,7 @@ from typing import Any, Mapping
 
 from canonical_site_validator import SCOPE_REQUIRED_FIELDS
 
-from du_export_adapter import resolve_profile_field_mappings
+from du_export_adapter import apply_scope_mapping_status, resolve_profile_field_mappings
 from du_profile_loader import load_du_profile
 from iepms_export_source_resolver import (
     SourceResolutionError,
@@ -152,6 +152,7 @@ def resolve_du_profile(
     required_field_approval = None
     if not header_validation["approved"]:
         mappings = resolve_profile_field_mappings(inventory, profile)
+        mappings = apply_scope_mapping_status(mappings, profile, normalized_scope)
         if normalized_scope in {"PLANNING", "BACKOFFICE"}:
             required_names = {
                 field

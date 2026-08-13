@@ -35,7 +35,7 @@ SCOPE_REQUIRED_FIELDS = {
         "subcontractor_planning",
         "existing_planning_pr_status",
     ),
-    "BACKOFFICE": ("site_code", "delivery_unit_code"),
+    "BACKOFFICE": ("site_code", "du_key"),
 }
 
 JENDELA_PROFILE_ID = "jendela_tx_migration_pr_v1"
