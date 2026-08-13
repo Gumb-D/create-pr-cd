@@ -101,6 +101,45 @@ class TestBackofficeRenderer(unittest.TestCase):
                 render(Namespace(site_data=inp,pr_model=model,mapping=mapping,output=out,scope='BACKOFFICE',du_model_name='TX Mini Project',all_sites=True,site_code=None))
             self.assertEqual('BACKOFFICE_CANDIDATE_IDENTITY_MISSING',cm.exception.code)
             self.assertFalse(out.exists() and any(out.iterdir()))
+    def test_same_day_supplementary_runs_do_not_overwrite_prior_workbook(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d); model=root/'m.xlsx'; mapping=root/'map.md'; out=root/'out'; first=root/'first.xlsx'; second=root/'second.xlsx'
+            make_model(model); make_mapping(mapping); make_input(first,issue='SUPPLEMENTARY'); make_input(second,issue='SUPPLEMENTARY')
+            wb=load_workbook(second); ws=wb['data']; headers=[ws.cell(4,c).value for c in range(1,ws.max_column+1)]
+            ws.cell(5,headers.index('customer site code')+1,'S2'); ws.cell(5,headers.index('customer site name')+1,'Site 2'); ws.cell(5,headers.index('du code')+1,'DU2'); wb.save(second); wb.close()
+            args=lambda p: Namespace(site_data=p,pr_model=model,mapping=mapping,output=out,scope='BACKOFFICE',du_model_name='TX Mini Project',all_sites=True,site_code=None)
+            first_paths=render(args(first)); second_paths=render(args(second))
+            self.assertEqual(1,len(first_paths)); self.assertEqual(1,len(second_paths))
+            self.assertNotEqual(first_paths[0],second_paths[0])
+            self.assertTrue(first_paths[0].exists()); self.assertTrue(second_paths[0].exists())
+            wb=load_workbook(first_paths[0],read_only=True,data_only=True); first_du=wb['details'].cell(2,6).value; wb.close()
+            wb=load_workbook(second_paths[0],read_only=True,data_only=True); second_du=wb['details'].cell(2,6).value; wb.close()
+            self.assertEqual('DU1',first_du); self.assertEqual('DU2',second_du)
+
+    def test_effective_provider_transition_partitions_into_separate_workbooks(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d); model=root/'m.xlsx'; inp=root/'i.xlsx'; mapping=root/'map.md'; out=root/'out'
+            make_model(model); make_input(inp,contract='OLD-CONTRACT'); make_mapping(mapping)
+            wb=load_workbook(inp); ws=wb['data']; headers=[ws.cell(4,c).value for c in range(1,ws.max_column+1)]
+            provider_col=headers.index('Backoffice Subcontractor')+1; contract_col=headers.index('Backoffice Contract Number')+1; trigger_col=headers.index('Backoffice Trigger Date')+1
+            ws.cell(5,provider_col,'OldVendor'); ws.cell(5,trigger_col,'2026-07-10')
+            base=[ws.cell(5,c).value for c in range(1,ws.max_column+1)]
+            row=list(base); row[0]='S2'; row[1]='Site 2'; row[2]='DU2'; row[trigger_col-1]='2026-07-20'; row[provider_col-1]='NewVendor'; row[contract_col-1]='NEW-CONTRACT'; ws.append(row)
+            wb.save(inp); wb.close()
+            registry={'services':[
+                {'effective_from':'2024-01-01','effective_to':'2026-07-15','subcontractor':'OldVendor','contract_number':'OLD-CONTRACT'},
+                {'effective_from':'2026-07-16','effective_to':None,'subcontractor':'NewVendor','contract_number':'NEW-CONTRACT'},
+            ]}
+            with patch('backoffice_ecc_renderer.load_service_registry',return_value=registry):
+                paths=render(Namespace(site_data=inp,pr_model=model,mapping=mapping,output=out,scope='BACKOFFICE',du_model_name='TX Mini Project',all_sites=True,site_code=None))
+            self.assertEqual(2,len(paths))
+            self.assertEqual({'OldVendor','NewVendor'},{'OldVendor' if 'OldVendor' in p.name else 'NewVendor' for p in paths})
+            workbook_contracts=[]
+            for path in paths:
+                wb=load_workbook(path,read_only=True,data_only=True); ws=wb['details']
+                providers={ws.cell(r,9).value for r in range(2,ws.max_row+1)}; contracts={ws.cell(r,8).value for r in range(2,ws.max_row+1)}; wb.close()
+                self.assertEqual(1,len(providers)); self.assertEqual(1,len(contracts)); workbook_contracts.append(next(iter(contracts)))
+            self.assertEqual({'OLD-CONTRACT','NEW-CONTRACT'},set(workbook_contracts))
     def test_pipeline_pbom_or_contract_mismatch_leaves_no_output(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d); model=root/'m.xlsx'; inp=root/'i.xlsx'; mapping=root/'map.md'; out=root/'out'

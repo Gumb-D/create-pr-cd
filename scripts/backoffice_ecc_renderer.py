@@ -238,10 +238,7 @@ def _validated_ecc_rows(rows: list[dict[str, Any]], pr_model: Path, mapping: Pat
             "Remarks": f"{_text(row.get('Backoffice Event Code'))}; Trigger={trigger.isoformat()}; Billing={billing_month}; {issue_type}",
             "Source_Tx_SOW": _text(row.get("Backoffice Warnings")),
         })
-    providers = {_text(row.get("Subcontractor")) for row in rendered}
-    if len(providers) != 1 or not next(iter(providers), ""):
-        raise BackofficeRendererError("BACKOFFICE_BATCH_MIXED_PROVIDER", "One Backoffice ECC batch must contain exactly one validated provider.")
-    return rendered, billing_month, issue_type, next(iter(providers))
+    return rendered, billing_month, issue_type
 
 
 def _safe_filename(value: str) -> str:
@@ -255,6 +252,20 @@ def _split_rows_by_unique_site(rows: list[dict[str, Any]]) -> list[list[dict[str
         selected_sites = set(site_ids[offset : offset + MAX_SITES_PER_FILE])
         parts.append([row for row in rows if _text(row.get("Site_ID")) in selected_sites])
     return parts
+
+
+def _allocate_output_path(output: Path, filename: str) -> Path:
+    path = output / filename
+    if not path.exists():
+        return path
+    stem = path.stem
+    suffix = path.suffix
+    batch = 2
+    while True:
+        candidate = output / f"{stem} Batch {batch}{suffix}"
+        if not candidate.exists():
+            return candidate
+        batch += 1
 
 
 def _write_workbook(path: Path, rows: list[dict[str, Any]]) -> None:
@@ -282,22 +293,30 @@ def render(args: argparse.Namespace) -> list[Path]:
     if _text(args.scope).upper() != "BACKOFFICE":
         raise BackofficeRendererError("INVALID_SCOPE", "Backoffice renderer accepts only --scope BACKOFFICE.")
     rows = _filter_sites(_load_rows(args.site_data), args.all_sites, args.site_code)
-    ecc_rows, billing_month, issue_type, provider = _validated_ecc_rows(rows, args.pr_model, args.mapping)
+    ecc_rows, billing_month, issue_type = _validated_ecc_rows(rows, args.pr_model, args.mapping)
     if not ecc_rows:
         return []
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=True)
     date_stamp = datetime.now().strftime("%Y%m%d")
-    parts = _split_rows_by_unique_site(ecc_rows)
+    provider_contract_groups: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for row in ecc_rows:
+        provider = _text(row.get("Subcontractor"))
+        contract = _text(row.get("Contract_Number"))
+        if not provider or not contract:
+            raise BackofficeRendererError("BACKOFFICE_CANDIDATE_IDENTITY_MISSING", "Validated provider and contract are required for Backoffice output partitioning.")
+        provider_contract_groups.setdefault((provider, contract), []).append(row)
     created: list[Path] = []
-    for part_number, part_rows in enumerate(parts, 1):
-        suffix = f" Part {part_number}" if len(parts) > 1 else ""
-        filename = _safe_filename(
-            f"TX Outsource-{provider} Backoffice {issue_type} {billing_month} PR {date_stamp}{suffix}.xlsx"
-        )
-        path = output / filename
-        _write_workbook(path, part_rows)
-        created.append(path)
+    for (provider, _contract), group_rows in sorted(provider_contract_groups.items()):
+        parts = _split_rows_by_unique_site(group_rows)
+        for part_number, part_rows in enumerate(parts, 1):
+            part_suffix = f" Part {part_number}" if len(parts) > 1 else ""
+            filename = _safe_filename(
+                f"TX Outsource-{provider} Backoffice {issue_type} {billing_month} PR {date_stamp}{part_suffix}.xlsx"
+            )
+            path = _allocate_output_path(output, filename)
+            _write_workbook(path, part_rows)
+            created.append(path)
     return created
 
 
