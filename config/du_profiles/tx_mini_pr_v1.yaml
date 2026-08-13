@@ -408,7 +408,9 @@
   },
   "scope_mapping_status": {
     "BACKOFFICE": {
-      "du_key": "APPROVED"
+      "du_key": "APPROVED",
+      "site_name": "APPROVED",
+      "region": "APPROVED"
     }
   }
 }

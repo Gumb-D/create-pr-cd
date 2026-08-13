@@ -191,6 +191,24 @@ def build_backoffice_entitlements(
                     warnings.append(TX_DEFAULT_WARNING)
 
         if not _text(raw_trigger):
+            if du_model == "CD consolidation 2023":
+                alternate_field = "decom_actual_end" if trigger_field == "mocn_actual_end" else "mocn_actual_end"
+                alternate_raw = context.get(alternate_field)
+                if _text(alternate_raw):
+                    try:
+                        alternate_date = _parse_trigger_date(alternate_raw)
+                    except ValueError:
+                        _review(
+                            record, partitions, "BACKOFFICE_TRIGGER_DATE_INVALID",
+                            f"Alternate governed CD milestone {alternate_field} does not contain a valid date.",
+                        )
+                        continue
+                    if alternate_date is not None and _month(alternate_date) == billing_month:
+                        _review(
+                            record, partitions, "BACKOFFICE_CD_MILESTONE_CONFLICT",
+                            "The SOW-selected CD milestone is blank while the alternate governed MOCN/Decom milestone is complete in the requested billing month.",
+                        )
+                        continue
             _ignored(record, partitions, "NOT_YET_ELIGIBLE", "The approved Backoffice trigger Actual End Date is blank.")
             continue
         try:
@@ -256,7 +274,7 @@ def build_backoffice_entitlements(
         "billing_month": billing_month,
         "issue_type": issue_type,
         "pbom_code": pbom,
-        "eligible_hops": len(partitions["candidates"]),
+        "eligible_hops": len(partitions["candidates"]) + len(partitions["duplicates"]),
         "duplicate_blocked": len(partitions["duplicates"]),
         "not_generated": len(partitions["ignored"]),
         "review_required": len(partitions["review_required"]),

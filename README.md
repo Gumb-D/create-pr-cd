@@ -205,12 +205,13 @@ Governed rules:
 - Main PR is issued only for the immediately previous closed month and freezes that month's PBOM. Supplementary PR reuses the frozen Main PBOM.
 - Duplicate identity is `Delivery Unit Code + Canonical Backoffice Event`; Site ID is not the duplicate or reconciliation key. Historical duplicates are blocked from the tracker, while repeated entitlement identity inside the same current run fails closed for review.
 - The authoritative issued-history source is `TX Outsource & NOC Database.xls`, sheet `TX Outsource Details`; NOC scope is excluded.
-- Provider/contract are effective-dated and resolved from `config/backoffice_service_registry.yaml` using the trigger date.
+- Provider/contract are effective-dated and resolved from `config/backoffice_service_registry.yaml` using the trigger date. A billing month spanning a provider/contract transition is partitioned into separate validated provider/contract workbooks before the 30-site split.
 - Current configured Backoffice provider is Allstar / `S1MY2024042501WBF1`, but the renderer derives the provider from validated runtime data rather than hard-coding it.
 - Unknown TX Rollout SOW defaults to TX Integrated and records `BACKOFFICE_TX_SOW_DEFAULTED_TO_INTEGRATED`.
 - Unknown CD consolidation SOW requires review only when a governed MOCN/Decom milestone could affect the requested billing month; clearly historical or not-yet-complete records are ignored with an approved reason.
 - Any `REVIEW_REQUIRED` record blocks the entire Backoffice ECC run; partial ECC output is not allowed.
-- Backoffice ECC filenames use `TX Outsource-<Provider> Backoffice <MAIN|SUPPLEMENTARY> <YYYY-MM> PR <YYYYMMDD>.xlsx`; batches above 30 unique Site IDs are emitted as numbered `Part N` files with at most 30 unique Site IDs per workbook.
+- Backoffice ECC filenames use `TX Outsource-<Provider> Backoffice <MAIN|SUPPLEMENTARY> <YYYY-MM> PR <YYYYMMDD>.xlsx`; batches above 30 unique Site IDs are emitted as numbered `Part N` files with at most 30 unique Site IDs per workbook. If an otherwise identical same-day target already exists, a deterministic `Batch N` suffix preserves the earlier issued artifact instead of overwriting it.
+- Required renderer identity (`Site ID`, `Site Name`, `Delivery Unit Code`, `Region`) must have approved Backoffice-scope source mappings before production generation.
 
 ## Planning PR Business Rules — Issue #34
 

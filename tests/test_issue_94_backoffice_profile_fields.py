@@ -26,10 +26,25 @@ def load(pid):
 
 class TestBackofficeProfileFields(unittest.TestCase):
     def test_backoffice_base_scope_is_canonical(self):
-        self.assertEqual(('site_code','du_key'), SCOPE_REQUIRED_FIELDS['BACKOFFICE'])
+        self.assertEqual(('site_code','site_name','du_key','region'), SCOPE_REQUIRED_FIELDS['BACKOFFICE'])
         for name in ('du_key','backoffice_sow_raw','microwave_tx_cutover_date','tx_integrated_actual_end','cut_over_actual_end','site_integrated_actual_end','l1_approved_actual_end','mocn_actual_end','decom_actual_end'):
             self.assertIn(name,FIELD_PATHS)
 
+    def test_backoffice_renderer_identity_fields_are_scope_required_and_approved(self):
+        self.assertEqual(('site_code','site_name','du_key','region'), SCOPE_REQUIRED_FIELDS['BACKOFFICE'])
+        for path in sorted(PROFILES.glob('*.yaml')):
+            p=json.loads(path.read_text(encoding='utf-8'))
+            if p.get('scope_status',{}).get('BACKOFFICE')!='PRODUCTION':
+                continue
+            with self.subTest(profile=path.stem):
+                required=_required_fields_for_scope(p,'BACKOFFICE')
+                self.assertIn('site_name',required)
+                self.assertIn('region',required)
+                scoped=p.get('scope_mapping_status',{}).get('BACKOFFICE',{})
+                site_name_status=scoped.get('site_name') or p['field_mapping']['site_name']['source_candidates'][0]['mapping_status']
+                region_status=scoped.get('region') or p['field_mapping']['region']['source_candidates'][0]['mapping_status']
+                self.assertEqual('APPROVED',site_name_status)
+                self.assertEqual('APPROVED',region_status)
     def test_fixed_trigger_profiles_have_approved_real_fingerprints(self):
         for pid,(field,code,task,header) in EXPECTED.items():
             with self.subTest(profile=pid):
@@ -75,6 +90,6 @@ class TestBackofficeProfileFields(unittest.TestCase):
 
     def test_pipeline_uses_scope_specific_required_fields(self):
         p=load('tx_rollout_2023_pr_v1')
-        self.assertEqual({'site_code','du_key','tx_sow_raw','tx_integrated_actual_end','l1_approved_actual_end'},_required_fields_for_scope(p,'BACKOFFICE'))
+        self.assertEqual({'site_code','site_name','du_key','region','tx_sow_raw','tx_integrated_actual_end','l1_approved_actual_end'},_required_fields_for_scope(p,'BACKOFFICE'))
 
 if __name__=='__main__': unittest.main()

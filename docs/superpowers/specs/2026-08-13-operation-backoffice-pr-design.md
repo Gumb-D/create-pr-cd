@@ -271,4 +271,4 @@ Planning/TSS/TI selectors remain separate. Shared infrastructure may be reused, 
 - Existing TSS/TI/Planning behavior must remain regression protected.
 ## ECC output partitioning
 
-Each Backoffice ECC workbook may contain at most 30 unique Site IDs. Larger validated batches are partitioned into deterministic numbered `Part N` workbooks without changing entitlement, PBOM, provider, contract, or reconciliation identity.
+Each Backoffice ECC workbook may contain at most 30 unique Site IDs. Larger validated provider/contract groups are partitioned into deterministic numbered `Part N` workbooks without changing entitlement, PBOM, provider, contract, or reconciliation identity. If effective-dated provider/contract changes occur within one billing month, candidates are first partitioned by validated provider/contract. Same-day filename collisions must preserve the earlier artifact by allocating a deterministic `Batch N` suffix rather than overwriting it. Required renderer identity fields (`Site ID`, `Site Name`, `Delivery Unit Code`, `Region`) require approved Backoffice-scope source mappings.

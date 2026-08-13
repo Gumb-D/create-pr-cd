@@ -86,6 +86,27 @@ class TestBackofficeRuntime(unittest.TestCase):
         self.assertEqual(1,len(out['candidates']))
         self.assertEqual('CD_CONSOLIDATION_MOCN',out['candidates'][0]['backoffice_selection']['event_code'])
 
+    def test_cd_known_mocn_with_blank_selected_trigger_and_current_decom_evidence_requires_review(self):
+        r=rec('CD consolidation 2023',backoffice_sow_raw='Modernization',mocn_actual_end='',decom_actual_end='2026-07-18')
+        out=build_backoffice_entitlements([r],'2026-07',empty_tracker(),REG)
+        self.assertEqual(0,len(out['candidates']))
+        self.assertEqual(0,len(out['ignored']))
+        self.assertEqual(1,len(out['review_required']))
+        self.assertEqual('BACKOFFICE_CD_MILESTONE_CONFLICT',out['review_required'][0]['pr_generation_decision']['reason_code'])
+
+    def test_supplementary_eligible_hops_includes_tracker_blocked_month_entitlements(self):
+        duplicate_rows=[]
+        duplicate_keys=[]
+        for i in range(3):
+            row=rec(du=f'OLD{i}',site=f'OLD{i}',tx_integrated_actual_end='2026-07-15')
+            duplicate_rows.append(row)
+            duplicate_keys.append((f'OLD{i}','TX_MINI_INTEGRATION'))
+        new_rows=[rec(du='NEW1',site='NEW1',tx_integrated_actual_end='2026-07-16'),rec(du='NEW2',site='NEW2',tx_integrated_actual_end='2026-07-17')]
+        out=build_backoffice_entitlements(duplicate_rows+new_rows,'2026-07',empty_tracker({'2026-07':PBOM_LOW},keys=duplicate_keys),REG)
+        self.assertEqual('SUPPLEMENTARY',out['summary']['issue_type'])
+        self.assertEqual(3,len(out['duplicates']))
+        self.assertEqual(2,len(out['candidates']))
+        self.assertEqual(5,out['summary']['eligible_hops'])
     def test_invalid_trigger_date_requires_review(self):
         r=rec(tx_integrated_actual_end='not-a-date')
         out=build_backoffice_entitlements([r],'2026-07',empty_tracker(),REG)
