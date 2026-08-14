@@ -118,6 +118,7 @@ def issuance_type_from_filename(file_name: object) -> str:
 def build_tracker_index(rows: Iterable[Mapping[str, object]]) -> TrackerIndex:
     by_key: dict[tuple[str, str], Mapping[str, object]] = {}
     month_rows: dict[str, list[tuple[date, str]]] = {}
+    month_all_pboms: dict[str, set[str]] = {}
     month_entitlement_keys: dict[str, set[tuple[str, str]]] = {}
     for row in rows:
         du = row.get("Delivery Unit Code")
@@ -147,6 +148,7 @@ def build_tracker_index(rows: Iterable[Mapping[str, object]]) -> TrackerIndex:
         by_key[key] = dict(row)
         if issuance_type == "MAIN":
             month_rows.setdefault(month, []).append((issued, pbom))
+        month_all_pboms.setdefault(month, set()).add(pbom)
         month_entitlement_keys.setdefault(month, set()).add(key)
 
     month_pbom: dict[str, str] = {}
@@ -155,7 +157,13 @@ def build_tracker_index(rows: Iterable[Mapping[str, object]]) -> TrackerIndex:
         first_pboms = {pbom for issued, pbom in values if issued == first_date}
         if len(first_pboms) != 1:
             raise BackofficeTrackerError("BACKOFFICE_TRACKER_MONTH_PBOM_AMBIGUOUS", f"More than one PBOM appears on the first issue date for {month}.")
-        month_pbom[month] = next(iter(first_pboms))
+        frozen_pbom = next(iter(first_pboms))
+        if month_all_pboms.get(month, set()) != {frozen_pbom}:
+            raise BackofficeTrackerError(
+                "BACKOFFICE_TRACKER_MONTH_PBOM_CONFLICT",
+                f"Tracker contains PBOM values that conflict with the Main-frozen PBOM for {month}.",
+            )
+        month_pbom[month] = frozen_pbom
     return TrackerIndex(
         frozenset(by_key),
         by_key,

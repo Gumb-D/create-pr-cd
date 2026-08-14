@@ -51,6 +51,14 @@ class TestBackofficeTracker(unittest.TestCase):
         self.assertEqual('350000592793',frozen_pbom_for_month(idx,'2024-07'))
         self.assertEqual('350000592794',frozen_pbom_for_month(idx,'2024-08'))
 
+    def test_supplementary_pbom_must_match_frozen_main_pbom(self):
+        rows=[
+            {'Delivery Unit Code':'DU1','SOW':'TX Mini Project','PBOM Code':'350000592793','File Name':'TX Outsource-Allstar Backoffice MAIN 2026-07 PR 20260801.xlsx'},
+            {'Delivery Unit Code':'DU2','SOW':'MW EOS Swap','PBOM Code':'350000592794','File Name':'TX Outsource-Allstar Backoffice SUPPLEMENTARY 2026-07 PR 20260805.xlsx'},
+        ]
+        with self.assertRaises(BackofficeTrackerError) as cm:
+            build_tracker_index(rows)
+        self.assertEqual('BACKOFFICE_TRACKER_MONTH_PBOM_CONFLICT',cm.exception.code)
     def test_explicit_supplementary_cannot_establish_month_pbom_without_main(self):
         rows=[
             {'Delivery Unit Code':'DU1','SOW':'TX Mini Project','PBOM Code':'350000592793','File Name':'TX Outsource-Allstar Backoffice SUPPLEMENTARY 2026-05 PR 20260813.xlsx'},
@@ -61,7 +69,7 @@ class TestBackofficeTracker(unittest.TestCase):
 
     def test_month_pbom_is_frozen_only_from_main_even_if_supplementary_is_earlier(self):
         rows=[
-            {'Delivery Unit Code':'DU1','SOW':'TX Mini Project','PBOM Code':'350000592794','File Name':'TX Outsource-Allstar Backoffice SUPPLEMENTARY 2026-07 PR 20260802.xlsx'},
+            {'Delivery Unit Code':'DU1','SOW':'TX Mini Project','PBOM Code':'350000592793','File Name':'TX Outsource-Allstar Backoffice SUPPLEMENTARY 2026-07 PR 20260802.xlsx'},
             {'Delivery Unit Code':'DU2','SOW':'MW EOS Swap','PBOM Code':'350000592793','File Name':'TX Outsource-Allstar Backoffice MAIN 2026-07 PR 20260803.xlsx'},
         ]
         idx=build_tracker_index(rows)
