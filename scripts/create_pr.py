@@ -483,6 +483,26 @@ def _collect_backoffice_renderer_reconciliation(output, candidates, created_path
     return {"record_dispositions": dispositions}
 
 
+def _allocate_backoffice_summary_path(output: Path, billing_month: str, issue_type: str, issued_on: date | None = None) -> Path:
+    issued_on = issued_on or date.today()
+    base = f"CREATE_PR_SUMMARY_BACKOFFICE_{billing_month}_{issue_type}_{issued_on.strftime('%Y%m%d')}"
+    first = output / f"{base}.json"
+    if not first.exists():
+        return first
+    batch = 2
+    while True:
+        candidate = output / f"{base} Batch {batch}.json"
+        if not candidate.exists():
+            return candidate
+        batch += 1
+
+
+def _write_backoffice_summary(summary: Mapping[str, object], output: Path) -> None:
+    payload = json.dumps(summary, ensure_ascii=False, indent=2)
+    Path(summary["summary_path"]).write_text(payload, encoding="utf-8")
+    (output / "CREATE_PR_SUMMARY_BACKOFFICE.json").write_text(payload, encoding="utf-8")
+
+
 def _backoffice_governance_summary(partitions):
     runtime_summary = partitions.get("summary", {}) if isinstance(partitions, Mapping) else {}
     candidates = partitions.get("candidates", []) if isinstance(partitions, Mapping) else []
@@ -614,9 +634,11 @@ def _run_backoffice(parsed, baseline):
         "pr_model_baseline": {"baseline_id": baseline["baseline_id"], "version": baseline["version"], "sha256": baseline["actual_sha256"]},
         **reconciliation,
     }
-    summary_path = requested_output / "CREATE_PR_SUMMARY_BACKOFFICE.json"
+    summary_path = _allocate_backoffice_summary_path(
+        requested_output, billing_month, partitions["summary"]["issue_type"]
+    )
     summary["summary_path"] = str(summary_path.resolve())
-    summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    _write_backoffice_summary(summary, requested_output)
     return summary
 
 def _build_site_reconciliation(selected, partitions, renderer_reconciliation=None):
@@ -771,9 +793,7 @@ def _persist_reconciliation_artifact_error(summary, error):
     summary["status"] = "ERROR"
     summary["code"] = "PR_RECONCILIATION_ARTIFACT_READ_FAILED"
     summary["reconciliation_error"] = diagnostic
-    Path(summary["summary_path"]).write_text(
-        json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    _write_backoffice_summary(summary, Path(summary["output_root"]))
     raise CreatePrError(
         "PR_RECONCILIATION_ARTIFACT_READ_FAILED",
         "Renderer output could not be read for site reconciliation.",
@@ -819,9 +839,7 @@ def run(parsed):
         summary["status"] = "ERROR"
         summary["code"] = "PR_SITE_RECONCILIATION_FAILED"
 
-    Path(summary["summary_path"]).write_text(
-        json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    _write_backoffice_summary(summary, Path(summary["output_root"]))
     _assert_reconciliation_success(reconciliation)
     return summary
 

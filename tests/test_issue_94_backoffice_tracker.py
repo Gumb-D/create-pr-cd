@@ -51,6 +51,22 @@ class TestBackofficeTracker(unittest.TestCase):
         self.assertEqual('350000592793',frozen_pbom_for_month(idx,'2024-07'))
         self.assertEqual('350000592794',frozen_pbom_for_month(idx,'2024-08'))
 
+    def test_explicit_supplementary_cannot_establish_month_pbom_without_main(self):
+        rows=[
+            {'Delivery Unit Code':'DU1','SOW':'TX Mini Project','PBOM Code':'350000592793','File Name':'TX Outsource-Allstar Backoffice SUPPLEMENTARY 2026-05 PR 20260813.xlsx'},
+        ]
+        idx=build_tracker_index(rows)
+        self.assertNotIn('2026-05',idx.month_pbom)
+        self.assertIn(('DU1','TX_MINI_INTEGRATION'),idx.month_entitlement_keys['2026-05'])
+
+    def test_month_pbom_is_frozen_only_from_main_even_if_supplementary_is_earlier(self):
+        rows=[
+            {'Delivery Unit Code':'DU1','SOW':'TX Mini Project','PBOM Code':'350000592794','File Name':'TX Outsource-Allstar Backoffice SUPPLEMENTARY 2026-07 PR 20260802.xlsx'},
+            {'Delivery Unit Code':'DU2','SOW':'MW EOS Swap','PBOM Code':'350000592793','File Name':'TX Outsource-Allstar Backoffice MAIN 2026-07 PR 20260803.xlsx'},
+        ]
+        idx=build_tracker_index(rows)
+        self.assertEqual('350000592793',idx.month_pbom['2026-07'])
+        self.assertEqual(2,len(idx.month_entitlement_keys['2026-07']))
     def test_index_preserves_unique_entitlement_keys_by_billing_month(self):
         rows=[
             {'Delivery Unit Code':'DU1','SOW':'TX Mini Project','PBOM Code':'350000592793','File Name':'TX Outsource-Allstar Backoffice MAIN 2026-07 PR 20260801 Part 1.xlsx'},

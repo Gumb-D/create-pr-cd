@@ -149,6 +149,18 @@ class TestBackofficeEntrypoint(unittest.TestCase):
             snapshot.assert_not_called()
             self.assertFalse(any((root/'out').glob('* PR *.xlsx')))
 
+    def test_backoffice_summary_paths_preserve_same_day_issuance_history(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            first=create_pr._allocate_backoffice_summary_path(root,'2026-07','SUPPLEMENTARY',date(2026,8,14))
+            first.write_text('{}',encoding='utf-8')
+            second=create_pr._allocate_backoffice_summary_path(root,'2026-07','SUPPLEMENTARY',date(2026,8,14))
+            second.write_text('{}',encoding='utf-8')
+            self.assertNotEqual(first,second)
+            self.assertTrue(first.exists())
+            self.assertTrue(second.exists())
+            self.assertIn('2026-07_SUPPLEMENTARY_20260814',first.name)
+            self.assertIn('Batch 2',second.name)
     def test_backoffice_governance_summary_preserves_tier_and_warning_audit(self):
         partitions={
             'candidates':[

@@ -31,6 +31,7 @@ _TRACKER_SOW_EVENTS = {
 }
 _DATE_RE = re.compile(r"(?<!\d)(20\d{6})(?!\d)")
 _BACKOFFICE_BILLING_MONTH_RE = re.compile(r"\bBackoffice\s+(?:MAIN|SUPPLEMENTARY)\s+(20\d{2}-(?:0[1-9]|1[0-2]))\s+PR\b", re.IGNORECASE)
+_BACKOFFICE_ISSUANCE_RE = re.compile(r"\bBackoffice\s+(MAIN|SUPPLEMENTARY)\s+20\d{2}-(?:0[1-9]|1[0-2])\s+PR\b", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -104,6 +105,16 @@ def billing_month_from_filename(file_name: object) -> str | None:
     return f"{year:04d}-{month:02d}"
 
 
+def issuance_type_from_filename(file_name: object) -> str:
+    text = _text(file_name)
+    explicit = _BACKOFFICE_ISSUANCE_RE.search(text)
+    if explicit:
+        return explicit.group(1).upper()
+    if re.search(r"\bsupplementary\b", text, re.IGNORECASE):
+        return "SUPPLEMENTARY"
+    return "MAIN"
+
+
 def build_tracker_index(rows: Iterable[Mapping[str, object]]) -> TrackerIndex:
     by_key: dict[tuple[str, str], Mapping[str, object]] = {}
     month_rows: dict[str, list[tuple[date, str]]] = {}
@@ -121,6 +132,7 @@ def build_tracker_index(rows: Iterable[Mapping[str, object]]) -> TrackerIndex:
         file_name = row.get("File Name")
         issued = issue_date_from_filename(file_name)
         month = billing_month_from_filename(file_name)
+        issuance_type = issuance_type_from_filename(file_name)
         if not pbom:
             raise BackofficeTrackerError("BACKOFFICE_TRACKER_PBOM_MISSING", f"PBOM Code is missing for {key}.")
         if issued is None or month is None:
@@ -133,7 +145,8 @@ def build_tracker_index(rows: Iterable[Mapping[str, object]]) -> TrackerIndex:
                 raise BackofficeTrackerError("BACKOFFICE_TRACKER_DUPLICATE_IDENTITY_AMBIGUOUS", f"Tracker contains conflicting history for {key}.")
             continue
         by_key[key] = dict(row)
-        month_rows.setdefault(month, []).append((issued, pbom))
+        if issuance_type == "MAIN":
+            month_rows.setdefault(month, []).append((issued, pbom))
         month_entitlement_keys.setdefault(month, set()).add(key)
 
     month_pbom: dict[str, str] = {}
