@@ -51,6 +51,16 @@ class TestBackofficeTracker(unittest.TestCase):
         self.assertEqual('350000592793',frozen_pbom_for_month(idx,'2024-07'))
         self.assertEqual('350000592794',frozen_pbom_for_month(idx,'2024-08'))
 
+    def test_index_preserves_unique_entitlement_keys_by_billing_month(self):
+        rows=[
+            {'Delivery Unit Code':'DU1','SOW':'TX Mini Project','PBOM Code':'350000592793','File Name':'TX Outsource-Allstar Backoffice MAIN 2026-07 PR 20260801 Part 1.xlsx'},
+            {'Delivery Unit Code':'DU2','SOW':'MW EOS Swap','PBOM Code':'350000592793','File Name':'TX Outsource-Allstar Backoffice MAIN 2026-07 PR 20260801 Part 1.xlsx'},
+            {'Delivery Unit Code':'DU3','SOW':'ZTE TX MINI','PBOM Code':'350000592793','File Name':'TX Outsource-Allstar Backoffice MAIN 2026-06 PR 20260701.xlsx'},
+        ]
+        idx=build_tracker_index(rows)
+        self.assertEqual(2,len(idx.month_entitlement_keys['2026-07']))
+        self.assertEqual(1,len(idx.month_entitlement_keys['2026-06']))
+        self.assertIn(('DU1','TX_MINI_INTEGRATION'),idx.month_entitlement_keys['2026-07'])
     def test_xls_reader_uses_outsource_sheet_and_xlrd(self):
         fake=[{'Delivery Unit Code':'DU1','SOW':'TX Mini Project','PBOM Code':'350000592793','File Name':'TX Outsource-Allstar PR CD 20240815 Batch 1'}]
         with patch('backoffice_tracker.pd.read_excel', return_value=__import__('pandas').DataFrame(fake)) as read:

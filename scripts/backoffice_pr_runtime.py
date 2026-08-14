@@ -229,10 +229,6 @@ def build_backoffice_entitlements(
             continue
 
         key = duplicate_key(du_code, event_code)
-        if key in tracker_snapshot.duplicate_keys:
-            set_generation_decision(record, "DUPLICATE_BLOCKED", "BACKOFFICE_TRACKER_DUPLICATE", "The Delivery Unit Code + canonical Backoffice event is already present in the authoritative tracker.")
-            partitions["duplicates"].append(record)
-            continue
         if key in accepted_current_run_keys:
             _review(
                 record,
@@ -242,6 +238,10 @@ def build_backoffice_entitlements(
             )
             continue
         accepted_current_run_keys.add(key)
+        if key in tracker_snapshot.duplicate_keys:
+            set_generation_decision(record, "DUPLICATE_BLOCKED", "BACKOFFICE_TRACKER_DUPLICATE", "The Delivery Unit Code + canonical Backoffice event is already present in the authoritative tracker.")
+            partitions["duplicates"].append(record)
+            continue
 
         record["backoffice_selection"] = {
             "event_code": event_code,
@@ -270,11 +270,18 @@ def build_backoffice_entitlements(
         record["backoffice_selection"]["pbom_code"] = pbom
         record["backoffice_selection"]["issue_type"] = issue_type
 
+    historical_month_keys = set(tracker_snapshot.month_entitlement_keys.get(billing_month, frozenset()))
+    new_candidate_keys = {
+        duplicate_key(record["site"]["du_key"], record["backoffice_selection"]["event_code"])
+        for record in partitions["candidates"]
+    }
+    known_month_keys = historical_month_keys | new_candidate_keys
+
     partitions["summary"] = {
         "billing_month": billing_month,
         "issue_type": issue_type,
         "pbom_code": pbom,
-        "eligible_hops": len(partitions["candidates"]) + len(partitions["duplicates"]),
+        "eligible_hops": len(known_month_keys),
         "duplicate_blocked": len(partitions["duplicates"]),
         "not_generated": len(partitions["ignored"]),
         "review_required": len(partitions["review_required"]),

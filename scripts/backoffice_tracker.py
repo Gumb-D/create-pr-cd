@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
 from typing import Iterable, Mapping
@@ -38,6 +38,7 @@ class TrackerIndex:
     duplicate_keys: frozenset[tuple[str, str]]
     rows_by_key: Mapping[tuple[str, str], Mapping[str, object]]
     month_pbom: Mapping[str, str]
+    month_entitlement_keys: Mapping[str, frozenset[tuple[str, str]]] = field(default_factory=dict)
 
 
 _REQUIRED_TRACKER_COLUMNS = {"Delivery Unit Code", "SOW", "PBOM Code", "File Name"}
@@ -106,6 +107,7 @@ def billing_month_from_filename(file_name: object) -> str | None:
 def build_tracker_index(rows: Iterable[Mapping[str, object]]) -> TrackerIndex:
     by_key: dict[tuple[str, str], Mapping[str, object]] = {}
     month_rows: dict[str, list[tuple[date, str]]] = {}
+    month_entitlement_keys: dict[str, set[tuple[str, str]]] = {}
     for row in rows:
         du = row.get("Delivery Unit Code")
         sow = row.get("SOW")
@@ -132,6 +134,7 @@ def build_tracker_index(rows: Iterable[Mapping[str, object]]) -> TrackerIndex:
             continue
         by_key[key] = dict(row)
         month_rows.setdefault(month, []).append((issued, pbom))
+        month_entitlement_keys.setdefault(month, set()).add(key)
 
     month_pbom: dict[str, str] = {}
     for month, values in month_rows.items():
@@ -140,7 +143,12 @@ def build_tracker_index(rows: Iterable[Mapping[str, object]]) -> TrackerIndex:
         if len(first_pboms) != 1:
             raise BackofficeTrackerError("BACKOFFICE_TRACKER_MONTH_PBOM_AMBIGUOUS", f"More than one PBOM appears on the first issue date for {month}.")
         month_pbom[month] = next(iter(first_pboms))
-    return TrackerIndex(frozenset(by_key), by_key, month_pbom)
+    return TrackerIndex(
+        frozenset(by_key),
+        by_key,
+        month_pbom,
+        {month: frozenset(keys) for month, keys in month_entitlement_keys.items()},
+    )
 
 
 def frozen_pbom_for_month(index: TrackerIndex, billing_month: str) -> str | None:

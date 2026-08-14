@@ -2,7 +2,7 @@ import sys
 import unittest
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
-from backoffice_tracker import TrackerIndex
+from backoffice_tracker import TrackerIndex, build_tracker_index
 from backoffice_pr_runtime import build_backoffice_entitlements, load_service_registry
 
 PBOM_LOW='350000592793'
@@ -19,7 +19,11 @@ def rec(du_model='TX Mini Project', du='DU1', site='S1', sow='', **ctx):
     return base
 
 def empty_tracker(month_pbom=None, keys=()):
-    return TrackerIndex(frozenset(keys),{},month_pbom or {})
+    months=month_pbom or {}
+    month_keys={}
+    if keys and len(months)==1:
+        month_keys[next(iter(months))]=frozenset(keys)
+    return TrackerIndex(frozenset(keys),{},months,month_keys)
 
 REG={
  'services':[{
@@ -54,6 +58,28 @@ class TestBackofficeRuntime(unittest.TestCase):
         self.assertEqual(1,len(out['review_required']))
         self.assertEqual('BACKOFFICE_CURRENT_RUN_DUPLICATE_ENTITLEMENT',out['review_required'][0]['pr_generation_decision']['reason_code'])
 
+    def test_repeated_current_run_identity_already_in_tracker_requires_review(self):
+        key=('DU1','TX_MINI_INTEGRATION')
+        first=rec(du='DU1',site='S1',tx_integrated_actual_end='2026-07-15')
+        repeated=rec(du='DU1',site='S2',tx_integrated_actual_end='2026-07-16')
+        out=build_backoffice_entitlements([first,repeated],'2026-07',empty_tracker({'2026-07':PBOM_LOW},keys=(key,)),REG)
+        self.assertEqual(1,len(out['duplicates']))
+        self.assertEqual(1,len(out['review_required']))
+        self.assertEqual('BACKOFFICE_CURRENT_RUN_DUPLICATE_ENTITLEMENT',out['review_required'][0]['pr_generation_decision']['reason_code'])
+
+    def test_narrow_supplementary_eligible_hops_includes_month_tracker_history(self):
+        history=[
+            {'Delivery Unit Code':'OLD1','SOW':'TX Mini Project','PBOM Code':PBOM_LOW,'File Name':'TX Outsource-Allstar Backoffice MAIN 2026-07 PR 20260801 Part 1.xlsx'},
+            {'Delivery Unit Code':'OLD2','SOW':'MW EOS Swap','PBOM Code':PBOM_LOW,'File Name':'TX Outsource-Allstar Backoffice MAIN 2026-07 PR 20260801 Part 1.xlsx'},
+            {'Delivery Unit Code':'OLD3','SOW':'2023 Celcomdigi BAU','PBOM Code':PBOM_LOW,'File Name':'TX Outsource-Allstar Backoffice MAIN 2026-07 PR 20260801 Part 1.xlsx'},
+        ]
+        snapshot=build_tracker_index(history)
+        new_rows=[rec(du='NEW1',site='NEW1',tx_integrated_actual_end='2026-07-16'),rec(du='NEW2',site='NEW2',tx_integrated_actual_end='2026-07-17')]
+        out=build_backoffice_entitlements(new_rows,'2026-07',snapshot,REG)
+        self.assertEqual('SUPPLEMENTARY',out['summary']['issue_type'])
+        self.assertEqual(0,len(out['duplicates']))
+        self.assertEqual(2,len(out['candidates']))
+        self.assertEqual(5,out['summary']['eligible_hops'])
     def test_main_month_800_uses_low_pbom(self):
         rows=[rec(du=f'DU{i}',site=f'S{i}',tx_integrated_actual_end='2026-07-15') for i in range(800)]
         out=build_backoffice_entitlements(rows,'2026-07',empty_tracker(),REG)
