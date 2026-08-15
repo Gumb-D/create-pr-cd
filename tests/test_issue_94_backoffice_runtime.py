@@ -80,6 +80,15 @@ class TestBackofficeRuntime(unittest.TestCase):
         self.assertEqual(0,len(out['duplicates']))
         self.assertEqual(2,len(out['candidates']))
         self.assertEqual(5,out['summary']['eligible_hops'])
+    def test_main_pbom_uses_combined_historical_and_new_month_keys_without_freeze(self):
+        historical=frozenset((f'OLD{i}','TX_MINI_INTEGRATION') for i in range(795))
+        snapshot=TrackerIndex(historical,{}, {}, {'2026-07':historical})
+        rows=[rec(du=f'NEW{i}',site=f'NEW{i}',tx_integrated_actual_end='2026-07-15') for i in range(10)]
+        out=build_backoffice_entitlements(rows,'2026-07',snapshot,REG)
+        self.assertEqual('MAIN',out['summary']['issue_type'])
+        self.assertEqual(805,out['summary']['eligible_hops'])
+        self.assertEqual(PBOM_HIGH,out['summary']['pbom_code'])
+        self.assertTrue(all(x['backoffice_selection']['pbom_code']==PBOM_HIGH for x in out['candidates']))
     def test_main_month_800_uses_low_pbom(self):
         rows=[rec(du=f'DU{i}',site=f'S{i}',tx_integrated_actual_end='2026-07-15') for i in range(800)]
         out=build_backoffice_entitlements(rows,'2026-07',empty_tracker(),REG)

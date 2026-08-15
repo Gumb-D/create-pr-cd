@@ -263,19 +263,19 @@ def build_backoffice_entitlements(
         set_generation_decision(record, "CANDIDATE", "ELIGIBLE", "Backoffice entitlement passed trigger, month, contract and duplicate controls.")
         partitions["candidates"].append(record)
 
-    frozen = tracker_snapshot.month_pbom.get(billing_month)
-    issue_type = "SUPPLEMENTARY" if frozen else "MAIN"
-    pbom = frozen or select_backoffice_pbom(len(partitions["candidates"]))
-    for record in partitions["candidates"]:
-        record["backoffice_selection"]["pbom_code"] = pbom
-        record["backoffice_selection"]["issue_type"] = issue_type
-
     historical_month_keys = set(tracker_snapshot.month_entitlement_keys.get(billing_month, frozenset()))
     new_candidate_keys = {
         duplicate_key(record["site"]["du_key"], record["backoffice_selection"]["event_code"])
         for record in partitions["candidates"]
     }
     known_month_keys = historical_month_keys | new_candidate_keys
+
+    frozen = tracker_snapshot.month_pbom.get(billing_month)
+    issue_type = "SUPPLEMENTARY" if frozen else "MAIN"
+    pbom = frozen or select_backoffice_pbom(len(known_month_keys))
+    for record in partitions["candidates"]:
+        record["backoffice_selection"]["pbom_code"] = pbom
+        record["backoffice_selection"]["issue_type"] = issue_type
 
     partitions["summary"] = {
         "billing_month": billing_month,

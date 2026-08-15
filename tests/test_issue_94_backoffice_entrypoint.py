@@ -149,6 +149,27 @@ class TestBackofficeEntrypoint(unittest.TestCase):
             snapshot.assert_not_called()
             self.assertFalse(any((root/'out').glob('* PR *.xlsx')))
 
+    def test_non_backoffice_run_does_not_write_backoffice_summary_alias(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            scope_summary=root/'CREATE_PR_SUMMARY_TI.json'
+            def fake_impl_run(_parsed):
+                scope_summary.write_text('{}',encoding='utf-8')
+                return {
+                    'status':'SUCCESS',
+                    'scope':'TI',
+                    'run_mode':'PRODUCTION',
+                    'output_root':str(root),
+                    'summary_path':str(scope_summary),
+                }
+            parsed=Namespace(scope='TI',output=root,pr_model=Path('model.xlsx'))
+            baseline={'baseline_id':'x','version':'4.1','actual_sha256':'abc','path':Path('model.xlsx')}
+            reconciliation={'requested_count':0,'generated_count':0,'review_required_count':0,'approved_ignored_count':0,'failed_count':0,'unaccounted_count':0,'site_dispositions':[]}
+            with patch.object(create_pr,'validate_pr_model_baseline',return_value=baseline), patch.object(create_pr,'_sync_dependencies'), patch.object(create_pr,'_renderer_for_scope',return_value=Path('renderer.py')), patch.object(create_pr,'snapshot_renderer_artifacts',return_value={}), patch.object(create_pr._impl,'run',side_effect=fake_impl_run), patch.object(create_pr,'_write_ignored_report',return_value=None), patch.object(create_pr,'_reconcile_summary',return_value=reconciliation):
+                result=create_pr.run(parsed)
+            self.assertEqual('SUCCESS',result['status'])
+            self.assertTrue(scope_summary.exists())
+            self.assertFalse((root/'CREATE_PR_SUMMARY_BACKOFFICE.json').exists())
     def test_backoffice_summary_paths_preserve_same_day_issuance_history(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d)

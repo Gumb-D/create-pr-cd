@@ -503,6 +503,12 @@ def _write_backoffice_summary(summary: Mapping[str, object], output: Path) -> No
     (output / "CREATE_PR_SUMMARY_BACKOFFICE.json").write_text(payload, encoding="utf-8")
 
 
+def _write_declared_summary(summary: Mapping[str, object]) -> None:
+    Path(summary["summary_path"]).write_text(
+        json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+
 def _backoffice_governance_summary(partitions):
     runtime_summary = partitions.get("summary", {}) if isinstance(partitions, Mapping) else {}
     candidates = partitions.get("candidates", []) if isinstance(partitions, Mapping) else []
@@ -793,7 +799,7 @@ def _persist_reconciliation_artifact_error(summary, error):
     summary["status"] = "ERROR"
     summary["code"] = "PR_RECONCILIATION_ARTIFACT_READ_FAILED"
     summary["reconciliation_error"] = diagnostic
-    _write_backoffice_summary(summary, Path(summary["output_root"]))
+    _write_declared_summary(summary)
     raise CreatePrError(
         "PR_RECONCILIATION_ARTIFACT_READ_FAILED",
         "Renderer output could not be read for site reconciliation.",
@@ -839,7 +845,7 @@ def run(parsed):
         summary["status"] = "ERROR"
         summary["code"] = "PR_SITE_RECONCILIATION_FAILED"
 
-    _write_backoffice_summary(summary, Path(summary["output_root"]))
+    _write_declared_summary(summary)
     _assert_reconciliation_success(reconciliation)
     return summary
 
