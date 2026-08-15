@@ -57,6 +57,12 @@ class TestBackofficeEntrypoint(unittest.TestCase):
             create_pr._validate_backoffice_main_du_coverage(metadata)
         self.assertEqual('BACKOFFICE_MAIN_DU_SET_INCOMPLETE',cm.exception.code)
 
+    def test_main_rejects_duplicate_export_for_governed_du_model(self):
+        metadata=[{'du_model_name':name} for name in sorted(create_pr.BACKOFFICE_REQUIRED_DU_MODELS)]
+        metadata.append({'du_model_name':sorted(create_pr.BACKOFFICE_REQUIRED_DU_MODELS)[0]})
+        with self.assertRaises(create_pr.CreatePrError) as cm:
+            create_pr._validate_backoffice_main_du_coverage(metadata)
+        self.assertEqual('BACKOFFICE_MAIN_DU_SET_DUPLICATE',cm.exception.code)
     def test_main_accepts_complete_supported_du_model_set(self):
         metadata=[{'du_model_name':name} for name in sorted(create_pr.BACKOFFICE_REQUIRED_DU_MODELS)]
         create_pr._validate_backoffice_main_du_coverage(metadata)
@@ -170,6 +176,19 @@ class TestBackofficeEntrypoint(unittest.TestCase):
             self.assertEqual('SUCCESS',result['status'])
             self.assertTrue(scope_summary.exists())
             self.assertFalse((root/'CREATE_PR_SUMMARY_BACKOFFICE.json').exists())
+    def test_backoffice_issuance_paths_share_collision_safe_batch_identity(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            first=create_pr._allocate_backoffice_issuance_paths(root,'2026-07','SUPPLEMENTARY',date(2026,8,16))
+            for path in first.values():
+                path.write_text('first',encoding='utf-8')
+            second=create_pr._allocate_backoffice_issuance_paths(root,'2026-07','SUPPLEMENTARY',date(2026,8,16))
+            self.assertNotEqual(first['summary'],second['summary'])
+            self.assertIn('Batch 2',second['summary'].name)
+            self.assertIn('Batch 2',second['review'].name)
+            self.assertIn('Batch 2',second['duplicates'].name)
+            self.assertIn('Batch 2',second['ignored'].name)
+            self.assertTrue(all(path.exists() for path in first.values()))
     def test_backoffice_summary_paths_preserve_same_day_issuance_history(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d)

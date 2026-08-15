@@ -164,17 +164,27 @@ def _backoffice_source_files(path, issue_type):
     return files
 
 def _validate_backoffice_main_du_coverage(metadata):
-    observed = {
-        str(item.get("du_model_name", "") or "").strip()
-        for item in metadata
-        if isinstance(item, Mapping)
-    }
+    counts = {}
+    for item in metadata:
+        if not isinstance(item, Mapping):
+            continue
+        name = str(item.get("du_model_name", "") or "").strip()
+        if name:
+            counts[name] = counts.get(name, 0) + 1
+    observed = set(counts)
     missing = sorted(BACKOFFICE_REQUIRED_DU_MODELS - observed)
     if missing:
         raise CreatePrError(
             "BACKOFFICE_MAIN_DU_SET_INCOMPLETE",
             "Backoffice Main issuance requires the complete supported DU-model export set before the monthly PBOM tier is calculated.",
             {"missing_du_models": missing, "observed_du_models": sorted(observed)},
+        )
+    duplicates = sorted(name for name in BACKOFFICE_REQUIRED_DU_MODELS if counts.get(name, 0) != 1)
+    if duplicates:
+        raise CreatePrError(
+            "BACKOFFICE_MAIN_DU_SET_DUPLICATE",
+            "Backoffice Main issuance requires exactly one authoritative export for each supported DU model.",
+            {"duplicate_du_models": duplicates, "du_model_counts": {name: counts[name] for name in sorted(counts)}},
         )
 
 
@@ -483,18 +493,37 @@ def _collect_backoffice_renderer_reconciliation(output, candidates, created_path
     return {"record_dispositions": dispositions}
 
 
-def _allocate_backoffice_summary_path(output: Path, billing_month: str, issue_type: str, issued_on: date | None = None) -> Path:
+def _allocate_backoffice_issuance_paths(output: Path, billing_month: str, issue_type: str, issued_on: date | None = None) -> dict[str, Path]:
     issued_on = issued_on or date.today()
-    base = f"CREATE_PR_SUMMARY_BACKOFFICE_{billing_month}_{issue_type}_{issued_on.strftime('%Y%m%d')}"
-    first = output / f"{base}.json"
-    if not first.exists():
-        return first
-    batch = 2
+    token = f"{billing_month}_{issue_type}_{issued_on.strftime('%Y%m%d')}"
+    batch = 1
     while True:
-        candidate = output / f"{base} Batch {batch}.json"
-        if not candidate.exists():
-            return candidate
+        suffix = "" if batch == 1 else f" Batch {batch}"
+        paths = {
+            "summary": output / f"CREATE_PR_SUMMARY_BACKOFFICE_{token}{suffix}.json",
+            "review": output / f"CANONICAL_REVIEW_REQUIRED_BACKOFFICE_{token}{suffix}.csv",
+            "duplicates": output / f"CANONICAL_IGNORED_BACKOFFICE_DUPLICATES_{token}{suffix}.csv",
+            "ignored": output / f"CANONICAL_IGNORED_BACKOFFICE_{token}{suffix}.csv",
+        }
+        if not any(path.exists() for path in paths.values()):
+            return paths
         batch += 1
+
+
+def _allocate_backoffice_summary_path(output: Path, billing_month: str, issue_type: str, issued_on: date | None = None) -> Path:
+    return _allocate_backoffice_issuance_paths(output, billing_month, issue_type, issued_on)["summary"]
+
+
+def _write_backoffice_audit_report(path: Path, scope: str, records) -> Path | None:
+    if not records:
+        return None
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=REVIEW_REPORT_FIELDS)
+        writer.writeheader()
+        for record in records:
+            writer.writerow(_impl._report_row(record, scope))
+    return path
 
 
 def _write_backoffice_summary(summary: Mapping[str, object], output: Path) -> None:
@@ -563,9 +592,18 @@ def _run_backoffice(parsed, baseline):
 
     requested_output = Path(parsed.output).resolve()
     requested_output.mkdir(parents=True, exist_ok=True)
-    review_path = _impl._write_review_report(requested_output, "BACKOFFICE", partitions["review_required"], RUN_MODE_PRODUCTION)
-    duplicate_path = _write_ignored_report(requested_output, "BACKOFFICE_DUPLICATES", partitions["duplicates"], RUN_MODE_PRODUCTION)
-    ignored_path = _write_ignored_report(requested_output, "BACKOFFICE", partitions["ignored"], RUN_MODE_PRODUCTION)
+    issuance_paths = _allocate_backoffice_issuance_paths(
+        requested_output, billing_month, partitions["summary"]["issue_type"]
+    )
+    review_path = _write_backoffice_audit_report(
+        issuance_paths["review"], "BACKOFFICE", partitions["review_required"]
+    )
+    duplicate_path = _write_backoffice_audit_report(
+        issuance_paths["duplicates"], "BACKOFFICE", partitions["duplicates"]
+    )
+    ignored_path = _write_backoffice_audit_report(
+        issuance_paths["ignored"], "BACKOFFICE", partitions["ignored"]
+    )
     if partitions["review_required"]:
         raise CreatePrError(
             "BACKOFFICE_REVIEW_REQUIRED",
@@ -640,9 +678,7 @@ def _run_backoffice(parsed, baseline):
         "pr_model_baseline": {"baseline_id": baseline["baseline_id"], "version": baseline["version"], "sha256": baseline["actual_sha256"]},
         **reconciliation,
     }
-    summary_path = _allocate_backoffice_summary_path(
-        requested_output, billing_month, partitions["summary"]["issue_type"]
-    )
+    summary_path = issuance_paths["summary"]
     summary["summary_path"] = str(summary_path.resolve())
     _write_backoffice_summary(summary, requested_output)
     return summary
