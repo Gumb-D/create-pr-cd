@@ -1,3 +1,4 @@
+import json
 import sys
 import tempfile
 import unittest
@@ -146,14 +147,28 @@ class TestBackofficeEntrypoint(unittest.TestCase):
             root=Path(d)
             parsed=Namespace(scope='BACKOFFICE',non_production_uat=False,backoffice_tracker=root/'tracker.xls',billing_month='2026-07',site_data=root/'input',site_code=None,all_sites=True,output=root/'out',pr_model=Path('Info/input/pr_model.xlsx'),template=Path('Info/input/ecc_template.xls'),mapping=Path('Info/input/contract_info_reference.md'))
             review={'site':{'site_code':'S1','du_key':'DU1'},'identity':{'du_model_name':'CD consolidation 2023'},'pr_generation_decision':{'reason_code':'BACKOFFICE_CD_SOW_NOT_APPROVED','reason':'x'}}
-            partitions={'candidates':[{'site':{'site_code':'S2','du_key':'DU2'}}],'duplicates':[],'ignored':[],'review_required':[review],'summary':{'issue_type':'MAIN','pbom_code':LOW}}
+            candidate={'site':{'site_code':'S2','du_key':'DU2'},'backoffice_selection':{'event_code':'EVENT_OK'},'pr_generation_decision':{'reason_code':'ELIGIBLE','reason':'x'}}
+            partitions={'candidates':[candidate],'duplicates':[],'ignored':[],'review_required':[review],'summary':{'issue_type':'MAIN','pbom_code':LOW}}
             complete_metadata=[{'du_model_name':name} for name in sorted(create_pr.BACKOFFICE_REQUIRED_DU_MODELS)]
-            with patch.object(create_pr,'load_backoffice_tracker',return_value=tracker()), patch.object(create_pr,'_validate_backoffice_cadence',return_value='MAIN'), patch.object(create_pr,'_backoffice_source_files',return_value=[root/'a.xlsx']), patch.object(create_pr,'_canonicalize_backoffice_sources',return_value=([review],complete_metadata)), patch.object(create_pr._impl,'_select_records',return_value=[review]), patch.object(create_pr,'load_service_registry',return_value={}), patch.object(create_pr,'build_backoffice_entitlements',return_value=partitions), patch.object(create_pr._impl,'_write_review_report',return_value=root/'out'/'CANONICAL_REVIEW_REQUIRED_BACKOFFICE.csv'), patch.object(create_pr,'_write_ignored_report',return_value=None), patch.object(create_pr,'snapshot_renderer_artifacts') as snapshot:
+            with patch.object(create_pr,'load_backoffice_tracker',return_value=tracker()), patch.object(create_pr,'_validate_backoffice_cadence',return_value='MAIN'), patch.object(create_pr,'_backoffice_source_files',return_value=[root/'a.xlsx']), patch.object(create_pr,'_canonicalize_backoffice_sources',return_value=([review,candidate],complete_metadata)), patch.object(create_pr._impl,'_select_records',return_value=[review,candidate]), patch.object(create_pr,'load_service_registry',return_value={}), patch.object(create_pr,'build_backoffice_entitlements',return_value=partitions), patch.object(create_pr._impl,'_write_review_report',return_value=root/'out'/'CANONICAL_REVIEW_REQUIRED_BACKOFFICE.csv'), patch.object(create_pr,'_write_ignored_report',return_value=None), patch.object(create_pr,'snapshot_renderer_artifacts') as snapshot:
                 with self.assertRaises(create_pr.CreatePrError) as cm:
                     create_pr._run_backoffice(parsed,{'baseline_id':'x','version':'4.1','actual_sha256':'abc'})
             self.assertEqual('BACKOFFICE_REVIEW_REQUIRED',cm.exception.code)
             snapshot.assert_not_called()
             self.assertFalse(any((root/'out').glob('* PR *.xlsx')))
+            summaries=list((root/'out').glob('CREATE_PR_SUMMARY_BACKOFFICE_*.json'))
+            self.assertEqual(1,len(summaries))
+            blocked=json.loads(summaries[0].read_text(encoding='utf-8'))
+            self.assertEqual('BLOCKED',blocked['status'])
+            self.assertEqual(1,blocked['review_required_count'])
+            self.assertEqual(0,blocked['generated_count'])
+            self.assertEqual(2,blocked['requested_count'])
+            self.assertEqual(1,blocked['failed_count'])
+            self.assertEqual(1,blocked['candidate_count'])
+            self.assertEqual(0,blocked['unaccounted_count'])
+            failed=[item for item in blocked['record_dispositions'] if item['disposition']=='FAILED']
+            self.assertEqual('BACKOFFICE_BATCH_BLOCKED_BY_REVIEW_REQUIRED',failed[0]['reason_code'])
+            self.assertTrue((root/'out'/'CREATE_PR_SUMMARY_BACKOFFICE.json').exists())
 
     def test_non_backoffice_run_does_not_write_backoffice_summary_alias(self):
         with tempfile.TemporaryDirectory() as d:

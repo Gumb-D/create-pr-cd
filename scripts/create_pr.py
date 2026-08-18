@@ -606,6 +606,47 @@ def _run_backoffice(parsed, baseline):
         issuance_paths["ignored"], "BACKOFFICE", partitions["ignored"]
     )
     if partitions["review_required"]:
+        blocked_renderer = {"record_dispositions": [{
+            "site_code": _record_site_code(record),
+            "identity_key": _backoffice_identity_key(record),
+            "disposition": "FAILED",
+            "reason_code": "BACKOFFICE_BATCH_BLOCKED_BY_REVIEW_REQUIRED",
+            "reason": "ECC generation was not attempted because the Backoffice batch contains review-required records.",
+        } for record in partitions["candidates"]]}
+        reconciliation = _build_backoffice_reconciliation(selected, partitions, blocked_renderer)
+        summary = {
+            "status": "BLOCKED",
+            "error_code": "BACKOFFICE_REVIEW_REQUIRED",
+            "entrypoint": "create_pr.py",
+            "run_mode": RUN_MODE_PRODUCTION,
+            "scope": "BACKOFFICE",
+            "billing_month": billing_month,
+            "issue_type": partitions["summary"]["issue_type"],
+            "pbom_code": partitions["summary"]["pbom_code"],
+            **_backoffice_governance_summary(partitions),
+            "source_files": [str(path.resolve()) for path in sources],
+            "source_file_count": len(sources),
+            "source_record_count": len(records),
+            "selected_record_count": len(selected),
+            "candidate_count": len(partitions["candidates"]),
+            "duplicate_count": len(partitions["duplicates"]),
+            "ignored_count": len(partitions["ignored"]),
+            "review_required_count": len(partitions["review_required"]),
+            "review_required_reason_distribution": reason_distribution(partitions["review_required"]),
+            "review_report": str(review_path.resolve()) if review_path else None,
+            "duplicate_report": str(duplicate_path.resolve()) if duplicate_path else None,
+            "ignored_report": str(ignored_path.resolve()) if ignored_path else None,
+            "tracker": str(Path(tracker_path).resolve()),
+            "service_registry": str(BACKOFFICE_SERVICE_REGISTRY.resolve()),
+            "output_root": str(requested_output),
+            "created_files": [],
+            "profiles": metadata,
+            "pr_model_baseline": {"baseline_id": baseline["baseline_id"], "version": baseline["version"], "sha256": baseline["actual_sha256"]},
+            **reconciliation,
+        }
+        summary_path = issuance_paths["summary"]
+        summary["summary_path"] = str(summary_path.resolve())
+        _write_backoffice_summary(summary, requested_output)
         raise CreatePrError(
             "BACKOFFICE_REVIEW_REQUIRED",
             "Backoffice generation is blocked because one or more records require review; no partial ECC is permitted.",
@@ -613,6 +654,7 @@ def _run_backoffice(parsed, baseline):
                 "review_required_count": len(partitions["review_required"]),
                 "review_required_reason_distribution": reason_distribution(partitions["review_required"]),
                 "review_report": str(review_path.resolve()) if review_path else None,
+                "summary_path": str(summary_path.resolve()),
             },
         )
     before_renderer = snapshot_renderer_artifacts(requested_output)
