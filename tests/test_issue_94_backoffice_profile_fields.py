@@ -76,16 +76,21 @@ class TestBackofficeProfileFields(unittest.TestCase):
         self.assertEqual('PRODUCTION',p['scope_status']['BACKOFFICE'])
         self.assertEqual(['du_key','backoffice_sow_raw','mocn_actual_end','decom_actual_end'],p['scope_required_fields']['BACKOFFICE'])
         site=next(c for c in p['field_mapping']['site_code']['source_candidates'] if c['fingerprint']['field_code']=='site|fix00012|8359047522524182050|8359047522524230651')
-        self.assertEqual('APPROVED',site['mapping_status'])
+        self.assertEqual('UNVERIFIED',site['mapping_status'])
         tx=next(c for c in p['field_mapping']['backoffice_sow_raw']['source_candidates'] if c['fingerprint']['wbs_stage']=='Installation' and c['fingerprint']['task_name']=='Wireless RAN')
-        self.assertEqual('APPROVED',tx['mapping_status'])
+        self.assertEqual('UNVERIFIED',tx['mapping_status'])
         self.assertEqual(('docata|ZDCSZ631062','Installation','Wireless RAN','SOW'),(tx['fingerprint']['field_code'],tx['fingerprint']['wbs_stage'],tx['fingerprint']['task_name'],tx['fingerprint']['display_header']))
         expected={
             'mocn_actual_end':('WPC000011434|AC0000084313|actual_end_date','MOCN Consolidation','CD consolidation (CD MOCN)','actual end time'),
             'decom_actual_end':('WPC000011433|AC0000084312|actual_end_date','Site DECOMM','Decomm','actual end time'),
         }
+        scoped=p['scope_mapping_status']['BACKOFFICE']
+        for field in ('site_code','site_name','du_key','region','backoffice_sow_raw','mocn_actual_end','decom_actual_end'):
+            self.assertEqual('APPROVED',scoped[field])
         for field,want in expected.items():
-            fp=p['field_mapping'][field]['source_candidates'][0]['fingerprint']
+            mapping=p['field_mapping'][field]['source_candidates'][0]
+            self.assertEqual('UNVERIFIED',mapping['mapping_status'])
+            fp=mapping['fingerprint']
             self.assertEqual(want,(fp['field_code'],fp['wbs_stage'],fp['task_name'],fp['display_header']))
 
     def test_pipeline_uses_scope_specific_required_fields(self):
