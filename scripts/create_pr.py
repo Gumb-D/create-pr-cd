@@ -554,6 +554,7 @@ def _backoffice_governance_summary(partitions):
             warning_distribution[code] = warning_distribution.get(code, 0) + 1
     return {
         "eligible_hops": runtime_summary.get("eligible_hops", len(candidates)),
+        "already_issued_hops": runtime_summary.get("already_issued_hops", 0),
         "tier_source": runtime_summary.get("tier_source", ""),
         "warning_count": warning_count,
         "warning_distribution": dict(sorted(warning_distribution.items())),

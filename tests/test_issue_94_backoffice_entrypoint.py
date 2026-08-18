@@ -211,11 +211,13 @@ class TestBackofficeEntrypoint(unittest.TestCase):
                 'issue_type':'SUPPLEMENTARY',
                 'pbom_code':LOW,
                 'eligible_hops':812,
+                'already_issued_hops':800,
                 'tier_source':'TRACKER_MAIN_FREEZE',
             },
         }
         audit=create_pr._backoffice_governance_summary(partitions)
         self.assertEqual(812,audit['eligible_hops'])
+        self.assertEqual(800,audit['already_issued_hops'])
         self.assertEqual('TRACKER_MAIN_FREEZE',audit['tier_source'])
         self.assertEqual(1,audit['warning_count'])
     def test_backoffice_reconciliation_uses_delivery_unit_plus_event_record_identity(self):

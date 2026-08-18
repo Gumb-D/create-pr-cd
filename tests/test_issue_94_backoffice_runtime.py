@@ -80,6 +80,7 @@ class TestBackofficeRuntime(unittest.TestCase):
         self.assertEqual(0,len(out['duplicates']))
         self.assertEqual(2,len(out['candidates']))
         self.assertEqual(5,out['summary']['eligible_hops'])
+        self.assertEqual(3,out['summary']['already_issued_hops'])
     def test_main_pbom_uses_combined_historical_and_new_month_keys_without_freeze(self):
         historical=frozenset((f'OLD{i}','TX_MINI_INTEGRATION') for i in range(795))
         snapshot=TrackerIndex(historical,{}, {}, {'2026-07':historical})
@@ -123,6 +124,14 @@ class TestBackofficeRuntime(unittest.TestCase):
 
     def test_cd_known_mocn_with_blank_selected_trigger_and_current_decom_evidence_requires_review(self):
         r=rec('CD consolidation 2023',backoffice_sow_raw='Modernization',mocn_actual_end='',decom_actual_end='2026-07-18')
+        out=build_backoffice_entitlements([r],'2026-07',empty_tracker(),REG)
+        self.assertEqual(0,len(out['candidates']))
+        self.assertEqual(0,len(out['ignored']))
+        self.assertEqual(1,len(out['review_required']))
+        self.assertEqual('BACKOFFICE_CD_MILESTONE_CONFLICT',out['review_required'][0]['pr_generation_decision']['reason_code'])
+
+    def test_cd_known_mocn_with_off_month_selected_trigger_and_current_decom_evidence_requires_review(self):
+        r=rec('CD consolidation 2023',backoffice_sow_raw='Modernization',mocn_actual_end='2026-06-18',decom_actual_end='2026-07-18')
         out=build_backoffice_entitlements([r],'2026-07',empty_tracker(),REG)
         self.assertEqual(0,len(out['candidates']))
         self.assertEqual(0,len(out['ignored']))

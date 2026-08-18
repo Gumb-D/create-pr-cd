@@ -220,6 +220,24 @@ def build_backoffice_entitlements(
 
         trigger_month = _month(trigger_date)
         if trigger_month != billing_month:
+            if du_model == "CD consolidation 2023":
+                alternate_field = "decom_actual_end" if trigger_field == "mocn_actual_end" else "mocn_actual_end"
+                alternate_raw = context.get(alternate_field)
+                if _text(alternate_raw):
+                    try:
+                        alternate_date = _parse_trigger_date(alternate_raw)
+                    except ValueError:
+                        _review(
+                            record, partitions, "BACKOFFICE_TRIGGER_DATE_INVALID",
+                            f"Alternate governed CD milestone {alternate_field} does not contain a valid date.",
+                        )
+                        continue
+                    if alternate_date is not None and _month(alternate_date) == billing_month:
+                        _review(
+                            record, partitions, "BACKOFFICE_CD_MILESTONE_CONFLICT",
+                            "The SOW-selected CD milestone is outside the requested billing month while the alternate governed MOCN/Decom milestone is complete in the requested billing month.",
+                        )
+                        continue
             _ignored(record, partitions, "BACKOFFICE_OUTSIDE_BILLING_MONTH", f"Trigger month {trigger_month} is outside requested billing month {billing_month}.")
             continue
 
@@ -282,6 +300,7 @@ def build_backoffice_entitlements(
         "issue_type": issue_type,
         "pbom_code": pbom,
         "eligible_hops": len(known_month_keys),
+        "already_issued_hops": len(historical_month_keys),
         "duplicate_blocked": len(partitions["duplicates"]),
         "not_generated": len(partitions["ignored"]),
         "review_required": len(partitions["review_required"]),
