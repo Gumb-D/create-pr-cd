@@ -7,10 +7,13 @@ import csv
 import json
 import re
 import sys
+from datetime import date, datetime
 from collections.abc import Mapping
 from pathlib import Path
 
 import create_pr_impl as _impl
+from backoffice_tracker import BackofficeTrackerError, load_backoffice_tracker
+from backoffice_pr_runtime import build_backoffice_entitlements, load_service_registry
 from planning_pr_runtime import (
     partition_planning_records,
     planning_scope_subcontractor,
@@ -34,6 +37,19 @@ _ORIGINAL_SCOPE_SUBCONTRACTOR = _impl._scope_subcontractor
 _ORIGINAL_VALIDATE_CANDIDATE_CONTRACTS = _impl.validate_candidate_contracts
 _ORIGINAL_RENDERER = Path(_impl.RENDERER)
 PLANNING_RENDERER = Path(_impl.ROOT) / "scripts" / "planning_ecc_renderer.py"
+BACKOFFICE_RENDERER = Path(_impl.ROOT) / "scripts" / "backoffice_ecc_renderer.py"
+BACKOFFICE_SERVICE_REGISTRY = Path(_impl.ROOT) / "config" / "backoffice_service_registry.yaml"
+BACKOFFICE_REQUIRED_DU_MODELS = frozenset({
+    "2023 Celcomdigi BAU",
+    "2024 Celcomdigi BAU",
+    "CD consolidation 2023",
+    "Celcomdigi USP",
+    "Jendela TX Migration",
+    "MW EOS Swap",
+    "TX Mini Project",
+    "2023 TX Rollout",
+    "ZTE TX MINI",
+})
 _LAST_PARTITIONS = None
 
 _ANTENNA_EVIDENCE_RENDERER_COLUMNS = (
@@ -52,9 +68,22 @@ _PLANNING_RENDERER_COLUMNS = (
     "Planning Unit",
     "Planning Quantity",
 )
+
+_BACKOFFICE_RENDERER_COLUMNS = (
+    "Backoffice Event Code",
+    "Backoffice Trigger Date",
+    "Backoffice Billing Month",
+    "Backoffice PBOM Code",
+    "Backoffice Unit",
+    "Backoffice Quantity",
+    "Backoffice Subcontractor",
+    "Backoffice Contract Number",
+    "Backoffice Issue Type",
+    "Backoffice Warnings",
+)
 CANONICAL_RENDERER_COLUMNS = tuple(_impl.CANONICAL_RENDERER_COLUMNS) + tuple(
     column
-    for column in (*_ANTENNA_EVIDENCE_RENDERER_COLUMNS, *_PLANNING_RENDERER_COLUMNS)
+    for column in (*_ANTENNA_EVIDENCE_RENDERER_COLUMNS, *_PLANNING_RENDERER_COLUMNS, *_BACKOFFICE_RENDERER_COLUMNS)
     if column not in _impl.CANONICAL_RENDERER_COLUMNS
 )
 
@@ -64,7 +93,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Identify DU Profile, canonicalize iEPMS data, and generate ECC.")
     parser.add_argument("--site-data", required=True, type=Path, help="Original four-header iEPMS export")
     parser.add_argument("--output", required=True, type=Path, help="ECC output directory")
-    parser.add_argument("--scope", required=True, choices=["TSS", "TI", "PLANNING"], type=str.upper)
+    parser.add_argument("--scope", required=True, choices=["TSS", "TI", "PLANNING", "BACKOFFICE"], type=str.upper)
     parser.add_argument("--site-code", help="Comma-separated site codes")
     parser.add_argument("--all-sites", action="store_true")
     parser.add_argument("--pr-model", type=Path, default=Path(_impl.ROOT) / "Info" / "input" / "pr_model.xlsx")
@@ -76,6 +105,8 @@ def parse_args() -> argparse.Namespace:
         default=_impl.PR_POLICY_PATH,
         help="Approved fail-closed subcontractor PR policy JSON",
     )
+    parser.add_argument("--backoffice-tracker", type=Path, help="Authoritative TX Outsource & NOC Database.xls for BACKOFFICE duplicate/tier governance")
+    parser.add_argument("--billing-month", help="BACKOFFICE billing month in YYYY-MM")
     parser.add_argument(
         "--non-production-uat",
         action="store_true",
@@ -89,7 +120,72 @@ def parse_args() -> argparse.Namespace:
 
 def _renderer_for_scope(scope):
     """Route Planning only to the deterministic Planning renderer."""
-    return PLANNING_RENDERER if str(scope).strip().upper() == "PLANNING" else _ORIGINAL_RENDERER
+    scope_name = str(scope).strip().upper()
+    if scope_name == "PLANNING":
+        return PLANNING_RENDERER
+    if scope_name == "BACKOFFICE":
+        return BACKOFFICE_RENDERER
+    return _ORIGINAL_RENDERER
+
+
+
+def _validate_backoffice_cadence(billing_month, tracker_snapshot, today=None):
+    current = today or date.today()
+    try:
+        month = datetime.strptime(str(billing_month), "%Y-%m").date().replace(day=1)
+    except ValueError as error:
+        raise CreatePrError("BACKOFFICE_BILLING_MONTH_INVALID", "Backoffice billing month must use YYYY-MM.") from error
+    current_month = current.replace(day=1)
+    if month >= current_month:
+        raise CreatePrError("BACKOFFICE_BILLING_MONTH_NOT_CLOSED", "Backoffice production issuance requires a closed billing month.")
+    if str(billing_month) in tracker_snapshot.month_pbom:
+        return "SUPPLEMENTARY"
+    if current_month.month == 1:
+        previous = date(current_month.year - 1, 12, 1)
+    else:
+        previous = date(current_month.year, current_month.month - 1, 1)
+    if month != previous:
+        raise CreatePrError("BACKOFFICE_MAIN_BILLING_MONTH_NOT_PREVIOUS", "A Backoffice Main PR can only be issued for the immediately previous calendar month.")
+    return "MAIN"
+
+
+def _backoffice_source_files(path, issue_type):
+    source = Path(path)
+    if source.is_file():
+        if str(issue_type).upper() == "MAIN":
+            raise CreatePrError("BACKOFFICE_MAIN_REQUIRES_SOURCE_DIRECTORY", "Backoffice Main PR requires a source directory so all supported DU exports can be aggregated before tier selection.")
+        return [source]
+    if not source.is_dir():
+        raise CreatePrError("BACKOFFICE_SOURCE_NOT_FOUND", f"Backoffice source path not found: {source}")
+    allowed = {".xlsx", ".xlsm", ".csv"}
+    files = sorted(p for p in source.iterdir() if p.is_file() and p.suffix.lower() in allowed and not p.name.startswith("~$"))
+    if not files:
+        raise CreatePrError("BACKOFFICE_SOURCE_DIRECTORY_EMPTY", "Backoffice source directory contains no supported iEPMS exports.")
+    return files
+
+def _validate_backoffice_main_du_coverage(metadata):
+    counts = {}
+    for item in metadata:
+        if not isinstance(item, Mapping):
+            continue
+        name = str(item.get("du_model_name", "") or "").strip()
+        if name:
+            counts[name] = counts.get(name, 0) + 1
+    observed = set(counts)
+    missing = sorted(BACKOFFICE_REQUIRED_DU_MODELS - observed)
+    if missing:
+        raise CreatePrError(
+            "BACKOFFICE_MAIN_DU_SET_INCOMPLETE",
+            "Backoffice Main issuance requires the complete supported DU-model export set before the monthly PBOM tier is calculated.",
+            {"missing_du_models": missing, "observed_du_models": sorted(observed)},
+        )
+    duplicates = sorted(name for name in BACKOFFICE_REQUIRED_DU_MODELS if counts.get(name, 0) != 1)
+    if duplicates:
+        raise CreatePrError(
+            "BACKOFFICE_MAIN_DU_SET_DUPLICATE",
+            "Backoffice Main issuance requires exactly one authoritative export for each supported DU model.",
+            {"duplicate_du_models": duplicates, "du_model_counts": {name: counts[name] for name in sorted(counts)}},
+        )
 
 
 def _canonical_relocate_site_id(value):
@@ -144,6 +240,16 @@ def _renderer_row(record):
             "Planning SOW": planning_selection.get("description", ""),
             "Planning Unit": planning_selection.get("unit", ""),
             "Planning Quantity": planning_selection.get("quantity", ""),
+            "Backoffice Event Code": record.get("backoffice_selection", {}).get("event_code", ""),
+            "Backoffice Trigger Date": record.get("backoffice_selection", {}).get("trigger_date", ""),
+            "Backoffice Billing Month": record.get("backoffice_selection", {}).get("billing_month", ""),
+            "Backoffice PBOM Code": record.get("backoffice_selection", {}).get("pbom_code", ""),
+            "Backoffice Unit": record.get("backoffice_selection", {}).get("unit", ""),
+            "Backoffice Quantity": record.get("backoffice_selection", {}).get("quantity", ""),
+            "Backoffice Subcontractor": record.get("backoffice_selection", {}).get("subcontractor", ""),
+            "Backoffice Contract Number": record.get("backoffice_selection", {}).get("contract_number", ""),
+            "Backoffice Issue Type": record.get("backoffice_selection", {}).get("issue_type", ""),
+            "Backoffice Warnings": " | ".join(record.get("backoffice_selection", {}).get("warnings", []) or []),
         }
     )
     sow = str(record.get("pr_context", {}).get("tx_sow_normalized", "") or "").strip().upper()
@@ -221,6 +327,404 @@ def _partition_records(records, scope, policy=None):
         _LAST_PARTITIONS = _ORIGINAL_PARTITION(records, scope, policy)
     return _LAST_PARTITIONS
 
+
+
+def _validate_backoffice_source_identity(records):
+    """Backoffice duplicate identity is governed later as Delivery Unit Code + canonical event.
+
+    Site ID is intentionally not a uniqueness key for this scope.
+    """
+    return None
+
+
+def _canonicalize_backoffice_sources(sources):
+    all_records = []
+    metadata = []
+    for source in sources:
+        resolution = resolve_du_profile(
+            Path(source),
+            profile_root=_impl.PROFILE_ROOT,
+            identity_registry_path=_impl.IDENTITY_REGISTRY,
+            scope="BACKOFFICE",
+        )
+        scope_status = str(resolution["profile"].get("scope_status", {}).get("BACKOFFICE", "")).strip().upper()
+        if scope_status != "PRODUCTION":
+            raise CreatePrError(
+                "BACKOFFICE_PROFILE_SCOPE_NOT_PRODUCTION",
+                f"DU Profile Backoffice scope is {scope_status or '(blank)'}; production Backoffice generation is blocked.",
+                {"source": str(source), "scope_status": scope_status},
+            )
+        records, item_metadata = build_canonical_records(
+            input_path=Path(source),
+            profile=resolution["profile"],
+            inventory=resolution["inventory"],
+            header_hash=resolution["header_hash"],
+            scope="BACKOFFICE",
+            sow_registry_path=_impl.SOW_REGISTRY,
+        )
+        all_records.extend(records)
+        metadata.append(item_metadata)
+    return all_records, metadata
+
+
+def _backoffice_identity_key(record):
+    site = record.get("site", {})
+    selection = record.get("backoffice_selection", {})
+    du_code = str(site.get("du_key") or site.get("delivery_unit_code") or "").strip().upper()
+    event_code = str(selection.get("event_code") or "").strip().upper()
+    return f"{du_code}|{event_code}" if du_code and event_code else ""
+
+
+def _build_backoffice_reconciliation(selected, partitions, renderer_reconciliation=None):
+    """Reconcile Backoffice records by governed Delivery Unit Code + canonical event identity."""
+    renderer_by_key = {
+        str(item.get("identity_key", "")).strip().upper(): dict(item)
+        for item in (renderer_reconciliation or {}).get("record_dispositions", [])
+        if str(item.get("identity_key", "")).strip()
+    }
+    direct_by_object = {}
+    for bucket, disposition in (
+        ("review_required", "REVIEW_REQUIRED"),
+        ("ignored", "IGNORED_WITH_APPROVED_REASON"),
+        ("duplicates", "DUPLICATE_BLOCKED"),
+    ):
+        for record in partitions.get(bucket, []):
+            decision = record.get("pr_generation_decision", {})
+            direct_by_object[id(record)] = {
+                "site_code": _record_site_code(record),
+                "identity_key": _backoffice_identity_key(record),
+                "disposition": disposition,
+                "reason_code": decision.get("reason_code", ""),
+                "reason": decision.get("reason", ""),
+            }
+
+    candidate_ids = {id(record) for record in partitions.get("candidates", [])}
+    record_dispositions = []
+    for record in selected:
+        terminal = direct_by_object.get(id(record))
+        if terminal is None and id(record) in candidate_ids:
+            key = _backoffice_identity_key(record).upper()
+            terminal = renderer_by_key.get(key)
+            if terminal is None:
+                terminal = {
+                    "site_code": _record_site_code(record),
+                    "identity_key": key,
+                    "disposition": "FAILED",
+                    "reason_code": "RENDERER_BACKOFFICE_RECORD_UNACCOUNTED",
+                    "reason": "The Backoffice candidate returned no Delivery Unit + Event renderer evidence.",
+                }
+        if terminal is None:
+            terminal = {
+                "site_code": _record_site_code(record),
+                "identity_key": _backoffice_identity_key(record),
+                "disposition": "FAILED",
+                "reason_code": "ENGINE_BACKOFFICE_RECORD_UNACCOUNTED",
+                "reason": "The selected Backoffice record did not enter any terminal engine partition.",
+            }
+        record_dispositions.append(dict(terminal))
+
+    counts = {name: 0 for name in (
+        "GENERATED", "REVIEW_REQUIRED", "IGNORED_WITH_APPROVED_REASON", "DUPLICATE_BLOCKED", "FAILED"
+    )}
+    for item in record_dispositions:
+        disposition = str(item.get("disposition", ""))
+        if disposition in counts:
+            counts[disposition] += 1
+    accounted = sum(counts.values())
+    return {
+        "requested_count": len(selected),
+        "generated_count": counts["GENERATED"],
+        "review_required_count": counts["REVIEW_REQUIRED"],
+        "approved_ignored_count": counts["IGNORED_WITH_APPROVED_REASON"],
+        "duplicate_blocked_count": counts["DUPLICATE_BLOCKED"],
+        "failed_count": counts["FAILED"],
+        "unaccounted_count": max(0, len(selected) - accounted),
+        "record_dispositions": record_dispositions,
+    }
+
+
+def _collect_backoffice_renderer_reconciliation(output, candidates, created_paths):
+    """Read Backoffice ECC evidence using Delivery Unit Code + Event, never Site ID."""
+    from openpyxl import load_workbook
+    generated = set()
+    for raw_path in created_paths or []:
+        path = Path(raw_path)
+        if not path.exists() or path.suffix.lower() != ".xlsx" or " PR " not in path.name.upper():
+            continue
+        workbook = load_workbook(path, read_only=True, data_only=True)
+        try:
+            if "details" not in workbook.sheetnames:
+                continue
+            worksheet = workbook["details"]
+            header = [str(value or "").strip() for value in next(worksheet.iter_rows(min_row=1, max_row=1, values_only=True))]
+            try:
+                du_index = header.index("Delivery Unit Code*")
+                remarks_index = header.index("Remarks")
+            except ValueError:
+                continue
+            for row in worksheet.iter_rows(min_row=2, values_only=True):
+                du = str(row[du_index] or "").strip().upper() if du_index < len(row) else ""
+                remarks = str(row[remarks_index] or "").strip() if remarks_index < len(row) else ""
+                event = remarks.split(";", 1)[0].strip().upper()
+                if du and event:
+                    generated.add(f"{du}|{event}")
+        finally:
+            workbook.close()
+
+    dispositions = []
+    for record in candidates:
+        key = _backoffice_identity_key(record).upper()
+        if key and key in generated:
+            dispositions.append({
+                "site_code": _record_site_code(record),
+                "identity_key": key,
+                "disposition": "GENERATED",
+                "reason_code": "ECC_GENERATED",
+                "ecc_evidence_present": True,
+            })
+        else:
+            dispositions.append({
+                "site_code": _record_site_code(record),
+                "identity_key": key,
+                "disposition": "FAILED",
+                "reason_code": "RENDERER_BACKOFFICE_RECORD_UNACCOUNTED",
+                "ecc_evidence_present": False,
+            })
+    return {"record_dispositions": dispositions}
+
+
+def _allocate_backoffice_issuance_paths(output: Path, billing_month: str, issue_type: str, issued_on: date | None = None) -> dict[str, Path]:
+    issued_on = issued_on or date.today()
+    token = f"{billing_month}_{issue_type}_{issued_on.strftime('%Y%m%d')}"
+    batch = 1
+    while True:
+        suffix = "" if batch == 1 else f" Batch {batch}"
+        paths = {
+            "summary": output / f"CREATE_PR_SUMMARY_BACKOFFICE_{token}{suffix}.json",
+            "review": output / f"CANONICAL_REVIEW_REQUIRED_BACKOFFICE_{token}{suffix}.csv",
+            "duplicates": output / f"CANONICAL_IGNORED_BACKOFFICE_DUPLICATES_{token}{suffix}.csv",
+            "ignored": output / f"CANONICAL_IGNORED_BACKOFFICE_{token}{suffix}.csv",
+        }
+        if not any(path.exists() for path in paths.values()):
+            return paths
+        batch += 1
+
+
+def _allocate_backoffice_summary_path(output: Path, billing_month: str, issue_type: str, issued_on: date | None = None) -> Path:
+    return _allocate_backoffice_issuance_paths(output, billing_month, issue_type, issued_on)["summary"]
+
+
+def _write_backoffice_audit_report(path: Path, scope: str, records) -> Path | None:
+    if not records:
+        return None
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=REVIEW_REPORT_FIELDS)
+        writer.writeheader()
+        for record in records:
+            writer.writerow(_impl._report_row(record, scope))
+    return path
+
+
+def _write_backoffice_summary(summary: Mapping[str, object], output: Path) -> None:
+    payload = json.dumps(summary, ensure_ascii=False, indent=2)
+    Path(summary["summary_path"]).write_text(payload, encoding="utf-8")
+    (output / "CREATE_PR_SUMMARY_BACKOFFICE.json").write_text(payload, encoding="utf-8")
+
+
+def _write_declared_summary(summary: Mapping[str, object]) -> None:
+    Path(summary["summary_path"]).write_text(
+        json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+
+def _backoffice_governance_summary(partitions):
+    runtime_summary = partitions.get("summary", {}) if isinstance(partitions, Mapping) else {}
+    candidates = partitions.get("candidates", []) if isinstance(partitions, Mapping) else []
+    warning_distribution = {}
+    warning_count = 0
+    for record in candidates:
+        selection = record.get("backoffice_selection", {}) if isinstance(record, Mapping) else {}
+        warnings = selection.get("warnings", []) if isinstance(selection, Mapping) else []
+        for warning in warnings if isinstance(warnings, (list, tuple, set)) else []:
+            code = str(warning or "").strip()
+            if not code:
+                continue
+            warning_count += 1
+            warning_distribution[code] = warning_distribution.get(code, 0) + 1
+    return {
+        "eligible_hops": runtime_summary.get("eligible_hops", len(candidates)),
+        "already_issued_hops": runtime_summary.get("already_issued_hops", 0),
+        "tier_source": runtime_summary.get("tier_source", ""),
+        "warning_count": warning_count,
+        "warning_distribution": dict(sorted(warning_distribution.items())),
+    }
+
+
+def _run_backoffice(parsed, baseline):
+    global _LAST_PARTITIONS
+    if bool(getattr(parsed, "non_production_uat", False)):
+        raise CreatePrError("BACKOFFICE_PRODUCTION_ONLY", "Operation Backoffice PR is governed as production-only in Issue #94.")
+    tracker_path = getattr(parsed, "backoffice_tracker", None)
+    billing_month = str(getattr(parsed, "billing_month", "") or "").strip()
+    if not tracker_path:
+        raise CreatePrError("BACKOFFICE_TRACKER_REQUIRED", "--backoffice-tracker is required for Backoffice duplicate and tier governance.")
+    if not billing_month:
+        raise CreatePrError("BACKOFFICE_BILLING_MONTH_REQUIRED", "--billing-month YYYY-MM is required for Backoffice generation.")
+    try:
+        tracker_snapshot = load_backoffice_tracker(Path(tracker_path))
+    except BackofficeTrackerError as error:
+        raise CreatePrError(error.code, str(error)) from error
+    issue_type = _validate_backoffice_cadence(billing_month, tracker_snapshot)
+    if issue_type == "MAIN" and (not bool(getattr(parsed, "all_sites", False)) or str(getattr(parsed, "site_code", "") or "").strip()):
+        raise CreatePrError(
+            "BACKOFFICE_MAIN_REQUIRES_ALL_SITES",
+            "Backoffice Main issuance must use --all-sites so the monthly cross-DU PBOM tier is complete.",
+        )
+    sources = _backoffice_source_files(parsed.site_data, issue_type)
+    records, metadata = _canonicalize_backoffice_sources(sources)
+    if issue_type == "MAIN":
+        _validate_backoffice_main_du_coverage(metadata)
+    selected = _impl._select_records(records, _impl._parse_site_codes(parsed.site_code), parsed.all_sites)
+    _validate_backoffice_source_identity(selected)
+    service_registry = load_service_registry(BACKOFFICE_SERVICE_REGISTRY)
+    partitions = build_backoffice_entitlements(selected, billing_month, tracker_snapshot, service_registry)
+    _LAST_PARTITIONS = partitions
+
+    requested_output = Path(parsed.output).resolve()
+    requested_output.mkdir(parents=True, exist_ok=True)
+    issuance_paths = _allocate_backoffice_issuance_paths(
+        requested_output, billing_month, partitions["summary"]["issue_type"]
+    )
+    review_path = _write_backoffice_audit_report(
+        issuance_paths["review"], "BACKOFFICE", partitions["review_required"]
+    )
+    duplicate_path = _write_backoffice_audit_report(
+        issuance_paths["duplicates"], "BACKOFFICE", partitions["duplicates"]
+    )
+    ignored_path = _write_backoffice_audit_report(
+        issuance_paths["ignored"], "BACKOFFICE", partitions["ignored"]
+    )
+    if partitions["review_required"]:
+        blocked_renderer = {"record_dispositions": [{
+            "site_code": _record_site_code(record),
+            "identity_key": _backoffice_identity_key(record),
+            "disposition": "FAILED",
+            "reason_code": "BACKOFFICE_BATCH_BLOCKED_BY_REVIEW_REQUIRED",
+            "reason": "ECC generation was not attempted because the Backoffice batch contains review-required records.",
+        } for record in partitions["candidates"]]}
+        reconciliation = _build_backoffice_reconciliation(selected, partitions, blocked_renderer)
+        summary = {
+            "status": "BLOCKED",
+            "error_code": "BACKOFFICE_REVIEW_REQUIRED",
+            "entrypoint": "create_pr.py",
+            "run_mode": RUN_MODE_PRODUCTION,
+            "scope": "BACKOFFICE",
+            "billing_month": billing_month,
+            "issue_type": partitions["summary"]["issue_type"],
+            "pbom_code": partitions["summary"]["pbom_code"],
+            **_backoffice_governance_summary(partitions),
+            "source_files": [str(path.resolve()) for path in sources],
+            "source_file_count": len(sources),
+            "source_record_count": len(records),
+            "selected_record_count": len(selected),
+            "candidate_count": len(partitions["candidates"]),
+            "duplicate_count": len(partitions["duplicates"]),
+            "ignored_count": len(partitions["ignored"]),
+            "review_required_count": len(partitions["review_required"]),
+            "review_required_reason_distribution": reason_distribution(partitions["review_required"]),
+            "review_report": str(review_path.resolve()) if review_path else None,
+            "duplicate_report": str(duplicate_path.resolve()) if duplicate_path else None,
+            "ignored_report": str(ignored_path.resolve()) if ignored_path else None,
+            "tracker": str(Path(tracker_path).resolve()),
+            "service_registry": str(BACKOFFICE_SERVICE_REGISTRY.resolve()),
+            "output_root": str(requested_output),
+            "created_files": [],
+            "profiles": metadata,
+            "pr_model_baseline": {"baseline_id": baseline["baseline_id"], "version": baseline["version"], "sha256": baseline["actual_sha256"]},
+            **reconciliation,
+        }
+        summary_path = issuance_paths["summary"]
+        summary["summary_path"] = str(summary_path.resolve())
+        _write_backoffice_summary(summary, requested_output)
+        raise CreatePrError(
+            "BACKOFFICE_REVIEW_REQUIRED",
+            "Backoffice generation is blocked because one or more records require review; no partial ECC is permitted.",
+            {
+                "review_required_count": len(partitions["review_required"]),
+                "review_required_reason_distribution": reason_distribution(partitions["review_required"]),
+                "review_report": str(review_path.resolve()) if review_path else None,
+                "summary_path": str(summary_path.resolve()),
+            },
+        )
+    before_renderer = snapshot_renderer_artifacts(requested_output)
+
+    if partitions["candidates"]:
+        import subprocess
+        import tempfile
+        with tempfile.TemporaryDirectory(prefix="create-pr-backoffice-") as temp_dir:
+            canonical_input = Path(temp_dir) / "canonical_backoffice_input.xlsx"
+            _impl._write_renderer_input(canonical_input, partitions["candidates"])
+            command = [
+                sys.executable, str(BACKOFFICE_RENDERER),
+                "--site-data", str(canonical_input),
+                "--pr-model", str(parsed.pr_model),
+                "--template", str(parsed.template),
+                "--mapping", str(parsed.mapping),
+                "--output", str(requested_output),
+                "--scope", "BACKOFFICE",
+                "--all-sites",
+                "--du-model-name", "MULTI_DU_BACKOFFICE",
+            ]
+            result = subprocess.run(command, cwd=_impl.ROOT, text=True, encoding="utf-8", errors="replace", capture_output=True, check=False)
+            if result.stdout:
+                _safe_print(result.stdout, end="")
+            if result.stderr:
+                _safe_print(result.stderr, file=sys.stderr, end="")
+            if result.returncode != 0:
+                raise CreatePrError("ECC_RENDERER_FAILED", "Validated Backoffice candidates could not be rendered to ECC.", {"exit_code": result.returncode})
+
+    touched = touched_renderer_artifacts(requested_output, before_renderer)
+    renderer = _collect_backoffice_renderer_reconciliation(
+        requested_output,
+        partitions["candidates"],
+        touched,
+    )
+    reconciliation = _build_backoffice_reconciliation(selected, partitions, renderer)
+    _assert_reconciliation_success(reconciliation)
+    summary = {
+        "status": "SUCCESS",
+        "entrypoint": "create_pr.py",
+        "run_mode": RUN_MODE_PRODUCTION,
+        "scope": "BACKOFFICE",
+        "billing_month": billing_month,
+        "issue_type": partitions["summary"]["issue_type"],
+        "pbom_code": partitions["summary"]["pbom_code"],
+        **_backoffice_governance_summary(partitions),
+        "source_files": [str(path.resolve()) for path in sources],
+        "source_file_count": len(sources),
+        "source_record_count": len(records),
+        "selected_record_count": len(selected),
+        "candidate_count": len(partitions["candidates"]),
+        "duplicate_count": len(partitions["duplicates"]),
+        "ignored_count": len(partitions["ignored"]),
+        "review_required_count": len(partitions["review_required"]),
+        "review_required_reason_distribution": reason_distribution(partitions["review_required"]),
+        "review_report": str(review_path.resolve()) if review_path else None,
+        "duplicate_report": str(duplicate_path.resolve()) if duplicate_path else None,
+        "ignored_report": str(ignored_path.resolve()) if ignored_path else None,
+        "tracker": str(Path(tracker_path).resolve()),
+        "service_registry": str(BACKOFFICE_SERVICE_REGISTRY.resolve()),
+        "output_root": str(requested_output),
+        "created_files": [str(path.resolve()) for path in touched if path.suffix.lower() == ".xlsx"],
+        "profiles": metadata,
+        "pr_model_baseline": {"baseline_id": baseline["baseline_id"], "version": baseline["version"], "sha256": baseline["actual_sha256"]},
+        **reconciliation,
+    }
+    summary_path = issuance_paths["summary"]
+    summary["summary_path"] = str(summary_path.resolve())
+    _write_backoffice_summary(summary, requested_output)
+    return summary
 
 def _build_site_reconciliation(selected, partitions, renderer_reconciliation=None):
     """Assign exactly one terminal engine disposition to every selected site."""
@@ -374,9 +878,7 @@ def _persist_reconciliation_artifact_error(summary, error):
     summary["status"] = "ERROR"
     summary["code"] = "PR_RECONCILIATION_ARTIFACT_READ_FAILED"
     summary["reconciliation_error"] = diagnostic
-    Path(summary["summary_path"]).write_text(
-        json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    _write_declared_summary(summary)
     raise CreatePrError(
         "PR_RECONCILIATION_ARTIFACT_READ_FAILED",
         "Renderer output could not be read for site reconciliation.",
@@ -396,6 +898,8 @@ def run(parsed):
     if not hasattr(parsed, "pr_model"):
         parsed.pr_model = baseline["path"]
     _sync_dependencies()
+    if str(parsed.scope).strip().upper() == "BACKOFFICE":
+        return _run_backoffice(parsed, baseline)
     _impl.RENDERER = _renderer_for_scope(parsed.scope)
     before_renderer = snapshot_renderer_artifacts(Path(parsed.output))
     summary = _impl.run(parsed)
@@ -420,9 +924,7 @@ def run(parsed):
         summary["status"] = "ERROR"
         summary["code"] = "PR_SITE_RECONCILIATION_FAILED"
 
-    Path(summary["summary_path"]).write_text(
-        json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    _write_declared_summary(summary)
     _assert_reconciliation_success(reconciliation)
     return summary
 

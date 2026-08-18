@@ -303,6 +303,57 @@
       "transforms": [
         "trim"
       ]
+    },
+    "mocn_actual_end": {
+      "required": false,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "WPC000011434|AC0000084313|actual_end_date",
+            "wbs_stage": "MOCN Consolidation",
+            "task_name": "CD consolidation (CD MOCN)",
+            "display_header": "actual end time"
+          },
+          "mapping_status": "UNVERIFIED"
+        }
+      ],
+      "transforms": [
+        "trim"
+      ]
+    },
+    "decom_actual_end": {
+      "required": false,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "WPC000011433|AC0000084312|actual_end_date",
+            "wbs_stage": "Site DECOMM",
+            "task_name": "Decomm",
+            "display_header": "actual end time"
+          },
+          "mapping_status": "UNVERIFIED"
+        }
+      ],
+      "transforms": [
+        "trim"
+      ]
+    },
+    "backoffice_sow_raw": {
+      "required": false,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "docata|ZDCSZ631062",
+            "wbs_stage": "Installation",
+            "task_name": "Wireless RAN",
+            "display_header": "SOW"
+          },
+          "mapping_status": "UNVERIFIED"
+        }
+      ],
+      "transforms": [
+        "trim"
+      ]
     }
   },
   "layout_variants": [
@@ -784,5 +835,32 @@
       "Backoffice / Operation PR eligibility, duplicate prevention, output contract, and template remain under Issue #34.",
       "This profile is not production-ready and must never enable ECC generation."
     ]
+  },
+  "scope_status": {
+    "BACKOFFICE": "PRODUCTION"
+  },
+  "scope_required_fields": {
+    "BACKOFFICE": [
+      "du_key",
+      "backoffice_sow_raw",
+      "mocn_actual_end",
+      "decom_actual_end"
+    ]
+  },
+  "review": {
+    "profile_notes": [
+      "BACKOFFICE scope is production-governed under Issue #94 using only APPROVED scope-required field fingerprints; overall profile remains DRAFT for unrelated scopes."
+    ]
+  },
+  "scope_mapping_status": {
+    "BACKOFFICE": {
+      "site_code": "APPROVED",
+      "site_name": "APPROVED",
+      "du_key": "APPROVED",
+      "region": "APPROVED",
+      "backoffice_sow_raw": "APPROVED",
+      "mocn_actual_end": "APPROVED",
+      "decom_actual_end": "APPROVED"
+    }
   }
 }

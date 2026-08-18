@@ -148,8 +148,8 @@ python scripts/create_pr.py --site-data Info/input/site_pr_po_view.xlsx --scope 
 
 The script requires exactly one of `--site-code` or `--all-sites`.
 
-- Official `--scope` supports `TSS`, `TI`, and `Planning`.
-- Operation Backoffice remains a separate unsupported future scope and is not part of Issue #34.
+- Official `--scope` supports `TSS`, `TI`, `Planning`, and `BACKOFFICE`.
+- Operation Backoffice is implemented independently under Issue #94 and does not reuse Issue #34 Planning eligibility or line-item logic.
 
 ## Output Naming Convention
 
@@ -184,7 +184,34 @@ Explicit UAT artefacts insert `_NON_PRODUCTION_UAT` before the file extension an
 | TSS | Active | Implemented | Microwave Site Survey PR |
 | TI | Active | Implemented | Microwave Integration PR |
 | Planning | Active | Implemented / Issue #34 | Microwave Planning PR for all eight supported DU Models |
-| Operation Backoffice | Unsupported | Future / separate scope | Microwave Backoffice PR |
+| Operation Backoffice | Active | Implemented / Issue #94 | Milestone-triggered monthly Microwave Backoffice PR |
+
+## Operation Backoffice PR Business Rules — Issue #94
+
+Operation Backoffice uses the official `scripts/create_pr.py --scope BACKOFFICE` entrypoint. Main issuance requires `--all-sites` and a source directory that resolves to the complete nine governed DU-model export set, because all eligible DUs for the closed billing month must be aggregated before the monthly tier is selected. Supplementary issuance may use a narrower source after the Main PBOM has been frozen in the authoritative tracker.
+
+Example Main run:
+
+```bash
+python scripts/create_pr.py --site-data Info/reference/backoffice-pr --scope BACKOFFICE --all-sites --backoffice-tracker "TX Outsource & NOC Database.xls" --billing-month 2026-07 --output output
+```
+
+Governed rules:
+
+- One eligible Delivery Unit record equals one Hop.
+- Billing month is the calendar month of the approved Backoffice trigger Actual End Date.
+- All supported DU Models aggregate into the same monthly tier.
+- `<=800` Hops uses PBOM `350000592793`; `>800` uses `350000592794`. Exactly 800 uses the lower tier.
+- Main PR is issued only for the immediately previous closed month and freezes that month's PBOM. Supplementary PR reuses the frozen Main PBOM.
+- Duplicate identity is `Delivery Unit Code + Canonical Backoffice Event`; Site ID is not the duplicate or reconciliation key. Historical duplicates are blocked from the tracker, while repeated entitlement identity inside the same current run fails closed for review.
+- The authoritative issued-history source is `TX Outsource & NOC Database.xls`, sheet `TX Outsource Details`; NOC scope is excluded.
+- Provider/contract are effective-dated and resolved from `config/backoffice_service_registry.yaml` using the trigger date. A billing month spanning a provider/contract transition is partitioned into separate validated provider/contract workbooks before the 30-site split.
+- Current configured Backoffice provider is Allstar / `S1MY2024042501WBF1`, but the renderer derives the provider from validated runtime data rather than hard-coding it.
+- Unknown TX Rollout SOW defaults to TX Integrated and records `BACKOFFICE_TX_SOW_DEFAULTED_TO_INTEGRATED`.
+- Unknown CD consolidation SOW requires review only when a governed MOCN/Decom milestone could affect the requested billing month; clearly historical or not-yet-complete records are ignored with an approved reason.
+- Any `REVIEW_REQUIRED` record blocks the entire Backoffice ECC run; partial ECC output is not allowed.
+- Backoffice ECC filenames use `TX Outsource-<Provider> Backoffice <MAIN|SUPPLEMENTARY> <YYYY-MM> PR <YYYYMMDD>.xlsx`; batches above 30 unique Site IDs are emitted as numbered `Part N` files with at most 30 unique Site IDs per workbook. If an otherwise identical same-day target already exists, a deterministic `Batch N` suffix preserves the earlier issued artifact instead of overwriting it.
+- Required renderer identity (`Site ID`, `Site Name`, `Delivery Unit Code`, `Region`) must have approved Backoffice-scope source mappings before production generation.
 
 ## Planning PR Business Rules — Issue #34
 
@@ -310,7 +337,7 @@ The TI implementation is active for `--scope TI`.
 | TSS | Tx SOW from site data |
 | TI | Tx SOW + applicable antenna/subtype evidence from site data |
 | Planning | DU Model + `Subcon Planning`; fixed approved PBOM matrix above; no Tx SOW/Planning Remarks input |
-| Operation Backoffice | Future scope; not defined by Issue #34 |
+| Operation Backoffice | Approved DU trigger milestone + Delivery Unit/event duplicate identity + monthly PBOM tier |
 
 ### Mapping Rules
 

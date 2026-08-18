@@ -35,6 +35,7 @@ SCOPE_REQUIRED_FIELDS = {
         "subcontractor_planning",
         "existing_planning_pr_status",
     ),
+    "BACKOFFICE": ("site_code", "site_name", "du_key", "region"),
 }
 
 JENDELA_PROFILE_ID = "jendela_tx_migration_pr_v1"
@@ -43,6 +44,15 @@ FIELD_PATHS = {
     "site_code": ("site", "site_code"),
     "site_name": ("site", "site_name"),
     "du_key": ("site", "du_key"),
+    "delivery_unit_code": ("site", "delivery_unit_code"),
+    "backoffice_sow_raw": ("pr_context", "backoffice_sow_raw"),
+    "microwave_tx_cutover_date": ("pr_context", "microwave_tx_cutover_date"),
+    "tx_integrated_actual_end": ("pr_context", "tx_integrated_actual_end"),
+    "cut_over_actual_end": ("pr_context", "cut_over_actual_end"),
+    "site_integrated_actual_end": ("pr_context", "site_integrated_actual_end"),
+    "l1_approved_actual_end": ("pr_context", "l1_approved_actual_end"),
+    "mocn_actual_end": ("pr_context", "mocn_actual_end"),
+    "decom_actual_end": ("pr_context", "decom_actual_end"),
     "tx_sow_raw": ("pr_context", "tx_sow_raw"),
     "tx_sow_normalized": ("pr_context", "tx_sow_normalized"),
     "tx_upgrade_scope_raw": ("pr_context", "tx_upgrade_scope_raw"),
@@ -83,9 +93,10 @@ def empty_canonical_site_record() -> Dict[str, Any]:
             "header_hash": "",
             "source_row_number": None,
         },
-        "site": {"site_code": "", "site_name": "", "du_key": ""},
+        "site": {"site_code": "", "site_name": "", "du_key": "", "delivery_unit_code": ""},
         "pr_context": {
             "tx_sow_raw": "",
+            "backoffice_sow_raw": "",
             "tx_sow_normalized": "",
             "tx_upgrade_scope_raw": "",
             "tx_before_migration": "",
@@ -98,6 +109,13 @@ def empty_canonical_site_record() -> Dict[str, Any]:
             "existing_tss_pr_status": "",
             "existing_ti_pr_status": "",
             "existing_planning_pr_status": "",
+            "microwave_tx_cutover_date": "",
+            "tx_integrated_actual_end": "",
+            "cut_over_actual_end": "",
+            "site_integrated_actual_end": "",
+            "l1_approved_actual_end": "",
+            "mocn_actual_end": "",
+            "decom_actual_end": "",
         },
         "technical_context": {
             "latitude": None,
@@ -142,7 +160,7 @@ def validate_canonical_site_record(record: Mapping[str, Any], scope: str) -> Dic
     """Validate the structural/provenance contract without invoking PR business rules."""
     scope = str(scope).upper()
     if scope not in SCOPE_REQUIRED_FIELDS:
-        raise ValueError("scope must be TSS, TI, or PLANNING")
+        raise ValueError("scope must be TSS, TI, PLANNING, or BACKOFFICE")
 
     blocking_reasons: list[str] = []
     warnings: list[str] = []

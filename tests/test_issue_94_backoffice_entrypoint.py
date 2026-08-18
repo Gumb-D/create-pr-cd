@@ -1,0 +1,253 @@
+import json
+import sys
+import tempfile
+import unittest
+from argparse import Namespace
+from datetime import date
+from pathlib import Path
+from unittest.mock import patch
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
+import create_pr
+from backoffice_tracker import TrackerIndex, load_backoffice_tracker
+
+LOW='350000592793'
+
+def tracker(month_pbom=None):
+    return TrackerIndex(frozenset(),{},month_pbom or {})
+
+class TestBackofficeEntrypoint(unittest.TestCase):
+    def test_parser_accepts_backoffice_tracker_and_billing_month(self):
+        argv=['create_pr.py','--site-data','input','--output','out','--scope','BACKOFFICE','--all-sites','--backoffice-tracker','tracker.xls','--billing-month','2026-07']
+        with patch.object(sys,'argv',argv): args=create_pr.parse_args()
+        self.assertEqual('BACKOFFICE',args.scope)
+        self.assertEqual(Path('tracker.xls'),args.backoffice_tracker)
+        self.assertEqual('2026-07',args.billing_month)
+
+    def test_main_requires_previous_closed_month(self):
+        create_pr._validate_backoffice_cadence('2026-07',tracker(),date(2026,8,13))
+        with self.assertRaises(create_pr.CreatePrError) as cm:
+            create_pr._validate_backoffice_cadence('2026-06',tracker(),date(2026,8,13))
+        self.assertEqual('BACKOFFICE_MAIN_BILLING_MONTH_NOT_PREVIOUS',cm.exception.code)
+
+    def test_supplementary_allows_older_closed_frozen_month(self):
+        create_pr._validate_backoffice_cadence('2026-05',tracker({'2026-05':LOW}),date(2026,8,13))
+
+    def test_current_month_is_never_production_eligible(self):
+        with self.assertRaises(create_pr.CreatePrError) as cm:
+            create_pr._validate_backoffice_cadence('2026-08',tracker({'2026-08':LOW}),date(2026,8,13))
+        self.assertEqual('BACKOFFICE_BILLING_MONTH_NOT_CLOSED',cm.exception.code)
+
+    def test_main_requires_directory_to_prove_cross_du_aggregation(self):
+        with tempfile.TemporaryDirectory() as d:
+            p=Path(d)/'one.xlsx'; p.write_bytes(b'x')
+            with self.assertRaises(create_pr.CreatePrError) as cm:
+                create_pr._backoffice_source_files(p,issue_type='MAIN')
+            self.assertEqual('BACKOFFICE_MAIN_REQUIRES_SOURCE_DIRECTORY',cm.exception.code)
+
+    def test_source_directory_collects_supported_exports_and_ignores_temp_files(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            for name in ['a.xlsx','b.xlsm','c.csv','~$lock.xlsx','tracker.xls','note.txt']:
+                (root/name).write_bytes(b'x')
+            files=create_pr._backoffice_source_files(root,issue_type='MAIN')
+            self.assertEqual(['a.xlsx','b.xlsm','c.csv'],[p.name for p in files])
+
+    def test_main_rejects_incomplete_supported_du_model_set(self):
+        metadata=[{'du_model_name':'TX Mini Project'}]
+        with self.assertRaises(create_pr.CreatePrError) as cm:
+            create_pr._validate_backoffice_main_du_coverage(metadata)
+        self.assertEqual('BACKOFFICE_MAIN_DU_SET_INCOMPLETE',cm.exception.code)
+
+    def test_main_rejects_duplicate_export_for_governed_du_model(self):
+        metadata=[{'du_model_name':name} for name in sorted(create_pr.BACKOFFICE_REQUIRED_DU_MODELS)]
+        metadata.append({'du_model_name':sorted(create_pr.BACKOFFICE_REQUIRED_DU_MODELS)[0]})
+        with self.assertRaises(create_pr.CreatePrError) as cm:
+            create_pr._validate_backoffice_main_du_coverage(metadata)
+        self.assertEqual('BACKOFFICE_MAIN_DU_SET_DUPLICATE',cm.exception.code)
+    def test_main_accepts_complete_supported_du_model_set(self):
+        metadata=[{'du_model_name':name} for name in sorted(create_pr.BACKOFFICE_REQUIRED_DU_MODELS)]
+        create_pr._validate_backoffice_main_du_coverage(metadata)
+
+    def test_supplementary_can_use_single_export_because_tier_is_frozen(self):
+        with tempfile.TemporaryDirectory() as d:
+            p=Path(d)/'one.xlsx'; p.write_bytes(b'x')
+            self.assertEqual([p],create_pr._backoffice_source_files(p,issue_type='SUPPLEMENTARY'))
+
+    def test_tracker_loader_convenience_builds_snapshot(self):
+        rows=[{'Delivery Unit Code':'DU1','SOW':'TX Mini Project','PBOM Code':LOW,'File Name':'TX Outsource-Allstar PR CD 20240815 Batch 1'}]
+        with patch('backoffice_tracker.read_tracker_rows',return_value=rows):
+            snap=load_backoffice_tracker(Path('tracker.xls'))
+        self.assertIn(('DU1','TX_MINI_INTEGRATION'),snap.duplicate_keys)
+
+    def test_multi_export_canonicalization_accepts_backoffice_production_scope_even_if_overall_profile_is_draft(self):
+        sources=[Path('a.xlsx'),Path('b.xlsx')]
+        resolution={
+            'profile':{'status':'DRAFT','scope_status':{'BACKOFFICE':'PRODUCTION'}},
+            'inventory':{'x':1},'header_hash':'h'
+        }
+        with patch.object(create_pr,'resolve_du_profile',return_value=resolution) as resolver, patch.object(create_pr,'build_canonical_records',side_effect=[([{'site':{'site_code':'A'}}],{'profile_id':'p1'}),([{'site':{'site_code':'B'}}],{'profile_id':'p2'})]) as builder:
+            records, metadata=create_pr._canonicalize_backoffice_sources(sources)
+        self.assertEqual(['A','B'],[r['site']['site_code'] for r in records])
+        self.assertEqual(['p1','p2'],[m['profile_id'] for m in metadata])
+        self.assertEqual(2,resolver.call_count)
+        self.assertEqual(2,builder.call_count)
+
+    def test_multi_export_canonicalization_blocks_nonproduction_backoffice_scope(self):
+        resolution={'profile':{'status':'PRODUCTION','scope_status':{'BACKOFFICE':'DRAFT'}},'inventory':{},'header_hash':'h'}
+        with patch.object(create_pr,'resolve_du_profile',return_value=resolution):
+            with self.assertRaises(create_pr.CreatePrError) as cm:
+                create_pr._canonicalize_backoffice_sources([Path('a.xlsx')])
+        self.assertEqual('BACKOFFICE_PROFILE_SCOPE_NOT_PRODUCTION',cm.exception.code)
+
+    def test_run_syncs_backoffice_writer_dependencies_before_orchestration(self):
+        parsed=Namespace(scope='BACKOFFICE',pr_model=Path('Info/input/pr_model.xlsx'))
+        baseline={'path':Path('Info/input/pr_model.xlsx'),'baseline_id':'x','version':'4.1','actual_sha256':'abc'}
+        observed={}
+        def fake_runner(parsed, baseline):
+            observed['columns']=tuple(create_pr._impl.CANONICAL_RENDERER_COLUMNS)
+            observed['row_fn']=create_pr._impl._renderer_row
+            return {'status':'SUCCESS'}
+        with patch.object(create_pr,'validate_pr_model_baseline',return_value=baseline), patch.object(create_pr,'_run_backoffice',side_effect=fake_runner):
+            create_pr.run(parsed)
+        self.assertIn('Backoffice PBOM Code',observed['columns'])
+        self.assertIs(create_pr._renderer_row,observed['row_fn'])
+
+    def test_run_routes_backoffice_to_dedicated_orchestrator(self):
+        parsed=Namespace(scope='BACKOFFICE',pr_model=Path('Info/input/pr_model.xlsx'))
+        baseline={'path':Path('Info/input/pr_model.xlsx'),'baseline_id':'x','version':'4.1','actual_sha256':'abc'}
+        expected={'status':'SUCCESS'}
+        with patch.object(create_pr,'validate_pr_model_baseline',return_value=baseline), patch.object(create_pr,'_run_backoffice',return_value=expected) as runner:
+            self.assertIs(expected,create_pr.run(parsed))
+        runner.assert_called_once()
+
+    def test_backoffice_does_not_reject_same_site_when_delivery_unit_event_identity_differs(self):
+        records=[
+            {'site':{'site_code':'SAME','du_key':'DU1'},'identity':{'project_key':'P'}},
+            {'site':{'site_code':'SAME','du_key':'DU2'},'identity':{'project_key':'P'}},
+        ]
+        create_pr._validate_backoffice_source_identity(records)
+
+    def test_backoffice_renderer_row_carries_runtime_selection(self):
+        record={'site':{'site_code':'S1','site_name':'Site 1','du_key':'DU1'},'pr_context':{'region':'Central'},'backoffice_selection':{'event_code':'TX_MINI_INTEGRATION','trigger_date':'2026-07-15','billing_month':'2026-07','pbom_code':LOW,'unit':'Hop','quantity':1,'subcontractor':'Allstar','contract_number':'S1MY2024042501WBF1','issue_type':'MAIN','warnings':['W']}}
+        row=create_pr._renderer_row(record)
+        self.assertEqual('TX_MINI_INTEGRATION',row['Backoffice Event Code'])
+        self.assertEqual(LOW,row['Backoffice PBOM Code'])
+        self.assertEqual('W',row['Backoffice Warnings'])
+
+    def test_main_requires_all_sites_for_complete_monthly_tier(self):
+        parsed=Namespace(scope='BACKOFFICE',non_production_uat=False,backoffice_tracker=Path('tracker.xls'),billing_month='2026-07',site_data=Path('input'),site_code='S1',all_sites=False,output=Path('out'))
+        with patch.object(create_pr,'load_backoffice_tracker',return_value=tracker()), patch.object(create_pr,'_validate_backoffice_cadence',return_value='MAIN'), patch.object(create_pr,'_backoffice_source_files') as sources:
+            with self.assertRaises(create_pr.CreatePrError) as cm:
+                create_pr._run_backoffice(parsed,{'baseline_id':'x','version':'4.1','actual_sha256':'abc'})
+        self.assertEqual('BACKOFFICE_MAIN_REQUIRES_ALL_SITES',cm.exception.code)
+        sources.assert_not_called()
+
+    def test_review_required_fails_closed_before_renderer(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            parsed=Namespace(scope='BACKOFFICE',non_production_uat=False,backoffice_tracker=root/'tracker.xls',billing_month='2026-07',site_data=root/'input',site_code=None,all_sites=True,output=root/'out',pr_model=Path('Info/input/pr_model.xlsx'),template=Path('Info/input/ecc_template.xls'),mapping=Path('Info/input/contract_info_reference.md'))
+            review={'site':{'site_code':'S1','du_key':'DU1'},'identity':{'du_model_name':'CD consolidation 2023'},'pr_generation_decision':{'reason_code':'BACKOFFICE_CD_SOW_NOT_APPROVED','reason':'x'}}
+            candidate={'site':{'site_code':'S2','du_key':'DU2'},'backoffice_selection':{'event_code':'EVENT_OK'},'pr_generation_decision':{'reason_code':'ELIGIBLE','reason':'x'}}
+            partitions={'candidates':[candidate],'duplicates':[],'ignored':[],'review_required':[review],'summary':{'issue_type':'MAIN','pbom_code':LOW}}
+            complete_metadata=[{'du_model_name':name} for name in sorted(create_pr.BACKOFFICE_REQUIRED_DU_MODELS)]
+            with patch.object(create_pr,'load_backoffice_tracker',return_value=tracker()), patch.object(create_pr,'_validate_backoffice_cadence',return_value='MAIN'), patch.object(create_pr,'_backoffice_source_files',return_value=[root/'a.xlsx']), patch.object(create_pr,'_canonicalize_backoffice_sources',return_value=([review,candidate],complete_metadata)), patch.object(create_pr._impl,'_select_records',return_value=[review,candidate]), patch.object(create_pr,'load_service_registry',return_value={}), patch.object(create_pr,'build_backoffice_entitlements',return_value=partitions), patch.object(create_pr._impl,'_write_review_report',return_value=root/'out'/'CANONICAL_REVIEW_REQUIRED_BACKOFFICE.csv'), patch.object(create_pr,'_write_ignored_report',return_value=None), patch.object(create_pr,'snapshot_renderer_artifacts') as snapshot:
+                with self.assertRaises(create_pr.CreatePrError) as cm:
+                    create_pr._run_backoffice(parsed,{'baseline_id':'x','version':'4.1','actual_sha256':'abc'})
+            self.assertEqual('BACKOFFICE_REVIEW_REQUIRED',cm.exception.code)
+            snapshot.assert_not_called()
+            self.assertFalse(any((root/'out').glob('* PR *.xlsx')))
+            summaries=list((root/'out').glob('CREATE_PR_SUMMARY_BACKOFFICE_*.json'))
+            self.assertEqual(1,len(summaries))
+            blocked=json.loads(summaries[0].read_text(encoding='utf-8'))
+            self.assertEqual('BLOCKED',blocked['status'])
+            self.assertEqual(1,blocked['review_required_count'])
+            self.assertEqual(0,blocked['generated_count'])
+            self.assertEqual(2,blocked['requested_count'])
+            self.assertEqual(1,blocked['failed_count'])
+            self.assertEqual(1,blocked['candidate_count'])
+            self.assertEqual(0,blocked['unaccounted_count'])
+            failed=[item for item in blocked['record_dispositions'] if item['disposition']=='FAILED']
+            self.assertEqual('BACKOFFICE_BATCH_BLOCKED_BY_REVIEW_REQUIRED',failed[0]['reason_code'])
+            self.assertTrue((root/'out'/'CREATE_PR_SUMMARY_BACKOFFICE.json').exists())
+
+    def test_non_backoffice_run_does_not_write_backoffice_summary_alias(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            scope_summary=root/'CREATE_PR_SUMMARY_TI.json'
+            def fake_impl_run(_parsed):
+                scope_summary.write_text('{}',encoding='utf-8')
+                return {
+                    'status':'SUCCESS',
+                    'scope':'TI',
+                    'run_mode':'PRODUCTION',
+                    'output_root':str(root),
+                    'summary_path':str(scope_summary),
+                }
+            parsed=Namespace(scope='TI',output=root,pr_model=Path('model.xlsx'))
+            baseline={'baseline_id':'x','version':'4.1','actual_sha256':'abc','path':Path('model.xlsx')}
+            reconciliation={'requested_count':0,'generated_count':0,'review_required_count':0,'approved_ignored_count':0,'failed_count':0,'unaccounted_count':0,'site_dispositions':[]}
+            with patch.object(create_pr,'validate_pr_model_baseline',return_value=baseline), patch.object(create_pr,'_sync_dependencies'), patch.object(create_pr,'_renderer_for_scope',return_value=Path('renderer.py')), patch.object(create_pr,'snapshot_renderer_artifacts',return_value={}), patch.object(create_pr._impl,'run',side_effect=fake_impl_run), patch.object(create_pr,'_write_ignored_report',return_value=None), patch.object(create_pr,'_reconcile_summary',return_value=reconciliation):
+                result=create_pr.run(parsed)
+            self.assertEqual('SUCCESS',result['status'])
+            self.assertTrue(scope_summary.exists())
+            self.assertFalse((root/'CREATE_PR_SUMMARY_BACKOFFICE.json').exists())
+    def test_backoffice_issuance_paths_share_collision_safe_batch_identity(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            first=create_pr._allocate_backoffice_issuance_paths(root,'2026-07','SUPPLEMENTARY',date(2026,8,16))
+            for path in first.values():
+                path.write_text('first',encoding='utf-8')
+            second=create_pr._allocate_backoffice_issuance_paths(root,'2026-07','SUPPLEMENTARY',date(2026,8,16))
+            self.assertNotEqual(first['summary'],second['summary'])
+            self.assertIn('Batch 2',second['summary'].name)
+            self.assertIn('Batch 2',second['review'].name)
+            self.assertIn('Batch 2',second['duplicates'].name)
+            self.assertIn('Batch 2',second['ignored'].name)
+            self.assertTrue(all(path.exists() for path in first.values()))
+    def test_backoffice_summary_paths_preserve_same_day_issuance_history(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            first=create_pr._allocate_backoffice_summary_path(root,'2026-07','SUPPLEMENTARY',date(2026,8,14))
+            first.write_text('{}',encoding='utf-8')
+            second=create_pr._allocate_backoffice_summary_path(root,'2026-07','SUPPLEMENTARY',date(2026,8,14))
+            second.write_text('{}',encoding='utf-8')
+            self.assertNotEqual(first,second)
+            self.assertTrue(first.exists())
+            self.assertTrue(second.exists())
+            self.assertIn('2026-07_SUPPLEMENTARY_20260814',first.name)
+            self.assertIn('Batch 2',second.name)
+    def test_backoffice_governance_summary_preserves_tier_and_warning_audit(self):
+        partitions={
+            'candidates':[
+                {'backoffice_selection':{'warnings':['BACKOFFICE_TX_SOW_DEFAULTED_TO_INTEGRATED']}},
+                {'backoffice_selection':{'warnings':[]}},
+            ],
+            'summary':{
+                'issue_type':'SUPPLEMENTARY',
+                'pbom_code':LOW,
+                'eligible_hops':812,
+                'already_issued_hops':800,
+                'tier_source':'TRACKER_MAIN_FREEZE',
+            },
+        }
+        audit=create_pr._backoffice_governance_summary(partitions)
+        self.assertEqual(812,audit['eligible_hops'])
+        self.assertEqual(800,audit['already_issued_hops'])
+        self.assertEqual('TRACKER_MAIN_FREEZE',audit['tier_source'])
+        self.assertEqual(1,audit['warning_count'])
+    def test_backoffice_reconciliation_uses_delivery_unit_plus_event_record_identity(self):
+        a={'site':{'site_code':'SAME','du_key':'DU1'},'backoffice_selection':{'event_code':'EVENT_A'},'pr_generation_decision':{'reason_code':'ELIGIBLE'}}
+        b={'site':{'site_code':'SAME','du_key':'DU2'},'backoffice_selection':{'event_code':'EVENT_B'},'pr_generation_decision':{'reason_code':'ELIGIBLE'}}
+        partitions={'candidates':[a,b],'duplicates':[],'ignored':[],'review_required':[]}
+        renderer={'record_dispositions':[
+            {'identity_key':'DU1|EVENT_A','disposition':'GENERATED','reason_code':'ECC_GENERATED'},
+            {'identity_key':'DU2|EVENT_B','disposition':'GENERATED','reason_code':'ECC_GENERATED'},
+        ]}
+        result=create_pr._build_backoffice_reconciliation([a,b],partitions,renderer)
+        self.assertEqual(2,result['requested_count'])
+        self.assertEqual(2,result['generated_count'])
+        self.assertEqual(0,result['review_required_count'])
+        self.assertEqual(0,result['unaccounted_count'])
+        self.assertEqual(2,len(result['record_dispositions']))
+
+if __name__=='__main__': unittest.main()

@@ -10,7 +10,7 @@ from typing import Any, Iterable, Mapping
 from openpyxl import load_workbook
 
 from canonical_site_validator import SCOPE_REQUIRED_FIELDS
-from du_export_adapter import build_canonical_site_record, resolve_profile_field_mappings
+from du_export_adapter import apply_scope_mapping_status, build_canonical_site_record, resolve_profile_field_mappings
 from profile_du_export import (
     extract_du_identities,
     fingerprint_key,
@@ -45,6 +45,9 @@ def _required_fields_for_scope(profile: Mapping[str, Any], scope: str) -> set[st
     }
     if normalized_scope == "PLANNING":
         return mapped_scope_fields
+    if normalized_scope == "BACKOFFICE":
+        configured = set(profile.get("scope_required_fields", {}).get("BACKOFFICE", []))
+        return mapped_scope_fields | configured
     profile_required = {
         field
         for field, config in profile.get("field_mapping", {}).items()
@@ -115,6 +118,7 @@ def build_canonical_records(
         profile,
         semantic_fallback_fields=required_fields,
     )
+    resolved = apply_scope_mapping_status(resolved, profile, scope)
     missing = [
         field
         for field in sorted(required_fields)

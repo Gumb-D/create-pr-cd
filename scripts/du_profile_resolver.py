@@ -7,7 +7,7 @@ from typing import Any, Mapping
 
 from canonical_site_validator import SCOPE_REQUIRED_FIELDS
 
-from du_export_adapter import resolve_profile_field_mappings
+from du_export_adapter import apply_scope_mapping_status, resolve_profile_field_mappings
 from du_profile_loader import load_du_profile
 from iepms_export_source_resolver import (
     SourceResolutionError,
@@ -124,7 +124,9 @@ def resolve_du_profile(
 
     profile = load_du_profile(profile_path)
     profile_status = str(profile.get("status", ""))
-    if profile_status not in RUNNABLE_PROFILE_STATUSES:
+    normalized_scope = str(scope or "").strip().upper()
+    scope_status = str(profile.get("scope_status", {}).get(normalized_scope, ""))
+    if profile_status not in RUNNABLE_PROFILE_STATUSES and scope_status not in RUNNABLE_PROFILE_STATUSES:
         raise DuProfileResolutionError(
             "DU_PROFILE_NOT_RUNNABLE",
             f"DU Profile {profile_id} has non-runnable status {profile_status}.",
@@ -150,12 +152,14 @@ def resolve_du_profile(
     required_field_approval = None
     if not header_validation["approved"]:
         mappings = resolve_profile_field_mappings(inventory, profile)
-        if str(scope or "").strip().upper() == "PLANNING":
+        mappings = apply_scope_mapping_status(mappings, profile, normalized_scope)
+        if normalized_scope in {"PLANNING", "BACKOFFICE"}:
             required_names = {
                 field
-                for field in SCOPE_REQUIRED_FIELDS["PLANNING"]
+                for field in SCOPE_REQUIRED_FIELDS[normalized_scope]
                 if field != "tx_sow_normalized"
             }
+            required_names.update(profile.get("scope_required_fields", {}).get(normalized_scope, []))
             required_fields = {
                 name: profile.get("field_mapping", {}).get(name, {})
                 for name in required_names

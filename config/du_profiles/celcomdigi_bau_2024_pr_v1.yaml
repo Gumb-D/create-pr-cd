@@ -3,30 +3,436 @@
   "profile_version": "0.1.0",
   "mapping_version": "approved-2026-07-10-2024-celcomdigi-bau-v2",
   "status": "PRODUCTION",
-  "identity": {"project_key": "Malaysia_CelcomDigi_Project", "accepted_du_models": ["2024 Celcomdigi BAU"], "accepted_du_model_ids": ["7278317398457076992"], "accepted_view_ids": ["1090541706000906451"]},
-  "export_structure": {"sheet_selector": null, "header_rows": [0, 1, 2, 3], "header_hash_policy": "strict", "observed_header_hash": "b3677457da49e5de484976c3fdb7ad6f5dc19055f5339ec616407f5cbde89a86", "approved_header_hashes": ["b3677457da49e5de484976c3fdb7ad6f5dc19055f5339ec616407f5cbde89a86"]},
-  "field_mapping": {
-    "site_code": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|fix00012|7278317398457076992|1090541706000906451", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "customer site code"}, "mapping_status": "APPROVED"}], "transforms": ["trim", "uppercase"]},
-    "site_name": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00015", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "customer site name"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
-    "du_key": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "du|du_code", "wbs_stage": "Du", "task_name": "Du", "display_header": "du code"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
-    "tx_sow_raw": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00815532", "wbs_stage": "Installation", "task_name": "Microwave", "display_header": "Tx SOW"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
-    "tx_upgrade_scope_raw": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ0656912", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "TX Upgrade Scope"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
-    "region": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "site|region_name", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "region"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
-    "state": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00008", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "Province/State"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
-    "subcontractor_tss": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ640307", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "SubCon - TSS"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
-    "subcontractor_ti": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ640242", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "SubCon - TI"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
-    "subcontractor_planning": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01036640", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Subcon Planning"}, "mapping_status": "APPROVED"}], "transforms": ["trim"]},
-    "existing_planning_pr_status": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ01036639", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Subcon PR - Planning"}, "mapping_status": "APPROVED"}], "transforms": ["normalize_pr_reference_status"]},
-    "existing_tss_pr_status": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ641766", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Subcon PR - TSS"}, "mapping_status": "APPROVED"}], "transforms": ["normalize_pr_reference_status"]},
-    "existing_ti_pr_status": {"required": true, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ641765", "wbs_stage": "Installation", "task_name": "Wireless RAN", "display_header": "Subcon PR - TI"}, "mapping_status": "APPROVED"}], "transforms": ["normalize_pr_reference_status"]},
-    "latitude": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00013", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "Latitude (North Plus South Minus)"}, "mapping_status": "UNVERIFIED"}], "transforms": ["parse_decimal"]},
-    "longitude": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "site|fix00010", "wbs_stage": "Site Basic Info", "task_name": "Site Basic Info", "display_header": "Longitude (East Plus West Minus)"}, "mapping_status": "UNVERIFIED"}], "transforms": ["parse_decimal"]},
-    "antenna_size_ne": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00969578", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "MW Config Antenna Size NE"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
-    "antenna_size_fe": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00969579", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "MW Config Antenna Size FE"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
-    "boq_configuration": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00815531", "wbs_stage": "Installation", "task_name": "Microwave", "display_header": "BOQ Configuration"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
-    "tx_sow_details": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ642123", "wbs_stage": "TX Solution", "task_name": "TX SOW Details", "display_header": "TX SOW Details"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
-    "ne_sow_details": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00969593", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "NE SOW Details"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]},
-    "fe_sow_details": {"required": false, "source_candidates": [{"fingerprint": {"field_code": "docata|ZDCSZ00969594", "wbs_stage": "Network Planning", "task_name": "Microwave", "display_header": "FE SOW Details"}, "mapping_status": "UNVERIFIED"}], "transforms": ["trim"]}
+  "identity": {
+    "project_key": "Malaysia_CelcomDigi_Project",
+    "accepted_du_models": [
+      "2024 Celcomdigi BAU"
+    ],
+    "accepted_du_model_ids": [
+      "7278317398457076992"
+    ],
+    "accepted_view_ids": [
+      "1090541706000906451"
+    ]
   },
-  "validation": {"reject_unknown_headers": true, "reject_ambiguous_source_mapping": true, "require_evidence_for_every_canonical_field": true, "profile_notes": ["Only the six human-approved TSS/TI PR-critical mappings remain unchanged for existing scopes.", "The approved 2024 Celcomdigi BAU header hash stays strict and fail-closed for changed, missing, ambiguous, or unapproved source evidence.", "Existing PR status/reference fields normalize through the established duplicate-prevention transform.", "Issue #34 approves Subcon Planning and Subcon PR - Planning as Planning-only source fields; Subcon PR - Planning must never be used as existing_ti_pr_status.", "Header-hash and required approved-field validation remain mandatory for formal production output.", "Production enabled by JJ on 2026-08-06; formal production jobs are the validation surface and non-production UAT is not a release prerequisite."]}
+  "export_structure": {
+    "sheet_selector": null,
+    "header_rows": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "header_hash_policy": "strict",
+    "observed_header_hash": "b3677457da49e5de484976c3fdb7ad6f5dc19055f5339ec616407f5cbde89a86",
+    "approved_header_hashes": [
+      "b3677457da49e5de484976c3fdb7ad6f5dc19055f5339ec616407f5cbde89a86"
+    ]
+  },
+  "field_mapping": {
+    "site_code": {
+      "required": true,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "site|fix00012|7278317398457076992|1090541706000906451",
+            "wbs_stage": "Site Basic Info",
+            "task_name": "Site Basic Info",
+            "display_header": "customer site code"
+          },
+          "mapping_status": "APPROVED"
+        }
+      ],
+      "transforms": [
+        "trim",
+        "uppercase"
+      ]
+    },
+    "site_name": {
+      "required": false,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "site|fix00015",
+            "wbs_stage": "Site Basic Info",
+            "task_name": "Site Basic Info",
+            "display_header": "customer site name"
+          },
+          "mapping_status": "UNVERIFIED"
+        }
+      ],
+      "transforms": [
+        "trim"
+      ]
+    },
+    "du_key": {
+      "required": false,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "du|du_code",
+            "wbs_stage": "Du",
+            "task_name": "Du",
+            "display_header": "du code"
+          },
+          "mapping_status": "UNVERIFIED"
+        }
+      ],
+      "transforms": [
+        "trim"
+      ]
+    },
+    "tx_sow_raw": {
+      "required": true,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "docata|ZDCSZ00815532",
+            "wbs_stage": "Installation",
+            "task_name": "Microwave",
+            "display_header": "Tx SOW"
+          },
+          "mapping_status": "APPROVED"
+        }
+      ],
+      "transforms": [
+        "trim"
+      ]
+    },
+    "tx_upgrade_scope_raw": {
+      "required": false,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "docata|ZDCSZ0656912",
+            "wbs_stage": "Installation",
+            "task_name": "Wireless RAN",
+            "display_header": "TX Upgrade Scope"
+          },
+          "mapping_status": "UNVERIFIED"
+        }
+      ],
+      "transforms": [
+        "trim"
+      ]
+    },
+    "region": {
+      "required": true,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "site|region_name",
+            "wbs_stage": "Site Basic Info",
+            "task_name": "Site Basic Info",
+            "display_header": "region"
+          },
+          "mapping_status": "APPROVED"
+        }
+      ],
+      "transforms": [
+        "trim"
+      ]
+    },
+    "state": {
+      "required": false,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "site|fix00008",
+            "wbs_stage": "Site Basic Info",
+            "task_name": "Site Basic Info",
+            "display_header": "Province/State"
+          },
+          "mapping_status": "UNVERIFIED"
+        }
+      ],
+      "transforms": [
+        "trim"
+      ]
+    },
+    "subcontractor_tss": {
+      "required": false,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "docata|ZDCSZ640307",
+            "wbs_stage": "Installation",
+            "task_name": "Wireless RAN",
+            "display_header": "SubCon - TSS"
+          },
+          "mapping_status": "APPROVED"
+        }
+      ],
+      "transforms": [
+        "trim"
+      ]
+    },
+    "subcontractor_ti": {
+      "required": true,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "docata|ZDCSZ640242",
+            "wbs_stage": "Installation",
+            "task_name": "Wireless RAN",
+            "display_header": "SubCon - TI"
+          },
+          "mapping_status": "APPROVED"
+        }
+      ],
+      "transforms": [
+        "trim"
+      ]
+    },
+    "subcontractor_planning": {
+      "required": false,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "docata|ZDCSZ01036640",
+            "wbs_stage": "Installation",
+            "task_name": "Wireless RAN",
+            "display_header": "Subcon Planning"
+          },
+          "mapping_status": "APPROVED"
+        }
+      ],
+      "transforms": [
+        "trim"
+      ]
+    },
+    "existing_planning_pr_status": {
+      "required": false,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "docata|ZDCSZ01036639",
+            "wbs_stage": "Installation",
+            "task_name": "Wireless RAN",
+            "display_header": "Subcon PR - Planning"
+          },
+          "mapping_status": "APPROVED"
+        }
+      ],
+      "transforms": [
+        "normalize_pr_reference_status"
+      ]
+    },
+    "existing_tss_pr_status": {
+      "required": true,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "docata|ZDCSZ641766",
+            "wbs_stage": "Installation",
+            "task_name": "Wireless RAN",
+            "display_header": "Subcon PR - TSS"
+          },
+          "mapping_status": "APPROVED"
+        }
+      ],
+      "transforms": [
+        "normalize_pr_reference_status"
+      ]
+    },
+    "existing_ti_pr_status": {
+      "required": true,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "docata|ZDCSZ641765",
+            "wbs_stage": "Installation",
+            "task_name": "Wireless RAN",
+            "display_header": "Subcon PR - TI"
+          },
+          "mapping_status": "APPROVED"
+        }
+      ],
+      "transforms": [
+        "normalize_pr_reference_status"
+      ]
+    },
+    "latitude": {
+      "required": false,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "site|fix00013",
+            "wbs_stage": "Site Basic Info",
+            "task_name": "Site Basic Info",
+            "display_header": "Latitude (North Plus South Minus)"
+          },
+          "mapping_status": "UNVERIFIED"
+        }
+      ],
+      "transforms": [
+        "parse_decimal"
+      ]
+    },
+    "longitude": {
+      "required": false,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "site|fix00010",
+            "wbs_stage": "Site Basic Info",
+            "task_name": "Site Basic Info",
+            "display_header": "Longitude (East Plus West Minus)"
+          },
+          "mapping_status": "UNVERIFIED"
+        }
+      ],
+      "transforms": [
+        "parse_decimal"
+      ]
+    },
+    "antenna_size_ne": {
+      "required": false,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "docata|ZDCSZ00969578",
+            "wbs_stage": "Network Planning",
+            "task_name": "Microwave",
+            "display_header": "MW Config Antenna Size NE"
+          },
+          "mapping_status": "UNVERIFIED"
+        }
+      ],
+      "transforms": [
+        "trim"
+      ]
+    },
+    "antenna_size_fe": {
+      "required": false,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "docata|ZDCSZ00969579",
+            "wbs_stage": "Network Planning",
+            "task_name": "Microwave",
+            "display_header": "MW Config Antenna Size FE"
+          },
+          "mapping_status": "UNVERIFIED"
+        }
+      ],
+      "transforms": [
+        "trim"
+      ]
+    },
+    "boq_configuration": {
+      "required": false,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "docata|ZDCSZ00815531",
+            "wbs_stage": "Installation",
+            "task_name": "Microwave",
+            "display_header": "BOQ Configuration"
+          },
+          "mapping_status": "UNVERIFIED"
+        }
+      ],
+      "transforms": [
+        "trim"
+      ]
+    },
+    "tx_sow_details": {
+      "required": false,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "docata|ZDCSZ642123",
+            "wbs_stage": "TX Solution",
+            "task_name": "TX SOW Details",
+            "display_header": "TX SOW Details"
+          },
+          "mapping_status": "UNVERIFIED"
+        }
+      ],
+      "transforms": [
+        "trim"
+      ]
+    },
+    "ne_sow_details": {
+      "required": false,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "docata|ZDCSZ00969593",
+            "wbs_stage": "Network Planning",
+            "task_name": "Microwave",
+            "display_header": "NE SOW Details"
+          },
+          "mapping_status": "UNVERIFIED"
+        }
+      ],
+      "transforms": [
+        "trim"
+      ]
+    },
+    "fe_sow_details": {
+      "required": false,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "docata|ZDCSZ00969594",
+            "wbs_stage": "Network Planning",
+            "task_name": "Microwave",
+            "display_header": "FE SOW Details"
+          },
+          "mapping_status": "UNVERIFIED"
+        }
+      ],
+      "transforms": [
+        "trim"
+      ]
+    },
+    "microwave_tx_cutover_date": {
+      "required": false,
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "docata|ZDCSZ00885808",
+            "wbs_stage": "Installation",
+            "task_name": "Microwave",
+            "display_header": "TX Cutover Date"
+          },
+          "mapping_status": "APPROVED"
+        }
+      ],
+      "transforms": [
+        "trim"
+      ]
+    }
+  },
+  "validation": {
+    "reject_unknown_headers": true,
+    "reject_ambiguous_source_mapping": true,
+    "require_evidence_for_every_canonical_field": true,
+    "profile_notes": [
+      "Only the six human-approved TSS/TI PR-critical mappings remain unchanged for existing scopes.",
+      "The approved 2024 Celcomdigi BAU header hash stays strict and fail-closed for changed, missing, ambiguous, or unapproved source evidence.",
+      "Existing PR status/reference fields normalize through the established duplicate-prevention transform.",
+      "Issue #34 approves Subcon Planning and Subcon PR - Planning as Planning-only source fields; Subcon PR - Planning must never be used as existing_ti_pr_status.",
+      "Header-hash and required approved-field validation remain mandatory for formal production output.",
+      "Production enabled by JJ on 2026-08-06; formal production jobs are the validation surface and non-production UAT is not a release prerequisite."
+    ]
+  },
+  "scope_status": {
+    "BACKOFFICE": "PRODUCTION"
+  },
+  "scope_required_fields": {
+    "BACKOFFICE": [
+      "du_key",
+      "microwave_tx_cutover_date"
+    ]
+  },
+  "scope_mapping_status": {
+    "BACKOFFICE": {
+      "du_key": "APPROVED",
+      "site_name": "APPROVED",
+      "region": "APPROVED"
+    }
+  }
 }
