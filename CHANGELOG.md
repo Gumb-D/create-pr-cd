@@ -1,3 +1,11 @@
+## 4.0.1 - TI business guidance
+
+- Standardize terminal PostMOCN site-ID aliases without dropping numbered instances or changing source identity; reject collisions.
+- Explicit Starlink-only MW antenna applicability; mixed migration MW work retains validation and atomicity.
+- Approved NLOS evidence selects 0.3m with provenance; contradictions remain review-required.
+- Wire existing TX Rollout detail fingerprints under Issue #50 Batch 2 / #80; preserve strict header gates.
+- No antenna-count/PBOM guess for ambiguous reroute dismantle models. See docs/TI_BUSINESS_GUIDANCE_4_0_1.md.
+
 # Changelog
 
 ## 2025-06-24 - MW Reroute/New Link Quantity Conflict Fix (Revised)

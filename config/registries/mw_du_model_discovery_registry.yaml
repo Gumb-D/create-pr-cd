@@ -58,7 +58,7 @@
       ],
       "profile_id": "tx_rollout_2023_pr_v1",
       "profile_status": "PRODUCTION",
-      "profile_version": "0.1.1",
+      "profile_version": "0.1.2",
       "mapping_version": "approved-2026-07-10-2023-tx-rollout-v2",
       "pr_input_status": "PR_INPUT_QUARANTINED",
       "discovery_status": "KEYWORD_DISCOVERY_REVIEWED",

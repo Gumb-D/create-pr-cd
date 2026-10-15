@@ -45,7 +45,7 @@ def _safe_print(*args, file=None, **kwargs):
     encoding = getattr(file, "encoding", None) or getattr(sys.stdout, "encoding", None)
     safe_args = tuple(_console_safe_text(arg, encoding) for arg in args)
     print(*safe_args, file=file, **kwargs)
-from antenna_evidence_resolver import resolve_installation_antenna_evidence
+from antenna_evidence_resolver import resolve_installation_antenna_evidence, resolve_nlos_standard
 from pr_helpers import (
     normalize_pbom_code,
     normalize_ti_sow,
@@ -530,6 +530,11 @@ def extract_contextual_sizes(text, context_keywords, ambiguous_keywords=None, re
 
 
 def extract_mw_reroute_install_size(row):
+    nlos = resolve_nlos_standard(row)
+    if nlos is not None:
+        return {'size': nlos['selected_size'], 'source': nlos['group_source'],
+                'confidence': 'HIGH', 'reason': nlos['reason_code'] if nlos['status'] == 'CONFLICT' else None,
+                'evidence': nlos['evidence']}
     ne_size = normalize_antenna_size(row.get('MW Config Antenna Size NE', ''))
     fe_size = normalize_antenna_size(row.get('MW Config Antenna Size FE', ''))
     config_sizes = [size for size in [ne_size, fe_size] if size is not None]
@@ -569,6 +574,11 @@ def extract_mw_reroute_install_size(row):
 
 
 def extract_mw_reroute_decom_size(row):
+    nlos = resolve_nlos_standard(row)
+    if nlos is not None:
+        return {'size': nlos['selected_size'], 'source': nlos['group_source'],
+                'confidence': 'HIGH', 'reason': nlos['reason_code'] if nlos['status'] == 'CONFLICT' else None,
+                'evidence': nlos['evidence']}
     decom_keywords = ['decom', 'dismant', 'remove', 'removal']
     existing_keywords = ['existing']
     source_columns = [
@@ -674,9 +684,13 @@ def match_mw_reroute_models(row, region, ti_models):
     review_reasons = []
     install_result = extract_mw_reroute_install_size(row)
     decom_result = extract_mw_reroute_decom_size(row)
+    if install_result.get('source') == 'APPROVED_NLOS_STANDARD':
+        _safe_print('[NLOS_STANDARD]', f"site={row.get('customer site code', '')}",
+                    f"size={install_result['size']}", f"reason={install_result.get('reason')}",
+                    f"evidence={install_result.get('evidence')}")
 
     if install_result['size'] is None:
-        return [], ['MW Reroute install antenna size missing'], install_result, decom_result
+        return [], [install_result.get('reason') or 'MW Reroute install antenna size missing'], install_result, decom_result
 
     install_item, install_status = select_mw_reroute_item(install_items, install_result['size'])
     if install_item:
@@ -1323,6 +1337,17 @@ for idx in range(len(candidates)):
             if requires_antenna:
 
                 antenna_resolution = resolve_installation_antenna_evidence(row)
+                if antenna_resolution["status"] == "CONFLICT":
+                    unmatched_ti_items.append(add_review_fields(review_base, make_review_reason(
+                        antenna_resolution["reason_code"],
+                        description="NLOS standard 0.3m conflicts with explicit or uncertain source evidence.",
+                        action="Confirm the approved NLOS classification and antenna sizes; no value was overwritten.",
+                        technical_detail=str({"nlos": antenna_resolution["evidence"],
+                                              "conflicts": antenna_resolution.get("conflicting_evidence", [])}),
+                    )))
+                    if migration_decision_id:
+                        failed_migration_decisions.add(migration_decision_id)
+                    continue
                 resolved_ne_size = antenna_resolution["ne_size"]
                 resolved_fe_size = antenna_resolution["fe_size"]
                 if antenna_resolution["status"] == "RESOLVED_COMMON":

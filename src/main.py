@@ -28,7 +28,7 @@ import create_pr  # noqa: E402
 
 CONTRACT_VERSION = "1.0"
 SKILL_ID = "create-pr-cd"
-SKILL_VERSION = "4.0.0"
+SKILL_VERSION = "4.0.1"
 SAFE_DOMAIN_ERROR_DETAIL_FIELDS = {
     "SITE_CODES_NOT_FOUND": ("missing_site_codes",),
     "HEADER_HASH_REVALIDATION_REQUIRED": (

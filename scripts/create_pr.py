@@ -12,6 +12,7 @@ from collections.abc import Mapping
 from pathlib import Path
 
 import create_pr_impl as _impl
+from pr_helpers import normalize_postmocn_site_id
 from backoffice_tracker import BackofficeTrackerError, load_backoffice_tracker
 from backoffice_pr_runtime import build_backoffice_entitlements, load_service_registry
 from planning_pr_runtime import (
@@ -54,6 +55,7 @@ _LAST_PARTITIONS = None
 
 _ANTENNA_EVIDENCE_RENDERER_COLUMNS = (
     "Antenna Evidence Governance",
+    "BOQ Configuration Mapping Status",
     "Antenna Size NE Mapping Status",
     "Antenna Size FE Mapping Status",
     "TX SOW Details Mapping Status",
@@ -229,6 +231,7 @@ def _renderer_row(record):
             "Antenna Evidence Governance": (
                 "CANONICAL_MAPPING_STATUS" if canonical_fields is not None else ""
             ),
+            "BOQ Configuration Mapping Status": _source_mapping_status(record, "boq_configuration"),
             "Antenna Size NE Mapping Status": _source_mapping_status(record, "antenna_size_ne"),
             "Antenna Size FE Mapping Status": _source_mapping_status(record, "antenna_size_fe"),
             "TX SOW Details Mapping Status": _source_mapping_status(record, "tx_sow_details"),
@@ -255,6 +258,8 @@ def _renderer_row(record):
     sow = str(record.get("pr_context", {}).get("tx_sow_normalized", "") or "").strip().upper()
     if sow == "DECOM - RELO":
         row["customer site code"] = _canonical_relocate_site_id(row.get("customer site code", ""))
+    if not planning_selection and not record.get("backoffice_selection"):
+        row["customer site code"] = normalize_postmocn_site_id(row.get("customer site code", ""))
     return row
 
 
@@ -321,6 +326,19 @@ def _partition_records(records, scope, policy=None):
     """Validate business identity, then apply the scope-specific partition flow."""
     global _LAST_PARTITIONS
     _assert_unique_project_site_codes(records)
+    # Formatting aliases must not collapse distinct requested source identities.
+    if str(scope).strip().upper() in {"TSS", "TI"}:
+        rendered = {}
+        for record in records:
+            project = str(record.get("identity", {}).get("project_key", "")).casefold()
+            source = str(record.get("site", {}).get("site_code", "") or "").strip()
+            canonical = normalize_postmocn_site_id(source).upper()
+            key = (project, canonical)
+            if canonical and key in rendered and rendered[key].upper() != source.upper():
+                raise CreatePrError("RENDERED_SITE_ID_COLLISION",
+                                    "Distinct source sites normalize to the same PostMOCN output ID.",
+                                    {"source_site_ids": [rendered[key], source], "rendered_site_id": canonical})
+            rendered[key] = source
     if str(scope).strip().upper() == "PLANNING":
         _LAST_PARTITIONS = partition_planning_records(records)
     else:

@@ -27,7 +27,7 @@ class SkillContractTests(unittest.TestCase):
         envelope = {
             "schemaVersion": "1.0",
             "jobId": "JOB-CONTRACT-001",
-            "skill": {"skillId": "create-pr-cd", "version": "4.0.0"},
+            "skill": {"skillId": "create-pr-cd", "version": contract.SKILL_VERSION},
             "parameters": {"scope": "TSS", "allSites": True},
             "files": [{
                 "name": "site_data",

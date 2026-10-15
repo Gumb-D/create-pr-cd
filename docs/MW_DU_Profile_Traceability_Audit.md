@@ -131,7 +131,7 @@ Discovery-only audit of profile-version and header-hash traceability across gene
 ## tx_rollout_2023_pr_v1
 
 - Traceability status: `TRACEABLE`
-- Profile version: `0.1.1`
+- Profile version: `0.1.2`
 - Mapping version: `approved-2026-07-10-2023-tx-rollout-v2`
 - Observed header hash: `e61b834994eeef30e7d8249f87616cb04d60598eea323feea50178fc4292c162`
 - Artifacts:

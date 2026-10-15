@@ -82,10 +82,10 @@ Discovery-only rollback-readiness review for tracked DU profiles.
 
 - Rollback readiness status: `ROLLBACK_BASELINE_RECORDED`
 - Current status: `PRODUCTION`
-- Profile version: `0.1.1`
+- Profile version: `0.1.2`
 - Mapping version: `approved-2026-07-10-2023-tx-rollout-v2`
 - Observed header hash: `e61b834994eeef30e7d8249f87616cb04d60598eea323feea50178fc4292c162`
-- Rollback target: `tx_rollout_2023_pr_v1` `0.1.1`
+- Rollback target: `tx_rollout_2023_pr_v1` `0.1.2`
 - Rollback target header hashes: `8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320, e61b834994eeef30e7d8249f87616cb04d60598eea323feea50178fc4292c162`
 - Note: Rollback baseline is documented from the current approved profile identity and header-hash set.
 

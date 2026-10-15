@@ -384,3 +384,28 @@ def select_tss_items_for_site(
         matched = filter_tss_mw_new_link_reroute_items(matched, is_mw_reroute, site_id)
 
     return matched
+
+
+def normalize_postmocn_site_id(value: Any) -> str:
+    """Normalize only a terminal PostMOCN suffix; retain instance identity.
+
+    Source Project + Site Code is unchanged. Unknown lookalikes are not aliases.
+    """
+    text = optional_cell_text(value)
+    match = re.fullmatch(r"(.+?)[_-]POST[ _-]?MOCN(?:_?(\d+))?", text, re.IGNORECASE)
+    if not match:
+        return text
+    base = match.group(1).rstrip("_-")
+    return f"{base}_POSTMOCN{match.group(2) or ''}" if base else text
+
+
+def is_starlink_only_work_item(row) -> bool:
+    """Only the approved Starlink dismantle model is MW-antenna independent.
+
+    A site-level Starlink label never exempts a separate MW work item.
+    Unsupported New Starlink / Starlink-MW SOWs still require model review.
+    """
+    return (
+        normalize_ti_sow(row.get("Tx SOW")) == "STARLINK DISMANLE"
+        and optional_cell_text(row.get("Migration Work Item")) in {"", "Dismantle Starlink"}
+    )

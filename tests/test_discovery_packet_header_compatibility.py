@@ -37,7 +37,7 @@ class TestDiscoveryPacketHeaderCompatibility(unittest.TestCase):
         historical_hash = "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320"
         self.assertEqual(historical["observed_header_hash"], historical_hash)
         self.assertIn(historical_hash, profile["export_structure"]["approved_header_hashes"])
-        self.assertEqual(profile["profile_version"], "0.1.1")
+        self.assertEqual(profile["profile_version"], "0.1.2")
 
     def test_unapproved_historical_hash_fails_closed(self):
         profile = load_du_profile(ROOT / "config" / "du_profiles" / "tx_rollout_2023_pr_v1.yaml")

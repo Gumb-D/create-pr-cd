@@ -329,7 +329,7 @@ class TestAllDuEccUat(unittest.TestCase):
         profile = json.loads(path.read_text(encoding="utf-8"))
         old_hash = "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320"
         new_hash = "e61b834994eeef30e7d8249f87616cb04d60598eea323feea50178fc4292c162"
-        self.assertEqual(profile["profile_version"], "0.1.1")
+        self.assertEqual(profile["profile_version"], "0.1.2")
         self.assertEqual(profile["mapping_version"], "approved-2026-07-10-2023-tx-rollout-v2")
         self.assertEqual(profile["status"], "PRODUCTION")
         self.assertEqual(profile["export_structure"]["observed_header_hash"], new_hash)

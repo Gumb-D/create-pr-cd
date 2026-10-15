@@ -19,6 +19,7 @@ COMMON_DETAIL = "TX SOW Details"
 GOVERNANCE_FIELD = "Antenna Evidence Governance"
 CANONICAL_GOVERNANCE = "CANONICAL_MAPPING_STATUS"
 _SOURCE_STATUS_FIELDS = {
+    "BOQ Configuration": "BOQ Configuration Mapping Status",
     DIRECT_NE: "Antenna Size NE Mapping Status",
     DIRECT_FE: "Antenna Size FE Mapping Status",
     DETAIL_NE: "NE SOW Details Mapping Status",
@@ -401,7 +402,7 @@ def _endpoint_resolution(row: Mapping[str, Any], direct_field: str, detail_field
     }
 
 
-def resolve_installation_antenna_evidence(row: Mapping[str, Any]) -> dict[str, Any]:
+def _resolve_installation_antenna_evidence(row: Mapping[str, Any]) -> dict[str, Any]:
     ne = _endpoint_resolution(row, DIRECT_NE, DETAIL_NE)
     fe = _endpoint_resolution(row, DIRECT_FE, DETAIL_FE)
     invalid_direct = bool(ne.get("invalid_authoritative") or fe.get("invalid_authoritative"))
@@ -456,3 +457,76 @@ def resolve_installation_antenna_evidence(row: Mapping[str, Any]) -> dict[str, A
         "common_size": common_size,
         "evidence": evidence,
     }
+
+
+def resolve_nlos_standard(row: Mapping[str, Any]) -> dict[str, Any] | None:
+    """Approved NLOS evidence selects 0.3m; never infer from site identifiers.
+
+    Negated/uncertain labels and any explicit conflicting antenna evidence fail
+    closed. Mapping approval remains mandatory for canonical production rows.
+    """
+    sources = []
+    conflicting_evidence = []
+    uncertain = False
+    for field in ("BOQ Configuration", COMMON_DETAIL):
+        if not _source_is_approved(row, field) or _is_blank(row.get(field)):
+            continue
+        text = str(row[field]).strip()
+        if not re.search(r"\bNLOS\b", text, re.IGNORECASE):
+            continue
+        sources.append({"source": field, "raw_value": row[field], "size": 0.3,
+                        "priority": "APPROVED_NLOS_STANDARD",
+                        "mapping_status": _mapping_status(row, field) or None})
+        # Match qualifiers around the NLOS label, not unrelated "no dismantle" work.
+        if re.search(
+            r"\b(?:no|not|non|without|possible|possibly|maybe|if|pending|unconfirmed|unknown|previous|historical|old)"
+            r"[ \t-]+(?:(?:an?|the)[ \t]+)?NLOS\b|"
+            r"\bNLOS[ \t]*(?:[?]|(?:is[ \t]+)?(?:not|unknown|unconfirmed|pending)\b)",
+            text, re.IGNORECASE
+        ) or "?" in text:
+            uncertain = True
+    if not sources:
+        return None
+    conflict = uncertain
+    for field in _SOURCE_STATUS_FIELDS:
+        if not _source_is_approved(row, field) or _is_blank(row.get(field)):
+            continue
+        raw = row[field]
+        field_conflict = False
+        if field in {DIRECT_NE, DIRECT_FE}:
+            size = _parse_direct_size(raw)
+            if size is None or abs(size - 0.3) > 1e-6:
+                field_conflict = True
+        else:
+            text = str(raw).replace(",", ".")
+            if re.search(r"\bLOS\b", text, re.IGNORECASE):
+                field_conflict = True
+            for match in re.finditer(r"(?<![\w.])(\d+(?:\.\d+)?)(?![\d.])", text):
+                if _candidate_is_antenna_size_phrase(text, match.start(), match.end()):
+                    if abs(float(match.group(1)) - 0.3) > 1e-6:
+                        field_conflict = True
+        if field_conflict:
+            conflict = True
+            conflicting_evidence.append({"source": field, "raw_value": raw,
+                                         "mapping_status": _mapping_status(row, field) or None})
+    return {
+        "status": "CONFLICT" if conflict else "RESOLVED_COMMON",
+        "reason_code": "NLOS_ANTENNA_EVIDENCE_CONFLICT" if conflict else "NLOS_STANDARD_0_3M",
+        "ne_size": None if conflict else 0.3,
+        "fe_size": None if conflict else 0.3,
+        "selected_size": None if conflict else 0.3,
+        "common_size": None if conflict else 0.3,
+        "group_source": "APPROVED_NLOS_STANDARD",
+        "evidence": sources,
+        "conflicting_evidence": conflicting_evidence,
+    }
+
+
+def resolve_installation_antenna_evidence(row: Mapping[str, Any]) -> dict[str, Any]:
+    from pr_helpers import is_starlink_only_work_item
+    if is_starlink_only_work_item(row):
+        return {"status": "NOT_APPLICABLE", "reason_code": "STARLINK_NO_MW_ANTENNA",
+                "ne_size": None, "fe_size": None, "selected_size": None,
+                "common_size": None, "group_source": "STARLINK_WORK_ITEM", "evidence": []}
+    nlos = resolve_nlos_standard(row)
+    return nlos if nlos is not None else _resolve_installation_antenna_evidence(row)

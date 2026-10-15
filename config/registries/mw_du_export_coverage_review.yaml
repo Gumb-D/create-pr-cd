@@ -26,7 +26,7 @@
       "coverage_status": "TRACKED_DRAFT_PROFILE",
       "profile_id": "tx_rollout_2023_pr_v1",
       "profile_status": "PRODUCTION",
-      "profile_version": "0.1.1",
+      "profile_version": "0.1.2",
       "mapping_version": "approved-2026-07-10-2023-tx-rollout-v2",
       "observed_header_hash": "8aab4c2da2dc133e0a65b9203c62e6db1ebeb30430f9f63f5c5de1673703c320",
       "missing_skill_fields": [

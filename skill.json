@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "skillId": "create-pr-cd",
   "displayName": "Create PR CD",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "runtime": {
     "type": "python",
     "entrypoint": "src/main.py",
