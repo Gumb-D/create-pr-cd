@@ -1,3 +1,11 @@
+## 4.0.2 - Production TI new-link / reroute split
+
+- Classify new-link-only, actual reroute and unresolved combined scope using approved source evidence.
+- Require old dismantle diameter and explicit 2/4 antenna count separately from installation/NLOS evidence.
+- Select mandatory transport and installation/dismantle PBOMs atomically; no partial ECC for unresolved cases.
+- Preserve TSS, Jendela separated work items, duplicate guards and source/profile approvals.
+- See docs/TI_NEW_LINK_REROUTE_4_0_2.md for approval, limits and regressions.
+
 ## 4.0.1 - TI business guidance
 
 - Standardize terminal PostMOCN site-ID aliases without dropping numbered instances or changing source identity; reject collisions.

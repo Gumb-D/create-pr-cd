@@ -46,6 +46,7 @@ def _safe_print(*args, file=None, **kwargs):
     safe_args = tuple(_console_safe_text(arg, encoding) for arg in args)
     print(*safe_args, file=file, **kwargs)
 from antenna_evidence_resolver import resolve_installation_antenna_evidence, resolve_nlos_standard
+from mw_link_scope import classify_link_scope, installation_evidence, dismantle_evidence, model_antenna_count, approved_row
 from pr_helpers import (
     normalize_pbom_code,
     normalize_ti_sow,
@@ -210,6 +211,8 @@ def make_review_reason(reason_code, category='PR Model Matching', description=No
         'NO_MANDATORY_TI_ITEM_FOUND': 'The matching TI PR model rows do not contain mandatory items that can be generated automatically.',
         'NO_MATCHING_ANTENNA_GROUP_ITEM': 'The mandatory antenna choose-one group could not be matched to the site antenna size.',
         'MW_REROUTE_INSTALL_ANTENNA_SIZE_MISSING': 'The MW Reroute install antenna size could not be determined from the site data.',
+        'MW_LINK_SCOPE_UNRESOLVED': 'New-link-only versus reroute/dismantling is not uniquely established by approved source evidence.',
+        'MW_REROUTE_DECOM_ANTENNA_COUNT_UNRESOLVED': 'The old antenna dismantling count must be explicitly and uniquely established (2 or 4).',
         'MW_REROUTE_DECOM_ANTENNA_SIZE_AMBIGUOUS': 'The MW Reroute dismantle antenna size is ambiguous in the site data.',
         'MW_REROUTE_DECOM_ANTENNA_SIZE_MISSING': 'The MW Reroute dismantle antenna size could not be determined from the site data.',
         'MW_REROUTE_INSTALL_ITEM_NOT_MATCHED': 'The MW Reroute install mandatory PR item could not be matched.',
@@ -235,6 +238,8 @@ def make_review_reason(reason_code, category='PR Model Matching', description=No
         'NO_MANDATORY_TI_ITEM_FOUND': 'Confirm the mandatory TI PR model rows for this SOW.',
         'NO_MATCHING_ANTENNA_GROUP_ITEM': 'Confirm the antenna size and mandatory antenna group selection.',
         'MW_REROUTE_INSTALL_ANTENNA_SIZE_MISSING': 'Confirm the MW Reroute install antenna size.',
+        'MW_LINK_SCOPE_UNRESOLVED': 'Confirm new-link-only or actual reroute using approved scope/detail evidence.',
+        'MW_REROUTE_DECOM_ANTENNA_COUNT_UNRESOLVED': 'Confirm the explicit old antenna count; installation/NLOS evidence does not determine it.',
         'MW_REROUTE_DECOM_ANTENNA_SIZE_AMBIGUOUS': 'Confirm the MW Reroute dismantle antenna size.',
         'MW_REROUTE_DECOM_ANTENNA_SIZE_MISSING': 'Confirm the MW Reroute dismantle antenna size.',
         'MW_REROUTE_INSTALL_ITEM_NOT_MATCHED': 'Confirm the install antenna size and matching PR model row.',
@@ -530,102 +535,11 @@ def extract_contextual_sizes(text, context_keywords, ambiguous_keywords=None, re
 
 
 def extract_mw_reroute_install_size(row):
-    nlos = resolve_nlos_standard(row)
-    if nlos is not None:
-        return {'size': nlos['selected_size'], 'source': nlos['group_source'],
-                'confidence': 'HIGH', 'reason': nlos['reason_code'] if nlos['status'] == 'CONFLICT' else None,
-                'evidence': nlos['evidence']}
-    ne_size = normalize_antenna_size(row.get('MW Config Antenna Size NE', ''))
-    fe_size = normalize_antenna_size(row.get('MW Config Antenna Size FE', ''))
-    config_sizes = [size for size in [ne_size, fe_size] if size is not None]
-    if config_sizes:
-        return {
-            'size': max(config_sizes),
-            'source': 'MW Config Antenna Size NE/FE',
-            'confidence': 'HIGH',
-            'reason': None
-        }
-
-    install_keywords = ['target', 'new', 'install', 'upgrade', 'build']
-    source_groups = [
-        ('BOQ Configuration', ['BOQ Configuration']),
-        ('TX SOW Details', ['TX SOW Details']),
-        ('NE/FE SOW Details', ['NE SOW Details', 'FE SOW Details'])
-    ]
-    for source_name, columns in source_groups:
-        sizes = []
-        for column in columns:
-            column_sizes, _ = extract_contextual_sizes(get_text_value(row, column), install_keywords)
-            sizes.extend(column_sizes)
-        if sizes:
-            return {
-                'size': max(sizes),
-                'source': source_name,
-                'confidence': 'MEDIUM',
-                'reason': None
-            }
-
-    return {
-        'size': None,
-        'source': None,
-        'confidence': 'LOW',
-        'reason': 'MW Reroute install antenna size missing'
-    }
+    return installation_evidence(row)
 
 
 def extract_mw_reroute_decom_size(row):
-    nlos = resolve_nlos_standard(row)
-    if nlos is not None:
-        return {'size': nlos['selected_size'], 'source': nlos['group_source'],
-                'confidence': 'HIGH', 'reason': nlos['reason_code'] if nlos['status'] == 'CONFLICT' else None,
-                'evidence': nlos['evidence']}
-    decom_keywords = ['decom', 'dismant', 'remove', 'removal']
-    existing_keywords = ['existing']
-    source_columns = [
-        ('BOQ Configuration', 'BOQ Configuration'),
-        ('TX SOW Details', 'TX SOW Details'),
-        ('NE SOW Details', 'NE SOW Details'),
-        ('FE SOW Details', 'FE SOW Details')
-    ]
-
-    for source_name, column in source_columns:
-        text = get_text_value(row, column)
-        sizes, ambiguous_reuse = extract_contextual_sizes(
-            text,
-            decom_keywords,
-            ambiguous_keywords=['reuse existing'],
-            require_keyword_before=True
-        )
-        existing_sizes, _ = extract_contextual_sizes(text, existing_keywords, require_keyword_before=True)
-
-        # "Reuse existing" often describes retained equipment, not a decom target.
-        lower_text = text.lower()
-        if 'reuse existing' in lower_text:
-            existing_sizes = []
-            ambiguous_reuse = True
-
-        combined = sorted(set(sizes + existing_sizes))
-        if len(combined) == 1:
-            return {
-                'size': combined[0],
-                'source': source_name,
-                'confidence': 'MEDIUM',
-                'reason': None
-            }
-        if len(combined) > 1 or ambiguous_reuse:
-            return {
-                'size': None,
-                'source': source_name,
-                'confidence': 'LOW',
-                'reason': 'MW Reroute decom antenna size ambiguous'
-            }
-
-    return {
-        'size': None,
-        'source': None,
-        'confidence': 'LOW',
-        'reason': 'MW Reroute decom antenna size missing'
-    }
+    return dismantle_evidence(row)
 
 
 def classify_mw_reroute_model_item(item):
@@ -668,48 +582,54 @@ def select_mw_reroute_item(items, chosen_size):
     return None, 'missing'
 
 
-def match_mw_reroute_models(row, region, ti_models):
-    sow = str(row.get('Tx SOW', '')).strip()
-    sow_upper = sow.upper()
-    candidates = []
-    for item in ti_models:
-        item_sow_upper = item['SOW'].upper()
-        if item['Is_Mandatory'] and ('REROUTE' in item_sow_upper or item_sow_upper == 'MW REROUTE'):
-            candidates.append(item)
-
-    install_items = [item for item in candidates if classify_mw_reroute_model_item(item) == 'install']
-    dismantle_items = [item for item in candidates if classify_mw_reroute_model_item(item) == 'dismantle']
-
-    selected_items = []
-    review_reasons = []
-    install_result = extract_mw_reroute_install_size(row)
-    decom_result = extract_mw_reroute_decom_size(row)
+def match_mw_reroute_models(row, region, ti_models, resolver=None):
+    scope = classify_link_scope(row)
+    install_result = installation_evidence(row)
+    decom_result = {'size': None, 'count': None, 'reason': None, 'source': 'NOT_APPLICABLE'}
+    _safe_print('[MW_LINK_SCOPE]', f"site={row.get('customer site code', '')}",
+                f"classification={scope['status']}", f"sources={scope['evidence']}")
+    if scope['status'] == 'REVIEW_REQUIRED':
+        return [], [scope['reason']], install_result, decom_result
     if install_result.get('source') == 'APPROVED_NLOS_STANDARD':
         _safe_print('[NLOS_STANDARD]', f"site={row.get('customer site code', '')}",
-                    f"size={install_result['size']}", f"reason={install_result.get('reason')}",
-                    f"evidence={install_result.get('evidence')}")
-
+                    f"size={install_result['size']}")
     if install_result['size'] is None:
-        return [], [install_result.get('reason') or 'MW Reroute install antenna size missing'], install_result, decom_result
+        return [], [install_result.get('reason') or 'MW_REROUTE_INSTALL_ANTENNA_SIZE_MISSING'], install_result, decom_result
 
-    install_item, install_status = select_mw_reroute_item(install_items, install_result['size'])
-    if install_item:
-        selected_items.append(install_item)
-    else:
-        review_reasons.append('MW Reroute install item not matched')
+    # Source model maps blank remarks to new installation and Reroute remarks
+    # to dismantling/return transport. Do not change that packaged workbook.
+    new_models = [dict(item, SOW='MW New Link / Reroute') for item in ti_models
+                  if item.get('Is_Mandatory') and
+                  normalize_ti_sow(item.get('SOW')) == 'MW NEW LINK / REROUTE' and
+                  str(item.get('Remarks', '')).strip().casefold() != 'reroute']
+    selected, review = match_ti_models('MW New Link / Reroute', None,
+                                     install_result['size'], region, new_models,
+                                     row=approved_row(row), resolver=resolver)
+    if review or not selected or not any(classify_mw_reroute_model_item(x) == 'install' for x in selected):
+        return [], ['MW_REROUTE_INSTALL_ITEM_NOT_MATCHED'], install_result, decom_result
+    if scope['status'] == 'NEW_LINK_ONLY':
+        return selected, [], install_result, decom_result
 
-    if decom_result['size'] is None:
-        review_reasons.append(decom_result['reason'])
-    else:
-        dismantle_item, dismantle_status = select_mw_reroute_item(dismantle_items, decom_result['size'])
-        if dismantle_item:
-            selected_items.append(dismantle_item)
-        elif dismantle_status == 'ambiguous':
-            review_reasons.append('MW Reroute dismantle item not matched')
-        else:
-            review_reasons.append('MW Reroute dismantle item not matched')
-
-    return selected_items, review_reasons, install_result, decom_result
+    decom_result = dismantle_evidence(row)
+    if decom_result.get('reason'):
+        return [], [decom_result['reason']], install_result, decom_result
+    old_models = []
+    for item in ti_models:
+        if not item.get('Is_Mandatory') or normalize_ti_sow(item.get('SOW')) != 'MW REROUTE':
+            continue
+        if classify_mw_reroute_model_item(item) == 'dismantle':
+            if model_antenna_count(item) != decom_result['count']:
+                continue
+        old_models.append(dict(item, SOW='MW Reroute'))
+    old_selected, review = match_ti_models('MW Reroute', None,
+                                         decom_result['size'], region, old_models,
+                                         row=approved_row(row), resolver=resolver)
+    if review or not old_selected or not any(classify_mw_reroute_model_item(x) == 'dismantle' for x in old_selected):
+        return [], ['MW_REROUTE_DISMANTLE_ITEM_NOT_MATCHED'], install_result, decom_result
+    selected += old_selected
+    if has_duplicate_pbom(selected):
+        return [], ['MW_REROUTE_DISMANTLE_ITEM_NOT_MATCHED'], install_result, decom_result
+    return selected, [], install_result, decom_result
 
 
 def parse_choice_rule(rule_text):
@@ -1284,9 +1204,14 @@ for idx in range(len(candidates)):
             matched_items, mw_review_reasons, install_result, decom_result = match_mw_reroute_models(
                 row,
                 region,
-                ti_models
+                ti_models,
+                resolver=resolver
             )
             if mw_review_reasons:
+                review_required = True
+                matched_items = []
+                if migration_decision_id:
+                    failed_migration_decisions.add(migration_decision_id)
                 remarks = 'REVIEW_REQUIRED'
                 for review_reason in mw_review_reasons:
                     unmatched_ti_items.append(add_review_fields(

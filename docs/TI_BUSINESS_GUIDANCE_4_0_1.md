@@ -64,3 +64,8 @@ identity. These unrelated failures are not silently fixed by this change.
 - TX Rollout discovery consistency, historical header acceptance, and profile traceability pass after synchronizing only the affected version metadata.
 - Platform fingerprint normalization, generic skill catalog/submission/result contracts, and offline Python job runner pass.
 - Seven reported production site workbooks have not been replayed; no live PR submitted.
+
+
+## Superseded reroute behavior in v4.0.2
+
+The earlier NLOS-to-reroute-dismantle-size behavior above is historical. v4.0.2 requires explicit old-antenna size and count for actual reroutes; NLOS remains governed installation evidence only. See [production split](TI_NEW_LINK_REROUTE_4_0_2.md). No historical PR was automatically rerun.

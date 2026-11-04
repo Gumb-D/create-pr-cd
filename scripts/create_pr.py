@@ -54,6 +54,7 @@ BACKOFFICE_REQUIRED_DU_MODELS = frozenset({
 _LAST_PARTITIONS = None
 
 _ANTENNA_EVIDENCE_RENDERER_COLUMNS = (
+    "TX Upgrade Scope Mapping Status",
     "Antenna Evidence Governance",
     "BOQ Configuration Mapping Status",
     "Antenna Size NE Mapping Status",
@@ -232,6 +233,7 @@ def _renderer_row(record):
                 "CANONICAL_MAPPING_STATUS" if canonical_fields is not None else ""
             ),
             "BOQ Configuration Mapping Status": _source_mapping_status(record, "boq_configuration"),
+            "TX Upgrade Scope Mapping Status": _source_mapping_status(record, "tx_upgrade_scope_raw"),
             "Antenna Size NE Mapping Status": _source_mapping_status(record, "antenna_size_ne"),
             "Antenna Size FE Mapping Status": _source_mapping_status(record, "antenna_size_fe"),
             "TX SOW Details Mapping Status": _source_mapping_status(record, "tx_sow_details"),

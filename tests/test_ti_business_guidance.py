@@ -133,24 +133,14 @@ class NlosTests(unittest.TestCase):
         self.assertIn('BOQ Configuration Mapping Status', create_pr.CANONICAL_RENDERER_COLUMNS)
         self.assertEqual(resolve_nlos_standard(rendered)['selected_size'], 0.3)
 
-    def test_reroute_install_and_decom_use_same_governed_standard(self):
-        # Load pure helper definitions without starting the renderer CLI.
-        namespace = {'resolve_nlos_standard': resolve_nlos_standard}
-        tree = ast.parse((ROOT / 'scripts/generate_tss_pr_ecc.py').read_text(encoding='utf-8'))
-        for node in tree.body:
-            if isinstance(node, ast.FunctionDef) and node.name in {
-                'extract_mw_reroute_install_size', 'extract_mw_reroute_decom_size'}:
-                exec(compile(ast.Module(body=[node], type_ignores=[]), '<renderer-functions>', 'exec'), namespace)
+    def test_nlos_is_installation_not_automatic_old_dismantle_evidence(self):
+        from mw_link_scope import installation_evidence, dismantle_evidence
         source = row(**{'TX SOW Details': 'NLOS'})
-        for name in ('extract_mw_reroute_install_size', 'extract_mw_reroute_decom_size'):
-            result = namespace[name](source)
-            self.assertEqual(result['size'], 0.3)
-            self.assertIsNone(result['reason'])
-            source['MW Config Antenna Size NE'] = '1.2m'
-            result = namespace[name](source)
-            self.assertIsNone(result['size'])
-            self.assertEqual(result['reason'], 'NLOS_ANTENNA_EVIDENCE_CONFLICT')
-            source['MW Config Antenna Size NE'] = ''
+        self.assertEqual(installation_evidence(source)['size'], 0.3)
+        self.assertIsNone(dismantle_evidence(source)['size'])
+        self.assertEqual(dismantle_evidence(source)['reason'], 'MW_REROUTE_DECOM_ANTENNA_SIZE_MISSING')
+        source['MW Config Antenna Size NE'] = '1.2m'
+        self.assertEqual(installation_evidence(source)['reason'], 'NLOS_ANTENNA_EVIDENCE_CONFLICT')
 
 
 class StarlinkTests(unittest.TestCase):
@@ -221,10 +211,9 @@ class GeneratorGuidanceTests(TestMwSwapGeneratorFallback):
         result, sites, reviews, diagnostics = self._run_generator([row(**{
             'Tx SOW': 'MW New Link / Reroute', 'TX SOW Details': 'NLOS'})])
         self.assertEqual(result.returncode, 0, diagnostics)
-        self.assertIn('GUIDANCE_TEST', sites, diagnostics)
-        self.assertTrue(any(r['Reason_Code'] == 'MW_REROUTE_DISMANTLE_ITEM_NOT_MATCHED' for r in reviews), diagnostics)
-        self.assertIn('[NLOS_STANDARD]', result.stdout)
-        self.assertIn('size=0.3', result.stdout)
+        self.assertNotIn('GUIDANCE_TEST', sites, diagnostics)
+        self.assertTrue(any(r['Reason_Code'] == 'MW_LINK_SCOPE_UNRESOLVED' for r in reviews), diagnostics)
+        self.assertIn('[MW_LINK_SCOPE]', result.stdout)
         self.assertFalse(any('ANTENNA_SIZE_MISSING' in r['Reason_Code'] for r in reviews), diagnostics)
 
 

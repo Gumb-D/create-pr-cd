@@ -394,3 +394,8 @@ The TI implementation is active for `--scope TI`.
 - For Planning, verify the DU Model and Planning subcontractor against the approved three-PBOM matrix; Tx SOW and TX Planning Remarks are not Planning selectors.
 
 ---
+
+
+## TI production new-link/reroute split (4.0.2)
+
+New-link-only uses installation evidence and no dismantling; actual reroute requires old-antenna size/count as well. Unclear combined labels stay review-required without partial ECC. See [approved rules and limitations](docs/TI_NEW_LINK_REROUTE_4_0_2.md). TSS/Jendela routing and duplicate protection are not bypassed.

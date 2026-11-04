@@ -260,7 +260,7 @@ def is_mw_reroute_row(row: Dict[str, Any]) -> bool:
     if profile_id == "jendela_tx_migration_pr_v1" and migration_work_item == "MW New Link":
         return False
     sow = str(row.get('Tx SOW', '')).strip().lower()
-    return "mw" in sow and 'reroute' in sow
+    return ("mw" in sow and 'reroute' in sow) or normalize_ti_sow(row.get('Tx SOW')) in {'MW NEW LINK', 'MW NEW LINK ONLY'}
 
 
 def parse_mw_new_link_reroute(sow: str, upgrade_scope: str) -> bool:
