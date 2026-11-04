@@ -399,3 +399,8 @@ The TI implementation is active for `--scope TI`.
 ## TI production new-link/reroute split (4.0.2)
 
 New-link-only uses installation evidence and no dismantling; actual reroute requires old-antenna size/count as well. Unclear combined labels stay review-required without partial ECC. See [approved rules and limitations](docs/TI_NEW_LINK_REROUTE_4_0_2.md). TSS/Jendela routing and duplicate protection are not bypassed.
+
+
+## MW Planning platform task type (4.1.0)
+
+The public MW manifest adapter supports TSS, TI and PLANNING. Planning uses the existing governed domain engine and same single/all-sites source upload; see [contract integration](docs/PLANNING_PLATFORM_4_1_0.md). Backoffice remains standalone-only. No PR Upload Planning scope or external submission is enabled.

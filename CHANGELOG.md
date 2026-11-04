@@ -1,3 +1,10 @@
+## 4.1.0 - Planning in MW platform contract
+
+- Expose existing governed Planning engine through Task Type and public manifest adapter.
+- Preserve existing Planning eligibility, duplicates, exact model/contract mappings and reconciled ZIP outputs.
+- Keep iEPMS uploader, auditor and RAN scope contracts unchanged.
+- See docs/PLANNING_PLATFORM_4_1_0.md for integration/test/release details.
+
 ## 4.0.2 - Production TI new-link / reroute split
 
 - Classify new-link-only, actual reroute and unresolved combined scope using approved source evidence.

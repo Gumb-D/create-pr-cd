@@ -28,7 +28,7 @@ import create_pr  # noqa: E402
 
 CONTRACT_VERSION = "1.0"
 SKILL_ID = "create-pr-cd"
-SKILL_VERSION = "4.0.2"
+SKILL_VERSION = "4.1.0"
 SAFE_DOMAIN_ERROR_DETAIL_FIELDS = {
     "SITE_CODES_NOT_FOUND": ("missing_site_codes",),
     "HEADER_HASH_REVALIDATION_REQUIRED": (
@@ -323,8 +323,8 @@ def run(input_manifest: Path) -> int:
         if unknown:
             raise ContractError("PARAMETERS_INVALID", "Unsupported parameters were supplied.", details={"fields": unknown})
         scope = str(parameters.get("scope") or "").upper()
-        if scope not in {"TSS", "TI"}:
-            raise ContractError("PARAMETERS_INVALID", "scope must be TSS or TI.")
+        if scope not in {"TSS", "TI", "PLANNING"}:
+            raise ContractError("PARAMETERS_INVALID", "scope must be TSS, TI or PLANNING.")
         site_codes = [str(value).strip() for value in parameters.get("siteCodes", []) if str(value).strip()]
         all_sites = bool(parameters.get("allSites", False))
         if all_sites == bool(site_codes):
