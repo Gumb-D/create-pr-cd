@@ -125,7 +125,17 @@
     },
     "state": {
       "required": false,
-      "source_candidates": [],
+      "source_candidates": [
+        {
+          "fingerprint": {
+            "field_code": "site|fix00008",
+            "wbs_stage": "Site Basic Info",
+            "task_name": "Site Basic Info",
+            "display_header": "Province/State"
+          },
+          "mapping_status": "UNVERIFIED"
+        }
+      ],
       "transforms": [
         "trim"
       ]
@@ -349,7 +359,8 @@
       "Issue #34 approves Subcon - Planning and Subcon - PR Planning as Planning-only source fields; existing_planning_pr_status normalizes independently.",
       "Milestone/date fields are not approved PR-status sources.",
       "Header-hash and required approved-field validation remain mandatory for formal production output.",
-      "Production enabled by JJ on 2026-08-06; formal production jobs are the validation surface and non-production UAT is not a release prerequisite."
+      "Production enabled by JJ on 2026-08-06; formal production jobs are the validation surface and non-production UAT is not a release prerequisite.",
+      "JJ 2026-11-05: TI MW New Link aliases the combined MW New Link / Reroute category; K/Y/Z exact mappings approved for this category. R BOQ and Equipment Installation actual end are non-inputs. Dismantling requires explicit approved evidence; all other scopes/categories unchanged."
     ]
   },
   "scope_status": {

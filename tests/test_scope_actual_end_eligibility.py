@@ -27,7 +27,7 @@ class TestScopeActualEndEligibility(unittest.TestCase):
         record["technical_context"]["tx_sow_details"] = details
         record["validation"].update(
             {
-                "profile_id": "zte_tx_mini_pr_v1",
+                "profile_id": "mw_eos_swap_pr_v1",
                 "profile_version": "0.2.0",
                 "mapping_version": "approved-v1",
                 "pr_input_classification": "PR_INPUT_READY",

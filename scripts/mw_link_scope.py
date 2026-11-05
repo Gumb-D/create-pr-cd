@@ -26,6 +26,10 @@ NEW_ONLY = re.compile(r"\b(?:MW\s+)?new\s+link\s+only\b", re.I)
 
 def approved_row(row):
     clean = dict(row)
+    from zte_tx_mini_link_policy import applies
+    if applies(row.get('DU Profile ID'), 'TI', row.get('Tx SOW')):
+        clean['BOQ Configuration'] = ''
+        clean['BOQ Configuration Mapping Status'] = 'NOT_APPLICABLE'
     if optional_cell_text(row.get('Antenna Evidence Governance')).upper() == 'CANONICAL_MAPPING_STATUS':
         for field, status in {**DETAIL_FIELDS, **DIRECT_FIELDS}.items():
             if optional_cell_text(row.get(status)).upper() != 'APPROVED':
@@ -39,7 +43,7 @@ def clauses(text):
     return [x.strip() for x in re.split(r'[;\r\n]|\.(?=\s|$)|\band\s+(?=(?:install|new|dismantle|decom|remove|retain|reuse)\b)', text, flags=re.I) if x.strip()]
 
 
-def classify_link_scope(row):
+def _classify_link_scope(row):
     clean = approved_row(row)
     sow = normalize_ti_sow(clean.get('Tx SOW'))
     combined = bool(COMBINED.fullmatch(sow))
@@ -84,6 +88,19 @@ def classify_link_scope(row):
     else:
         status = 'REVIEW_REQUIRED'
     return {'status': status, 'reason': None if status != 'REVIEW_REQUIRED' else 'MW_LINK_SCOPE_UNRESOLVED', 'evidence': evidence}
+
+
+def classify_link_scope(row):
+    from zte_tx_mini_link_policy import applies
+    result = _classify_link_scope(row)
+    if not applies(row.get('DU Profile ID'), 'TI', row.get('Tx SOW')):
+        return result
+    # One business category. Still reject contradictory/uncertain work evidence.
+    if result['status'] == 'REVIEW_REQUIRED' and result['evidence']:
+        return result
+    return {'status': 'COMBINED_LINK', 'reason': None,
+            'include_dismantle': result['status'] == 'REROUTE',
+            'evidence': result['evidence']}
 
 
 def installation_evidence(row):

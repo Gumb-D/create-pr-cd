@@ -141,11 +141,12 @@ def classify_uat_record(record: Mapping[str, Any], scope: str) -> tuple[str, lis
     if status == PR_STATUS_NOT_REQUIRED:
         return "NO_PR_OR_IGNORED", reasons + [f"{status_field}:NO_PR_REQUIRED"]
 
+    from zte_tx_mini_link_policy import record_applies
     date_field = _scope_date_field(scope)
     date_evidence = (
         record.get("source_evidence", {}).get("fields", {}).get(date_field)
     )
-    if isinstance(date_evidence, Mapping):
+    if isinstance(date_evidence, Mapping) and not record_applies(record, scope):
         source_value = date_evidence.get("source_value")
         if _is_blank(source_value):
             return "NO_PR_OR_IGNORED", reasons + [f"{date_field}:ACTUAL_END_MISSING"]
@@ -409,6 +410,9 @@ def _attach_scope_eligibility(
         return record
     if config.get("rule") != "actual_end_required":
         raise ValueError("UNSUPPORTED_SCOPE_ELIGIBILITY_RULE")
+    from zte_tx_mini_link_policy import record_applies
+    if record_applies(record, scope):
+        return record
     fingerprint = config.get("actual_end_fingerprint")
     if not isinstance(fingerprint, Mapping):
         raise ValueError("MISSING_SCOPE_ACTUAL_END_FINGERPRINT")

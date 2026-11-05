@@ -16,7 +16,7 @@ class PlanningPlatformContractTests(unittest.TestCase):
     def execute(self, root, source, scope='PLANNING', sites=None):
         params={'scope':scope,'allSites':sites is None,'nonProductionUat':False}
         if sites is not None:params['siteCodes']=sites
-        envelope={'schemaVersion':'1.0','jobId':'PLANNING-CONTRACT','skill':{'skillId':'create-pr-cd','version':'4.1.0'},
+        envelope={'schemaVersion':'1.0','jobId':'PLANNING-CONTRACT','skill':{'skillId':'create-pr-cd','version':json.loads((ROOT/'skill.json').read_text())['version']},
                   'parameters':params,'files':[{'name':'site_data','path':source.name,'size':source.stat().st_size,
                   'sha256':hashlib.sha256(source.read_bytes()).hexdigest()}],
                   'paths':{'workspace':'.','output':'output','result':'result.json','cancellation':'temp/cancel.requested'}}
@@ -43,7 +43,7 @@ class PlanningPlatformContractTests(unittest.TestCase):
                 run,result=self.execute(root,src)
                 self.assertEqual(run.returncode,0,run.stdout+run.stderr)
                 self.assertEqual(result['status'],'succeeded')
-                self.assertEqual(result['skillVersion'],'4.1.0')
+                self.assertEqual(result['skillVersion'],json.loads((ROOT/'skill.json').read_text())['version'])
                 self.assertEqual(result['reconciliation']['unaccountedCount'],0)
                 self.assertEqual(result['reconciliation']['generatedCount'],2)
                 rows=_ecc_rows(root/'output');self.assertEqual({str(row[9]) for row in rows},{pbom,'350001042321'})

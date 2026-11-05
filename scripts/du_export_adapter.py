@@ -12,6 +12,7 @@ from canonical_site_validator import FIELD_PATHS, apply_validation_result, empty
 from profile_du_export import fingerprint_key, structural_fingerprint, structural_fingerprint_key
 from sow_normalization import normalize_tx_sow
 from jendela_migration_decision import derive_jendela_migration_decision
+from zte_tx_mini_link_policy import applies, PROFILE_ID, COMBINED_SOW
 
 
 PR_STATUS_EXISTS = "PR_EXISTS"
@@ -219,6 +220,10 @@ def build_canonical_site_record(
     record["validation"]["mapping_version"] = profile.get("mapping_version", "")
 
     for canonical_field, mapping in resolved_mappings.items():
+        # Newly mapped state is consumed only by the approved combined TI category.
+        if (canonical_field == "state" and profile.get("profile_id") == PROFILE_ID
+                and not applies(PROFILE_ID, scope, record["pr_context"]["tx_sow_raw"])):
+            continue
         status = mapping.get("status")
         if status == "AMBIGUOUS":
             record["source_evidence"]["ambiguous_fields"].append(canonical_field)
@@ -269,6 +274,19 @@ def build_canonical_site_record(
                     "transformation": "trim",
                     "normalization_status": "UNVERIFIED",
                 }
+
+    # This approved alias is profile/scope-specific; retain the raw source evidence.
+    if applies(profile.get("profile_id"), scope, record["pr_context"]["tx_sow_raw"]):
+        record["pr_context"]["tx_sow_normalized"] = COMBINED_SOW
+        record["source_evidence"]["fields"]["tx_sow_normalized"].update({
+            "transformation": "zte_tx_mini_ti_combined_link_20261105",
+            "normalization_status": "APPROVED", "sow_classification": "PR_TRIGGER",
+        })
+        # Only these exact existing technical mappings are approved for this category.
+        for field in ("tx_sow_details", "antenna_size_ne", "antenna_size_fe", "state"):
+            evidence = record["source_evidence"]["fields"].get(field)
+            if evidence:
+                evidence["mapping_status"] = "APPROVED"
 
     _apply_geography_correction(record)
     migration_decision = derive_jendela_migration_decision(

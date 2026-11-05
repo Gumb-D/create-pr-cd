@@ -607,7 +607,7 @@ def match_mw_reroute_models(row, region, ti_models, resolver=None):
                                      row=approved_row(row), resolver=resolver)
     if review or not selected or not any(classify_mw_reroute_model_item(x) == 'install' for x in selected):
         return [], ['MW_REROUTE_INSTALL_ITEM_NOT_MATCHED'], install_result, decom_result
-    if scope['status'] == 'NEW_LINK_ONLY':
+    if scope['status'] == 'NEW_LINK_ONLY' or (scope['status'] == 'COMBINED_LINK' and not scope.get('include_dismantle')):
         return selected, [], install_result, decom_result
 
     decom_result = dismantle_evidence(row)
